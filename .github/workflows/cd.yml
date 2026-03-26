@@ -37,12 +37,6 @@ jobs:
         id: image
         run: echo "name=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
 
-      - name: Compute infra image names
-        id: infra
-        run: |
-          echo "db=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/resume-postgres:16" >> "$GITHUB_OUTPUT"
-          echo "redis=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/resume-redis:8.4-alpine" >> "$GITHUB_OUTPUT"
-
       - name: Docker metadata
         id: meta
         uses: docker/metadata-action@v5
@@ -65,23 +59,9 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Mirror Postgres to GHCR
-        run: |
-          docker pull postgres:16
-          docker tag postgres:16 "${{ steps.infra.outputs.db }}"
-          docker push "${{ steps.infra.outputs.db }}"
-
-      - name: Mirror Redis to GHCR
-        run: |
-          docker pull redis:8.4-alpine
-          docker tag redis:8.4-alpine "${{ steps.infra.outputs.redis }}"
-          docker push "${{ steps.infra.outputs.redis }}"
-
       - name: Verify deploy images exist
         run: |
           docker buildx imagetools inspect "${{ steps.image.outputs.name }}:sha-${{ github.sha }}" >/dev/null
-          docker buildx imagetools inspect "${{ steps.infra.outputs.db }}" >/dev/null
-          docker buildx imagetools inspect "${{ steps.infra.outputs.redis }}" >/dev/null
 
       - name: Prepare remote deploy path
         uses: appleboy/ssh-action@v1.0.3
@@ -163,7 +143,7 @@ jobs:
               if docker info >/dev/null 2>&1; then
                 docker "$@"
               elif command -v sudo >/dev/null 2>&1 && sudo docker info >/dev/null 2>&1; then
-                sudo --preserve-env=IMAGE_NAME,IMAGE_TAG,DB_IMAGE,REDIS_IMAGE,POSTGRES_PASSWORD,POSTGRES_DB,TZ,APP_PORT docker "$@"
+                sudo --preserve-env=IMAGE_NAME,IMAGE_TAG,POSTGRES_PASSWORD,POSTGRES_DB,TZ,APP_PORT docker "$@"
               else
                 echo "cannot access docker daemon"
                 exit 1
@@ -191,8 +171,6 @@ jobs:
 
             export IMAGE_NAME="${{ steps.image.outputs.name }}"
             export IMAGE_TAG="sha-${{ github.sha }}"
-            export DB_IMAGE="${{ steps.infra.outputs.db }}"
-            export REDIS_IMAGE="${{ steps.infra.outputs.redis }}"
 
             if [ -z "$IMAGE_NAME" ] || [ -z "$IMAGE_TAG" ]; then
               echo "IMAGE_NAME or IMAGE_TAG is empty"
@@ -200,8 +178,6 @@ jobs:
             fi
 
             echo "Deploying app image: ${IMAGE_NAME}:${IMAGE_TAG}"
-            echo "Deploying db image: ${DB_IMAGE}"
-            echo "Deploying redis image: ${REDIS_IMAGE}"
 
             docker_cmd compose -f docker-compose.prod.yml up -d db redis
             wait_healthy resume-db
