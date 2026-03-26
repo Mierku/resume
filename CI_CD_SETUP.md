@@ -1,9 +1,9 @@
-# CI/CD 配置说明（Docker 版）
+# CI/CD 配置说明（Docker 自动部署）
 
 当前仓库包含两条流水线：
 
 - `/.github/workflows/ci.yml`：代码质量与构建检查
-- `/.github/workflows/cd.yml`：构建 Docker 镜像并部署
+- `/.github/workflows/cd.yml`：构建 Docker 镜像并自动部署
 
 ## 1) CI（持续集成）
 
@@ -19,12 +19,7 @@
 3. `pnpm lint`（当前告警，不阻断）
 4. `pnpm build`（阻断）
 
-说明：
-
-- 由于仓库当前有现存 lint 问题，lint 暂时为非阻断。
-- 等 lint 全部修复后，把 `ci.yml` 中 `continue-on-error: true` 去掉即可。
-
-## 2) CD（Docker 持续部署）
+## 2) CD（持续部署）
 
 触发时机：
 
@@ -33,51 +28,73 @@
 
 执行流程：
 
-1. GitHub Actions 使用 `Dockerfile` 构建镜像
-2. 镜像推送到 `ghcr.io/<owner>/<repo>`
-3. 通过 SSH 登录服务器
-4. 在 `DEPLOY_PATH` 拉最新代码（用于同步 `docker-compose.prod.yml`）
-5. `docker compose pull`
-6. `docker compose run --rm app pnpm exec prisma migrate deploy`
-7. `docker compose up -d`
+1. GitHub Actions 构建镜像并推送到 `ghcr.io/<owner>/<repo>`
+2. 自动 SSH 到服务器创建 `DEPLOY_PATH`
+3. 自动上传仓库中的 `docker-compose.prod.yml` 到 `DEPLOY_PATH`
+4. 可选：从 `DEPLOY_ENV_B64` 自动写入 `DEPLOY_PATH/.env`
+5. 自动执行：
+   - `docker compose pull`
+   - `docker compose run --rm app pnpm exec prisma migrate deploy`
+   - `docker compose up -d`
 
-## 3) 必填 Secrets
+说明：
 
-在 GitHub 仓库 `Settings -> Secrets and variables -> Actions` 中添加：
+- 该流程已移除服务器 `git pull` 依赖。
+- 服务器不需要 clone 代码仓库。
+
+## 3) Secrets（GitHub 仓库）
+
+在仓库 `Settings -> Secrets and variables -> Actions` 中添加：
+
+必填：
 
 - `DEPLOY_HOST`：服务器地址
 - `DEPLOY_USER`：SSH 用户
-- `DEPLOY_SSH_KEY`：SSH 私钥
-- `DEPLOY_PATH`：服务器仓库目录（例如 `/var/www/website`）
+- `DEPLOY_SSH_KEY`：SSH 私钥内容
+- `DEPLOY_PATH`：部署目录（例如 `/opt/resume`）
 - `GHCR_USERNAME`：可拉取 GHCR 镜像的用户名
 - `GHCR_TOKEN`：可拉取 GHCR 镜像的 Token（至少 `read:packages`）
 
 可选：
 
 - `DEPLOY_PORT`：SSH 端口（默认 `22`）
+- `DEPLOY_ENV_B64`：生产 `.env` 的 base64（设置后每次部署会重写远端 `.env`）
 
-## 4) 服务器前置条件
+## 4) 本地一键写 Secrets
 
-服务器需提前准备：
+新增脚本：
 
-1. Docker（含 `docker compose`）
-2. Git
-3. 项目仓库已 clone 到 `DEPLOY_PATH`
-4. `DEPLOY_PATH/.env` 已配置生产环境变量
-5. 数据库可访问（用于 `prisma migrate deploy`）
+- `/scripts/deploy/setup-github-secrets.sh`
 
-## 5) 新增的 Docker 文件
+示例：
 
-- `/Dockerfile`
-- `/.dockerignore`
-- `/docker-compose.prod.yml`
+```bash
+cd "/Users/mierku/Personal/idaa/一键投递/website"
 
-## 6) 首次上线建议
+scripts/deploy/setup-github-secrets.sh \
+  --repo <你的GitHub用户名>/resume \
+  --deploy-host <服务器IP或域名> \
+  --deploy-user <SSH用户名> \
+  --deploy-path /opt/resume \
+  --ssh-key-path ~/.ssh/id_ed25519 \
+  --ghcr-username <你的GitHub用户名> \
+  --ghcr-token <你的GHCR_TOKEN> \
+  --deploy-port 22 \
+  --env-file .env
+```
 
-1. 服务器上先手动执行一次：
-   - `cd <DEPLOY_PATH>`
-   - `docker login ghcr.io -u <GHCR_USERNAME>`
-   - `IMAGE_NAME=ghcr.io/<owner>/<repo> IMAGE_TAG=latest docker compose -f docker-compose.prod.yml pull app`
-   - `IMAGE_NAME=ghcr.io/<owner>/<repo> IMAGE_TAG=latest docker compose -f docker-compose.prod.yml run --rm app pnpm exec prisma migrate deploy`
-   - `IMAGE_NAME=ghcr.io/<owner>/<repo> IMAGE_TAG=latest docker compose -f docker-compose.prod.yml up -d app`
-2. 访问站点确认功能正常后，再完全依赖自动 CD。
+执行后会自动写入仓库 secrets（含可选 `DEPLOY_ENV_B64`）。
+
+## 5) 服务器前置条件
+
+需要：
+
+1. 服务器可通过 SSH 登录
+2. 服务器可访问互联网（拉 GHCR 镜像）
+3. 可选：如果服务器未安装 Docker，workflow 会尝试自动安装（需要 root 或 sudo 权限）
+
+## 6) 首次部署
+
+1. 本地 push 到 `main`
+2. 到 GitHub `Actions` 查看 `CD (Docker)` 运行结果
+3. 成功后访问你的域名或服务器端口验证服务

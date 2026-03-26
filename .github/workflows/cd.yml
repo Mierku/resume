@@ -55,6 +55,33 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Prepare remote deploy path
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_PORT != '' && secrets.DEPLOY_PORT || '22' }}
+          script_stop: true
+          script: |
+            set -euo pipefail
+            if [ -z "${{ secrets.DEPLOY_PATH }}" ]; then
+              echo "DEPLOY_PATH is empty"
+              exit 1
+            fi
+            mkdir -p "${{ secrets.DEPLOY_PATH }}"
+
+      - name: Upload docker compose file
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_PORT != '' && secrets.DEPLOY_PORT || '22' }}
+          source: docker-compose.prod.yml
+          target: ${{ secrets.DEPLOY_PATH }}
+          overwrite: true
+
       - name: Deploy over SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -77,17 +104,51 @@ jobs:
             fi
 
             cd "${{ secrets.DEPLOY_PATH }}"
-            git fetch --all --prune
-            git checkout "${{ github.ref_name }}"
-            git pull origin "${{ github.ref_name }}"
+            if [ ! -f "docker-compose.prod.yml" ]; then
+              echo "docker-compose.prod.yml not found under DEPLOY_PATH"
+              exit 1
+            fi
 
-            echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
+            # Optional: write .env from GitHub secret DEPLOY_ENV_B64.
+            if [ -n "${{ secrets.DEPLOY_ENV_B64 }}" ]; then
+              echo "${{ secrets.DEPLOY_ENV_B64 }}" | base64 -d > .env
+              chmod 600 .env
+            fi
+
+            if [ ! -f ".env" ]; then
+              echo ".env not found under DEPLOY_PATH and DEPLOY_ENV_B64 is empty"
+              exit 1
+            fi
+
+            if ! command -v docker >/dev/null 2>&1; then
+              if [ "$(id -u)" -eq 0 ]; then
+                curl -fsSL https://get.docker.com | sh
+              elif command -v sudo >/dev/null 2>&1; then
+                curl -fsSL https://get.docker.com | sudo sh
+              else
+                echo "docker is not installed and sudo is unavailable"
+                exit 1
+              fi
+            fi
+
+            docker_cmd() {
+              if docker info >/dev/null 2>&1; then
+                docker "$@"
+              elif command -v sudo >/dev/null 2>&1 && sudo docker info >/dev/null 2>&1; then
+                sudo docker "$@"
+              else
+                echo "cannot access docker daemon"
+                exit 1
+              fi
+            }
+
+            echo "${{ secrets.GHCR_TOKEN }}" | docker_cmd login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
 
             export IMAGE_NAME="ghcr.io/${{ github.repository }}"
             export IMAGE_TAG="sha-${{ github.sha }}"
 
-            docker compose -f docker-compose.prod.yml pull app
-            docker compose -f docker-compose.prod.yml run --rm app pnpm exec prisma migrate deploy
-            docker compose -f docker-compose.prod.yml up -d --remove-orphans app
+            docker_cmd compose -f docker-compose.prod.yml pull app
+            docker_cmd compose -f docker-compose.prod.yml run --rm app pnpm exec prisma migrate deploy
+            docker_cmd compose -f docker-compose.prod.yml up -d --remove-orphans app
 
-            docker image prune -f
+            docker_cmd image prune -f
