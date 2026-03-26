@@ -84,15 +84,16 @@ jobs:
               exit 1
             fi
             mkdir -p "${{ secrets.DEPLOY_PATH }}"
+            mkdir -p "${{ secrets.DEPLOY_PATH }}/deploy/nginx/conf.d"
 
-      - name: Upload docker compose file
+      - name: Upload deployment files
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           port: ${{ secrets.DEPLOY_PORT != '' && secrets.DEPLOY_PORT || '22' }}
-          source: docker-compose.prod.yml
+          source: docker-compose.prod.yml,deploy/nginx/conf.d/default.conf
           target: ${{ secrets.DEPLOY_PATH }}
           overwrite: true
 
@@ -117,6 +118,10 @@ jobs:
             cd "${{ secrets.DEPLOY_PATH }}"
             if [ ! -f "docker-compose.prod.yml" ]; then
               echo "docker-compose.prod.yml not found under DEPLOY_PATH"
+              exit 1
+            fi
+            if [ ! -f "deploy/nginx/conf.d/default.conf" ]; then
+              echo "deploy/nginx/conf.d/default.conf not found under DEPLOY_PATH"
               exit 1
             fi
 
@@ -146,7 +151,7 @@ jobs:
               if docker info >/dev/null 2>&1; then
                 docker "$@"
               elif command -v sudo >/dev/null 2>&1 && sudo docker info >/dev/null 2>&1; then
-                sudo --preserve-env=IMAGE_NAME,IMAGE_TAG,POSTGRES_PASSWORD,POSTGRES_DB,TZ,APP_PORT docker "$@"
+                sudo --preserve-env=IMAGE_NAME,IMAGE_TAG docker "$@"
               else
                 echo "cannot access docker daemon"
                 exit 1
@@ -185,8 +190,10 @@ jobs:
             docker_cmd compose -f docker-compose.prod.yml up -d db redis
             wait_healthy resume-db
             wait_healthy resume-redis
-            docker_cmd compose -f docker-compose.prod.yml pull app
+            docker_cmd compose -f docker-compose.prod.yml pull app nginx
             docker_cmd compose -f docker-compose.prod.yml run --rm app pnpm exec prisma migrate deploy
-            docker_cmd compose -f docker-compose.prod.yml up -d --remove-orphans app
+            docker_cmd compose -f docker-compose.prod.yml up -d --remove-orphans app nginx
+            wait_healthy resume-app
+            wait_healthy resume-nginx
 
             docker_cmd image prune -f

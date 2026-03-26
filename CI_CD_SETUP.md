@@ -30,20 +30,24 @@
 
 1. GitHub Actions 构建镜像并推送到 `ghcr.io/<owner>/<repo>`
 2. 自动 SSH 到服务器创建 `DEPLOY_PATH`
-3. 自动上传仓库中的 `docker-compose.prod.yml` 到 `DEPLOY_PATH`
+3. 自动上传仓库中的 `docker-compose.prod.yml` 和 `deploy/nginx/conf.d/default.conf` 到 `DEPLOY_PATH`
 4. 可选：从 `DEPLOY_ENV_B64` 自动写入 `DEPLOY_PATH/.env`
 5. 自动执行：
   - `docker compose up -d db redis`
   - 等待 `db/redis` healthy
   - 从 `ghcr.nju.edu.cn/<owner>/<repo>` 拉取应用镜像
+  - 拉取 `nginx:stable-alpine`（可用 `NGINX_IMAGE` 覆盖）
   - `docker compose run --rm app pnpm exec prisma migrate deploy`
-  - `docker compose up -d app`
+  - `docker compose up -d app nginx`
+  - 等待 `app/nginx` healthy
 
 说明：
 
 - 该流程已移除服务器 `git pull` 依赖。
 - 服务器不需要 clone 代码仓库。
-- `docker-compose.prod.yml` 已内置 `Postgres + Redis` 服务，不需要单独部署它们。
+- `docker-compose.prod.yml` 已内置 `Postgres + Redis + Nginx` 服务，不需要单独部署它们。
+- `app` 不再直接暴露公网 `3000`，外部流量统一走 `Nginx -> app`。
+- 当前这套配置默认只开 HTTP `80`。如果后续要上 HTTPS，再补证书或接 CDN/负载均衡。
 
 ## 3) Secrets（GitHub 仓库）
 
@@ -86,14 +90,23 @@ scripts/deploy/setup-github-secrets.sh \
 需要：
 
 1. 服务器可通过 SSH 登录
-2. 服务器可访问互联网（拉 `ghcr.nju.edu.cn` 镜像）
+2. 服务器可访问互联网（拉 `ghcr.nju.edu.cn` 应用镜像和 `NGINX_IMAGE`）
 3. 可选：如果服务器未安装 Docker，workflow 会尝试自动安装（需要 root 或 sudo 权限）
+4. 安全组 / 防火墙需要放行 `80` 端口
+5. 域名解析需要把 `www.immersiveapply.com` 指向这台服务器公网 IP
 
 ## 6) 首次部署
 
 1. 本地 push 到 `main`
 2. 到 GitHub `Actions` 查看 `CD (Docker)` 运行结果
-3. 成功后访问你的域名或服务器端口验证服务
+3. 成功后访问 `http://www.immersiveapply.com`
+
+Nginx 配置文件位置：
+
+- 本地仓库：`deploy/nginx/conf.d/default.conf`
+- 服务器：`<DEPLOY_PATH>/deploy/nginx/conf.d/default.conf`
+
+如果你的正式域名不是 `immersiveapply.com` / `www.immersiveapply.com`，就改这个文件里的 `server_name` 后再 push。
 
 ## 7) `.env` 最低建议项（容器内置 Postgres/Redis）
 
@@ -105,7 +118,10 @@ scripts/deploy/setup-github-secrets.sh \
 - `SESSION_SECRET`
 - `INTERNAL_SYNC_TOKEN`
 - `AI_API_KEY` 或 `DASHSCOPE_API_KEY`
+- 可选：`NGINX_HTTP_PORT`（默认 `80`）
+- 可选：`NGINX_IMAGE`（默认 `nginx:stable-alpine`，如果服务器拉 Docker Hub 慢，可以换成你自己的镜像仓库地址）
 
 说明：
 
 - `DATABASE_URL` 和 `REDIS_URL` 在生产 compose 中会自动指向容器内的 `db` 和 `redis`，不需要你手动改为公网地址。
+- 如果你已经有 CDN / 证书，`SITE_ORIGIN`、`NEXT_PUBLIC_SITE_ORIGIN`、`APP_URL` 建议填正式域名，例如 `https://www.immersiveapply.com`。

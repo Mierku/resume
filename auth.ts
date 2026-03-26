@@ -1,5 +1,4 @@
 import NextAuth from 'next-auth'
-import Google from 'next-auth/providers/google'
 import WeChat from 'next-auth/providers/wechat'
 import { PrismaAdapter } from '@auth/prisma-adapter'
 import { prisma } from '@/lib/prisma'
@@ -7,21 +6,6 @@ import { sanitizeNextPath } from '@/lib/auth-redirect'
 
 function buildProviders() {
   const providers = []
-
-  if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
-    providers.push(
-      Google({
-        clientId: process.env.GOOGLE_CLIENT_ID,
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        allowDangerousEmailAccountLinking: true,
-        authorization: {
-          params: {
-            prompt: 'select_account',
-          },
-        },
-      })
-    )
-  }
 
   if (process.env.WECHAT_OPEN_APP_ID && process.env.WECHAT_OPEN_APP_SECRET) {
     providers.push(
@@ -90,7 +74,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
 export function getProviderAvailability() {
   return {
-    google: Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET),
     wechat: Boolean(process.env.WECHAT_OPEN_APP_ID && process.env.WECHAT_OPEN_APP_SECRET),
   }
 }
