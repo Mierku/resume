@@ -20,23 +20,37 @@ export default function ResumeLayout({ children }: { children: ReactNode }) {
   const [showAuthModal, setShowAuthModal] = useState(false)
   const isTemplatesRoute = pathname === '/resume' || pathname.startsWith('/resume/templates')
 
-  const checkAuth = useCallback(async () => {
+  const fetchAuthState = useCallback(async () => {
     try {
       const res = await fetch('/api/auth/me', { cache: 'no-store' })
-      const authed = res.ok
-      setAuthenticated(authed)
-      setAuthChecked(true)
-      return authed
+      return res.ok
     } catch {
-      setAuthenticated(false)
-      setAuthChecked(true)
       return false
     }
   }, [])
 
+  const checkAuth = useCallback(async () => {
+    const authed = await fetchAuthState()
+    setAuthenticated(authed)
+    setAuthChecked(true)
+    return authed
+  }, [fetchAuthState])
+
   useEffect(() => {
-    void checkAuth()
-  }, [checkAuth])
+    let cancelled = false
+
+    void (async () => {
+      const authed = await fetchAuthState()
+      if (cancelled) return
+
+      setAuthenticated(authed)
+      setAuthChecked(true)
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [fetchAuthState])
 
   // Full-screen editor mode
   if (pathname.startsWith('/resume/editor/')) {

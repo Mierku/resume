@@ -2,7 +2,7 @@
 
 import { Popover } from '@base-ui/react/popover'
 import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
+import { useMemo, useRef, useState, type CSSProperties } from 'react'
 import { Field, FieldLabel } from '@/components/ui/field'
 import { MAX_TIME_YEAR, MIN_TIME_YEAR, MONTH_OPTIONS, isYearMonthValue, yearMonthToYear } from '@/lib/date-fields'
 import { cn } from '@/lib/utils'
@@ -58,14 +58,6 @@ export function DateRangePickerField({
   const [startYear, setStartYear] = useState(() => resolveInitialYear(start, currentYear))
   const [endYear, setEndYear] = useState(() => resolveInitialYear(end, currentYear))
 
-  useEffect(() => {
-    if (!open) return
-
-    const fallbackYear = yearMonthToYear(start) || yearMonthToYear(end) || currentYear
-    setStartYear(resolveInitialYear(start, fallbackYear))
-    setEndYear(resolveInitialYear(end, fallbackYear))
-  }, [currentYear, end, open, start])
-
   const displayText = useMemo(() => {
     if (start && end) {
       return `${start} - ${end}`
@@ -82,6 +74,15 @@ export function DateRangePickerField({
     panelRef.current?.querySelector<HTMLElement>('[data-selected-month="true"]') ||
     panelRef.current?.querySelector<HTMLElement>('[data-month-button="true"]:not([disabled])') ||
     true
+
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (nextOpen) {
+      const fallbackYear = yearMonthToYear(start) || yearMonthToYear(end) || currentYear
+      setStartYear(resolveInitialYear(start, fallbackYear))
+      setEndYear(resolveInitialYear(end, fallbackYear))
+    }
+    setOpen(nextOpen)
+  }
 
   const handleStartSelect = (nextStart: string) => {
     if (isYearMonthValue(end) && compareYearMonth(nextStart, end) > 0) {
@@ -112,7 +113,7 @@ export function DateRangePickerField({
       {label ? <FieldLabel nativeLabel={false}>{label}</FieldLabel> : null}
       {name ? <input type="hidden" name={name} value={displayText} /> : null}
 
-      <Popover.Root open={open} onOpenChange={setOpen}>
+      <Popover.Root open={open} onOpenChange={handleOpenChange}>
         <Popover.Trigger
           id={id}
           type="button"

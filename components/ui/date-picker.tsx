@@ -2,7 +2,7 @@
 
 import { Popover } from '@base-ui/react/popover'
 import { CalendarDays } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
+import { useMemo, useRef, useState, type CSSProperties } from 'react'
 import { zhCN } from 'date-fns/locale/zh-CN'
 import { Calendar } from '@/components/ui/calendar'
 import { Field, FieldLabel } from '@/components/ui/field'
@@ -62,11 +62,6 @@ export function DatePickerField({
   const selectedDate = useMemo(() => dateValueToDate(value), [value])
   const [month, setMonth] = useState<Date>(selectedDate || new Date())
 
-  useEffect(() => {
-    if (!open) return
-    setMonth(selectedDate || new Date())
-  }, [open, selectedDate])
-
   const displayText = value || placeholder
 
   const getInitialFocusTarget = () =>
@@ -74,12 +69,20 @@ export function DatePickerField({
     panelRef.current?.querySelector<HTMLElement>('.rdp-day_button:not([disabled])') ||
     true
 
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (disabled) return
+    if (nextOpen) {
+      setMonth(selectedDate || new Date())
+    }
+    setOpen(nextOpen)
+  }
+
   return (
     <Field className={cn('resume-date-picker-field', className)}>
       {showLabel && label ? <FieldLabel nativeLabel={false}>{label}</FieldLabel> : null}
       {name ? <input type="hidden" name={name} value={value} /> : null}
 
-      <Popover.Root open={open} onOpenChange={nextOpen => !disabled && setOpen(nextOpen)}>
+      <Popover.Root open={open} onOpenChange={handleOpenChange}>
         <Popover.Trigger
           id={id}
           type="button"

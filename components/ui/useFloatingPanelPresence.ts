@@ -12,6 +12,7 @@ export function useFloatingPanelPresence(open: boolean, animationMs = FLOATING_P
   const mountedRef = useRef(open)
   const frameRef = useRef<number | null>(null)
   const timeoutRef = useRef<number | null>(null)
+  const initializedRef = useRef(false)
 
   useEffect(() => {
     mountedRef.current = mounted
@@ -30,14 +31,17 @@ export function useFloatingPanelPresence(open: boolean, animationMs = FLOATING_P
       }
     }
 
-    clearPending()
+    if (!initializedRef.current) {
+      initializedRef.current = true
+      return clearPending
+    }
 
     if (open) {
-      mountedRef.current = true
-      setMounted(true)
-      setPhase('opening')
-
       frameRef.current = window.requestAnimationFrame(() => {
+        mountedRef.current = true
+        setMounted(true)
+        setPhase('opening')
+
         frameRef.current = window.requestAnimationFrame(() => {
           setPhase('open')
         })
@@ -47,19 +51,23 @@ export function useFloatingPanelPresence(open: boolean, animationMs = FLOATING_P
     }
 
     if (!mountedRef.current) {
-      setPhase('closed')
+      frameRef.current = window.requestAnimationFrame(() => {
+        setPhase('closed')
+      })
       return clearPending
     }
 
-    setPhase('closing')
-    timeoutRef.current = window.setTimeout(() => {
-      mountedRef.current = false
-      setMounted(false)
-      setPhase('closed')
-    }, animationMs)
+    frameRef.current = window.requestAnimationFrame(() => {
+      setPhase('closing')
+      timeoutRef.current = window.setTimeout(() => {
+        mountedRef.current = false
+        setMounted(false)
+        setPhase('closed')
+      }, animationMs)
+    })
 
     return clearPending
   }, [animationMs, open])
 
-  return { mounted, phase }
+  return { mounted: open || mounted, phase }
 }

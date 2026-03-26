@@ -1,6 +1,5 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import styles from './ChromeWindow.module.scss'
 
 interface ChromeWindowProps {

@@ -376,10 +376,6 @@ function hasMeaningfulText(value: string) {
   return normalized.length > 0 && normalized !== '-'
 }
 
-function compactJoin(values: string[]) {
-  return values.filter(hasMeaningfulText).join(' ｜ ')
-}
-
 function calculateAgeFromBirthDate(birthDate: string) {
   const normalized = birthDate.trim()
   if (!normalized) return ''

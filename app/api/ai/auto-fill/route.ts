@@ -58,7 +58,20 @@ export async function POST(request: NextRequest) {
 
     // 第二阶段：流式匹配
     console.log('[AutoFill] Stage 2: Streaming resume match...')
-    const aiStream = await generateFillPlanStream(snapshot, dataSource as any)
+    const resumePayload = {
+      id: dataSource.id,
+      name: dataSource.name,
+      langMode: dataSource.langMode,
+      basics: dataSource.basics,
+      intention: dataSource.intention,
+      education: dataSource.education,
+      work: dataSource.work,
+      projects: dataSource.projects,
+      skills: dataSource.skills,
+      summaryZh: dataSource.summaryZh,
+      summaryEn: dataSource.summaryEn,
+    }
+    const aiStream = await generateFillPlanStream(snapshot, resumePayload)
 
     const encoder = new TextEncoder()
     const readable = new ReadableStream({

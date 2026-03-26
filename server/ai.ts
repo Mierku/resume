@@ -3,8 +3,10 @@
 // Stage 2: Match resume data and generate fill plan
 
 import OpenAI from 'openai'
+/* eslint-disable-next-line @typescript-eslint/no-unused-vars */
 import { DOM_PARSE_PROMPT, RESUME_MATCH_PROMPT } from './prompts'
 
+/* eslint-disable-next-line @typescript-eslint/no-unused-vars */
 const dom1 = [
   {
     "section": "个人信息",

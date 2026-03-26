@@ -2,7 +2,7 @@
 
 import { Popover } from '@base-ui/react/popover'
 import { ChevronDown } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
+import { useMemo, useRef, useState, type CSSProperties } from 'react'
 import { Field, FieldLabel } from '@/components/ui/field'
 import { MAX_TIME_YEAR, MIN_TIME_YEAR, MONTH_OPTIONS, isYearMonthValue, yearMonthToYear } from '@/lib/date-fields'
 import { cn } from '@/lib/utils'
@@ -48,12 +48,6 @@ export function MonthPickerField({
   const [year, setYear] = useState(initialYear)
   const maxYear = yearMonthToYear(maxValue || '') || MAX_TIME_YEAR
 
-  useEffect(() => {
-    if (!open) return
-    const nextYear = yearMonthToYear(value)
-    setYear(clamp(nextYear || initialYear, MIN_TIME_YEAR, maxYear))
-  }, [initialYear, maxYear, open, value])
-
   const selectedYear = yearMonthToYear(value)
   const selectedMonth = isYearMonthValue(value) ? value.slice(5, 7) : null
   const displayText = value || placeholder || '选择日期'
@@ -63,12 +57,20 @@ export function MonthPickerField({
     panelRef.current?.querySelector<HTMLElement>('[data-month-button="true"]:not([disabled])') ||
     true
 
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (nextOpen) {
+      const nextYear = yearMonthToYear(value)
+      setYear(clamp(nextYear || initialYear, MIN_TIME_YEAR, maxYear))
+    }
+    setOpen(nextOpen)
+  }
+
   return (
     <Field className={cn('resume-month-picker-field', className)}>
       {showLabel && label ? <FieldLabel nativeLabel={false}>{label}</FieldLabel> : null}
       {name ? <input type="hidden" name={name} value={value} /> : null}
 
-      <Popover.Root open={open} onOpenChange={setOpen}>
+      <Popover.Root open={open} onOpenChange={handleOpenChange}>
         <Popover.Trigger
           id={id}
           type="button"

@@ -251,21 +251,6 @@ interface ButtonProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>
   size?: ButtonSize
 }
 
-const buttonTypeClasses: Record<ButtonType, string> = {
-  primary: 'border border-primary bg-primary text-white hover:bg-primary-hover',
-  secondary: 'border border-border bg-[var(--control-surface)] text-foreground hover:bg-[var(--control-hover-surface)]',
-  outline: 'border border-border bg-[var(--control-surface)] text-foreground hover:bg-[var(--control-hover-surface)]',
-  text: 'border border-transparent bg-transparent text-foreground hover:bg-[var(--control-hover-surface)]',
-  default: 'border border-border bg-[var(--control-surface)] text-foreground hover:bg-[var(--control-hover-surface)]',
-}
-
-const buttonSizeClasses: Record<ButtonSize, string> = {
-  mini: 'h-7 px-2 text-xs',
-  small: 'h-8 px-3 text-xs',
-  default: 'h-9 px-3.5 text-sm',
-  large: 'h-10 px-4 text-sm',
-}
-
 export function Button({
   type = 'default',
   htmlType = 'button',

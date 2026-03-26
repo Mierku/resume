@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 解析请求体
-    const snapshot: unknown = await request.json()
+    await request.json()
 
     // TODO: 调用 AI 解析 DOM
     // const result = await parseDOMStructure(snapshot)
