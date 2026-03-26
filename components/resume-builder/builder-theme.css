@@ -1,0 +1,1808 @@
+.resume-builder-scope {
+  --builder-workspace-bg: var(--color-background);
+  --builder-panel-bg: color-mix(in srgb, var(--color-background) 94%, #ffffff);
+  --builder-panel-bg-soft: color-mix(in srgb, var(--color-background) 97%, #ffffff);
+  --builder-panel-border: color-mix(in srgb, var(--color-border) 90%, transparent);
+  --builder-panel-border-strong: color-mix(in srgb, var(--color-border) 100%, transparent);
+  --builder-panel-text: var(--color-foreground);
+  --builder-panel-text-muted: var(--color-muted-foreground);
+  --builder-toolbar-bg: color-mix(in srgb, var(--builder-panel-bg-soft) 96%, #ffffff);
+  --builder-preview-bg: var(--resume-preview-shell-bg);
+  --builder-preview-dock-bg: color-mix(in srgb, var(--builder-panel-bg) 92%, #ffffff);
+  --builder-preview-dock-shadow: 0 8px 20px rgba(0, 0, 0, 0.16);
+  --control-surface: color-mix(in srgb, var(--builder-panel-bg-soft) 96%, #ffffff);
+  --control-hover-surface: color-mix(in srgb, var(--builder-panel-text) 5%, var(--builder-panel-bg-soft));
+  --control-focus-border: color-mix(in srgb, var(--builder-panel-text) 50%, transparent);
+  --control-panel-border: color-mix(in srgb, var(--builder-panel-border-strong) 95%, transparent);
+  --control-panel-surface: color-mix(in srgb, var(--builder-panel-bg) 96%, #ffffff);
+  --control-panel-shadow: 0 12px 24px rgba(0, 0, 0, 0.18);
+  --control-active-surface: color-mix(in srgb, var(--builder-panel-text) 8%, transparent);
+  --control-active-indicator: var(--builder-panel-text);
+  background: var(--builder-workspace-bg);
+  overscroll-behavior: none;
+}
+
+[data-theme='dark'] .resume-builder-scope {
+  --builder-panel-bg: color-mix(in srgb, var(--color-background) 92%, #000000);
+  --builder-panel-bg-soft: color-mix(in srgb, var(--color-background) 95%, #000000);
+  --builder-panel-text: rgba(248, 250, 252, 0.94);
+  --builder-panel-text-muted: rgba(226, 232, 240, 0.74);
+  --builder-toolbar-bg: color-mix(in srgb, var(--builder-panel-bg-soft) 95%, #000000);
+  --builder-preview-dock-bg: color-mix(in srgb, var(--builder-panel-bg) 90%, #000000);
+  --builder-preview-dock-shadow: 0 10px 26px rgba(0, 0, 0, 0.36);
+  --control-surface: transparent;
+  --control-hover-surface: color-mix(in srgb, var(--builder-panel-text) 6%, transparent);
+  --control-focus-border: color-mix(in srgb, var(--builder-panel-text) 78%, transparent);
+  --control-panel-border: color-mix(in srgb, var(--builder-panel-border-strong) 95%, transparent);
+  --control-panel-surface: color-mix(in srgb, var(--builder-panel-bg) 95%, #000000);
+  --control-panel-shadow: 0 16px 32px rgba(0, 0, 0, 0.4);
+  --control-active-surface: color-mix(in srgb, var(--builder-panel-text) 12%, transparent);
+  --control-active-indicator: var(--builder-panel-text);
+}
+
+body.resume-builder-mono {
+  --control-surface: transparent;
+  --control-hover-surface: color-mix(in srgb, var(--color-foreground) 4%, transparent);
+  --control-focus-border: color-mix(in srgb, var(--color-foreground) 80%, transparent);
+  --control-panel-border: color-mix(in srgb, var(--color-border) 95%, transparent);
+  --control-panel-surface: color-mix(in srgb, var(--color-background) 96%, #ffffff);
+  --control-panel-shadow: 0 12px 24px rgba(0, 0, 0, 0.18);
+  --control-active-surface: color-mix(in srgb, var(--color-foreground) 8%, transparent);
+  --control-active-indicator: var(--color-foreground);
+  --resume-control-text: var(--color-foreground);
+  --resume-control-line: color-mix(in srgb, var(--color-border) 96%, transparent);
+  --resume-control-line-hover: color-mix(in srgb, var(--color-foreground) 44%, transparent);
+  --resume-control-line-focus: color-mix(in srgb, var(--color-foreground) 84%, transparent);
+}
+
+[data-theme='dark'] body.resume-builder-mono {
+  --control-hover-surface: color-mix(in srgb, var(--color-foreground) 6%, transparent);
+  --control-focus-border: color-mix(in srgb, var(--color-foreground) 82%, transparent);
+  --control-panel-border: color-mix(in srgb, var(--color-border) 95%, transparent);
+  --control-panel-surface: color-mix(in srgb, var(--color-background) 94%, #000000);
+  --control-panel-shadow: 0 18px 34px rgba(0, 0, 0, 0.5);
+  --control-active-surface: color-mix(in srgb, var(--color-foreground) 12%, transparent);
+  --control-active-indicator: var(--color-foreground);
+  --resume-control-text: var(--color-foreground);
+  --resume-control-line: color-mix(in srgb, var(--color-border) 100%, transparent);
+  --resume-control-line-hover: color-mix(in srgb, var(--color-foreground) 56%, transparent);
+  --resume-control-line-focus: color-mix(in srgb, var(--color-foreground) 86%, transparent);
+}
+
+body.resume-builder-mono .control-field {
+  border: 0;
+  border-bottom: 1px solid var(--resume-control-line);
+  border-radius: 0;
+  background: transparent;
+  color: var(--resume-control-text);
+  box-shadow: none;
+}
+
+body.resume-builder-mono .control-field:hover {
+  border-bottom-color: var(--resume-control-line-hover);
+  background: transparent;
+}
+
+body.resume-builder-mono .control-field:focus,
+body.resume-builder-mono .control-field:focus-visible,
+body.resume-builder-mono .control-field[data-open='true'] {
+  border-bottom-color: var(--resume-control-line-focus);
+  background: transparent;
+}
+
+body.resume-builder-mono .control-panel {
+  border-color: var(--control-panel-border);
+  background: var(--control-panel-surface);
+  box-shadow: var(--control-panel-shadow);
+  backdrop-filter: none;
+  border-radius: 6px;
+}
+
+body.resume-builder-mono .control-floating-panel {
+  --control-panel-anchor-transform: translateY(0px);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform-origin: top center;
+  will-change: transform, opacity;
+  transition:
+    opacity 180ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 210ms cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0s linear 210ms;
+}
+
+body.resume-builder-mono .control-floating-panel[data-panel-placement='top'] {
+  transform-origin: bottom center;
+}
+
+body.resume-builder-mono .control-floating-panel[data-panel-state='opening'],
+body.resume-builder-mono .control-floating-panel[data-panel-state='open'] {
+  visibility: visible;
+  pointer-events: auto;
+  transition-delay: 0s;
+}
+
+body.resume-builder-mono .control-floating-panel[data-panel-state='opening'],
+body.resume-builder-mono .control-floating-panel[data-panel-state='closing'] {
+  opacity: 0;
+}
+
+body.resume-builder-mono .control-floating-panel[data-panel-placement='bottom'][data-panel-state='opening'],
+body.resume-builder-mono .control-floating-panel[data-panel-placement='bottom'][data-panel-state='closing'] {
+  transform: var(--control-panel-anchor-transform) translateY(8px) scale(0.982);
+}
+
+body.resume-builder-mono .control-floating-panel[data-panel-placement='top'][data-panel-state='opening'],
+body.resume-builder-mono .control-floating-panel[data-panel-placement='top'][data-panel-state='closing'] {
+  transform: var(--control-panel-anchor-transform) translateY(-8px) scale(0.982);
+}
+
+body.resume-builder-mono .control-floating-panel[data-panel-state='open'] {
+  opacity: 1;
+  transform: var(--control-panel-anchor-transform) translateY(0) scale(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.resume-builder-mono .control-floating-panel {
+    transition: none;
+  }
+}
+
+body.resume-builder-mono .control-search {
+  border-color: var(--resume-control-line);
+  background: transparent;
+}
+
+body.resume-builder-mono .control-search:hover {
+  border-color: var(--resume-control-line-hover);
+  background: transparent;
+}
+
+body.resume-builder-mono .control-search:focus-within {
+  border-color: var(--resume-control-line-focus);
+  background: transparent;
+}
+
+body.resume-builder-mono .control-option:hover,
+body.resume-builder-mono .control-option:focus-visible,
+body.resume-builder-mono .control-option[data-selected='true'] {
+  background: var(--control-active-surface);
+}
+
+body.resume-builder-mono .control-option {
+  border-radius: 6px;
+}
+
+body.resume-builder-mono .control-option[data-selected='true'] {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--resume-control-text) 44%, transparent);
+}
+
+body.resume-builder-mono .control-check {
+  color: var(--resume-control-text);
+}
+
+.resume-builder-scope .resume-toolbar {
+  --color-background: var(--builder-panel-bg-soft);
+  --color-foreground: var(--builder-panel-text);
+  --color-border: var(--builder-panel-border);
+  --color-border-weak: color-mix(in srgb, var(--builder-panel-border) 72%, transparent);
+  --color-muted: color-mix(in srgb, var(--builder-panel-bg-soft) 78%, white);
+  --color-muted-foreground: var(--builder-panel-text-muted);
+  background: var(--builder-toolbar-bg);
+  border-color: var(--builder-panel-border);
+  backdrop-filter: blur(10px);
+}
+
+.resume-builder-scope .resume-toolbar-title-wrap {
+  width: 100%;
+  max-width: 380px;
+  min-width: 220px;
+}
+
+.resume-builder-scope .resume-toolbar-title-display {
+  width: 100%;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--builder-panel-text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  user-select: none;
+  cursor: default;
+}
+
+.resume-builder-scope .resume-toolbar-title-display:focus,
+.resume-builder-scope .resume-toolbar-title-display:focus-visible {
+  outline: none;
+}
+
+.resume-builder-scope .resume-toolbar-title-input.control-field {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid color-mix(in srgb, var(--builder-panel-border-strong) 88%, transparent);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--builder-panel-bg-soft) 94%, white);
+  box-shadow: none;
+}
+
+.resume-builder-scope .resume-toolbar-title-input.control-field:focus,
+.resume-builder-scope .resume-toolbar-title-input.control-field:focus-visible {
+  border-color: var(--control-focus-border);
+}
+
+body.resume-builder-mono .resume-builder-scope .resume-toolbar .resume-toolbar-title-input.control-field {
+  border: 1px solid var(--resume-control-line);
+  border-radius: 6px;
+  background: transparent;
+}
+
+body.resume-builder-mono .resume-builder-scope .resume-toolbar .resume-toolbar-title-input.control-field:hover {
+  border-color: var(--resume-control-line-hover);
+}
+
+body.resume-builder-mono .resume-builder-scope .resume-toolbar .resume-toolbar-title-input.control-field:focus,
+body.resume-builder-mono .resume-builder-scope .resume-toolbar .resume-toolbar-title-input.control-field:focus-visible {
+  border-color: var(--resume-control-line-focus);
+}
+
+.resume-builder-scope .resume-toolbar .resume-toolbar-action {
+  min-height: 38px;
+  padding: 0 16px;
+  border-radius: 999px !important;
+  font-weight: 600;
+}
+
+.resume-builder-scope .resume-toolbar .resume-toolbar-action-export {
+  border-color: color-mix(in srgb, #111827 78%, transparent);
+  background: color-mix(in srgb, #111827 88%, var(--builder-panel-text) 12%);
+  color: #fff;
+}
+
+.resume-builder-scope .resume-toolbar .resume-toolbar-action-export:hover {
+  border-color: color-mix(in srgb, #0f172a 84%, transparent);
+  background: color-mix(in srgb, #0f172a 92%, var(--builder-panel-text) 8%);
+}
+
+.resume-builder-scope .resume-toolbar .resume-toolbar-action-save {
+  border-color: color-mix(in srgb, var(--builder-panel-border-strong) 88%, transparent);
+  background: color-mix(in srgb, var(--builder-panel-bg-soft) 96%, white);
+  color: var(--builder-panel-text);
+}
+
+.resume-builder-scope .resume-toolbar .resume-toolbar-action-save:hover {
+  background: color-mix(in srgb, var(--builder-panel-text) 6%, var(--builder-panel-bg-soft));
+}
+
+[data-theme='dark'] .resume-builder-scope .resume-toolbar .resume-toolbar-action-save {
+  background: color-mix(in srgb, var(--builder-panel-bg-soft) 80%, #111111);
+  border-color: color-mix(in srgb, var(--builder-panel-border-strong) 96%, transparent);
+}
+
+.resume-builder-scope .resume-save-status {
+  font-size: 11px;
+  color: color-mix(in srgb, var(--builder-panel-text-muted) 88%, transparent);
+  white-space: nowrap;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.resume-builder-scope .resume-save-status.is-busy {
+  color: color-mix(in srgb, var(--builder-panel-text-muted) 95%, transparent);
+}
+
+.resume-builder-scope .resume-save-status.is-error {
+  color: #ef4444;
+}
+
+.resume-builder-scope .resume-side-panel {
+  --color-background: var(--builder-panel-bg-soft);
+  --color-foreground: var(--builder-panel-text);
+  --color-border: var(--builder-panel-border);
+  --color-border-weak: color-mix(in srgb, var(--builder-panel-border) 72%, transparent);
+  --color-muted: color-mix(in srgb, var(--builder-panel-bg-soft) 78%, white);
+  --color-muted-foreground: var(--builder-panel-text-muted);
+  background: var(--builder-panel-bg);
+  border-right: 0;
+  color: var(--builder-panel-text);
+}
+
+.resume-builder-scope .resume-side-panel input:not([type='range']):not([type='color']),
+.resume-builder-scope .resume-side-panel textarea,
+.resume-builder-scope .resume-side-panel select {
+  background: transparent;
+  color: var(--builder-panel-text);
+  border: 0;
+  border-radius: 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--builder-panel-border-strong) 78%, transparent);
+  box-shadow: none;
+}
+
+[data-theme='dark'] .resume-builder-scope .resume-side-panel input:not([type='range']):not([type='color']),
+[data-theme='dark'] .resume-builder-scope .resume-side-panel textarea,
+[data-theme='dark'] .resume-builder-scope .resume-side-panel select {
+  background: transparent;
+  border-bottom-color: color-mix(in srgb, var(--builder-panel-border-strong) 86%, transparent);
+}
+
+.resume-builder-scope .resume-side-panel input::placeholder,
+.resume-builder-scope .resume-side-panel textarea::placeholder {
+  color: var(--builder-panel-text-muted);
+}
+
+.resume-builder-scope .resume-side-panel [class*='rounded-sm border'] {
+  border-color: var(--builder-panel-border);
+  background: color-mix(in srgb, var(--builder-panel-bg-soft) 54%, white);
+}
+
+[data-theme='dark'] .resume-builder-scope .resume-side-panel [class*='rounded-sm border'] {
+  background: color-mix(in srgb, var(--builder-panel-bg-soft) 86%, black);
+}
+
+.resume-builder-scope .resume-preview-pane {
+  background: var(--builder-preview-bg);
+}
+
+.resume-builder-scope .resume-preview-viewport {
+  position: relative;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  user-select: auto;
+}
+
+.resume-builder-scope .resume-preview-scroll-space {
+  position: relative;
+  width: 100%;
+  min-height: 100%;
+}
+
+.resume-builder-scope .resume-preview-stage-shell {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform-origin: top center;
+  will-change: transform;
+}
+
+.resume-builder-scope .resume-preview-stage {
+  width: fit-content;
+  height: fit-content;
+  user-select: text;
+}
+
+.resume-builder-scope .resume-sections-column {
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+  transition: background-color 120ms ease;
+}
+
+[data-theme='dark'] .resume-builder-scope .resume-sections-column {
+  background: transparent;
+}
+
+.resume-builder-scope .resume-sections-column.is-over {
+  background: color-mix(in srgb, var(--builder-panel-bg-soft) 72%, white);
+}
+
+[data-theme='dark'] .resume-builder-scope .resume-sections-column.is-over {
+  background: color-mix(in srgb, var(--builder-panel-bg-soft) 82%, black);
+}
+
+.resume-builder-scope .resume-sections-column-empty {
+  border: 1px dashed color-mix(in srgb, var(--builder-panel-border) 85%, transparent);
+  border-radius: 6px;
+  padding: 10px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--builder-panel-text-muted);
+}
+
+.resume-builder-scope .resume-section-item {
+  border-radius: 6px;
+  border: 0;
+  background: transparent;
+  margin-bottom: 2px;
+  transition: background-color 120ms ease, box-shadow 120ms ease;
+}
+
+.resume-builder-scope .resume-focus-target {
+  scroll-margin-block: 96px;
+  --preview-focus-flash-bg: color-mix(in srgb, #d4bc9a 22%, var(--builder-panel-bg-soft));
+  --preview-focus-ring: color-mix(in srgb, var(--builder-panel-text) 34%, transparent);
+  transition: background-color 980ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 980ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+[data-theme='dark'] .resume-builder-scope .resume-focus-target {
+  --preview-focus-flash-bg: color-mix(in srgb, var(--builder-panel-bg-soft) 84%, white);
+  --preview-focus-ring: color-mix(in srgb, var(--builder-panel-text) 52%, transparent);
+}
+
+.resume-builder-scope .resume-focus-target.is-preview-focused {
+  background: var(--preview-focus-flash-bg);
+
+  transition-duration: 120ms;
+  transition-timing-function: ease-out;
+}
+
+.resume-builder-scope .resume-focus-target .control-field,
+.resume-builder-scope .resume-focus-target [contenteditable='true'],
+.resume-builder-scope .resume-focus-target .resume-section-item-row {
+  transition: background-color 980ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.resume-builder-scope .resume-focus-target.is-preview-focused .control-field,
+.resume-builder-scope .resume-focus-target.is-preview-focused [contenteditable='true'],
+.resume-builder-scope .resume-focus-target.is-preview-focused .resume-section-item-row {
+  transition-duration: 120ms;
+  transition-timing-function: ease-out;
+}
+
+body.resume-builder-mono .resume-builder-scope .resume-focus-target.is-preview-focused .control-field,
+body.resume-builder-mono .resume-builder-scope .resume-focus-target.is-preview-focused .control-field:hover,
+body.resume-builder-mono .resume-builder-scope .resume-focus-target.is-preview-focused .control-field:focus,
+body.resume-builder-mono .resume-builder-scope .resume-focus-target.is-preview-focused .control-field:focus-visible,
+body.resume-builder-mono .resume-builder-scope .resume-focus-target.is-preview-focused .control-field[data-open='true'] {
+  border-bottom-color: var(--resume-control-line);
+  background: color-mix(in srgb, var(--preview-focus-flash-bg) 82%, transparent);
+  box-shadow: none;
+}
+
+.resume-builder-scope .resume-focus-target.is-preview-focused .control-field,
+.resume-builder-scope .resume-focus-target.is-preview-focused .control-field:hover,
+.resume-builder-scope .resume-focus-target.is-preview-focused .control-field:focus,
+.resume-builder-scope .resume-focus-target.is-preview-focused .control-field:focus-visible,
+.resume-builder-scope .resume-focus-target.is-preview-focused .control-field[data-open='true'] {
+  border-color: var(--preview-focus-ring);
+  background: color-mix(in srgb, var(--preview-focus-flash-bg) 82%, transparent);
+  box-shadow: none;
+}
+
+.resume-builder-scope .resume-section-item:last-child {
+  margin-bottom: 0;
+}
+
+.resume-builder-scope .resume-section-item[data-dragging='true'] {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.24);
+}
+
+.resume-builder-scope .resume-section-item[data-dragging='true'] .resume-section-item-row {
+  cursor: grabbing;
+}
+
+.resume-builder-scope .resume-section-item-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--builder-panel-text);
+  border: 1px solid transparent;
+  background: transparent;
+  transition: border-color 120ms ease, background-color 120ms ease;
+}
+
+[data-theme='dark'] .resume-builder-scope .resume-section-item-row {
+  background: transparent;
+}
+
+.resume-builder-scope .resume-section-item-row:hover {
+  border-color: color-mix(in srgb, var(--builder-panel-border-strong) 85%, transparent);
+  background: color-mix(in srgb, var(--builder-panel-bg-soft) 62%, white);
+}
+
+[data-theme='dark'] .resume-builder-scope .resume-section-item-row:hover {
+  background: color-mix(in srgb, var(--builder-panel-bg-soft) 76%, black);
+}
+
+.resume-builder-scope .resume-section-item-row:focus,
+.resume-builder-scope .resume-section-item-row:focus-visible {
+  outline: none !important;
+  outline-color: transparent !important;
+  border-color: color-mix(in srgb, var(--builder-panel-border-strong) 92%, transparent);
+  box-shadow: none;
+}
+
+/* .resume-builder-scope .resume-section-item-row:active {
+  cursor: grabbing;
+} */
+
+.resume-builder-scope .resume-section-item-row.is-hidden {
+  opacity: 0.6;
+}
+
+.resume-builder-scope .resume-section-item-row.is-static {
+  cursor: pointer;
+}
+
+.resume-builder-scope .resume-section-item-grip {
+  display: inline-flex;
+  align-items: center;
+  opacity: 0.6;
+  flex-shrink: 0;
+}
+
+.resume-builder-scope .resume-section-item-chevron {
+  display: inline-flex;
+  align-items: center;
+  opacity: 0.75;
+  flex-shrink: 0;
+}
+
+.resume-builder-scope .resume-section-item-title {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+.resume-builder-scope .resume-section-item-column {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  min-width: 40px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 11px;
+  color: var(--builder-panel-text-muted);
+  background: color-mix(in srgb, var(--builder-panel-bg-soft) 72%, white);
+}
+
+.resume-builder-scope .resume-section-item-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  opacity: 1;
+  transition: opacity 120ms ease;
+}
+
+.resume-builder-scope .resume-section-item-row:hover .resume-section-item-actions,
+.resume-builder-scope .resume-section-item-row:focus-within .resume-section-item-actions {
+  opacity: 1;
+}
+
+.resume-builder-scope .resume-section-item-body {
+  margin-top: 6px;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid color-mix(in srgb, var(--builder-panel-border) 90%, transparent);
+  background: color-mix(in srgb, var(--builder-panel-bg-soft) 80%, white);
+}
+
+[data-theme='dark'] .resume-builder-scope .resume-section-item-body {
+  border-color: color-mix(in srgb, var(--builder-panel-border) 94%, transparent);
+  background: color-mix(in srgb, var(--builder-panel-bg-soft) 84%, black);
+}
+
+.resume-builder-scope .resume-section-item-add-row {
+  margin-top: 10px;
+}
+
+.resume-builder-scope .resume-sections-add-row {
+  margin-top: 2px;
+}
+
+.resume-builder-scope .resume-sections-add-row .resume-add-row-button {
+  min-height: 52px;
+  justify-content: center;
+  text-align: center;
+  padding: 10px 16px;
+}
+
+.resume-builder-scope .resume-add-row-button {
+  width: 100%;
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  border-radius: 6px;
+  border: 1px dashed color-mix(in srgb, var(--builder-panel-border) 88%, transparent);
+  background: color-mix(in srgb, var(--builder-panel-bg-soft) 40%, transparent);
+  color: var(--builder-panel-text-muted);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.2;
+  padding: 7px 10px;
+  cursor: pointer;
+  transition: border-color 120ms ease, background-color 120ms ease, color 120ms ease;
+}
+
+[data-theme='dark'] .resume-builder-scope .resume-add-row-button {
+  background: color-mix(in srgb, var(--builder-panel-bg-soft) 48%, black);
+}
+
+.resume-builder-scope .resume-add-row-button:hover {
+  border-color: color-mix(in srgb, var(--builder-panel-border-strong) 86%, transparent);
+  background: color-mix(in srgb, var(--builder-panel-bg-soft) 75%, white);
+  color: var(--builder-panel-text);
+}
+
+[data-theme='dark'] .resume-builder-scope .resume-add-row-button:hover {
+  background: color-mix(in srgb, var(--builder-panel-bg-soft) 86%, black);
+}
+
+.resume-builder-scope .resume-add-row-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.resume-builder-scope .resume-add-row-button-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--builder-panel-accent);
+  flex-shrink: 0;
+}
+
+.resume-builder-scope .resume-section-overlay {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--builder-panel-border-strong);
+  background: color-mix(in srgb, var(--builder-panel-bg-soft) 70%, white);
+  color: var(--builder-panel-text);
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.2);
+}
+
+.resume-builder-scope .resume-preview-dock-wrap {
+  pointer-events: none;
+  position: absolute;
+  inset-inline: 0;
+  bottom: 16px;
+  display: flex;
+  justify-content: center;
+  z-index: 5;
+}
+
+.resume-builder-scope .resume-preview-dock {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--builder-panel-border) 95%, transparent);
+  background: color-mix(in srgb, var(--builder-preview-dock-bg) 82%, transparent);
+  box-shadow: var(--builder-preview-dock-shadow);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  padding: 5px;
+}
+
+.resume-builder-scope .resume-preview-dock-divider {
+  width: 1px;
+  height: 18px;
+  margin: 0 2px;
+  background: color-mix(in srgb, var(--builder-panel-border) 75%, transparent);
+}
+
+.resume-builder-scope .resume-preview-dock .resume-dock-btn {
+  min-width: 27px;
+  height: 27px;
+  padding: 0 6px;
+  border-radius: 999px;
+  color: var(--builder-panel-text);
+}
+
+.resume-builder-scope .resume-preview-dock .resume-dock-btn svg {
+  width: 13px;
+  height: 13px;
+}
+
+.resume-builder-scope .resume-preview-dock .resume-dock-btn:hover {
+  background: color-mix(in srgb, var(--builder-panel-bg-soft) 72%, white);
+}
+
+[data-theme='dark'] .resume-builder-scope .resume-preview-dock .resume-dock-btn:hover {
+  background: color-mix(in srgb, var(--builder-panel-bg-soft) 86%, white);
+}
+
+.resume-builder-scope .resume-inline-icon-btn {
+  min-width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  color: var(--builder-panel-text-muted);
+}
+
+.resume-builder-scope .resume-inline-icon-btn:hover {
+  background: color-mix(in srgb, var(--builder-panel-bg-soft) 70%, white);
+  color: var(--builder-panel-text);
+}
+
+[data-theme='dark'] .resume-builder-scope .resume-inline-icon-btn:hover {
+  background: color-mix(in srgb, var(--builder-panel-bg-soft) 86%, white);
+}
+
+.resume-builder-scope .resume-item-menu {
+  position: relative;
+}
+
+.resume-builder-scope .resume-item-menu-popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 116px;
+  border-radius: 6px;
+  border: 1px solid color-mix(in srgb, var(--builder-panel-border-strong) 85%, transparent);
+  background: color-mix(in srgb, var(--builder-panel-bg) 88%, white);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.34);
+  padding: 6px;
+  z-index: 20;
+}
+
+[data-theme='dark'] .resume-builder-scope .resume-item-menu-popover {
+  background: color-mix(in srgb, var(--builder-panel-bg) 88%, black);
+}
+
+.resume-builder-scope .resume-item-menu-action {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--builder-panel-text);
+  text-align: left;
+  font-size: 12px;
+  line-height: 1.1;
+  border-radius: 6px;
+  padding: 7px 8px;
+  cursor: pointer;
+}
+
+.resume-builder-scope .resume-item-menu-action:hover {
+  background: color-mix(in srgb, var(--builder-panel-bg-soft) 72%, white);
+}
+
+[data-theme='dark'] .resume-builder-scope .resume-item-menu-action:hover {
+  background: color-mix(in srgb, var(--builder-panel-bg-soft) 82%, black);
+}
+
+.resume-builder-scope .resume-item-menu-action.is-danger {
+  color: #ef4444;
+}
+
+.resume-builder-scope .resume-item-menu-action.is-disabled {
+  opacity: 0.48;
+  cursor: not-allowed;
+}
+
+.resume-builder-scope .resume-side-resizer {
+  width: 6px;
+  margin-left: -3px;
+  margin-right: -3px;
+  cursor: col-resize;
+  flex-shrink: 0;
+  background: transparent;
+  position: relative;
+  z-index: 6;
+  touch-action: none;
+}
+
+.resume-builder-scope .resume-side-resizer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+  transform: translateX(-50%);
+  background: color-mix(in srgb, var(--builder-panel-border) 80%, transparent);
+  pointer-events: none;
+  transition: width 140ms ease, background-color 140ms ease;
+}
+
+.resume-builder-scope .resume-side-resizer:hover::before {
+  width: 2px;
+  background: var(--builder-panel-border-strong);
+}
+
+.resume-builder-scope .resume-side-resizer::after {
+  content: '拖拽调整面板宽度';
+  position: absolute;
+  right: calc(100% + 10px);
+  top: 50%;
+  transform: translateY(-50%) translateX(4px);
+  border-radius: 6px;
+  border: 1px solid color-mix(in srgb, var(--builder-panel-border) 90%, transparent);
+  background: var(--builder-panel-bg);
+  color: var(--builder-panel-text-muted);
+  font-size: 11px;
+  line-height: 1;
+  white-space: nowrap;
+  padding: 6px 8px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 140ms ease, transform 140ms ease;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.16);
+}
+
+.resume-builder-scope .resume-side-resizer:hover::after,
+.resume-builder-scope .resume-side-resizer:focus-visible::after {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+}
+
+.resume-builder-scope .resume-side-shell {
+  min-height: 0;
+  height: 100%;
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+}
+
+.resume-builder-scope .resume-side-tools {
+  border-right: 1px solid color-mix(in srgb, var(--builder-panel-border) 88%, transparent);
+  background: color-mix(in srgb, var(--builder-panel-bg-soft) 92%, transparent);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 8px;
+}
+
+.resume-builder-scope .resume-side-tool-btn {
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--builder-panel-text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+
+.resume-builder-scope .resume-side-tool-hint {
+  position: relative;
+  display: inline-flex;
+}
+
+.resume-builder-scope .resume-side-tool-hint::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: calc(100% + 12px);
+  top: 50%;
+  transform: translateY(-50%) translateX(-6px);
+  border-radius: 6px;
+  border: 1px solid color-mix(in srgb, var(--builder-panel-border) 90%, transparent);
+  background: var(--builder-panel-bg);
+  color: var(--builder-panel-text);
+  font-size: 11px;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  padding: 6px 8px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 140ms ease, transform 140ms ease;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.16);
+  z-index: 60;
+}
+
+.resume-builder-scope .resume-side-tool-hint:hover::after,
+.resume-builder-scope .resume-side-tool-hint:focus-within::after {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+}
+
+.resume-builder-scope .resume-side-tool-btn:hover {
+  color: var(--builder-panel-text);
+  background: color-mix(in srgb, var(--builder-panel-bg-soft) 64%, white);
+}
+
+.resume-builder-scope .resume-side-tool-btn.is-active {
+  color: var(--builder-panel-text);
+  background: color-mix(in srgb, var(--builder-panel-bg-soft) 56%, white);
+}
+
+[data-theme='dark'] .resume-builder-scope .resume-side-tool-btn:hover {
+  background: color-mix(in srgb, var(--builder-panel-bg-soft) 82%, white);
+}
+
+[data-theme='dark'] .resume-builder-scope .resume-side-tool-btn.is-active {
+  background: color-mix(in srgb, var(--builder-panel-bg-soft) 78%, white);
+}
+
+[data-theme='dark'] .resume-builder-scope .resume-side-tool-hint::after {
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.34);
+}
+
+.resume-builder-scope .resume-side-tools-divider {
+  width: 26px;
+  height: 1px;
+  background: color-mix(in srgb, var(--builder-panel-border) 76%, transparent);
+  margin: 4px 0;
+}
+
+.resume-builder-scope .resume-side-tool-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.resume-builder-scope .resume-side-tool-popover-anchor {
+  position: relative;
+}
+
+.resume-builder-scope .resume-side-tool-popover {
+  position: absolute;
+  left: calc(100% + 10px);
+  top: -6px;
+  width: min(336px, calc(100vw - 120px));
+  border: 1px solid color-mix(in srgb, var(--builder-panel-border) 90%, transparent);
+  background: var(--builder-panel-bg);
+  border-radius: 6px;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.28);
+  padding: 12px;
+  z-index: 45;
+}
+
+[data-theme='dark'] .resume-builder-scope .resume-side-tool-popover {
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.42);
+}
+
+.resume-builder-scope .resume-side-tool-popover-title {
+  font-size: 12px;
+  color: var(--builder-panel-text-muted);
+  margin-bottom: 8px;
+}
+
+.resume-builder-scope .resume-side-tools-spacer {
+  flex: 1;
+}
+
+.resume-builder-scope .resume-side-content {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.resume-builder-scope .resume-scroll-shell {
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  scrollbar-gutter: stable;
+}
+
+.resume-builder-scope .resume-scroll-shell::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.resume-builder-scope .resume-scroll-shell::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.resume-builder-scope .resume-scroll-shell::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: transparent;
+  transition: background-color 160ms ease;
+}
+
+.resume-builder-scope .resume-scroll-shell.is-scrolling {
+  scrollbar-width: thin;
+}
+
+.resume-builder-scope .resume-scroll-shell.is-scrolling::-webkit-scrollbar-thumb,
+.resume-builder-scope .resume-scroll-shell:hover::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--builder-panel-border-strong) 76%, transparent);
+}
+
+.resume-builder-scope .resume-side-panel-body {
+  min-height: 100%;
+}
+
+.resume-builder-scope .resume-template-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.resume-builder-scope .resume-template-theme-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid color-mix(in srgb, var(--builder-panel-border) 84%, transparent);
+  border-radius: 6px;
+  padding: 10px;
+}
+
+.resume-builder-scope .resume-template-theme-current {
+  min-width: 0;
+}
+
+.resume-builder-scope .resume-template-theme-label {
+  font-size: 11px;
+  color: var(--builder-panel-text-muted);
+  margin-bottom: 6px;
+}
+
+.resume-builder-scope .resume-template-theme-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--builder-panel-text);
+  line-height: 1.2;
+}
+
+.resume-builder-scope .resume-template-theme-name span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.resume-builder-scope .resume-template-theme-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--builder-panel-border) 88%, transparent);
+  flex-shrink: 0;
+}
+
+.resume-builder-scope .resume-template-theme-picker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.resume-builder-scope .resume-inline-color-input {
+  width: 34px;
+  height: 34px;
+  padding: 2px;
+  border-radius: 6px;
+  border: 1px solid color-mix(in srgb, var(--builder-panel-border) 86%, transparent);
+  background: color-mix(in srgb, var(--builder-panel-bg-soft) 52%, white);
+  cursor: pointer;
+}
+
+[data-theme='dark'] .resume-builder-scope .resume-inline-color-input {
+  background: color-mix(in srgb, var(--builder-panel-bg-soft) 72%, black);
+}
+
+.resume-builder-scope .resume-inline-color-input::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.resume-builder-scope .resume-inline-color-input::-webkit-color-swatch {
+  border: 0;
+  border-radius: 4px;
+}
+
+.resume-builder-scope .resume-inline-color-input::-moz-color-swatch {
+  border: 0;
+  border-radius: 4px;
+}
+
+.resume-builder-scope .resume-number-combo-field {
+  position: relative;
+}
+
+.resume-builder-scope .resume-number-combo-single {
+  position: relative;
+}
+
+.resume-builder-scope .resume-number-combo-single .resume-number-combo-input {
+  padding-right: 30px;
+}
+
+.resume-builder-scope .resume-number-combo-toggle {
+  position: absolute;
+  right: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--builder-panel-text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+
+.resume-builder-scope .resume-number-combo-toggle:hover {
+  background: color-mix(in srgb, var(--builder-panel-bg-soft) 68%, white);
+  color: var(--builder-panel-text);
+}
+
+[data-theme='dark'] .resume-builder-scope .resume-number-combo-toggle:hover {
+  background: color-mix(in srgb, var(--builder-panel-bg-soft) 76%, black);
+}
+
+.resume-builder-scope .resume-number-combo-menu {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 6px);
+  border: 1px solid color-mix(in srgb, var(--builder-panel-border) 90%, transparent);
+  border-radius: 6px;
+  background: var(--builder-panel-bg);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
+  overflow: auto;
+  max-height: 220px;
+  padding: 6px;
+  z-index: 55;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+[data-theme='dark'] .resume-builder-scope .resume-number-combo-menu {
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.42);
+}
+
+.resume-builder-scope .resume-number-combo-option {
+  width: 100%;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--builder-panel-text);
+  text-align: left;
+  font-size: 12px;
+  line-height: 1.25;
+  padding: 7px 8px;
+  cursor: pointer;
+  transition: background-color 120ms ease, box-shadow 120ms ease;
+}
+
+.resume-builder-scope .resume-number-combo-option:hover,
+.resume-builder-scope .resume-number-combo-option.is-active {
+  background: var(--control-active-surface);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--resume-control-text) 34%, transparent);
+}
+
+[data-theme='dark'] .resume-builder-scope .resume-number-combo-option:hover,
+[data-theme='dark'] .resume-builder-scope .resume-number-combo-option.is-active {
+  background: var(--control-active-surface);
+}
+
+.resume-builder-scope .resume-month-picker-field {
+  position: relative;
+}
+
+.resume-builder-scope .resume-period-range-field {
+  position: relative;
+}
+
+.resume-builder-scope .resume-period-range-trigger {
+  position: relative;
+  display: inline-flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-variant-numeric: tabular-nums;
+  transition:
+    background-color 160ms ease,
+    box-shadow 180ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 160ms ease;
+}
+
+.resume-builder-scope .resume-period-range-trigger.has-icon {
+  padding-right: 34px;
+}
+
+.resume-builder-scope .resume-period-range-trigger-icon {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--builder-panel-text-muted);
+  pointer-events: none;
+  transition: color 160ms ease, transform 210ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.resume-builder-scope .resume-period-range-trigger.is-open .resume-period-range-trigger-icon {
+  color: var(--builder-panel-text);
+  transform: translateY(-50%) rotate(180deg);
+}
+
+.resume-period-range-panel {
+  border-radius: 8px;
+  z-index: 140;
+  padding: 10px;
+  max-height: min(78vh, 560px);
+  overflow: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.resume-period-range-calendar {
+  --rdp-accent-color: var(--resume-control-text);
+  --rdp-accent-background-color: var(--control-active-surface);
+  --rdp-day_button-border-radius: 6px;
+  --rdp-day-height: 32px;
+  --rdp-day-width: 32px;
+  --rdp-day_button-height: 30px;
+  --rdp-day_button-width: 30px;
+  margin: 0;
+  color: var(--builder-panel-text);
+}
+
+.resume-period-range-calendar .rdp-months {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, max-content));
+  gap: 10px;
+  justify-content: flex-start;
+  align-items: flex-start;
+}
+
+.resume-period-range-calendar .rdp-month {
+  margin: 0;
+  align-self: flex-start;
+}
+
+.resume-period-range-calendar .rdp-nav button,
+.resume-period-range-calendar .rdp-button_previous,
+.resume-period-range-calendar .rdp-button_next {
+  border-radius: 6px;
+}
+
+.resume-period-range-calendar .rdp-day_button {
+  font-size: 13px;
+  line-height: 1;
+}
+
+.resume-period-range-calendar .rdp-caption_label {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.resume-period-range-calendar .rdp-weekday {
+  font-size: 11px;
+  color: var(--builder-panel-text-muted);
+}
+
+.resume-period-range-actions {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  border-top: 1px solid color-mix(in srgb, var(--builder-panel-border) 88%, transparent);
+  padding-top: 8px;
+}
+
+.resume-period-range-action {
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--builder-panel-text-muted);
+  font-size: 12px;
+  line-height: 1.2;
+  padding: 7px 10px;
+  cursor: pointer;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+
+.resume-period-range-action:hover,
+.resume-period-range-action.is-active {
+  background: var(--control-active-surface);
+  color: var(--builder-panel-text);
+}
+
+@media (max-width: 1200px) {
+  .resume-period-range-calendar .rdp-months {
+    grid-template-columns: 1fr;
+  }
+}
+
+.resume-builder-scope .resume-month-picker-trigger {
+  position: relative;
+  display: inline-flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-variant-numeric: tabular-nums;
+  transition:
+    background-color 160ms ease,
+    box-shadow 180ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 160ms ease;
+}
+
+.resume-builder-scope .resume-month-picker-trigger.has-icon {
+  padding-right: 34px;
+}
+
+.resume-builder-scope .resume-month-picker-trigger-icon {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--builder-panel-text-muted);
+  pointer-events: none;
+  transition: color 160ms ease, transform 210ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.resume-builder-scope .resume-month-picker-trigger.is-open .resume-month-picker-trigger-icon {
+  color: var(--builder-panel-text);
+  transform: translateY(-50%) rotate(180deg);
+}
+
+.resume-builder-scope .resume-month-picker-panel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 6px);
+  border-radius: 8px;
+  z-index: 55;
+  padding: 10px;
+}
+
+.resume-builder-scope .resume-month-picker-panel-head {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.resume-builder-scope .resume-month-picker-year-btn {
+  height: 28px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--builder-panel-text-muted);
+  font-size: 12px;
+  line-height: 1;
+  padding: 0 10px;
+  cursor: pointer;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+
+.resume-builder-scope .resume-month-picker-year-btn:hover {
+  background: var(--control-hover-surface);
+  color: var(--builder-panel-text);
+}
+
+.resume-builder-scope .resume-month-picker-year-label {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--builder-panel-text);
+}
+
+.resume-builder-scope .resume-month-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.resume-builder-scope .resume-month-picker-cell {
+  height: 34px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--builder-panel-text);
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 120ms ease, box-shadow 120ms ease;
+}
+
+.resume-builder-scope .resume-month-picker-cell:hover {
+  background: var(--control-active-surface);
+}
+
+.resume-builder-scope .resume-month-picker-cell:disabled {
+  cursor: not-allowed;
+  opacity: 0.38;
+}
+
+.resume-builder-scope .resume-month-picker-cell:disabled:hover {
+  background: transparent;
+}
+
+.resume-builder-scope .resume-month-picker-cell.is-active {
+  background: var(--control-active-surface);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--resume-control-text) 40%, transparent);
+}
+
+.resume-builder-scope .resume-month-picker-panel-actions {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  border-top: 1px solid color-mix(in srgb, var(--builder-panel-border) 88%, transparent);
+  padding-top: 8px;
+}
+
+.resume-builder-scope .resume-month-picker-action {
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--builder-panel-text-muted);
+  font-size: 12px;
+  line-height: 1.2;
+  padding: 7px 10px;
+  cursor: pointer;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+
+.resume-builder-scope .resume-month-picker-action:hover,
+.resume-builder-scope .resume-month-picker-action.is-active {
+  background: var(--control-active-surface);
+  color: var(--builder-panel-text);
+}
+
+.resume-builder-scope .resume-template-card {
+  position: relative;
+  border: 1px solid color-mix(in srgb, var(--builder-panel-border) 84%, transparent);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--builder-panel-text);
+  padding: 8px;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 120ms ease, background-color 120ms ease;
+}
+
+.resume-builder-scope .resume-template-card:hover {
+  border-color: color-mix(in srgb, var(--builder-panel-border-strong) 92%, transparent);
+  background: color-mix(in srgb, var(--builder-panel-bg-soft) 66%, white);
+}
+
+[data-theme='dark'] .resume-builder-scope .resume-template-card:hover {
+  background: color-mix(in srgb, var(--builder-panel-bg-soft) 74%, black);
+}
+
+.resume-builder-scope .resume-template-card.is-active {
+  border-color: color-mix(in srgb, var(--builder-panel-text) 58%, transparent);
+  background: color-mix(in srgb, var(--builder-panel-bg-soft) 62%, white);
+}
+
+[data-theme='dark'] .resume-builder-scope .resume-template-card.is-active {
+  background: color-mix(in srgb, var(--builder-panel-bg-soft) 70%, black);
+}
+
+.resume-builder-scope .resume-template-card-surface {
+  display: block;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  border-radius: 6px;
+  border: 1px solid color-mix(in srgb, var(--builder-panel-border) 78%, transparent);
+  background-image: var(--resume-template-preview);
+  background-size: cover;
+  background-position: center;
+  filter: grayscale(100%);
+}
+
+.resume-builder-scope .resume-template-card-name {
+  display: block;
+  margin-top: 7px;
+  font-size: 12px;
+  line-height: 1.2;
+  color: var(--builder-panel-text);
+}
+
+.resume-builder-scope .resume-export-hover-menu {
+  position: relative;
+}
+
+.resume-builder-scope .resume-export-hover-menu-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 232px;
+  padding: 6px;
+  border: 1px solid color-mix(in srgb, var(--builder-panel-border) 90%, transparent);
+  border-radius: 6px;
+  background: var(--builder-panel-bg);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.24);
+  z-index: 30;
+}
+
+.resume-builder-scope .resume-export-hover-menu-item {
+  width: 100%;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--builder-panel-text);
+  font-size: 12px;
+  text-align: left;
+  padding: 7px 8px;
+  cursor: pointer;
+}
+
+.resume-builder-scope .resume-export-hover-menu-item:hover {
+  background: color-mix(in srgb, var(--builder-panel-bg-soft) 72%, white);
+}
+
+[data-theme='dark'] .resume-builder-scope .resume-export-hover-menu-item:hover {
+  background: color-mix(in srgb, var(--builder-panel-bg-soft) 84%, black);
+}
+
+.resume-builder-scope .resume-image-export-measure-layer {
+  position: fixed;
+  left: -100000px;
+  top: 0;
+  opacity: 0;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.resume-builder-scope .resume-export-workbench-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--builder-workspace-bg) 68%, black);
+  backdrop-filter: blur(6px);
+}
+
+.resume-builder-scope .resume-export-workbench {
+  width: min(1460px, calc(100vw - 48px));
+  height: min(92vh, 980px);
+  min-height: 620px;
+  border: 1px solid var(--builder-panel-border);
+  border-radius: 6px;
+  background: var(--builder-panel-bg);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: auto 1fr;
+}
+
+[data-theme='dark'] .resume-builder-scope .resume-export-workbench {
+  box-shadow: 0 28px 78px rgba(0, 0, 0, 0.46);
+}
+
+.resume-builder-scope .resume-export-workbench-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 16px;
+  border-bottom: 1px solid color-mix(in srgb, var(--builder-panel-border) 94%, transparent);
+  background: var(--builder-toolbar-bg);
+}
+
+.resume-builder-scope .resume-export-workbench-title-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.resume-builder-scope .resume-export-workbench-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--builder-panel-text);
+}
+
+.resume-builder-scope .resume-export-workbench-subtitle {
+  margin: 0;
+  font-size: 12px;
+  color: var(--builder-panel-text-muted);
+}
+
+.resume-builder-scope .resume-export-workbench-body {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 296px;
+}
+
+.resume-builder-scope .resume-export-workbench-main {
+  min-width: 0;
+  min-height: 0;
+  border-right: 1px solid color-mix(in srgb, var(--builder-panel-border) 88%, transparent);
+}
+
+.resume-builder-scope .resume-export-preview-scroll {
+  height: 100%;
+  overflow: auto;
+  padding: 10px 12px;
+  background: var(--builder-preview-bg);
+}
+
+.resume-builder-scope .resume-export-preview-root {
+  --resume-export-preview-scale: 1.12;
+  zoom: var(--resume-export-preview-scale);
+}
+
+@supports not (zoom: 1) {
+  .resume-builder-scope .resume-export-preview-root {
+    transform: scale(var(--resume-export-preview-scale));
+    transform-origin: top center;
+    width: calc(100% / var(--resume-export-preview-scale));
+    margin-inline: auto;
+  }
+}
+
+.resume-builder-scope .resume-export-workbench-side {
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  --color-background: var(--builder-panel-bg-soft);
+  --color-foreground: var(--builder-panel-text);
+  --color-border: var(--builder-panel-border);
+  --color-border-weak: color-mix(in srgb, var(--builder-panel-border) 72%, transparent);
+  --color-muted: color-mix(in srgb, var(--builder-panel-bg-soft) 78%, white);
+  --color-muted-foreground: var(--builder-panel-text-muted);
+}
+
+.resume-builder-scope .resume-export-panel-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.resume-builder-scope .resume-export-panel-label {
+  font-size: 12px;
+  color: var(--builder-panel-text-muted);
+}
+
+.resume-builder-scope .resume-export-panel-hint {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--builder-panel-text-muted);
+  padding: 9px 10px;
+  border: 1px solid color-mix(in srgb, var(--builder-panel-border) 74%, transparent);
+  background: color-mix(in srgb, var(--builder-panel-bg-soft) 72%, white);
+  border-radius: 6px;
+}
+
+[data-theme='dark'] .resume-builder-scope .resume-export-panel-hint {
+  background: color-mix(in srgb, var(--builder-panel-bg-soft) 82%, black);
+}
+
+.resume-builder-scope .resume-export-panel-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: auto;
+}
+
+@media (max-width: 1024px) {
+  .resume-builder-scope .resume-export-workbench-overlay {
+    padding: 12px;
+  }
+
+  .resume-builder-scope .resume-export-workbench {
+    width: calc(100vw - 24px);
+    height: calc(100vh - 24px);
+    min-height: 0;
+  }
+
+  .resume-builder-scope .resume-export-workbench-body {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(0, 1fr) auto;
+  }
+
+  .resume-builder-scope .resume-export-workbench-main {
+    border-right: none;
+    border-bottom: 1px solid color-mix(in srgb, var(--builder-panel-border) 88%, transparent);
+  }
+
+  .resume-builder-scope .resume-export-workbench-side {
+    max-height: 36vh;
+  }
+}
+
+@media print {
+  @page {
+    margin: 0;
+  }
+
+  body.resume-print-preview-open,
+  body.resume-print-preview-open #__next {
+    height: auto !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
+
+  body.resume-print-preview-open .resume-builder-scope {
+    height: auto !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
+
+  body.resume-print-preview-open .resume-toolbar,
+  body.resume-print-preview-open .resume-side-panel,
+  body.resume-print-preview-open .resume-side-resizer,
+  body.resume-print-preview-open .resume-preview-dock-wrap {
+    display: none !important;
+  }
+
+  body.resume-print-preview-open .resume-export-workbench-overlay {
+    position: static !important;
+    inset: auto !important;
+    background: #fff !important;
+    padding: 0 !important;
+    display: block !important;
+    backdrop-filter: none !important;
+  }
+
+  body.resume-print-preview-open .resume-export-workbench {
+    width: auto !important;
+    max-width: none !important;
+    height: auto !important;
+    min-height: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
+
+  body.resume-print-preview-open .resume-export-workbench-header,
+  body.resume-print-preview-open .resume-export-workbench-side {
+    display: none !important;
+  }
+
+  body.resume-print-preview-open .resume-export-workbench-main {
+    border: none !important;
+  }
+
+  body.resume-print-preview-open .resume-export-preview-scroll {
+    padding: 0 !important;
+    overflow: visible !important;
+    height: auto !important;
+    background: #fff !important;
+  }
+
+  body.resume-print-preview-open .resume-export-preview-root {
+    gap: 0 !important;
+    zoom: 1 !important;
+    transform: none !important;
+    width: 100% !important;
+    margin-inline: 0 !important;
+  }
+
+  body.resume-print-preview-open .resume-export-preview-root .page {
+    box-shadow: none !important;
+    border: none !important;
+    margin: 0 auto !important;
+    transform: none !important;
+    break-after: page;
+    page-break-after: always;
+  }
+
+  body.resume-print-preview-open .resume-export-preview-root .page:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+}

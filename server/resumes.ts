@@ -1,0 +1,538 @@
+import { prisma } from '@/lib/prisma'
+import { ResumeMode, type Prisma } from '@prisma/client'
+import { RESUME_TEMPLATES } from '@/lib/constants'
+import {
+  createMockResumeDataSource,
+  createFreshResumeContent,
+  isResumeContentV2,
+  normalizeResumeContent,
+  normalizeTemplateId,
+  type ResumeDataSource,
+} from '@/lib/resume/mappers'
+import type { ResumeContentV2, ResumeData, StandardSectionType } from '@/lib/resume/types'
+
+export type ResumeContent = ResumeContentV2
+
+export interface CreateResumeInput {
+  title: string
+  templateId: string
+  dataSourceId?: string
+  mode?: ResumeMode
+  content?: unknown
+}
+
+export interface UpdateResumeInput {
+  title?: string
+  templateId?: string
+  dataSourceId?: string | null
+  mode?: ResumeMode
+  content?: unknown
+}
+
+export function getTemplates() {
+  return RESUME_TEMPLATES
+}
+
+export function getTemplate(id: string) {
+  return RESUME_TEMPLATES.find(t => t.id === id)
+}
+
+function toInputJsonValue(value: unknown): Prisma.InputJsonValue {
+  return value as Prisma.InputJsonValue
+}
+
+function toResumeDataSource(dataSource: unknown): ResumeDataSource | undefined {
+  if (!dataSource || typeof dataSource !== 'object') return undefined
+  return dataSource as ResumeDataSource
+}
+
+function stripHtml(text: string): string {
+  return text.replace(/<[^>]*>/g, '').trim()
+}
+
+function itemMarkdown(item: Record<string, unknown>, keys: string[]): string {
+  return keys
+    .map(key => String(item[key] || '').trim())
+    .filter(Boolean)
+    .join(' | ')
+}
+
+function richToMarkdown(html: string): string {
+  const plain = stripHtml(html)
+  return plain || ''
+}
+
+function sectionToMarkdown(data: ResumeData, section: StandardSectionType, title: string): string {
+  const sectionData = data.sections[section]
+  if (sectionData.hidden || sectionData.items.length === 0) {
+    return ''
+  }
+
+  const lines: string[] = [`## ${sectionData.title || title}`]
+
+  sectionData.items.forEach(item => {
+    if (item.hidden) return
+
+    if (section === 'experience') {
+      const row = itemMarkdown(item as unknown as Record<string, unknown>, ['company', 'position', 'period', 'location'])
+      if (row) lines.push(`- ${row}`)
+      const desc = richToMarkdown(String((item as { description?: string }).description || ''))
+      if (desc) lines.push(`  - ${desc}`)
+      return
+    }
+
+    if (section === 'education') {
+      const row = itemMarkdown(item as unknown as Record<string, unknown>, ['school', 'degree', 'area', 'period'])
+      if (row) lines.push(`- ${row}`)
+      const desc = richToMarkdown(String((item as { description?: string }).description || ''))
+      if (desc) lines.push(`  - ${desc}`)
+      return
+    }
+
+    if (section === 'projects') {
+      const row = itemMarkdown(item as unknown as Record<string, unknown>, ['name', 'period'])
+      if (row) lines.push(`- ${row}`)
+      const desc = richToMarkdown(String((item as { description?: string }).description || ''))
+      if (desc) lines.push(`  - ${desc}`)
+      return
+    }
+
+    if (section === 'skills') {
+      const row = itemMarkdown(item as unknown as Record<string, unknown>, ['name', 'proficiency'])
+      const keywords = (item as { keywords?: string[] }).keywords || []
+      const suffix = keywords.length > 0 ? ` (${keywords.join(', ')})` : ''
+      if (row) lines.push(`- ${row}${suffix}`)
+      return
+    }
+
+    if (section === 'languages') {
+      const row = itemMarkdown(item as unknown as Record<string, unknown>, ['language', 'fluency'])
+      if (row) lines.push(`- ${row}`)
+      return
+    }
+
+    if (section === 'interests') {
+      const row = itemMarkdown(item as unknown as Record<string, unknown>, ['name'])
+      const keywords = (item as { keywords?: string[] }).keywords || []
+      const suffix = keywords.length > 0 ? ` (${keywords.join(', ')})` : ''
+      if (row) lines.push(`- ${row}${suffix}`)
+      return
+    }
+
+    if (section === 'profiles') {
+      const row = itemMarkdown(item as unknown as Record<string, unknown>, ['network', 'username'])
+      const website = (item as { website?: { url?: string } }).website?.url || ''
+      if (row) lines.push(`- ${website ? `${row} (${website})` : row}`)
+      return
+    }
+
+    if (section === 'awards') {
+      const row = itemMarkdown(item as unknown as Record<string, unknown>, ['title', 'awarder', 'date'])
+      if (row) lines.push(`- ${row}`)
+      const desc = richToMarkdown(String((item as { description?: string }).description || ''))
+      if (desc) lines.push(`  - ${desc}`)
+      return
+    }
+
+    if (section === 'certifications') {
+      const row = itemMarkdown(item as unknown as Record<string, unknown>, ['title', 'issuer', 'date'])
+      if (row) lines.push(`- ${row}`)
+      const desc = richToMarkdown(String((item as { description?: string }).description || ''))
+      if (desc) lines.push(`  - ${desc}`)
+      return
+    }
+
+    if (section === 'publications') {
+      const row = itemMarkdown(item as unknown as Record<string, unknown>, ['title', 'publisher', 'date'])
+      if (row) lines.push(`- ${row}`)
+      const desc = richToMarkdown(String((item as { description?: string }).description || ''))
+      if (desc) lines.push(`  - ${desc}`)
+      return
+    }
+
+    if (section === 'volunteer') {
+      const row = itemMarkdown(item as unknown as Record<string, unknown>, ['organization', 'period', 'location'])
+      if (row) lines.push(`- ${row}`)
+      const desc = richToMarkdown(String((item as { description?: string }).description || ''))
+      if (desc) lines.push(`  - ${desc}`)
+      return
+    }
+
+    if (section === 'references') {
+      const row = itemMarkdown(item as unknown as Record<string, unknown>, ['name', 'position', 'phone'])
+      if (row) lines.push(`- ${row}`)
+      const desc = richToMarkdown(String((item as { description?: string }).description || ''))
+      if (desc) lines.push(`  - ${desc}`)
+    }
+  })
+
+  if (lines.length === 1) {
+    return ''
+  }
+
+  return lines.join('\n')
+}
+
+function generateMarkdownFromContent(title: string, content: ResumeContentV2): string {
+  const data = content.data
+  const lines: string[] = []
+
+  lines.push(`# ${data.basics.name || title}`)
+
+  const contact = [data.basics.email, data.basics.phone, data.basics.location].filter(Boolean).join(' | ')
+  if (contact) {
+    lines.push(contact)
+  }
+
+  const website = data.basics.website?.url
+  if (website) {
+    lines.push(website)
+  }
+
+  if (stripHtml(data.summary.content)) {
+    lines.push('\n## 个人简介')
+    lines.push(richToMarkdown(data.summary.content))
+  }
+
+  const standardSections: Array<[StandardSectionType, string]> = [
+    ['experience', '工作经历'],
+    ['education', '教育经历'],
+    ['projects', '项目经历'],
+    ['skills', '技能'],
+    ['profiles', '社交资料'],
+    ['languages', '语言'],
+    ['interests', '兴趣'],
+    ['awards', '奖项'],
+    ['certifications', '证书'],
+    ['publications', '出版物'],
+    ['volunteer', '志愿经历'],
+    ['references', '推荐人'],
+  ]
+
+  standardSections.forEach(([sectionId, fallbackTitle]) => {
+    const sectionMarkdown = sectionToMarkdown(data, sectionId, fallbackTitle)
+    if (sectionMarkdown) {
+      lines.push(`\n${sectionMarkdown}`)
+    }
+  })
+
+  if (data.customSections.length > 0) {
+    data.customSections.forEach(customSection => {
+      if (customSection.hidden || customSection.items.length === 0) return
+
+      lines.push(`\n## ${customSection.title}`)
+      customSection.items.forEach(item => {
+        if (item.hidden) return
+
+        if ('content' in item) {
+          const text = richToMarkdown(String(item.content || ''))
+          if (text) lines.push(`- ${text}`)
+          return
+        }
+
+        if ('recipient' in item) {
+          const coverLetterItem = item as unknown as { recipient?: string; content?: string }
+          const recipient = richToMarkdown(String(coverLetterItem.recipient || ''))
+          const body = richToMarkdown(String(coverLetterItem.content || ''))
+          if (recipient) lines.push(`- ${recipient}`)
+          if (body) lines.push(`  - ${body}`)
+          return
+        }
+
+        const generic = itemMarkdown(item as unknown as Record<string, unknown>, [
+          'title',
+          'name',
+          'company',
+          'school',
+          'organization',
+          'position',
+          'period',
+          'date',
+        ])
+        if (generic) {
+          lines.push(`- ${generic}`)
+        }
+
+        if ('description' in item) {
+          const description = richToMarkdown(String((item as { description?: string }).description || ''))
+          if (description) {
+            lines.push(`  - ${description}`)
+          }
+        }
+      })
+    })
+  }
+
+  return lines.join('\n')
+}
+
+async function migrateResumeIfNeeded(resume: {
+  id: string
+  userId: string
+  title: string
+  templateId: string
+  dataSourceId: string | null
+  mode: ResumeMode
+  content: unknown
+  createdAt: Date
+  updatedAt: Date
+  dataSource?: unknown
+}) {
+  const normalized = normalizeResumeContent(resume.content, {
+    dataSource: toResumeDataSource(resume.dataSource),
+    templateId: resume.templateId,
+    withBackup: true,
+  })
+
+  const normalizedTemplateId = normalizeTemplateId(resume.templateId)
+  normalized.data.metadata.template = normalizedTemplateId
+
+  const needsMigration =
+    !isResumeContentV2(resume.content) ||
+    resume.templateId !== normalizedTemplateId ||
+    resume.mode !== 'form'
+
+  if (!needsMigration) {
+    return {
+      ...resume,
+      templateId: normalizedTemplateId,
+      mode: 'form' as ResumeMode,
+      content: normalized,
+    }
+  }
+
+  return prisma.resume.update({
+    where: { id: resume.id },
+    data: {
+      templateId: normalizedTemplateId,
+      mode: 'form',
+      content: toInputJsonValue(normalized),
+    },
+    include: {
+      dataSource: true,
+    },
+  })
+}
+
+export async function getResumes(userId: string) {
+  return prisma.resume.findMany({
+    where: { userId },
+    orderBy: { updatedAt: 'desc' },
+    include: {
+      dataSource: {
+        select: { id: true, name: true },
+      },
+    },
+  })
+}
+
+export async function getResume(id: string, userId: string) {
+  const resume = await prisma.resume.findFirst({
+    where: { id, userId },
+    include: {
+      dataSource: true,
+    },
+  })
+
+  if (!resume) {
+    return null
+  }
+
+  return migrateResumeIfNeeded(resume)
+}
+
+export async function createResume(userId: string, input: CreateResumeInput) {
+  const normalizedInputTemplate = normalizeTemplateId(input.templateId)
+  const template = getTemplate(normalizedInputTemplate)
+  if (!template) {
+    throw new Error('Template not found')
+  }
+
+  const dataSource = input.dataSourceId
+    ? await prisma.dataSource.findFirst({ where: { id: input.dataSourceId, userId } })
+    : null
+
+  let fallbackDataSource: ResumeDataSource | undefined
+  if (!dataSource && input.content === undefined) {
+    const [dataSourceCount, resumeCount] = await Promise.all([
+      prisma.dataSource.count({ where: { userId } }),
+      prisma.resume.count({ where: { userId } }),
+    ])
+
+    if (dataSourceCount === 0 && resumeCount === 0) {
+      fallbackDataSource = createMockResumeDataSource()
+    }
+  }
+
+  const effectiveDataSource = toResumeDataSource(dataSource) || fallbackDataSource
+
+  const content = input.content
+    ? normalizeResumeContent(input.content, {
+        dataSource: effectiveDataSource,
+        templateId: input.templateId,
+        withBackup: true,
+      })
+    : createFreshResumeContent(input.templateId, effectiveDataSource)
+
+  const templateId = normalizedInputTemplate
+  content.data.metadata.template = templateId
+
+  return prisma.resume.create({
+    data: {
+      userId,
+      title: input.title,
+      templateId,
+      dataSourceId: input.dataSourceId,
+      mode: 'form',
+      content: toInputJsonValue(content),
+    },
+  })
+}
+
+export async function updateResume(id: string, userId: string, input: UpdateResumeInput) {
+  const existing = await prisma.resume.findFirst({
+    where: { id, userId },
+    include: { dataSource: true },
+  })
+
+  if (!existing) {
+    throw new Error('Resume not found')
+  }
+
+  if (input.templateId) {
+    const template = getTemplate(normalizeTemplateId(input.templateId))
+    if (!template) {
+      throw new Error('Template not found')
+    }
+  }
+
+  const templateId = normalizeTemplateId(input.templateId || existing.templateId)
+
+  const dataSource = input.dataSourceId
+    ? await prisma.dataSource.findFirst({ where: { id: input.dataSourceId, userId } })
+    : input.dataSourceId === null
+      ? null
+      : existing.dataSource
+
+  let content: ResumeContentV2 | undefined
+
+  if (input.content !== undefined) {
+    content = normalizeResumeContent(input.content, {
+      dataSource: toResumeDataSource(dataSource),
+      templateId,
+      withBackup: true,
+    })
+    content.data.metadata.template = templateId
+  } else if (input.templateId !== undefined) {
+    content = normalizeResumeContent(existing.content, {
+      dataSource: toResumeDataSource(existing.dataSource),
+      templateId,
+      withBackup: true,
+    })
+    content.data.metadata.template = templateId
+  }
+
+  return prisma.resume.update({
+    where: { id },
+    data: {
+      ...(input.title !== undefined && { title: input.title }),
+      ...(input.templateId !== undefined && { templateId }),
+      ...(input.dataSourceId !== undefined && { dataSourceId: input.dataSourceId }),
+      ...(input.mode !== undefined && { mode: 'form' }),
+      ...(content !== undefined && { content: toInputJsonValue(content) }),
+    },
+  })
+}
+
+export async function duplicateResume(id: string, userId: string) {
+  const existing = await prisma.resume.findFirst({
+    where: { id, userId },
+    include: { dataSource: true },
+  })
+
+  if (!existing) {
+    throw new Error('Resume not found')
+  }
+
+  const normalized = normalizeResumeContent(existing.content, {
+    dataSource: toResumeDataSource(existing.dataSource),
+    templateId: existing.templateId,
+    withBackup: true,
+  })
+
+  return prisma.resume.create({
+    data: {
+      userId,
+      title: `${existing.title} - 副本`,
+      templateId: normalizeTemplateId(existing.templateId),
+      dataSourceId: existing.dataSourceId,
+      mode: 'form',
+      content: toInputJsonValue(normalized),
+    },
+  })
+}
+
+export async function deleteResume(id: string, userId: string) {
+  const existing = await prisma.resume.findFirst({
+    where: { id, userId },
+  })
+
+  if (!existing) {
+    throw new Error('Resume not found')
+  }
+
+  return prisma.resume.delete({ where: { id } })
+}
+
+export async function exportResume(
+  id: string,
+  userId: string,
+  format: 'md' | 'pdf' | 'docx' | 'img',
+): Promise<{ data: string; mimeType: string; filename: string }> {
+  const resume = await prisma.resume.findFirst({
+    where: { id, userId },
+    include: { dataSource: true },
+  })
+
+  if (!resume) {
+    throw new Error('Resume not found')
+  }
+
+  const normalized = await migrateResumeIfNeeded(resume)
+  const content = normalizeResumeContent(normalized.content, {
+    dataSource: toResumeDataSource(normalized.dataSource),
+    templateId: normalized.templateId,
+    withBackup: true,
+  })
+
+  switch (format) {
+    case 'md': {
+      const markdown = generateMarkdownFromContent(normalized.title, content)
+      return {
+        data: markdown,
+        mimeType: 'text/markdown',
+        filename: `${normalized.title}.md`,
+      }
+    }
+    case 'pdf':
+      return {
+        data: '请在简历编辑页使用“导出 PDF”按钮进行浏览器打印导出。',
+        mimeType: 'application/json',
+        filename: `${normalized.title}.pdf`,
+      }
+    case 'docx':
+      return {
+        data: 'DOCX export coming soon',
+        mimeType: 'application/json',
+        filename: `${normalized.title}.docx`,
+      }
+    case 'img':
+      return {
+        data: '请在简历编辑页使用“导出图片”按钮进行前端导出。',
+        mimeType: 'application/json',
+        filename: `${normalized.title}.png`,
+      }
+    default:
+      throw new Error('Unsupported format')
+  }
+}

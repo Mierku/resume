@@ -1,0 +1,78 @@
+.resume-module-scope {
+  --resume-button-bg: #151515;
+  --resume-button-bg-hover: #070707;
+  --resume-button-border: #151515;
+  --resume-button-border-hover: #070707;
+  --resume-button-text: #ffffff;
+  --resume-pill-bg: rgba(18, 18, 18, 0.08);
+  --resume-pill-border: rgba(18, 18, 18, 0.22);
+  --resume-pill-text: #1b1b1b;
+}
+
+[data-theme='dark'] .resume-module-scope {
+  --resume-button-text: #ffffff;
+  --resume-pill-bg: rgba(232, 232, 232, 0.12);
+  --resume-pill-border: rgba(232, 232, 232, 0.28);
+  --resume-pill-text: #f2f2f2;
+}
+
+.resume-module-scope button.bg-primary,
+.resume-module-scope button[class*='bg-primary/'] {
+  background: var(--resume-button-bg) !important;
+  border-color: var(--resume-button-border) !important;
+  color: var(--resume-button-text) !important;
+}
+
+.resume-module-scope button.bg-primary:hover,
+.resume-module-scope button.bg-primary:focus-visible,
+.resume-module-scope button[class*='bg-primary/']:hover,
+.resume-module-scope button[class*='bg-primary/']:focus-visible,
+.resume-module-scope button[class*='hover:bg-primary-hover']:hover {
+  background: var(--resume-button-bg-hover) !important;
+  border-color: var(--resume-button-border-hover) !important;
+}
+
+.resume-module-scope button.border-primary,
+.resume-module-scope button[class*='border-primary/'],
+.resume-module-scope button[class*='hover:border-primary']:hover {
+  border-color: var(--resume-button-border-hover) !important;
+}
+
+.resume-module-scope button.text-primary,
+.resume-module-scope button[class*='hover:text-primary']:hover {
+  color: var(--resume-button-text) !important;
+}
+
+.resume-module-scope .btn-primary,
+.resume-module-scope .pill-primary {
+  background: var(--resume-pill-bg) !important;
+  border: 1px solid var(--resume-pill-border) !important;
+  color: var(--resume-pill-text) !important;
+}
+
+.resume-module-scope .btn-primary {
+  background: var(--resume-button-bg) !important;
+  border-color: var(--resume-button-border) !important;
+  color: var(--resume-button-text) !important;
+}
+
+.resume-module-scope .btn-primary:hover {
+  background: var(--resume-button-bg-hover) !important;
+  border-color: var(--resume-button-border-hover) !important;
+}
+
+.resume-module-scope a.text-primary,
+.resume-module-scope a[class*='text-primary'] {
+  color: var(--color-primary) !important;
+}
+
+.resume-module-scope a[class*='bg-primary/'] {
+  background: var(--resume-button-bg) !important;
+  border: 1px solid var(--resume-button-border) !important;
+}
+
+.resume-module-scope a[class*='bg-primary/']:hover,
+.resume-module-scope a[class*='hover:bg-primary/']:hover {
+  background: var(--resume-button-bg-hover) !important;
+  border-color: var(--resume-button-border-hover) !important;
+}

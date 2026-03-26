@@ -1,0 +1,22 @@
+<svg width="220" height="220" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    :root { color: #4a4240; }
+    @media (prefers-color-scheme: dark) {
+      :root { color: #d4bc9a; }
+    }
+  </style>
+  <defs>
+    <path id="petal" d="M100 106 Q138 70 100 28 Q62 70 100 106 Z" />
+  </defs>
+  <g fill="currentColor">
+    <use href="#petal" transform="rotate(0 100 100)" />
+    <use href="#petal" transform="rotate(45 100 100)" />
+    <use href="#petal" transform="rotate(90 100 100)" />
+    <use href="#petal" transform="rotate(135 100 100)" />
+    <use href="#petal" transform="rotate(180 100 100)" />
+    <use href="#petal" transform="rotate(225 100 100)" />
+    <use href="#petal" transform="rotate(270 100 100)" />
+    <use href="#petal" transform="rotate(315 100 100)" />
+    <circle cx="100" cy="100" r="7.5" />
+  </g>
+</svg>

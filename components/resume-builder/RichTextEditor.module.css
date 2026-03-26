@@ -1,0 +1,83 @@
+.editorRoot {
+  border: 1px solid var(--color-border);
+  border-radius: 2px;
+  overflow: hidden;
+  background: var(--control-surface, #ffffff);
+  color: var(--color-foreground, #111111);
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px;
+  border-bottom: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-muted, #f5f5f5) 72%, transparent);
+}
+
+.contentWrap {
+  position: relative;
+}
+
+.placeholder {
+  position: absolute;
+  top: 8px;
+  left: 12px;
+  right: 12px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--color-muted-foreground, #6b7280);
+  pointer-events: none;
+}
+
+.content {
+  padding: 8px 12px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: inherit;
+  outline: none;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.content :where(p) {
+  margin: 0 0 6px;
+}
+
+.content :where(p:last-child) {
+  margin-bottom: 0;
+}
+
+.content :where(ul),
+.content :where(ol) {
+  margin: 4px 0;
+  padding-left: 18px;
+  list-style-position: outside;
+}
+
+.content :where(ul) {
+  list-style-type: disc;
+}
+
+.content :where(ol) {
+  list-style-type: decimal;
+}
+
+.content :where(ul ul) {
+  list-style-type: circle;
+}
+
+.content :where(ol ol) {
+  list-style-type: lower-alpha;
+}
+
+.content :where(li) {
+  display: list-item;
+  margin: 2px 0;
+}
+
+.content :where(a) {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.12rem;
+}

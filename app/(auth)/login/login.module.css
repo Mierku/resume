@@ -1,0 +1,181 @@
+.page {
+  height: 100dvh;
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  background: var(--color-background);
+  position: relative;
+  overflow: hidden;
+}
+
+.backdropGlow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(380px 240px at 14% 18%, color-mix(in srgb, var(--color-primary) 18%, transparent), transparent 72%),
+    radial-gradient(420px 260px at 88% 10%, color-mix(in srgb, var(--color-muted-foreground) 16%, transparent), transparent 74%);
+  opacity: 0.7;
+}
+
+.container {
+  width: min(428px, 100%);
+  position: relative;
+  z-index: 1;
+}
+
+.brandLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-foreground);
+  text-decoration: none;
+}
+
+.brandLogo {
+  width: 42px;
+  height: 42px;
+  color: color-mix(in srgb, var(--color-primary) 82%, #8a5a12 18%);
+  opacity: 0.96;
+}
+
+.brandTextWrap {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.brandName {
+  font-size: 22px;
+  line-height: 1.1;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--color-foreground);
+}
+
+.brandDesc {
+  font-size: 12px;
+  color: var(--color-muted-foreground);
+}
+
+.authCard {
+  position: relative;
+  overflow: hidden;
+  padding: 28px 26px 22px;
+  border-radius: 36px;
+  border: 1px solid color-mix(in srgb, var(--color-border) 56%, transparent);
+  background:
+    linear-gradient(165deg,
+      color-mix(in srgb, var(--control-panel-surface) 98%, transparent) 0%,
+      color-mix(in srgb, var(--color-muted) 76%, transparent) 100%);
+  box-shadow: 0 30px 56px color-mix(in srgb, var(--color-border) 30%, transparent);
+}
+
+.cardHeader {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.authActions {
+  display: grid;
+  gap: 12px;
+}
+
+.authButton {
+  width: 100%;
+  justify-content: center;
+  gap: 10px;
+  min-height: 48px;
+  border-radius: 12px;
+  font-size: 15px;
+  letter-spacing: 0.01em;
+}
+
+.cardTitle {
+  margin: 2px 0 0;
+  font-size: clamp(34px, 5vw, 54px);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+  color: var(--color-foreground);
+}
+
+.cardSubtitle {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-muted-foreground);
+}
+
+.legalText {
+  margin: 8px 0 0;
+  text-align: center;
+  font-size: 12px;
+  color: var(--color-muted-foreground);
+  line-height: 1.6;
+}
+
+.legalConsent {
+  margin-top: 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--color-muted-foreground);
+}
+
+.legalConsent input {
+  margin-top: 3px;
+  width: 14px;
+  height: 14px;
+  accent-color: var(--color-primary);
+}
+
+.legalConsent span {
+  flex: 1;
+}
+
+.legalLink {
+  color: var(--color-primary);
+  text-decoration: none;
+  margin: 0 1px;
+  font-weight: 600;
+}
+
+.legalLink:hover {
+  text-decoration: underline;
+}
+
+.providerHint {
+  margin-top: 10px;
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--color-muted-foreground);
+  text-align: center;
+}
+
+.providerHint:empty {
+  display: none;
+}
+
+.footerTag {
+  margin-top: 14px;
+  text-align: center;
+  font-size: 12px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-muted-foreground) 76%, transparent);
+}
+
+.footerTag::before,
+.footerTag::after {
+  content: '';
+  display: inline-block;
+  width: 38px;
+  height: 1px;
+  margin: 0 10px 4px;
+  background: color-mix(in srgb, var(--color-border) 82%, transparent);
+}

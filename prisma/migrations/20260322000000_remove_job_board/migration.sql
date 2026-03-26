@@ -1,0 +1,11 @@
+DROP TABLE IF EXISTS "JobProgress";
+DROP TABLE IF EXISTS "JobPosting";
+DROP TABLE IF EXISTS "JobSyncRun";
+DROP TABLE IF EXISTS "Company";
+DROP TABLE IF EXISTS "SourceChannel";
+
+DROP TYPE IF EXISTS "JobProgressStage";
+DROP TYPE IF EXISTS "JobPostingStatus";
+DROP TYPE IF EXISTS "JobSyncRunStatus";
+DROP TYPE IF EXISTS "JobEducationLevel";
+DROP TYPE IF EXISTS "SourceType";

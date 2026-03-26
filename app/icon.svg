@@ -1,0 +1,18 @@
+<svg id="flower-mono-45" width="220" height="220" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <path id="fat-petal-path" d="M100,105 Q145,60 100,20 Q55,60 100,105 Z" />
+    <filter id="bloom-mono">
+      <feGaussianBlur stdDeviation="4" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <g filter="url(#bloom-mono)">
+    <use href="#fat-petal-path" transform="rotate(45, 100, 100)" fill="#f59e0b" />
+    <use href="#fat-petal-path" transform="rotate(135, 100, 100)" fill="#f59e0b" />
+    <use href="#fat-petal-path" transform="rotate(225, 100, 100)" fill="#f59e0b" />
+    <use href="#fat-petal-path" transform="rotate(315, 100, 100)" fill="#f59e0b" />
+    <circle cx="100" cy="100" r="8" fill="#000000" />
+    <circle cx="100" cy="100" r="2.5" fill="#f59e0b" opacity="0.9" />
+  </g>
+</svg>
