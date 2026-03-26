@@ -145,7 +145,7 @@ jobs:
               if docker info >/dev/null 2>&1; then
                 docker "$@"
               elif command -v sudo >/dev/null 2>&1 && sudo docker info >/dev/null 2>&1; then
-                sudo docker "$@"
+                sudo --preserve-env=IMAGE_NAME,IMAGE_TAG,DB_IMAGE,REDIS_IMAGE,POSTGRES_PASSWORD,POSTGRES_DB,TZ,APP_PORT docker "$@"
               else
                 echo "cannot access docker daemon"
                 exit 1
