@@ -1,5 +1,6 @@
 import { Form, Input, Select, Button, Card } from '@/components/ui/radix-adapter'
 import { IconPlus, IconDelete } from '@/components/ui/radix-icons'
+import { MonthPickerField } from '@/components/ui/month-picker'
 import { DATA_SOURCE_SECTION_IDS } from './section-meta'
 import { RichTextEditor } from '@/components/resume-builder/RichTextEditor'
 
@@ -51,10 +52,21 @@ export default function EducationSection({ data, onChange, onAdd, onRemove }: Pr
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
             <FormItem label="开始时间">
-              <Input value={edu.startDate} onChange={value => onChange(index, 'startDate', value)} placeholder="2018-09" />
+              <MonthPickerField
+                value={edu.startDate}
+                showLabel={false}
+                placeholder="选择开始时间"
+                onChange={value => onChange(index, 'startDate', value)}
+              />
             </FormItem>
             <FormItem label="结束时间">
-              <Input value={edu.endDate} onChange={value => onChange(index, 'endDate', value)} placeholder="2022-06" />
+              <MonthPickerField
+                value={edu.endDate}
+                showLabel={false}
+                allowPresent
+                placeholder="选择结束时间"
+                onChange={value => onChange(index, 'endDate', value)}
+              />
             </FormItem>
             <FormItem label="学历">
               <Select value={edu.degree} onChange={value => onChange(index, 'degree', value)} placeholder="请选择" showSearch>

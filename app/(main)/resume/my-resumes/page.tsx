@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { Copy, Edit, FileText, Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { toast } from '@/lib/toast'
@@ -104,10 +105,7 @@ export default function MyResumesPage() {
               <p className={s.heroHint}>管理、复制和编辑你的简历版本，保持投递内容始终一致。</p>
             </div>
             <Link href="/resume/templates">
-              <Button>
-                <span className="i-lucide-plus w-4 h-4 mr-1" />
-                新建简历
-              </Button>
+              <Button icon={<Plus />}>新建简历</Button>
             </Link>
           </section>
 
@@ -128,10 +126,7 @@ export default function MyResumesPage() {
 
                   <div className={s.actions}>
                     <Link href={`/resume/editor/${resume.id}`} className={s.editLink}>
-                      <Button variant="outline" size="sm" className="w-full">
-                        <span className="i-lucide-edit w-4 h-4 mr-1" />
-                        编辑
-                      </Button>
+                      <Button variant="outline" size="sm" className="w-full" icon={<Edit />}>编辑</Button>
                     </Link>
                     <Button
                       variant="ghost"
@@ -140,7 +135,7 @@ export default function MyResumesPage() {
                       onClick={() => handleDuplicate(resume.id)}
                       title="复制"
                     >
-                      <span className="i-lucide-copy w-4 h-4" />
+                      <Copy />
                     </Button>
                     <Button
                       variant="ghost"
@@ -149,7 +144,7 @@ export default function MyResumesPage() {
                       onClick={() => handleDelete(resume.id)}
                       title="删除"
                     >
-                      <span className="i-lucide-trash-2 w-4 h-4" />
+                      <Trash2 />
                     </Button>
                   </div>
                 </article>
@@ -157,13 +152,10 @@ export default function MyResumesPage() {
             </div>
           ) : (
             <div className={s.empty}>
-              <div className="i-lucide-file-text w-12 h-12 mx-auto text-muted-foreground mb-4" />
+              <FileText className="mx-auto mb-4 size-12 text-muted-foreground" />
               <p className="text-muted-foreground mb-4">还没有简历</p>
               <Link href="/resume/templates">
-                <Button>
-                  <span className="i-lucide-plus w-4 h-4 mr-1" />
-                  创建第一份简历
-                </Button>
+                <Button icon={<Plus />}>创建第一份简历</Button>
               </Link>
             </div>
           )}

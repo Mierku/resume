@@ -1,5 +1,6 @@
 import { Form, Input, Select, Button, Card } from '@/components/ui/radix-adapter'
 import { IconPlus, IconDelete } from '@/components/ui/radix-icons'
+import { MonthPickerField } from '@/components/ui/month-picker'
 import { DATA_SOURCE_SECTION_IDS } from './section-meta'
 import { RichTextEditor } from '@/components/resume-builder/RichTextEditor'
 
@@ -48,10 +49,21 @@ export default function WorkSection({ data, onChange, onAdd, onRemove }: Props) 
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
             <FormItem label="开始时间">
-              <Input value={w.startDate} onChange={value => onChange(index, 'startDate', value)} placeholder="2022-07" />
+              <MonthPickerField
+                value={w.startDate}
+                showLabel={false}
+                placeholder="选择开始时间"
+                onChange={value => onChange(index, 'startDate', value)}
+              />
             </FormItem>
             <FormItem label="结束时间">
-              <Input value={w.endDate} onChange={value => onChange(index, 'endDate', value)} placeholder="至今" />
+              <MonthPickerField
+                value={w.endDate}
+                showLabel={false}
+                allowPresent
+                placeholder="选择结束时间"
+                onChange={value => onChange(index, 'endDate', value)}
+              />
             </FormItem>
             <FormItem label="工作类型">
               <Select value={w.workType || ''} onChange={value => onChange(index, 'workType', value)} placeholder="请选择">

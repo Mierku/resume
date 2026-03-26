@@ -13,6 +13,10 @@ import {
 import { createPortal } from 'react-dom'
 import { Loader2 } from 'lucide-react'
 import { toast } from '@/lib/toast'
+import { Button as UIButton } from '@/components/ui/Button'
+import { DatePickerField } from '@/components/ui/date-picker'
+import { Input as BaseInput } from '@/components/ui/Input'
+import { Textarea as BaseTextarea } from '@/components/ui/Textarea'
 import { CustomSelect, getSelectLabelText, type CustomSelectOption } from '@/components/ui/select-core'
 
 function cx(...values: Array<string | false | null | undefined>) {
@@ -51,9 +55,9 @@ function FormRoot({ children, autoComplete, layout }: FormProps) {
 
 function FormItem({ children, label, required, style }: FormItemProps) {
   return (
-    <div style={style}>
+    <div className="flex flex-col gap-1.5" style={style}>
       {label ? (
-        <label className="mb-1.5 block text-sm font-medium text-foreground">
+        <label className="block text-sm font-medium text-foreground">
           {label}
           {required ? <span className="ml-1 text-red-500">*</span> : null}
         </label>
@@ -79,14 +83,11 @@ interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'value'
 
 function InputBase({ value = '', onChange, className, type = 'text', ...props }: InputProps) {
   return (
-    <input
+    <BaseInput
       value={value}
       type={type}
       onChange={event => onChange?.(event.target.value)}
-      className={cx(
-        'control-field h-9 w-full px-3 text-sm text-foreground outline-none',
-        className,
-      )}
+      className={className}
       {...props}
     />
   )
@@ -106,14 +107,11 @@ function TextArea({ value = '', onChange, autoSize, className, rows = 3, ...prop
   const maxRows = autoSize?.maxRows
 
   return (
-    <textarea
+    <BaseTextarea
       value={value}
       rows={computedRows}
       onChange={event => onChange?.(event.target.value)}
-      className={cx(
-        'control-field w-full px-3 py-2 text-sm text-foreground outline-none',
-        className,
-      )}
+      className={className}
       style={maxRows ? { maxHeight: `${maxRows * 1.75}rem` } : undefined}
       {...props}
     />
@@ -282,23 +280,20 @@ export function Button({
   ...props
 }: ButtonProps) {
   return (
-    <button
-      type={htmlType}
-      disabled={disabled || loading}
-      className={cx(
-        'inline-flex items-center justify-center gap-1.5 rounded-sm transition-colors',
-        buttonTypeClasses[type],
-        buttonSizeClasses[size],
-        long && 'w-full',
-        status === 'danger' && 'text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40',
-        (disabled || loading) && 'cursor-not-allowed opacity-60',
-        className,
-      )}
+    <UIButton
+      type={type}
+      htmlType={htmlType}
+      long={long}
+      loading={loading}
+      status={status}
+      icon={icon}
+      size={size}
+      className={className}
+      disabled={disabled}
       {...props}
     >
-      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : icon}
       {children}
-    </button>
+    </UIButton>
   )
 }
 
@@ -366,18 +361,21 @@ interface DatePickerProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'v
   format?: string
 }
 
-export function DatePicker({ value = '', onChange, className, ...props }: DatePickerProps) {
+export function DatePicker({ value = '', onChange, className, style, id, name, placeholder, disabled, ...props }: DatePickerProps) {
+  void props
   return (
-    <input
-      type="date"
-      value={value}
-      onChange={event => onChange?.(event.target.value)}
-      className={cx(
-        'control-field h-9 w-full px-3 py-2 pr-10 text-sm leading-5 text-foreground outline-none tabular-nums',
-        className,
-      )}
-      {...props}
-    />
+    <div style={style}>
+      <DatePickerField
+        id={id}
+        name={name}
+        value={value}
+        disabled={disabled}
+        placeholder={placeholder}
+        showLabel={false}
+        className={className}
+        onChange={nextValue => onChange?.(nextValue)}
+      />
+    </div>
   )
 }
 

@@ -413,11 +413,10 @@ export function createDefaultResumeData(template: ReactiveTemplateId = 'template
           {
             fullWidth: true,
             main: [
-              'summary',
               'education',
+              'skills',
               'experience',
               'projects',
-              'skills',
               'languages',
               'interests',
               'profiles',
@@ -426,6 +425,7 @@ export function createDefaultResumeData(template: ReactiveTemplateId = 'template
               'publications',
               'volunteer',
               'references',
+              'summary',
             ],
             sidebar: [],
           },

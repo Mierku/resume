@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, ReactNode } from 'react'
+import { ChevronDown } from 'lucide-react'
 
 interface AccordionItem {
   id: string
@@ -33,10 +34,10 @@ export function Accordion({ items, className = '' }: AccordionProps) {
             onClick={() => toggle(item.id)}
           >
             <span>{item.title}</span>
-            <span 
-              className={`i-lucide-chevron-down w-4 h-4 transition-transform ${
+            <ChevronDown
+              className={`size-4 transition-transform ${
                 openIds.includes(item.id) ? 'rotate-180' : ''
-              }`} 
+              }`}
             />
           </button>
           {openIds.includes(item.id) && (

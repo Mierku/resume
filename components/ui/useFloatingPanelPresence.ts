@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 
 export type FloatingPanelPhase = 'closed' | 'opening' | 'open' | 'closing'
 
-export const FLOATING_PANEL_ANIMATION_MS = 190
+export const FLOATING_PANEL_ANIMATION_MS = 240
 
 export function useFloatingPanelPresence(open: boolean, animationMs = FLOATING_PANEL_ANIMATION_MS) {
   const [mounted, setMounted] = useState(open)

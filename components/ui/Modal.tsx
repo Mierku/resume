@@ -2,6 +2,7 @@
 
 import { ReactNode, useEffect } from 'react'
 import { createPortal } from 'react-dom'
+import { X } from 'lucide-react'
 import { Button } from './Button'
 
 interface ModalProps {
@@ -50,7 +51,7 @@ export function Modal({ open, onClose, title, children, footer }: ModalProps) {
               onClick={onClose}
               className="p-1 hover:bg-muted rounded-[10px] transition-colors"
             >
-              <span className="i-lucide-x w-5 h-5" />
+              <X className="size-5" />
             </button>
           </div>
         )}

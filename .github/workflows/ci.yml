@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - master
+      - develop
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Verify (lint + build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/immersive_delivery?schema=public
+      REDIS_URL: redis://localhost:6379
+      AUTH_SECRET: ci-auth-secret
+      SESSION_SECRET: ci-session-secret
+      SITE_ORIGIN: http://localhost:3000
+      NEXT_PUBLIC_SITE_ORIGIN: http://localhost:3000
+      NEXT_PUBLIC_CDN_ORIGIN: ""
+      NEXT_PUBLIC_ASSET_PREFIX: ""
+      INTERNAL_SYNC_TOKEN: ci-internal-sync-token
+      AI_API_KEY: ci-ai-api-key
+      AI_BASE_URL: https://api.openai.com/v1
+      AI_MODEL: gpt-4o-mini
+      SMTP_HOST: smtp.example.com
+      SMTP_PORT: "587"
+      SMTP_USER: ci@example.com
+      SMTP_PASS: ci-smtp-password
+      EMAIL_FROM: CI <ci@example.com>
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: pnpm -s db:generate
+
+      - name: Lint (advisory)
+        id: lint
+        continue-on-error: true
+        run: pnpm -s lint
+
+      - name: Build (blocking)
+        run: pnpm -s build
+
+      - name: Lint summary
+        if: always()
+        run: |
+          if [ "${{ steps.lint.outcome }}" = "failure" ]; then
+            {
+              echo "### Lint status: advisory failure"
+              echo ""
+              echo "- This repository currently has lint violations."
+              echo "- CI is configured to **warn** on lint and **block** on build."
+              echo "- After lint is fixed, remove \`continue-on-error: true\` to make lint blocking."
+            } >> "$GITHUB_STEP_SUMMARY"
+          else
+            {
+              echo "### Lint status: pass"
+              echo ""
+              echo "- Lint passed."
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi

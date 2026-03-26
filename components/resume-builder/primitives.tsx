@@ -9,7 +9,11 @@ import {
   type ReactNode,
 } from 'react'
 import { toast } from '@/lib/toast'
+import { Checkbox as UICheckbox } from '@/components/ui/checkbox'
+import { Input as UIInput } from '@/components/ui/Input'
 import { CustomSelect, getSelectLabelText, type CustomSelectOption } from '@/components/ui/select-core'
+import { Switch as UISwitch } from '@/components/ui/switch'
+import { Textarea as UITextarea } from '@/components/ui/Textarea'
 import {
   ArrowDown,
   ArrowLeft,
@@ -116,7 +120,7 @@ function inputClass(className = '') {
 
 function InputBase({ value, onChange, placeholder, className, style, type = 'text', ...props }: InputBaseProps) {
   return (
-    <input
+    <UIInput
       type={type}
       value={value}
       onChange={event => onChange(event.target.value)}
@@ -141,7 +145,7 @@ function TextArea({ value, onChange, placeholder, className, autoSize }: TextAre
   const maxRows = autoSize?.maxRows
 
   return (
-    <textarea
+    <UITextarea
       value={value}
       onChange={event => onChange(event.target.value)}
       placeholder={placeholder}
@@ -247,25 +251,20 @@ interface SwitchProps {
 }
 
 export function Switch({ checked, onChange, size }: SwitchProps) {
-  const isSmall = size === 'small'
   return (
-    <label className={`relative inline-flex ${isSmall ? 'h-5 w-9' : 'h-6 w-10'} cursor-pointer items-center`}>
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={event => onChange(event.target.checked)}
-        className="peer sr-only"
-      />
-      <span className="absolute inset-0 rounded-full bg-border transition-colors peer-checked:bg-primary" />
-      <span
-        className={[
-          'absolute rounded-full bg-white transition-transform',
-          isSmall ? 'left-0.5 h-4 w-4' : 'left-0.5 h-5 w-5',
-          checked ? (isSmall ? 'translate-x-4' : 'translate-x-4') : 'translate-x-0',
-        ].join(' ')}
-      />
-    </label>
+    <UISwitch checked={checked} onCheckedChange={onChange} size={size === 'small' ? 'small' : 'default'} />
   )
+}
+
+interface CheckboxProps {
+  checked: boolean
+  onChange: (value: boolean) => void
+  className?: string
+  disabled?: boolean
+}
+
+export function Checkbox({ checked, onChange, className, disabled }: CheckboxProps) {
+  return <UICheckbox checked={checked} disabled={disabled} onCheckedChange={onChange} className={className} />
 }
 
 interface SliderProps {

@@ -1,14 +1,10 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-export function middleware(request: NextRequest) {
-  // 允许浏览器扩展访问 API
+export function proxy(request: NextRequest) {
   const response = NextResponse.next()
-  
-  // 获取请求来源
   const origin = request.headers.get('origin')
-  
-  // 允许 localhost 和浏览器扩展
+
   if (
     origin &&
     (
@@ -23,15 +19,14 @@ export function middleware(request: NextRequest) {
     response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
     response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
   }
-  
-  // 处理 OPTIONS 预检请求
+
   if (request.method === 'OPTIONS') {
     return new NextResponse(null, {
       status: 200,
       headers: response.headers,
     })
   }
-  
+
   return response
 }
 

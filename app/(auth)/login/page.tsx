@@ -1,9 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { signIn } from 'next-auth/react'
+import { FlaskConical, MessageCircleMore } from 'lucide-react'
 import { Message } from '@/components/ui/radix-adapter'
 import { Button } from '@/components/ui/Button'
 import { BrandFlowerIcon } from '@/components/BrandFlowerIcon'
@@ -23,7 +24,7 @@ function GoogleMark() {
 }
 
 function WeChatMark() {
-  return <span className="i-lucide-message-circle-more h-4 w-4" aria-hidden="true" />
+  return <MessageCircleMore className="size-4" aria-hidden="true" />
 }
 
 function getLoginErrorMessage(error: string | null) {
@@ -59,6 +60,14 @@ function withLegalAck(path: string) {
 }
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginPageContent />
+    </Suspense>
+  )
+}
+
+function LoginPageContent() {
   const searchParams = useSearchParams()
   const nextPath = sanitizeNextPath(searchParams.get('next'))
   const error = searchParams.get('error')
@@ -155,10 +164,10 @@ export default function LoginPage() {
                 color: '#ffffff',
               }}
               disabled={pendingProvider !== null || !consentChecked}
-            >
-              <WeChatMark />
-              {pendingProvider === 'wechat' ? '跳转中...' : '微信登录'}
-            </Button>
+              >
+                <WeChatMark />
+                {pendingProvider === 'wechat' ? '跳转中...' : '微信登录'}
+              </Button>
 
             <Button
               type="button"
@@ -225,7 +234,7 @@ export default function LoginPage() {
                 disabled={pendingProvider !== null || !consentChecked}
                 title="仅本地开发环境可用"
               >
-                <span className="i-lucide-flask-conical w-4 h-4" aria-hidden="true" />
+                <FlaskConical className="size-4" aria-hidden="true" />
                 {pendingProvider === 'dev' ? '创建中...' : '测试账号登录'}
               </Button>
             )}

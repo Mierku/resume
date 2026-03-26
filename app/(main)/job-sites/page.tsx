@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { ExternalLink, Plus, Trash2 } from 'lucide-react'
 import { AuthGuard } from '@/components/AuthGuard'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -136,10 +137,7 @@ function JobSitesContent() {
               返回跟踪页
             </Button>
           </Link>
-          <Button onClick={() => setShowAddModal(true)}>
-            <span className="i-lucide-plus w-4 h-4 mr-1" />
-            添加网站
-          </Button>
+          <Button onClick={() => setShowAddModal(true)} icon={<Plus />}>添加网站</Button>
         </div>
       </div>
 
@@ -189,7 +187,7 @@ function JobSitesContent() {
                 <div>
                   <h3 className="font-medium text-foreground flex items-center gap-2">
                     {site.name}
-                    <span className="i-lucide-external-link w-3 h-3 text-muted-foreground" />
+                    <ExternalLink className="size-3 text-muted-foreground" />
                   </h3>
                   {site.region && (
                     <span className="pill mt-1">{site.region}</span>
@@ -208,7 +206,7 @@ function JobSitesContent() {
                 className="absolute top-2 right-2 p-1.5 bg-background border border-border rounded-sm opacity-0 group-hover:opacity-100 hover:border-red-500 hover:text-red-500 transition-all"
                 title="删除"
               >
-                <span className="i-lucide-trash-2 w-4 h-4" />
+                <Trash2 className="size-4" />
               </button>
             )}
           </Card>

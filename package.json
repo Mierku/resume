@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build --webpack",
+    "build:turbo": "next build",
     "start": "next start",
     "lint": "eslint",
     "db:generate": "prisma generate",
@@ -59,21 +60,16 @@
     "zustand": "^5.0.8"
   },
   "devDependencies": {
-    "@iconify-json/lucide": "^1.2.24",
     "@tailwindcss/postcss": "^4.2.2",
     "@types/node": "^20",
     "@types/nodemailer": "^7.0.9",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@unocss/postcss": "^0.65.3",
-    "@unocss/preset-icons": "^0.65.3",
-    "@unocss/reset": "^0.65.3",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "prisma": "^6.2.1",
     "sass": "^1.97.3",
     "tailwindcss": "^4.2.2",
-    "typescript": "^5",
-    "unocss": "^0.65.3"
+    "typescript": "^5"
   }
 }

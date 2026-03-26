@@ -1,5 +1,6 @@
 import { Form, Input, Button, Card } from '@/components/ui/radix-adapter'
 import { IconPlus, IconDelete } from '@/components/ui/radix-icons'
+import { MonthPickerField } from '@/components/ui/month-picker'
 import { DATA_SOURCE_SECTION_IDS } from './section-meta'
 
 const FormItem = Form.Item
@@ -42,10 +43,21 @@ export default function ProjectSection({ data, onChange, onAdd, onRemove }: Prop
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
             <FormItem label="开始时间">
-              <Input value={p.startDate || ''} onChange={value => onChange(index, 'startDate', value)} placeholder="2023-01" />
+              <MonthPickerField
+                value={p.startDate || ''}
+                showLabel={false}
+                placeholder="选择开始时间"
+                onChange={value => onChange(index, 'startDate', value)}
+              />
             </FormItem>
             <FormItem label="结束时间">
-              <Input value={p.endDate || ''} onChange={value => onChange(index, 'endDate', value)} placeholder="2023-06" />
+              <MonthPickerField
+                value={p.endDate || ''}
+                showLabel={false}
+                allowPresent
+                placeholder="选择结束时间"
+                onChange={value => onChange(index, 'endDate', value)}
+              />
             </FormItem>
             <FormItem label="职位">
               <Input value={p.role || ''} onChange={value => onChange(index, 'role', value)} placeholder="前端负责人" />

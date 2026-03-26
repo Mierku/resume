@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { Check, Database, Edit, Plus, Trash2 } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Skeleton } from '@/components/ui/Skeleton'
@@ -155,10 +156,7 @@ export default function DataSourceListPage() {
             </p>
           </div>
           <Link href="/resume/data-source/new">
-            <Button>
-              <span className="i-lucide-plus w-4 h-4 mr-1" />
-              新建数据源
-            </Button>
+            <Button icon={<Plus />}>新建数据源</Button>
           </Link>
         </div>
 
@@ -192,12 +190,12 @@ export default function DataSourceListPage() {
                         onClick={() => void handleSetDefault(ds.id)}
                         title="设为默认"
                       >
-                        <span className="i-lucide-check w-4 h-4" />
+                        <Check />
                       </Button>
                     )}
                     <Link href={`/resume/data-source/${ds.id}`}>
                       <Button variant="ghost" size="sm" title="编辑">
-                        <span className="i-lucide-edit w-4 h-4" />
+                        <Edit />
                       </Button>
                     </Link>
                     <Button
@@ -206,7 +204,7 @@ export default function DataSourceListPage() {
                       onClick={() => void handleDelete(ds.id)}
                       title="删除"
                     >
-                      <span className="i-lucide-trash-2 w-4 h-4" />
+                      <Trash2 />
                     </Button>
                   </div>
                 </div>
@@ -215,13 +213,10 @@ export default function DataSourceListPage() {
           </div>
         ) : (
           <div className="text-center py-12">
-            <div className="i-lucide-database w-12 h-12 mx-auto text-muted-foreground mb-4" />
+            <Database className="mx-auto mb-4 size-12 text-muted-foreground" />
             <p className="text-muted-foreground mb-4">还没有数据源</p>
             <Link href="/resume/data-source/new">
-              <Button>
-                <span className="i-lucide-plus w-4 h-4 mr-1" />
-                创建第一个数据源
-              </Button>
+              <Button icon={<Plus />}>创建第一个数据源</Button>
             </Link>
           </div>
         )}

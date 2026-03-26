@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { Copy, X } from 'lucide-react'
 import { Message } from '@/components/ui/radix-adapter'
 import s from '../landing.module.scss'
 
@@ -124,7 +125,7 @@ export function HomePageClient() {
                   aria-label="关闭安装说明"
                   onClick={() => setInstallGuideOpen(false)}
                 >
-                  <span className="i-lucide-x w-5 h-5" aria-hidden="true" />
+                  <X className="size-5" aria-hidden="true" />
                 </button>
               </div>
 
@@ -190,7 +191,7 @@ export function HomePageClient() {
                         className={s.installCopyButton}
                         onClick={() => copyText(guide.url, `${guide.url} 已复制`)}
                       >
-                        <span className="i-lucide-copy w-4 h-4" aria-hidden="true" />
+                        <Copy className="size-4" aria-hidden="true" />
                         复制
                       </button>
                     </div>

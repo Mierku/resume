@@ -18,6 +18,7 @@ export interface ResumeDataSource {
   intention?: Record<string, unknown> | null
   summaryZh?: string | null
   summaryEn?: string | null
+  skillsIntroZh?: string | null
   education?: Array<Record<string, unknown>>
   work?: Array<Record<string, unknown>>
   projects?: Array<Record<string, unknown>>
@@ -45,6 +46,14 @@ export function createMockResumeDataSource(): ResumeDataSource {
     },
     summaryZh:
       '5 年前端开发经验，熟悉 React / Next.js / TypeScript，关注用户体验与工程质量，具备从 0 到 1 搭建业务前端架构能力。',
+    skillsIntroZh: `<ol>
+<li>熟练掌握 HTML5/CSS3</li>
+<li>了解 ES6/ES7、Webpack</li>
+<li>开发 Node 监控平台中间件</li>
+<li>了解常用的 Node 模块</li>
+<li>了解 Hybrid、Electron 开发</li>
+<li>React 以及 React 相关技术栈</li>
+</ol>`,
     education: [
       {
         id: 'edu-1',
@@ -82,21 +91,27 @@ export function createMockResumeDataSource(): ResumeDataSource {
     projects: [
       {
         id: 'project-1',
-        name: '智能简历 Builder',
+        name: '字节跳动创作者增长平台',
+        role: '前端负责人',
         startDate: '2024.01',
         endDate: '2024.08',
-        url: 'https://example.com/resume-builder',
-        description:
-          '设计并实现简历模块化编辑与模板引擎，支持拖拽排序、实时预览、导出打印。',
+        description: '主导创作者工作台与增长实验平台建设，统一任务流与指标看板，支撑运营快速验证增长策略。',
+        responsibilities:
+          '难点在于多业务线埋点口径不一致、实验配置频繁变更；设计可配置埋点协议与低代码实验面板，保障跨团队协作稳定推进。',
+        achievements: '平台覆盖 6 条核心增长链路，实验发布周期由 5 天缩短至 1 天，重点场景转化率提升 18%。',
+        url: '',
       },
       {
         id: 'project-2',
-        name: '岗位投递自动化平台',
+        name: '快手商业化投放中台',
+        role: '核心开发',
         startDate: '2023.03',
         endDate: '2023.11',
-        url: 'https://example.com/autofill',
-        description:
-          '实现多站点表单自动填充与投递记录收录，减少重复操作，提升投递效率。',
+        description: '负责投放策略配置、预算编排与数据报表模块，打通素材、计划、预算全流程。',
+        responsibilities:
+          '难点在于高并发场景下的数据一致性与复杂表单配置体验；通过分层缓存、异步校验和规则引擎重构，降低配置错误率。',
+        achievements: '人效提升约 30%，异常投放率下降 24%，复杂计划配置时长由 20 分钟缩短至 8 分钟。',
+        url: '',
       },
     ],
     skills: ['TypeScript', 'React', 'Next.js', 'Node.js', 'Tailwind CSS', 'Zustand'],
@@ -169,6 +184,32 @@ function textToHtml(text: string | null | undefined): string {
 
 function stripHtml(text: string): string {
   return text.replace(/<[^>]*>/g, '').trim()
+}
+
+function normalizeProjectDuty(project: Record<string, unknown>) {
+  return String(project.role || project.responsibilities || project.duty || project.position || '').trim()
+}
+
+function composeProjectDescription(project: Record<string, unknown>) {
+  const summary = String(project.description || '').trim()
+  const responsibilities = String(project.responsibilities || '').trim()
+  const achievements = String(project.achievements || '').trim()
+
+  if (!responsibilities && !achievements) {
+    return summary
+  }
+
+  const lines: string[] = []
+  if (summary) {
+    lines.push(`做了什么：${summary}`)
+  }
+  if (responsibilities) {
+    lines.push(`难点与职责：${responsibilities}`)
+  }
+  if (achievements) {
+    lines.push(`结果：${achievements}`)
+  }
+  return lines.join('\n')
 }
 
 function normalizeIntentionSalary(intention: Record<string, unknown>) {
@@ -350,9 +391,9 @@ function mapLegacyFormData(formData: Record<string, unknown>, data: ResumeData) 
     period: `${String(project.startDate || '')} - ${String(project.endDate || '')}`.replace(/^\s*-\s*$/, ''),
     website: {
       url: String(project.url || ''),
-      label: String(project.url || ''),
+      label: normalizeProjectDuty(project),
     },
-    description: textToHtml(String(project.description || '')),
+    description: textToHtml(composeProjectDescription(project)),
   }))
 
   const skills = (skillsModule.skills as string[]) || []
@@ -452,6 +493,7 @@ export function mapDataSourceToResumeData(
   }
 
   data.summary.content = textToHtml(dataSource.summaryZh || dataSource.summaryEn || '')
+  data.sections.skills.intro = textToHtml(dataSource.skillsIntroZh || '')
 
   data.sections.education.items = (dataSource.education || []).map(edu => ({
     id: String(edu.id || createId()),
@@ -484,9 +526,9 @@ export function mapDataSourceToResumeData(
     period: `${String(project.startDate || '')} - ${String(project.endDate || '')}`.replace(/^\s*-\s*$/, ''),
     website: {
       url: String(project.url || project.website || ''),
-      label: String(project.url || project.website || ''),
+      label: normalizeProjectDuty(project),
     },
-    description: textToHtml(String(project.description || '')),
+    description: textToHtml(composeProjectDescription(project)),
   }))
 
   data.sections.skills.items = (dataSource.skills || []).map<SkillItem>(skill => ({

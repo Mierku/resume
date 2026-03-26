@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { Check, Zap } from 'lucide-react'
 
 export function PluginSkeleton() {
   const [step, setStep] = useState<'idle' | 'popup' | 'filling' | 'done'>('idle')
@@ -108,7 +109,7 @@ export function PluginSkeleton() {
             ref={extBtnRef}
             className={`w-8 h-8 rounded-sm flex items-center justify-center transition-all ${step !== 'idle' ? 'bg-primary' : 'bg-primary/80'}`}
           >
-            <span className="i-lucide-zap w-4 h-4 text-white" />
+            <Zap className="size-4 text-white" />
           </div>
           <div className="text-[#5f6368]">⋮</div>
         </div>
@@ -144,7 +145,7 @@ export function PluginSkeleton() {
         <div className="absolute top-[92px] right-4 w-60 bg-white rounded-sm border border-[#ddd] shadow-2xl z-20 animate-slide-up">
           <div className="p-3 border-b border-[#eee] flex items-center gap-2">
             <div className="w-6 h-6 bg-primary rounded-sm flex items-center justify-center">
-              <span className="i-lucide-zap w-3.5 h-3.5 text-white" />
+              <Zap className="size-3.5 text-white" />
             </div>
             <span className="text-xs font-semibold text-[#333]">沉浸式填写</span>
           </div>
@@ -174,7 +175,7 @@ export function PluginSkeleton() {
                     />
                   </svg>
                   {step === 'done' && (
-                    <span className="i-lucide-check absolute inset-0 m-auto w-6 h-6 text-primary animate-fade-in" />
+                    <Check className="absolute inset-0 m-auto size-6 text-primary animate-fade-in" />
                   )}
                 </div>
                 <div className="text-[11px] text-[#666]">

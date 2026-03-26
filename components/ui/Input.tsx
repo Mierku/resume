@@ -1,6 +1,7 @@
 'use client'
 
 import { InputHTMLAttributes, forwardRef } from 'react'
+import { cn } from '@/lib/utils'
 
 export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   error?: string
@@ -13,14 +14,13 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
         <input
           ref={ref}
           data-invalid={error ? 'true' : undefined}
-          className={`
-            control-field w-full px-3 py-2 text-sm text-foreground outline-none
-            transition-all duration-200
-            ${className}
-          `}
+          className={cn(
+            'control-field h-9 w-full px-3 py-2 text-sm leading-5 text-foreground outline-none transition-[border-color,background-color] duration-200',
+            className,
+          )}
           {...props}
         />
-        {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
+        {error ? <p className="mt-1 text-[11px] text-red-500">{error}</p> : null}
       </div>
     )
   }

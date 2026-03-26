@@ -25,8 +25,8 @@
 [data-theme='dark'] .resume-builder-scope {
   --builder-panel-bg: color-mix(in srgb, var(--color-background) 92%, #000000);
   --builder-panel-bg-soft: color-mix(in srgb, var(--color-background) 95%, #000000);
-  --builder-panel-text: rgba(248, 250, 252, 0.94);
-  --builder-panel-text-muted: rgba(226, 232, 240, 0.74);
+  --builder-panel-text: rgba(250, 252, 255, 0.96);
+  --builder-panel-text-muted: rgba(226, 232, 240, 0.82);
   --builder-toolbar-bg: color-mix(in srgb, var(--builder-panel-bg-soft) 95%, #000000);
   --builder-preview-dock-bg: color-mix(in srgb, var(--builder-panel-bg) 90%, #000000);
   --builder-preview-dock-shadow: 0 10px 26px rgba(0, 0, 0, 0.36);
@@ -56,6 +56,8 @@ body.resume-builder-mono {
 }
 
 [data-theme='dark'] body.resume-builder-mono {
+  --color-foreground: rgba(250, 252, 255, 0.96);
+  --color-muted-foreground: rgba(226, 232, 240, 0.82);
   --control-hover-surface: color-mix(in srgb, var(--color-foreground) 6%, transparent);
   --control-focus-border: color-mix(in srgb, var(--color-foreground) 82%, transparent);
   --control-panel-border: color-mix(in srgb, var(--color-border) 95%, transparent);
@@ -63,7 +65,7 @@ body.resume-builder-mono {
   --control-panel-shadow: 0 18px 34px rgba(0, 0, 0, 0.5);
   --control-active-surface: color-mix(in srgb, var(--color-foreground) 12%, transparent);
   --control-active-indicator: var(--color-foreground);
-  --resume-control-text: var(--color-foreground);
+  --resume-control-text: rgba(250, 252, 255, 0.96);
   --resume-control-line: color-mix(in srgb, var(--color-border) 100%, transparent);
   --resume-control-line-hover: color-mix(in srgb, var(--color-foreground) 56%, transparent);
   --resume-control-line-focus: color-mix(in srgb, var(--color-foreground) 86%, transparent);
@@ -106,38 +108,50 @@ body.resume-builder-mono .control-floating-panel {
   transform-origin: top center;
   will-change: transform, opacity;
   transition:
-    opacity 180ms cubic-bezier(0.22, 1, 0.36, 1),
-    transform 210ms cubic-bezier(0.22, 1, 0.36, 1),
-    visibility 0s linear 210ms;
+    opacity 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 240ms cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0s linear 240ms;
 }
 
 body.resume-builder-mono .control-floating-panel[data-panel-placement='top'] {
   transform-origin: bottom center;
 }
 
+body.resume-builder-mono .control-floating-panel[data-side='top'] {
+  transform-origin: bottom center;
+}
+
 body.resume-builder-mono .control-floating-panel[data-panel-state='opening'],
-body.resume-builder-mono .control-floating-panel[data-panel-state='open'] {
+body.resume-builder-mono .control-floating-panel[data-panel-state='open'],
+body.resume-builder-mono .control-floating-panel[data-open] {
   visibility: visible;
   pointer-events: auto;
   transition-delay: 0s;
 }
 
 body.resume-builder-mono .control-floating-panel[data-panel-state='opening'],
-body.resume-builder-mono .control-floating-panel[data-panel-state='closing'] {
+body.resume-builder-mono .control-floating-panel[data-panel-state='closing'],
+body.resume-builder-mono .control-floating-panel[data-starting-style],
+body.resume-builder-mono .control-floating-panel[data-ending-style] {
   opacity: 0;
 }
 
 body.resume-builder-mono .control-floating-panel[data-panel-placement='bottom'][data-panel-state='opening'],
-body.resume-builder-mono .control-floating-panel[data-panel-placement='bottom'][data-panel-state='closing'] {
-  transform: var(--control-panel-anchor-transform) translateY(8px) scale(0.982);
+body.resume-builder-mono .control-floating-panel[data-panel-placement='bottom'][data-panel-state='closing'],
+body.resume-builder-mono .control-floating-panel[data-side='bottom'][data-starting-style],
+body.resume-builder-mono .control-floating-panel[data-side='bottom'][data-ending-style] {
+  transform: var(--control-panel-anchor-transform) translateY(10px) scale(0.984);
 }
 
 body.resume-builder-mono .control-floating-panel[data-panel-placement='top'][data-panel-state='opening'],
-body.resume-builder-mono .control-floating-panel[data-panel-placement='top'][data-panel-state='closing'] {
-  transform: var(--control-panel-anchor-transform) translateY(-8px) scale(0.982);
+body.resume-builder-mono .control-floating-panel[data-panel-placement='top'][data-panel-state='closing'],
+body.resume-builder-mono .control-floating-panel[data-side='top'][data-starting-style],
+body.resume-builder-mono .control-floating-panel[data-side='top'][data-ending-style] {
+  transform: var(--control-panel-anchor-transform) translateY(-10px) scale(0.984);
 }
 
-body.resume-builder-mono .control-floating-panel[data-panel-state='open'] {
+body.resume-builder-mono .control-floating-panel[data-panel-state='open'],
+body.resume-builder-mono .control-floating-panel[data-open]:not([data-starting-style]):not([data-ending-style]) {
   opacity: 1;
   transform: var(--control-panel-anchor-transform) translateY(0) scale(1);
 }
@@ -1355,12 +1369,8 @@ body.resume-builder-mono .resume-builder-scope .resume-focus-target.is-preview-f
 }
 
 .resume-builder-scope .resume-month-picker-panel {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: calc(100% + 6px);
   border-radius: 8px;
-  z-index: 55;
+  width: 100%;
   padding: 10px;
 }
 

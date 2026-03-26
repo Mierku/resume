@@ -1,0 +1,9 @@
+services:
+  app:
+    image: ${IMAGE_NAME:-ghcr.io/OWNER/REPO}:${IMAGE_TAG:-latest}
+    container_name: immersive-delivery-website
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "${APP_PORT:-3000}:3000"

@@ -4,6 +4,18 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { signOut } from "next-auth/react";
+import {
+  BadgeDollarSign,
+  ChevronDown,
+  ChevronUp,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  ScrollText,
+  ShieldCheck,
+  User,
+  X,
+} from "lucide-react";
 import { Button } from "../ui/Button";
 import { getUserDisplayName, type SessionUser } from "@/lib/user";
 import { AuthRequiredModal } from "@/components/ui/Modal";
@@ -20,7 +32,6 @@ const navLinks: NavLink[] = [
   { href: "/resume/templates", label: "模版" },
   { href: "/tracking", label: "跟踪" },
 ];
-const pricingLink: NavLink = { href: "/pricing", label: "定价" };
 
 export function Header() {
   const pathname = usePathname();
@@ -142,7 +153,7 @@ export function Header() {
   const auraTextPrimary = "var(--aura-header-text)";
   const auraTextMuted = "var(--aura-header-text-muted)";
   const auraTextSubtle = "var(--aura-header-text-subtle)";
-  const visibleNavLinks = user ? navLinks : [...navLinks, pricingLink];
+  const visibleNavLinks = navLinks;
   const displayName = user ? getUserDisplayName(user) : "";
 
   if (hideHeader) {
@@ -272,9 +283,13 @@ export function Header() {
                   aria-expanded={userMenuOpen}
                   aria-haspopup="menu"
                 >
-                  <span className="i-lucide-user w-4 h-4 mr-1" />
+                  <User className="mr-1 size-4" />
                   {displayName}
-                  <span className={`${userMenuOpen ? "i-lucide-chevron-up" : "i-lucide-chevron-down"} w-4 h-4 ml-1`} />
+                  {userMenuOpen ? (
+                    <ChevronUp className="ml-1 size-4" />
+                  ) : (
+                    <ChevronDown className="ml-1 size-4" />
+                  )}
                 </Button>
                 {userMenuOpen ? (
                   <div
@@ -291,7 +306,7 @@ export function Header() {
                       style={{ color: auraTextMuted }}
                       onClick={() => setUserMenuOpen(false)}
                     >
-                      <span className="i-lucide-layout-dashboard w-4 h-4" />
+                      <LayoutDashboard className="size-4" />
                       个人工作台
                     </Link>
                     <Link
@@ -300,7 +315,7 @@ export function Header() {
                       style={{ color: auraTextMuted }}
                       onClick={() => setUserMenuOpen(false)}
                     >
-                      <span className="i-lucide-badge-dollar-sign w-4 h-4" />
+                      <BadgeDollarSign className="size-4" />
                       定价
                     </Link>
                     <Link
@@ -309,7 +324,7 @@ export function Header() {
                       style={{ color: auraTextMuted }}
                       onClick={() => setUserMenuOpen(false)}
                     >
-                      <span className="i-lucide-scroll-text w-4 h-4" />
+                      <ScrollText className="size-4" />
                       用户服务协议
                     </Link>
                     <Link
@@ -318,7 +333,7 @@ export function Header() {
                       style={{ color: auraTextMuted }}
                       onClick={() => setUserMenuOpen(false)}
                     >
-                      <span className="i-lucide-shield-check w-4 h-4" />
+                      <ShieldCheck className="size-4" />
                       隐私政策
                     </Link>
                     <button
@@ -327,7 +342,7 @@ export function Header() {
                       style={{ color: auraTextMuted }}
                       onClick={() => void handleLogout()}
                     >
-                      <span className="i-lucide-log-out w-4 h-4" />
+                      <LogOut className="size-4" />
                       退出登录
                     </button>
                   </div>
@@ -351,7 +366,7 @@ export function Header() {
 
           {/* Mobile menu button */}
           <button className="md:hidden p-2" style={{ color: auraTextPrimary }} onClick={() => setMenuOpen(!menuOpen)}>
-            <span className={`${menuOpen ? "i-lucide-x" : "i-lucide-menu"} w-5 h-5`} />
+            {menuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
           </button>
         </div>
 
@@ -414,10 +429,14 @@ export function Header() {
                       onClick={() => setMobileUserMenuOpen(prev => !prev)}
                     >
                       <span className="flex items-center gap-2">
-                        <span className="i-lucide-user w-4 h-4" />
+                        <User className="size-4" />
                         {displayName}
                       </span>
-                      <span className={`${mobileUserMenuOpen ? "i-lucide-chevron-up" : "i-lucide-chevron-down"} w-4 h-4`} />
+                      {mobileUserMenuOpen ? (
+                        <ChevronUp className="size-4" />
+                      ) : (
+                        <ChevronDown className="size-4" />
+                      )}
                     </button>
                     {mobileUserMenuOpen ? (
                       <div className="flex flex-col gap-1 pl-9 pr-2 pb-1">

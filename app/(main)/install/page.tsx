@@ -1,5 +1,6 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
+import { Check } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { buildMetadata } from '@/lib/seo'
@@ -104,19 +105,19 @@ export default function InstallPage() {
           </p>
           <ul className="text-sm text-muted-foreground space-y-2">
             <li className="flex items-start gap-2">
-              <span className="i-lucide-check w-4 h-4 text-primary mt-0.5" />
+              <Check className="mt-0.5 size-4 text-primary" />
               是否已开启浏览器的开发者模式并重新加载扩展
             </li>
             <li className="flex items-start gap-2">
-              <span className="i-lucide-check w-4 h-4 text-primary mt-0.5" />
+              <Check className="mt-0.5 size-4 text-primary" />
               确保已登录网站账号
             </li>
             <li className="flex items-start gap-2">
-              <span className="i-lucide-check w-4 h-4 text-primary mt-0.5" />
+              <Check className="mt-0.5 size-4 text-primary" />
               确保已创建至少一个数据源
             </li>
             <li className="flex items-start gap-2">
-              <span className="i-lucide-check w-4 h-4 text-primary mt-0.5" />
+              <Check className="mt-0.5 size-4 text-primary" />
               刷新页面后重试
             </li>
           </ul>

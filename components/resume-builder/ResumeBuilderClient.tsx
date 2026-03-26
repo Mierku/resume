@@ -25,13 +25,11 @@ import {
   useState,
 } from 'react'
 import dynamic from 'next/dynamic'
-import { createPortal } from 'react-dom'
-import { DayPicker, type DateRange } from 'react-day-picker'
-import { zhCN } from 'date-fns/locale/zh-CN'
 import { useRouter } from 'next/navigation'
-import { CalendarDays, FilePenLine, LayoutTemplate, Moon, SlidersHorizontal, Sun, Type as TypeIcon, FileText, PenLine, ZoomIn, ZoomOut } from 'lucide-react'
+import { FilePenLine, LayoutTemplate, Moon, SlidersHorizontal, Sun, Type as TypeIcon, FileText, PenLine, ZoomIn, ZoomOut } from 'lucide-react'
 import {
   Button,
+  Checkbox,
   Input,
   IconChevronDown,
   IconChevronRight,
@@ -67,10 +65,12 @@ import {
   type ResumeData,
   type StandardSectionType,
 } from '@/lib/resume/types'
+import { dateToYearMonth, joinPeriodValue, splitPeriodValue } from '@/lib/date-fields'
 import { getTemplateDefaultPrimaryColor, RESUME_TEMPLATES } from '@/lib/constants'
 import { AuthRequiredModal, Modal } from '@/components/ui/Modal'
+import { DateRangePickerField } from '@/components/ui/date-range-picker'
+import { MonthPickerField } from '@/components/ui/month-picker'
 import type { PreviewNavigationTarget } from '@/components/resume-reactive-preview'
-import { useFloatingPanelPresence } from '@/components/ui/useFloatingPanelPresence'
 import { useResumeBuilderStore } from './store/useResumeBuilderStore'
 import { FillToolPanel } from './panels/FillToolPanel'
 import { ExportWorkbench } from './export/ExportWorkbench'
@@ -136,10 +136,7 @@ const POLITICAL_STATUS_OPTIONS = [
   { value: '民主党派', label: '民主党派' },
 ]
 
-const MIN_TIME_YEAR = 1980
-const MAX_TIME_YEAR = new Date().getFullYear() + 3
 const THEME_STORAGE_KEY = 'theme'
-const MONTH_OPTIONS = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'] as const
 const DEFAULT_TEXT_COLOR = '#111827'
 
 function toSingleSelectValue(value: string | string[]) {
@@ -334,367 +331,6 @@ function NumberComboField({ label, value, config, suffix, onChange }: NumberComb
   )
 }
 
-interface MonthPickerFieldProps {
-  label: string
-  value: string
-  placeholder?: string
-  allowPresent?: boolean
-  maxValue?: string
-  showTriggerIcon?: boolean
-  showLabel?: boolean
-  onChange: (value: string) => void
-}
-
-function MonthPickerField({
-  label,
-  value,
-  placeholder,
-  allowPresent = false,
-  maxValue,
-  showTriggerIcon = true,
-  showLabel = true,
-  onChange,
-}: MonthPickerFieldProps) {
-  const [open, setOpen] = useState(false)
-  const pickerRef = useRef<HTMLDivElement | null>(null)
-  const panelPresence = useFloatingPanelPresence(open)
-  const initialYear = yearMonthToYear(value) || new Date().getFullYear()
-  const [year, setYear] = useState(initialYear)
-  const maxYear = yearMonthToYear(maxValue || '') || MAX_TIME_YEAR
-  const openPicker = () => {
-    const nextYear = yearMonthToYear(value)
-    if (nextYear) {
-      setYear(clamp(nextYear, MIN_TIME_YEAR, maxYear))
-      setOpen(true)
-      return
-    }
-    setYear(clamp(initialYear, MIN_TIME_YEAR, maxYear))
-    setOpen(true)
-  }
-
-  useEffect(() => {
-    if (!open) return
-
-    const onPointerDown = (event: PointerEvent) => {
-      const target = event.target
-      if (!pickerRef.current || !(target instanceof Node)) return
-      if (!pickerRef.current.contains(target)) {
-        setOpen(false)
-      }
-    }
-
-    const onEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setOpen(false)
-      }
-    }
-
-    window.addEventListener('pointerdown', onPointerDown)
-    window.addEventListener('keydown', onEscape)
-    return () => {
-      window.removeEventListener('pointerdown', onPointerDown)
-      window.removeEventListener('keydown', onEscape)
-    }
-  }, [open])
-
-  const selectedYear = yearMonthToYear(value)
-  const selectedMonth = isYearMonthValue(value) ? value.slice(5, 7) : null
-  const displayText = value || placeholder || '选择日期'
-
-  return (
-    <div ref={pickerRef} className="resume-month-picker-field">
-      {showLabel ? <label className="text-xs text-muted-foreground block mb-1">{label}</label> : null}
-      <button
-        type="button"
-        className={`control-field resume-month-picker-trigger h-9 w-full px-3 py-2 text-sm leading-5 text-foreground outline-none ${showTriggerIcon ? 'has-icon' : ''} ${open ? 'is-open' : ''}`}
-        aria-haspopup="dialog"
-        aria-expanded={open}
-        data-open={open ? 'true' : undefined}
-        onClick={() => {
-          if (open) {
-            setOpen(false)
-            return
-          }
-          openPicker()
-        }}
-        onKeyDown={event => {
-          if (event.key === 'ArrowDown' || event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault()
-            openPicker()
-          }
-        }}
-      >
-        <span className={`min-w-0 flex-1 truncate ${value ? '' : 'text-muted-foreground'}`}>{displayText}</span>
-        {showTriggerIcon ? (
-          <span className="resume-month-picker-trigger-icon" aria-hidden>
-            <IconChevronDown />
-          </span>
-        ) : null}
-      </button>
-
-      {panelPresence.mounted ? (
-        <div
-          className="resume-month-picker-panel control-panel control-floating-panel"
-          data-panel-state={panelPresence.phase}
-          data-panel-placement="bottom"
-          aria-hidden={!open}
-        >
-          <div className="resume-month-picker-panel-head">
-            <button type="button" className="resume-month-picker-year-btn" onClick={() => setYear(prev => clamp(prev - 1, MIN_TIME_YEAR, maxYear))}>
-              上一年
-            </button>
-            <span className="resume-month-picker-year-label">{year} 年</span>
-            <button type="button" className="resume-month-picker-year-btn" onClick={() => setYear(prev => clamp(prev + 1, MIN_TIME_YEAR, maxYear))}>
-              下一年
-            </button>
-          </div>
-
-          <div className="resume-month-picker-grid">
-            {MONTH_OPTIONS.map(month => {
-              const nextValue = `${year}-${month}`
-              const active = selectedYear === year && selectedMonth === month
-              const disabled = Boolean(maxValue && isYearMonthValue(maxValue) && nextValue > maxValue)
-
-              return (
-                <button
-                  key={`${label}-${nextValue}`}
-                  type="button"
-                  className={`resume-month-picker-cell ${active ? 'is-active' : ''}`}
-                  disabled={disabled}
-                  onClick={() => {
-                    if (disabled) return
-                    onChange(nextValue)
-                    setOpen(false)
-                  }}
-                >
-                  {month}
-                </button>
-              )
-            })}
-          </div>
-
-          <div className="resume-month-picker-panel-actions">
-            <button
-              type="button"
-              className="resume-month-picker-action"
-              onClick={() => {
-                onChange('')
-                setOpen(false)
-              }}
-            >
-              清空
-            </button>
-            {allowPresent ? (
-              <button
-                type="button"
-                className={`resume-month-picker-action ${value === '至今' ? 'is-active' : ''}`}
-                onClick={() => {
-                  onChange('至今')
-                  setOpen(false)
-                }}
-              >
-                至今
-              </button>
-            ) : null}
-          </div>
-        </div>
-      ) : null}
-    </div>
-  )
-}
-
-interface DateRangePickerFieldProps {
-  label: string
-  start: string
-  end: string
-  onChange: (nextStart: string, nextEnd: string) => void
-}
-
-function DateRangePickerField({ label, start, end, onChange }: DateRangePickerFieldProps) {
-  const [open, setOpen] = useState(false)
-  const [panelPosition, setPanelPosition] = useState<{
-    left: number
-    top: number
-    width: number
-    placement: 'top' | 'bottom'
-  } | null>(null)
-  const triggerRef = useRef<HTMLButtonElement | null>(null)
-  const panelRef = useRef<HTMLDivElement | null>(null)
-  const panelPresence = useFloatingPanelPresence(open)
-  const canUsePortal = typeof document !== 'undefined'
-
-  const selectedRange = useMemo<DateRange | undefined>(() => {
-    const from = yearMonthToDate(start)
-    const to = yearMonthToDate(end)
-    if (!from) return undefined
-    return { from, to: to || undefined }
-  }, [end, start])
-
-  useEffect(() => {
-    if (!open) return
-
-    const updatePanelPosition = () => {
-      const rect = triggerRef.current?.getBoundingClientRect()
-      if (!rect) return
-
-      const viewportPadding = 12
-      const gap = 6
-      const viewportWidth = window.innerWidth
-      const oneMonthLayout = viewportWidth <= 1200
-      const preferredWidth = oneMonthLayout ? 320 : 516
-      const maxAllowedWidth = Math.max(280, viewportWidth - viewportPadding * 2)
-      const width = Math.min(preferredWidth, maxAllowedWidth)
-      const left = clamp(rect.left, viewportPadding, Math.max(viewportPadding, viewportWidth - width - viewportPadding))
-
-      const spaceBelow = window.innerHeight - rect.bottom - viewportPadding
-      const spaceAbove = rect.top - viewportPadding
-      const placement = spaceBelow < 360 && spaceAbove > spaceBelow ? 'top' : 'bottom'
-      const top = placement === 'top' ? rect.top - gap : rect.bottom + gap
-
-      setPanelPosition({
-        left,
-        top,
-        width,
-        placement,
-      })
-    }
-
-    const onPointerDown = (event: MouseEvent) => {
-      const target = event.target
-      if (!(target instanceof Node)) return
-      if (triggerRef.current?.contains(target) || panelRef.current?.contains(target)) return
-      setOpen(false)
-    }
-
-    const onScrollReposition = () => {
-      if (!open) return
-      updatePanelPosition()
-    }
-
-    const onEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setOpen(false)
-      }
-    }
-
-    updatePanelPosition()
-    window.addEventListener('resize', updatePanelPosition)
-    window.addEventListener('scroll', onScrollReposition, true)
-    document.addEventListener('mousedown', onPointerDown)
-    window.addEventListener('keydown', onEscape)
-
-    return () => {
-      window.removeEventListener('resize', updatePanelPosition)
-      window.removeEventListener('scroll', onScrollReposition, true)
-      document.removeEventListener('mousedown', onPointerDown)
-      window.removeEventListener('keydown', onEscape)
-    }
-  }, [open])
-
-  const displayText = useMemo(() => {
-    if (start && end) {
-      return `${start} - ${end}`
-    }
-    if (start) {
-      return start
-    }
-    return '选择时间段'
-  }, [end, start])
-
-  const fromMonth = selectedRange?.from || yearMonthToDate(start) || new Date()
-  const panelStyle: CSSProperties & Record<'--control-panel-anchor-transform', string> = {
-    position: 'fixed',
-    left: panelPosition?.left ?? 0,
-    top: panelPosition?.top ?? 0,
-    width: panelPosition?.width ?? 0,
-    '--control-panel-anchor-transform': panelPosition?.placement === 'top' ? 'translateY(-100%)' : 'translateY(0px)',
-  }
-
-  const panel = (
-    <div
-      ref={panelRef}
-      className="resume-period-range-panel control-panel control-floating-panel"
-      data-panel-state={panelPresence.phase}
-      data-panel-placement={panelPosition?.placement || 'bottom'}
-      aria-hidden={!open}
-      onPointerDown={event => event.stopPropagation()}
-      onWheelCapture={event => event.stopPropagation()}
-      onWheel={event => event.stopPropagation()}
-      style={panelStyle}
-    >
-      <DayPicker
-        mode="range"
-        locale={zhCN}
-        selected={selectedRange}
-        defaultMonth={fromMonth}
-        numberOfMonths={2}
-        pagedNavigation
-        showOutsideDays
-        className="resume-period-range-calendar"
-        onSelect={range => {
-          const nextStart = range?.from ? dateToYearMonth(range.from) : ''
-          const nextEnd = range?.to ? dateToYearMonth(range.to) : ''
-          onChange(nextStart, nextEnd)
-          if (range?.from && range?.to) {
-            setOpen(false)
-          }
-        }}
-      />
-      <div className="resume-period-range-actions">
-        <button
-          type="button"
-          className="resume-period-range-action"
-          onClick={() => {
-            onChange('', '')
-            setOpen(false)
-          }}
-        >
-          清空
-        </button>
-        <button
-          type="button"
-          className={`resume-period-range-action ${end === '至今' ? 'is-active' : ''}`}
-          onClick={() => {
-            const base = start && isYearMonthValue(start) ? start : dateToYearMonth(new Date())
-            onChange(base, '至今')
-            setOpen(false)
-          }}
-        >
-          至今
-        </button>
-      </div>
-    </div>
-  )
-
-  return (
-    <div className="resume-period-range-field">
-      <label className="text-xs text-muted-foreground block mb-1">{label}</label>
-      <button
-        ref={triggerRef}
-        type="button"
-        className={`control-field resume-period-range-trigger h-9 w-full px-3 py-2 text-sm leading-5 text-foreground outline-none has-icon ${open ? 'is-open' : ''}`}
-        aria-haspopup="dialog"
-        aria-expanded={open}
-        data-open={open ? 'true' : undefined}
-        onClick={() => setOpen(prev => !prev)}
-        onKeyDown={event => {
-          if (event.key === 'ArrowDown' || event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault()
-            setOpen(true)
-          }
-        }}
-      >
-        <span className={`min-w-0 flex-1 truncate ${start ? '' : 'text-muted-foreground'}`}>{displayText}</span>
-        <span className="resume-period-range-trigger-icon" aria-hidden>
-          <CalendarDays size={16} strokeWidth={1.8} />
-        </span>
-      </button>
-
-      {panelPresence.mounted && panelPosition && canUsePortal ? createPortal(panel, document.body) : null}
-    </div>
-  )
-}
-
 const STANDARD_SECTION_LABELS: Record<StandardSectionType, string> = {
   profiles: '社交资料',
   experience: '工作经历',
@@ -874,72 +510,6 @@ function clamp(value: number, min: number, max: number) {
 
 function dedupeSectionIds(sectionIds: string[]) {
   return Array.from(new Set(sectionIds.filter(Boolean)))
-}
-
-function isYearMonthValue(value: string) {
-  return /^\d{4}-(0[1-9]|1[0-2])$/.test(value)
-}
-
-function yearMonthToYear(value: string) {
-  if (!isYearMonthValue(value)) return null
-  return Number(value.slice(0, 4))
-}
-
-function yearMonthToDate(value: string) {
-  if (!isYearMonthValue(value)) return null
-  const [yearPart, monthPart] = value.split('-')
-  const year = Number(yearPart)
-  const month = Number(monthPart)
-  if (!Number.isFinite(year) || !Number.isFinite(month)) return null
-  return new Date(year, month - 1, 1)
-}
-
-function dateToYearMonth(value: Date) {
-  return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}`
-}
-
-function splitPeriodValue(value: string) {
-  const normalized = value.trim()
-  if (!normalized) {
-    return { start: '', end: '' }
-  }
-
-  if (normalized === '至今') {
-    return { start: '', end: '至今' }
-  }
-
-  if (isYearMonthValue(normalized)) {
-    return { start: normalized, end: '' }
-  }
-
-  const rangeMatch = normalized.match(
-    /^(\d{4}-(?:0[1-9]|1[0-2]))\s*(?:-|–|—|~|～|至|到)\s*(\d{4}-(?:0[1-9]|1[0-2])|至今)$/i,
-  )
-  if (rangeMatch) {
-    return { start: rangeMatch[1], end: rangeMatch[2] }
-  }
-
-  const humanParts = normalized.split(/\s+(?:-|–|—|~|～|至|到)\s+/).filter(Boolean)
-  if (humanParts.length >= 2) {
-    return { start: humanParts[0], end: humanParts[1] }
-  }
-
-  return { start: normalized, end: '' }
-}
-
-function joinPeriodValue(start: string, end: string) {
-  const normalizedStart = start.trim()
-  const normalizedEnd = end.trim()
-
-  if (normalizedStart && normalizedEnd) {
-    return `${normalizedStart} - ${normalizedEnd}`
-  }
-
-  if (normalizedStart) {
-    return normalizedStart
-  }
-
-  return normalizedEnd
 }
 
 type Html2Canvas = (
@@ -1257,13 +827,11 @@ function BasicsEditor() {
 
         <EditorAnchor sectionId="basics" fieldKey="birthDate" className="flex items-end pb-1">
           <label className="inline-flex h-9 cursor-pointer select-none items-center gap-2 text-xs text-muted-foreground">
-            <input
-              type="checkbox"
-              className="control-check h-4 w-4 shrink-0"
+            <Checkbox
               checked={basics.convertBirthToAge}
-              onChange={event =>
+              onChange={checked =>
                 updateResumeData(draft => {
-                  draft.basics.convertBirthToAge = event.target.checked
+                  draft.basics.convertBirthToAge = checked
                 })
               }
             />

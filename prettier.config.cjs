@@ -35,5 +35,4 @@ module.exports = {
       options: { printWidth: 100 },
     },
   ],
-  plugins: ['prettier-plugin-unocss'],
 };

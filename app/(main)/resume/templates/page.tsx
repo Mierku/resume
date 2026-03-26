@@ -152,7 +152,7 @@ export default function TemplatesPage() {
           <button
             key={template.id}
             type="button"
-            className="group relative rounded-[12px] overflow-hidden border border-border bg-background text-left"
+            className="group relative rounded-[12px] overflow-hidden border border-border bg-background text-left transition-colors duration-200 hover:border-primary/60"
             onClick={() => openCreateModal(template)}
           >
             <div className="aspect-[210/297] relative overflow-hidden bg-muted">
@@ -165,7 +165,7 @@ export default function TemplatesPage() {
                   loading="lazy"
                   decoding="async"
                   draggable={false}
-                  className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                  className="h-full w-full object-cover"
                   onError={() =>
                     setBrokenPreviews(prev => ({
                       ...prev,
@@ -183,8 +183,8 @@ export default function TemplatesPage() {
             </div>
 
             <div className="p-3">
-              <h3 className="font-medium text-foreground text-sm">{template.name}</h3>
-              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{template.description}</p>
+              <h3 className="font-medium text-foreground text-sm transition-colors duration-200 group-hover:text-primary">{template.name}</h3>
+              <p className="text-xs text-muted-foreground mt-1 line-clamp-2 transition-colors duration-200 group-hover:text-foreground">{template.description}</p>
             </div>
           </button>
         ))}

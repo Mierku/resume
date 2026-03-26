@@ -99,7 +99,7 @@ const SECTION_ICON_MAP: Record<string, LucideIcon> = {
 }
 
 const SIDEBAR_SECTION_IDS = new Set(['skills', 'languages', 'interests', 'profiles', 'certifications', 'awards', 'publications'])
-const DEFAULT_AVATAR = '/templates/shared/avatar-default.svg'
+const DEFAULT_AVATAR = '/templates/shared/avatar-default.png'
 const AVATAR_ASPECT_RATIO = 295 / 413
 const AVATAR_SIZE_SCALE = 1.6
 const SECTION_PRIMARY_FIELD_MAP: Partial<Record<StandardSectionType, string>> = {
@@ -584,7 +584,7 @@ function renderStandardItem(
             {String(item.name || '')}
           </span>
           <span {...getPreviewActionProps(onNavigate, { sectionId: navigationSectionId, itemId, fieldKey: 'website.label' }, styles.recordRole)}>
-            {String(projectWebsite.label || projectWebsite.url || '')}
+            {String(projectWebsite.label || '')}
           </span>
         </div>
         {'description' in item

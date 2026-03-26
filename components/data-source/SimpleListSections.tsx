@@ -1,5 +1,6 @@
 import { Form, Input, Select, Button, Card } from '@/components/ui/radix-adapter'
 import { IconPlus, IconDelete } from '@/components/ui/radix-icons'
+import { MonthPickerField } from '@/components/ui/month-picker'
 import { DATA_SOURCE_SECTION_IDS } from './section-meta'
 
 const FormItem = Form.Item
@@ -31,10 +32,21 @@ export function CampusExperienceSection({ data, onChange, onAdd, onRemove }: {
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
             <FormItem label="开始时间">
-              <Input value={exp.startDate} onChange={value => onChange(index, 'startDate', value)} placeholder="2020-09" />
+              <MonthPickerField
+                value={exp.startDate}
+                showLabel={false}
+                placeholder="选择开始时间"
+                onChange={value => onChange(index, 'startDate', value)}
+              />
             </FormItem>
             <FormItem label="结束时间">
-              <Input value={exp.endDate} onChange={value => onChange(index, 'endDate', value)} placeholder="2021-06" />
+              <MonthPickerField
+                value={exp.endDate}
+                showLabel={false}
+                allowPresent
+                placeholder="选择结束时间"
+                onChange={value => onChange(index, 'endDate', value)}
+              />
             </FormItem>
             <FormItem label="经历类型">
               <Input value={exp.type || ''} onChange={value => onChange(index, 'type', value)} placeholder="学生会、社团" />
@@ -77,7 +89,12 @@ export function AwardsSection({ data, onChange, onAdd, onRemove }: {
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
             <FormItem label="获奖时间">
-              <Input value={award.awardDate} onChange={value => onChange(index, 'awardDate', value)} placeholder="2021-06" />
+              <MonthPickerField
+                value={award.awardDate}
+                showLabel={false}
+                placeholder="选择获奖时间"
+                onChange={value => onChange(index, 'awardDate', value)}
+              />
             </FormItem>
             <FormItem label="奖励名称">
               <Input value={award.awardName} onChange={value => onChange(index, 'awardName', value)} placeholder="优秀学生" />
@@ -220,7 +237,12 @@ export function CertificatesSection({ data, onChange, onAdd, onRemove }: {
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
             <FormItem label="获得时间">
-              <Input value={cert.obtainDate} onChange={value => onChange(index, 'obtainDate', value)} placeholder="2021-06" />
+              <MonthPickerField
+                value={cert.obtainDate}
+                showLabel={false}
+                placeholder="选择获得时间"
+                onChange={value => onChange(index, 'obtainDate', value)}
+              />
             </FormItem>
             <FormItem label="证书名称">
               <Input value={cert.certificateName} onChange={value => onChange(index, 'certificateName', value)} placeholder="PMP" />

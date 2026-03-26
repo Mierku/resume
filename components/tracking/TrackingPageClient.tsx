@@ -3,10 +3,9 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
-import { AuthGuard } from '@/components/AuthGuard'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { Modal } from '@/components/ui/Modal'
+import { AuthRequiredModal, Modal } from '@/components/ui/Modal'
 import { Select } from '@/components/ui/Select'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { RECORD_STATUS_OPTIONS } from '@/lib/constants'
@@ -124,11 +123,7 @@ function getHostFallback(host: string) {
 }
 
 export default function TrackingPageClient() {
-  return (
-    <AuthGuard>
-      <TrackingDeck />
-    </AuthGuard>
-  )
+  return <TrackingDeck />
 }
 
 function TrackingDeck() {
@@ -147,6 +142,8 @@ function TrackingDeck() {
   const [editingRecordId, setEditingRecordId] = useState<string | null>(null)
   const [editDraft, setEditDraft] = useState<EditRecordDraft | null>(null)
   const [savingEdit, setSavingEdit] = useState(false)
+  const [requiresLogin, setRequiresLogin] = useState(false)
+  const [showAuthModal, setShowAuthModal] = useState(false)
   const toolbarRef = useRef<HTMLElement>(null)
 
   useEffect(() => {
@@ -216,6 +213,18 @@ function TrackingDeck() {
           fetch('/api/records/stats'),
         ])
 
+        if (recordsRes.status === 401) {
+          if (cancelled) {
+            return
+          }
+
+          setRequiresLogin(true)
+          setRecords([])
+          setTotal(0)
+          setStats({ total: 0, byStatus: {} })
+          return
+        }
+
         if (!recordsRes.ok) {
           throw new Error('跟踪数据加载失败')
         }
@@ -229,6 +238,7 @@ function TrackingDeck() {
           return
         }
 
+        setRequiresLogin(false)
         setRecords(recordsPayload.records || [])
         setTotal(recordsPayload.total || 0)
         setStats({
@@ -332,6 +342,12 @@ function TrackingDeck() {
   }
 
   const openEditModal = (record: TrackingRecord) => {
+    if (requiresLogin) {
+      setShowAuthModal(true)
+      toast.message('登录后可编辑跟踪记录')
+      return
+    }
+
     setEditingRecordId(record.id)
     setEditDraft(createEditDraft(record))
   }
@@ -361,6 +377,12 @@ function TrackingDeck() {
       if (searchQuery) params.set('query', searchQuery)
 
       const response = await fetch(`/api/records/export?${params}`)
+      if (response.status === 401) {
+        setRequiresLogin(true)
+        setShowAuthModal(true)
+        toast.message('登录后可导出跟踪数据')
+        return
+      }
       if (!response.ok) {
         throw new Error('导出失败')
       }
@@ -412,6 +434,12 @@ function TrackingDeck() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: normalizedStatus }),
       })
+
+      if (response.status === 401) {
+        setRequiresLogin(true)
+        setShowAuthModal(true)
+        throw new Error('登录后可更新状态')
+      }
 
       if (!response.ok) {
         const payload = await response.json().catch(() => null)
@@ -493,6 +521,12 @@ function TrackingDeck() {
           url: trimmedUrl,
         }),
       })
+
+      if (response.status === 401) {
+        setRequiresLogin(true)
+        setShowAuthModal(true)
+        throw new Error('登录后可编辑记录')
+      }
 
       if (!response.ok) {
         const payload = await response.json().catch(() => null)
@@ -591,7 +625,22 @@ function TrackingDeck() {
           </div>
         </section>
 
-        {loadError ? (
+        {requiresLogin ? (
+          <section className={styles.emptyState}>
+            <h2 className={styles.emptyTitle}>登录后查看你的求职跟踪数据</h2>
+            <p className={styles.emptyText}>
+              跟踪页支持未登录访问，但记录详情、状态更新、编辑和导出需要先登录。
+            </p>
+            <div className={styles.emptyActions}>
+              <Button type="button" onClick={() => setShowAuthModal(true)}>
+                去登录
+              </Button>
+              <Link href="/install" className={styles.primaryLink}>
+                先安装插件
+              </Link>
+            </div>
+          </section>
+        ) : loadError ? (
           <section className={styles.errorCard}>
             <h2 className={styles.errorTitle}>跟踪数据暂时不可用</h2>
             <p className={styles.errorText}>{loadError}</p>
@@ -851,6 +900,11 @@ function TrackingDeck() {
             </div>
           ) : null}
         </Modal>
+        <AuthRequiredModal
+          open={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
+          redirectPath="/tracking"
+        />
       </div>
     </div>
   )

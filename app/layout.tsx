@@ -3,10 +3,6 @@ import { Toaster } from 'sonner'
 import { SITE_NAME, SITE_DESCRIPTION } from '@/lib/constants'
 import { siteOrigin } from '@/lib/seo'
 import './globals.css'
-import { Geist } from "next/font/google";
-import { cn } from "@/lib/utils";
-
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteOrigin),
@@ -37,7 +33,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="zh-CN" suppressHydrationWarning className={cn("font-sans", geist.variable)}>
+    <html lang="zh-CN" suppressHydrationWarning className="font-sans">
       <body className="min-h-screen bg-background text-foreground antialiased" suppressHydrationWarning>
         <script
           dangerouslySetInnerHTML={{

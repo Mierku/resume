@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { Check, Chrome, Globe } from 'lucide-react'
 import { AuthGuard } from '@/components/AuthGuard'
 import { Card } from '@/components/ui/Card'
 import { Input, Button, Message } from '@/components/ui/radix-adapter'
@@ -135,7 +136,7 @@ function OnboardingContent() {
                     }`}
                 >
                   {steps.findIndex(x => x.id === step) > index ? (
-                    <span className="i-lucide-check w-4 h-4" />
+                    <Check className="size-4" />
                   ) : (
                     s.number
                   )}
@@ -250,7 +251,7 @@ function OnboardingContent() {
               <div className="grid gap-4 grid-cols-2">
                 <a href="#" target="_blank" rel="noopener noreferrer">
                   <Card hover className="flex items-center gap-3 p-4">
-                    <span className="i-lucide-chrome w-8 h-8 text-primary" />
+                    <Chrome className="size-8 text-primary" />
                     <div>
                       <p className="font-medium text-foreground">Chrome</p>
                       <p className="text-xs text-muted-foreground">Chrome 网上应用店</p>
@@ -259,7 +260,7 @@ function OnboardingContent() {
                 </a>
                 <a href="#" target="_blank" rel="noopener noreferrer">
                   <Card hover className="flex items-center gap-3 p-4">
-                    <span className="i-lucide-globe w-8 h-8 text-primary" />
+                    <Globe className="size-8 text-primary" />
                     <div>
                       <p className="font-medium text-foreground">Edge</p>
                       <p className="text-xs text-muted-foreground">Microsoft Edge 加载项</p>
