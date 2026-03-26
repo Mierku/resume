@@ -33,14 +33,17 @@
 3. 自动上传仓库中的 `docker-compose.prod.yml` 到 `DEPLOY_PATH`
 4. 可选：从 `DEPLOY_ENV_B64` 自动写入 `DEPLOY_PATH/.env`
 5. 自动执行：
-   - `docker compose pull`
-   - `docker compose run --rm app pnpm exec prisma migrate deploy`
-   - `docker compose up -d`
+  - `docker compose up -d db redis`
+  - 等待 `db/redis` healthy
+  - `docker compose pull app`
+  - `docker compose run --rm app pnpm exec prisma migrate deploy`
+  - `docker compose up -d app`
 
 说明：
 
 - 该流程已移除服务器 `git pull` 依赖。
 - 服务器不需要 clone 代码仓库。
+- `docker-compose.prod.yml` 已内置 `Postgres + Redis` 服务，不需要单独部署它们。
 
 ## 3) Secrets（GitHub 仓库）
 
@@ -57,7 +60,7 @@
 
 可选：
 
-- `DEPLOY_PORT`：SSH 端口（默认 `22`）
+- `DEPLOY_PORT`：SSH 端口（默认 `22`）@wz123456
 - `DEPLOY_ENV_B64`：生产 `.env` 的 base64（设置后每次部署会重写远端 `.env`）
 
 ## 4) 本地一键写 Secrets
@@ -83,9 +86,9 @@ scripts/deploy/setup-github-secrets.sh \
   --env-file .env
 ```
 
-执行后会自动写入仓库 secrets（含可选 `DEPLOY_ENV_B64`）。
+执行后会自动写入仓库 secrets（含可选 `DEPLOY_ENV_B64`）。@
 
-## 5) 服务器前置条件
+## 5) 服务器前置条件@w
 
 需要：
 
@@ -98,3 +101,19 @@ scripts/deploy/setup-github-secrets.sh \
 1. 本地 push 到 `main`
 2. 到 GitHub `Actions` 查看 `CD (Docker)` 运行结果
 3. 成功后访问你的域名或服务器端口验证服务
+
+## 7) `.env` 最低建议项（容器内置 Postgres/Redis）
+
+如果你用 `DEPLOY_ENV_B64` 自动下发 `.env`，建议至少包含：
+
+- `POSTGRES_PASSWORD`（务必改成强密码）
+- `POSTGRES_DB`（例如 `resume`）
+- `AUTH_SECRET`
+- `SESSION_SECRET`
+- `INTERNAL_SYNC_TOKEN`
+- `AI_API_KEY` 或 `DASHSCOPE_API_KEY`
+
+说明：
+
+- `DATABASE_URL` 和 `REDIS_URL` 在生产 compose 中会自动指向容器内的 `db` 和 `redis`，不需要你手动改为公网地址。
+

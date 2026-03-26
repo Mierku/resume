@@ -146,11 +146,31 @@ jobs:
               fi
             }
 
+            wait_healthy() {
+              container="$1"
+              retries=60
+              i=1
+              while [ "$i" -le "$retries" ]; do
+                status="$(docker_cmd inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' "$container" 2>/dev/null || true)"
+                if [ "$status" = "healthy" ] || [ "$status" = "running" ]; then
+                  return 0
+                fi
+                sleep 2
+                i=$((i + 1))
+              done
+              echo "$container did not become healthy"
+              docker_cmd logs --tail=100 "$container" || true
+              return 1
+            }
+
             echo "${{ secrets.GHCR_TOKEN }}" | docker_cmd login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
 
             export IMAGE_NAME="${{ steps.image.outputs.name }}"
             export IMAGE_TAG="sha-${{ github.sha }}"
 
+            docker_cmd compose -f docker-compose.prod.yml up -d db redis
+            wait_healthy resume-db
+            wait_healthy resume-redis
             docker_cmd compose -f docker-compose.prod.yml pull app
             docker_cmd compose -f docker-compose.prod.yml run --rm app pnpm exec prisma migrate deploy
             docker_cmd compose -f docker-compose.prod.yml up -d --remove-orphans app
