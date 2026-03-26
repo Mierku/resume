@@ -18,7 +18,7 @@ jobs:
   deploy:
     name: Build image and deploy
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 120
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -36,6 +36,10 @@ jobs:
       - name: Compute lowercase image name
         id: image
         run: echo "name=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+
+      - name: Compute deploy image name
+        id: deploy_image
+        run: echo "name=ghcr.nju.edu.cn/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
 
       - name: Docker metadata
         id: meta
@@ -100,18 +104,13 @@ jobs:
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           port: ${{ secrets.DEPLOY_PORT != '' && secrets.DEPLOY_PORT || '22' }}
           timeout: 60s
-          command_timeout: 60m
+          command_timeout: 110m
           script_stop: true
           script: |
             set -euo pipefail
 
             if [ -z "${{ secrets.DEPLOY_PATH }}" ]; then
               echo "DEPLOY_PATH is empty"
-              exit 1
-            fi
-
-            if [ -z "${{ secrets.GHCR_USERNAME }}" ] || [ -z "${{ secrets.GHCR_TOKEN }}" ]; then
-              echo "GHCR_USERNAME or GHCR_TOKEN is empty"
               exit 1
             fi
 
@@ -171,9 +170,9 @@ jobs:
               return 1
             }
 
-            echo "${{ secrets.GHCR_TOKEN }}" | docker_cmd login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
-
-            export IMAGE_NAME="${{ steps.image.outputs.name }}"
+            # Build artifacts are still published to ghcr.io.
+            # Deploy uses the ghcr.nju.edu.cn mirror for faster pulls in mainland China.
+            export IMAGE_NAME="${{ steps.deploy_image.outputs.name }}"
             export IMAGE_TAG="sha-${{ github.sha }}"
 
             if [ -z "$IMAGE_NAME" ] || [ -z "$IMAGE_TAG" ]; then

@@ -10,8 +10,6 @@ Usage:
     --deploy-user <user> \
     --deploy-path <path> \
     --ssh-key-path <path_to_private_key> \
-    --ghcr-username <github_username> \
-    --ghcr-token <token> \
     [--deploy-port <port>] \
     [--env-file <path_to_env_file>]
 
@@ -20,8 +18,6 @@ Required secrets that will be set:
   DEPLOY_USER
   DEPLOY_SSH_KEY
   DEPLOY_PATH
-  GHCR_USERNAME
-  GHCR_TOKEN
 
 Optional:
   DEPLOY_PORT
@@ -34,8 +30,6 @@ DEPLOY_HOST=""
 DEPLOY_USER=""
 DEPLOY_PATH=""
 SSH_KEY_PATH=""
-GHCR_USERNAME=""
-GHCR_TOKEN=""
 DEPLOY_PORT=""
 ENV_FILE=""
 
@@ -61,14 +55,6 @@ while [[ $# -gt 0 ]]; do
       SSH_KEY_PATH="${2:-}"
       shift 2
       ;;
-    --ghcr-username)
-      GHCR_USERNAME="${2:-}"
-      shift 2
-      ;;
-    --ghcr-token)
-      GHCR_TOKEN="${2:-}"
-      shift 2
-      ;;
     --deploy-port)
       DEPLOY_PORT="${2:-}"
       shift 2
@@ -89,7 +75,7 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-if [[ -z "$REPO" || -z "$DEPLOY_HOST" || -z "$DEPLOY_USER" || -z "$DEPLOY_PATH" || -z "$SSH_KEY_PATH" || -z "$GHCR_USERNAME" || -z "$GHCR_TOKEN" ]]; then
+if [[ -z "$REPO" || -z "$DEPLOY_HOST" || -z "$DEPLOY_USER" || -z "$DEPLOY_PATH" || -z "$SSH_KEY_PATH" ]]; then
   echo "Missing required arguments." >&2
   usage
   exit 1
@@ -120,8 +106,6 @@ echo "Setting repository secrets for $REPO ..."
 gh secret set DEPLOY_HOST --repo "$REPO" --body "$DEPLOY_HOST"
 gh secret set DEPLOY_USER --repo "$REPO" --body "$DEPLOY_USER"
 gh secret set DEPLOY_PATH --repo "$REPO" --body "$DEPLOY_PATH"
-gh secret set GHCR_USERNAME --repo "$REPO" --body "$GHCR_USERNAME"
-gh secret set GHCR_TOKEN --repo "$REPO" --body "$GHCR_TOKEN"
 gh secret set DEPLOY_SSH_KEY --repo "$REPO" < "$SSH_KEY_PATH"
 
 if [[ -n "$DEPLOY_PORT" ]]; then

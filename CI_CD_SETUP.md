@@ -35,7 +35,7 @@
 5. 自动执行：
   - `docker compose up -d db redis`
   - 等待 `db/redis` healthy
-  - `docker compose pull app`
+  - 从 `ghcr.nju.edu.cn/<owner>/<repo>` 拉取应用镜像
   - `docker compose run --rm app pnpm exec prisma migrate deploy`
   - `docker compose up -d app`
 
@@ -55,12 +55,7 @@
 - `DEPLOY_USER`：SSH 用户
 - `DEPLOY_SSH_KEY`：SSH 私钥内容
 - `DEPLOY_PATH`：部署目录（例如 `/opt/resume`）
-- `GHCR_USERNAME`：可拉取 GHCR 镜像的用户名
-- `GHCR_TOKEN`：可拉取 GHCR 镜像的 Token（至少 `read:packages`）
-
-可选：
-
-- `DEPLOY_PORT`：SSH 端口（默认 `22`）@wz123456
+- `DEPLOY_PORT`：SSH 端口（默认 `22`）
 - `DEPLOY_ENV_B64`：生产 `.env` 的 base64（设置后每次部署会重写远端 `.env`）
 
 ## 4) 本地一键写 Secrets
@@ -80,20 +75,18 @@ scripts/deploy/setup-github-secrets.sh \
   --deploy-user <SSH用户名> \
   --deploy-path /opt/resume \
   --ssh-key-path ~/.ssh/id_ed25519 \
-  --ghcr-username <你的GitHub用户名> \
-  --ghcr-token <你的GHCR_TOKEN> \
   --deploy-port 22 \
   --env-file .env
 ```
 
-执行后会自动写入仓库 secrets（含可选 `DEPLOY_ENV_B64`）。@
+执行后会自动写入仓库 secrets（含可选 `DEPLOY_ENV_B64`）。
 
-## 5) 服务器前置条件@w
+## 5) 服务器前置条件
 
 需要：
 
 1. 服务器可通过 SSH 登录
-2. 服务器可访问互联网（拉 GHCR 镜像）
+2. 服务器可访问互联网（拉 `ghcr.nju.edu.cn` 镜像）
 3. 可选：如果服务器未安装 Docker，workflow 会尝试自动安装（需要 root 或 sudo 权限）
 
 ## 6) 首次部署
@@ -116,4 +109,3 @@ scripts/deploy/setup-github-secrets.sh \
 说明：
 
 - `DATABASE_URL` 和 `REDIS_URL` 在生产 compose 中会自动指向容器内的 `db` 和 `redis`，不需要你手动改为公网地址。
-
