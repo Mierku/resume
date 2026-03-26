@@ -37,6 +37,12 @@ jobs:
         id: image
         run: echo "name=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
 
+      - name: Compute infra image names
+        id: infra
+        run: |
+          echo "db=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/resume-postgres:16" >> "$GITHUB_OUTPUT"
+          echo "redis=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/resume-redis:8.4-alpine" >> "$GITHUB_OUTPUT"
+
       - name: Docker metadata
         id: meta
         uses: docker/metadata-action@v5
@@ -167,6 +173,17 @@ jobs:
 
             export IMAGE_NAME="${{ steps.image.outputs.name }}"
             export IMAGE_TAG="sha-${{ github.sha }}"
+            export DB_IMAGE="${{ steps.infra.outputs.db }}"
+            export REDIS_IMAGE="${{ steps.infra.outputs.redis }}"
+
+            if [ -z "$IMAGE_NAME" ] || [ -z "$IMAGE_TAG" ]; then
+              echo "IMAGE_NAME or IMAGE_TAG is empty"
+              exit 1
+            fi
+
+            echo "Deploying app image: ${IMAGE_NAME}:${IMAGE_TAG}"
+            echo "Deploying db image: ${DB_IMAGE}"
+            echo "Deploying redis image: ${REDIS_IMAGE}"
 
             docker_cmd compose -f docker-compose.prod.yml up -d db redis
             wait_healthy resume-db
