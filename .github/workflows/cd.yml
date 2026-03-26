@@ -65,6 +65,24 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Mirror Postgres to GHCR
+        run: |
+          docker pull postgres:16
+          docker tag postgres:16 "${{ steps.infra.outputs.db }}"
+          docker push "${{ steps.infra.outputs.db }}"
+
+      - name: Mirror Redis to GHCR
+        run: |
+          docker pull redis:8.4-alpine
+          docker tag redis:8.4-alpine "${{ steps.infra.outputs.redis }}"
+          docker push "${{ steps.infra.outputs.redis }}"
+
+      - name: Verify deploy images exist
+        run: |
+          docker buildx imagetools inspect "${{ steps.image.outputs.name }}:sha-${{ github.sha }}" >/dev/null
+          docker buildx imagetools inspect "${{ steps.infra.outputs.db }}" >/dev/null
+          docker buildx imagetools inspect "${{ steps.infra.outputs.redis }}" >/dev/null
+
       - name: Prepare remote deploy path
         uses: appleboy/ssh-action@v1.0.3
         with:
