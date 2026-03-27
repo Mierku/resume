@@ -175,6 +175,29 @@ jobs:
               return 1
             }
 
+            cleanup_old_release_images() {
+              repo="$1"
+              keep_image="$2"
+
+              docker_cmd image ls "$repo" --format '{{.Repository}}:{{.Tag}}' \
+                | while IFS= read -r image; do
+                    if [ -z "$image" ]; then
+                      continue
+                    fi
+
+                    case "$image" in
+                      "$keep_image")
+                        echo "Keeping current release image: $image"
+                        continue
+                        ;;
+                      *:sha-*)
+                        echo "Removing old release image: $image"
+                        docker_cmd image rm "$image" || true
+                        ;;
+                    esac
+                  done
+            }
+
             # Build artifacts are still published to ghcr.io.
             # Deploy uses the ghcr.nju.edu.cn mirror for faster pulls in mainland China.
             export IMAGE_NAME="${{ steps.deploy_image.outputs.name }}"
@@ -196,4 +219,5 @@ jobs:
             wait_healthy resume-app
             wait_healthy resume-nginx
 
+            cleanup_old_release_images "$IMAGE_NAME" "${IMAGE_NAME}:${IMAGE_TAG}"
             docker_cmd image prune -f
