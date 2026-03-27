@@ -1,16 +1,16 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import Link from 'next/link'
 import { ExternalLink, Plus, Trash2 } from 'lucide-react'
-import { AuthGuard } from '@/components/AuthGuard'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
-import { Modal } from '@/components/ui/Modal'
+import { AuthRequiredModal, Modal } from '@/components/ui/Modal'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { toast } from '@/lib/toast'
+import { useAuthedPageData } from '@/lib/hooks/useAuthedPageData'
 
 interface JobSite {
   id: string
@@ -22,43 +22,66 @@ interface JobSite {
 }
 
 export default function JobSitesPage() {
-  return (
-    <AuthGuard>
-      <JobSitesContent />
-    </AuthGuard>
-  )
-}
-
-function JobSitesContent() {
-  const [sites, setSites] = useState<JobSite[]>([])
-  const [loading, setLoading] = useState(true)
+  const [showAuthModal, setShowAuthModal] = useState(false)
   const [search, setSearch] = useState('')
   const [regionFilter, setRegionFilter] = useState('')
   const [showAddModal, setShowAddModal] = useState(false)
   const [newSite, setNewSite] = useState({ name: '', url: '', description: '', region: '' })
   const [adding, setAdding] = useState(false)
 
-  useEffect(() => {
-    fetchSites()
-  }, [])
-
-  const fetchSites = async () => {
-    try {
-      const res = await fetch('/api/job-sites')
-      if (res.ok) {
-        const data = await res.json()
-        setSites(data.sites || [])
+  const loadSites = useCallback(
+    async ({ signal, auth }: { signal: AbortSignal; auth: { authenticated: boolean } }) => {
+      if (!auth.authenticated) {
+        return []
       }
-    } catch (error) {
-      console.error('Failed to fetch sites:', error)
-    } finally {
-      setLoading(false)
-    }
+
+      const response = await fetch('/api/job-sites', { cache: 'no-store', signal })
+      if (response.status === 401) {
+        return []
+      }
+
+      if (!response.ok) {
+        throw new Error('招聘网站加载失败')
+      }
+
+      const payload = await response.json().catch(() => null)
+      if (!payload || typeof payload !== 'object') {
+        return []
+      }
+
+      const sites = (payload as { sites?: unknown[] }).sites
+      return Array.isArray(sites) ? (sites as JobSite[]) : []
+    },
+    [],
+  )
+
+  const { data: sites, loading, error, auth, reload, ensureAuthenticated } = useAuthedPageData<JobSite[]>({
+    initialData: [],
+    load: loadSites,
+    onError: loadError => {
+      console.error('Failed to fetch sites:', loadError)
+    },
+  })
+
+  const authenticated = auth.authenticated
+
+  useEffect(() => {
+    if (loading || authenticated) return
+    setShowAuthModal(true)
+  }, [authenticated, loading])
+
+  const ensureAuthForAction = async (actionName: string) => {
+    const authed = await ensureAuthenticated()
+    if (authed) return true
+
+    toast.message(`${actionName}需要先登录`)
+    setShowAuthModal(true)
+    return false
   }
 
-  const handleAddSite = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const submitAddSite = async () => {
     if (!newSite.name || !newSite.url) return
+    if (!(await ensureAuthForAction('添加网站'))) return
 
     setAdding(true)
     try {
@@ -72,7 +95,7 @@ function JobSitesContent() {
         toast.success('添加成功')
         setShowAddModal(false)
         setNewSite({ name: '', url: '', description: '', region: '' })
-        fetchSites()
+        reload()
       } else {
         const data = await res.json()
         toast.error(data.error || '添加失败')
@@ -84,14 +107,20 @@ function JobSitesContent() {
     }
   }
 
+  const handleAddSite = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    await submitAddSite()
+  }
+
   const handleDeleteSite = async (id: string) => {
+    if (!(await ensureAuthForAction('删除网站'))) return
     if (!confirm('确定要删除吗？')) return
 
     try {
       const res = await fetch(`/api/job-sites/${id}`, { method: 'DELETE' })
       if (res.ok) {
         toast.success('删除成功')
-        fetchSites()
+        reload()
       } else {
         const data = await res.json()
         toast.error(data.error || '删除失败')
@@ -119,6 +148,41 @@ function JobSitesContent() {
           {[1, 2, 3, 4, 5, 6].map(i => (
             <Skeleton key={i} className="h-32" />
           ))}
+        </div>
+      </div>
+    )
+  }
+
+  if (!authenticated) {
+    return (
+      <>
+        <div className="container pt-24 pb-8">
+          <div className="rounded-[12px] border border-border bg-background/70 p-8 text-center">
+            <p className="text-sm text-muted-foreground">登录后可管理招聘网站。</p>
+            <div className="mt-4">
+              <Link href="/login?next=%2Fjob-sites">
+                <Button>去登录</Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+        <AuthRequiredModal
+          open={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
+          redirectPath="/job-sites"
+        />
+      </>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="container pt-24 pb-8">
+        <div className="rounded-[12px] border border-border bg-background/70 p-8 text-center">
+          <p className="text-sm text-muted-foreground">{error}</p>
+          <div className="mt-4">
+            <Button variant="outline" onClick={reload}>重试加载</Button>
+          </div>
         </div>
       </div>
     )
@@ -236,7 +300,7 @@ function JobSitesContent() {
             <Button variant="ghost" onClick={() => setShowAddModal(false)}>
               取消
             </Button>
-            <Button onClick={handleAddSite} loading={adding}>
+            <Button onClick={() => void submitAddSite()} loading={adding}>
               添加
             </Button>
           </>

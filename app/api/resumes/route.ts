@@ -7,6 +7,11 @@ const createSchema = z.object({
   title: z.string().min(1, '标题不能为空'),
   templateId: z.string().min(1, '请选择模板'),
   dataSourceId: z.string().nullable().optional(),
+  themeColor: z
+    .string()
+    .regex(/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/, '主题颜色格式不正确')
+    .nullable()
+    .optional(),
   mode: z.enum(['form', 'markdown']).optional(),
   content: z.record(z.any()).optional(),
 })
@@ -39,6 +44,7 @@ export async function POST(request: NextRequest) {
     const resume = await createResume(user.id, {
       ...data,
       dataSourceId: data.dataSourceId || undefined,
+      themeColor: data.themeColor || undefined,
     })
     return NextResponse.json({ resume }, { status: 201 })
   } catch (error) {

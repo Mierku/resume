@@ -1,11 +1,12 @@
 'use client'
 
-import { CheckCircle2, CircleAlert, CircleX, Info } from 'lucide-react'
+import { CheckCircle2, CircleAlert, CircleX, Info, Loader2 } from 'lucide-react'
 import { toast as sonnerToast } from 'sonner'
 
 type ToastVariant = 'success' | 'error' | 'warning' | 'info'
 
 const DEFAULT_TOAST_DURATION = 2000
+const LOADING_TOAST_DURATION = 12000
 
 function resolveToastId(variant: ToastVariant, content: string) {
   return `${variant}:${content.trim()}`
@@ -51,5 +52,14 @@ export const toast = {
   warning: (content: string) => showToast('warning', content),
   info: (content: string) => showToast('info', content),
   message: (content: string) => showToast('info', content),
+  loading: (content: string) => {
+    const id = resolveToastId('info', `loading:${content}`)
+    sonnerToast.loading(content, {
+      id,
+      duration: LOADING_TOAST_DURATION,
+      icon: <Loader2 className="h-4 w-4 animate-spin" />,
+    })
+    return id
+  },
   dismiss: (id?: string | number) => sonnerToast.dismiss(id),
 }

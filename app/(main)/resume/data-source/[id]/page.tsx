@@ -40,6 +40,7 @@ import {
   DATA_SOURCE_SECTION_NAV,
   DATA_SOURCE_STICKY_TOP,
 } from '@/components/data-source/section-meta'
+import { useAuthSnapshot } from '@/lib/hooks/useAuthSnapshot'
 
 const FormItem = Form.Item
 const TextArea = Input.TextArea
@@ -107,21 +108,9 @@ export default function DataSourceEditPage() {
   const [loading, setLoading] = useState(!isNew)
   const [saving, setSaving] = useState(false)
   const [activeSection, setActiveSection] = useState<DataSourceSectionId>(DATA_SOURCE_SECTION_NAV[0].id)
-  const [authenticated, setAuthenticated] = useState(false)
+  const [blockedByAuth, setBlockedByAuth] = useState(false)
   const [showAuthModal, setShowAuthModal] = useState(false)
-
-  useEffect(() => {
-    const checkAuthStatus = async () => {
-      try {
-        const res = await fetch('/api/auth/me', { cache: 'no-store' })
-        setAuthenticated(res.ok)
-      } catch {
-        setAuthenticated(false)
-      }
-    }
-
-    void checkAuthStatus()
-  }, [])
+  const { ensureAuthenticated } = useAuthSnapshot()
 
   useEffect(() => {
     if (isNew) return
@@ -156,6 +145,10 @@ export default function DataSourceEditPage() {
             summaryZh: ds.summaryZh || '',
             summaryEn: ds.summaryEn || '',
           })
+        } else if (res.status === 401) {
+          setBlockedByAuth(true)
+          Message.warning('登录后可访问该数据源')
+          setShowAuthModal(true)
         } else {
           toast.error('数据源不存在')
           router.push('/resume/data-source')
@@ -206,17 +199,7 @@ export default function DataSourceEditPage() {
   }, [loading])
 
   const handleSave = async () => {
-    let authed = authenticated
-    if (!authed) {
-      try {
-        const res = await fetch('/api/auth/me', { cache: 'no-store' })
-        authed = res.ok
-      } catch {
-        authed = false
-      }
-      setAuthenticated(authed)
-    }
-
+    const authed = await ensureAuthenticated()
     if (!authed) {
       Message.warning('保存数据源需要登录后继续')
       setShowAuthModal(true)
@@ -496,6 +479,28 @@ export default function DataSourceEditPage() {
       <div style={{ padding: '24px', textAlign: 'center' }}>
         <Spin size={40} />
       </div>
+    )
+  }
+
+  if (blockedByAuth) {
+    return (
+      <>
+        <div className="mx-auto max-w-[980px] px-6 py-14">
+          <div className="rounded-[12px] border border-border bg-background/70 p-8 text-center">
+            <p className="text-sm text-muted-foreground">登录后可编辑该数据源。</p>
+            <div className="mt-4">
+              <Link href={`/login?next=${encodeURIComponent(pathname || '/resume/data-source')}`}>
+                <Button type="default" size="large">去登录</Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+        <AuthRequiredModal
+          open={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
+          redirectPath={pathname || '/resume/data-source'}
+        />
+      </>
     )
   }
 

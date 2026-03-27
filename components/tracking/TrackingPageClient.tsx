@@ -325,6 +325,8 @@ function TrackingDeck() {
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
   const hasFilters = Boolean(searchQuery || statusFilter)
   const editingRecord = editingRecordId ? records.find(record => record.id === editingRecordId) || null : null
+  const pageStart = total === 0 ? 0 : page * PAGE_SIZE + 1
+  const pageEnd = Math.min(total, page * PAGE_SIZE + records.length)
 
   const handleSearchSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -556,9 +558,9 @@ function TrackingDeck() {
             <div className={styles.heroMain}>
               <div className={styles.heroCopy}>
                 <span className={styles.eyebrow}>Job Tracking</span>
-                <h1 className={styles.title}>求职跟踪页</h1>
+                <h1 className={styles.title}>求职跟踪看板</h1>
                 <p className={styles.description}>
-                  统一查看公司、岗位、状态和链接，把求职跟踪集中收口到一个稳定、可维护的面板里。
+                  把岗位信息、投递状态和跟进节奏放在同一个工作台里，减少切换页面和重复记录。
                 </p>
               </div>
 
@@ -577,12 +579,13 @@ function TrackingDeck() {
 
             <div className={styles.heroMeta}>
               <span className={styles.metaPill}>当前页 {records.length} 条</span>
-              <span className={styles.metaPill}>按最近更新时间排序</span>
+              <span className={styles.metaPill}>累计 {total} 条记录</span>
+              <span className={styles.metaPill}>{hasFilters ? '已启用筛选' : '按最近更新时间排序'}</span>
             </div>
 
             <div className={styles.metrics}>
               {summaryCards.map((card) => (
-                <div key={card.key} className={styles.metricCard}>
+                <div key={card.key} className={styles.metricCard} data-card={card.key}>
                   <div className={styles.metricLabel}>{card.label}</div>
                   <div className={styles.metricValue}>{card.value}</div>
                 </div>
@@ -667,7 +670,9 @@ function TrackingDeck() {
                   {hasFilters ? '当前为筛选结果。' : '按最近更新时间展示。'}
                 </div>
               </div>
-              <div className={styles.boardCaption}>共 {total} 条记录</div>
+              <div className={styles.boardCaption}>
+                显示 {pageStart}-{pageEnd} / 共 {total} 条
+              </div>
             </div>
 
             {records.map((record, index) => {

@@ -1,8 +1,6 @@
 .editorRoot {
-  border: 1px solid var(--color-border);
-  border-radius: 2px;
+  border-radius: 5px;
   overflow: hidden;
-  background: var(--control-surface, #ffffff);
   color: var(--color-foreground, #111111);
 }
 
@@ -10,28 +8,28 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 8px;
-  border-bottom: 1px solid var(--color-border);
-  background: color-mix(in srgb, var(--color-muted, #f5f5f5) 72%, transparent);
+  padding: 7px 8px;
+  background: var(--builder-editor-toolbar-bg, color-mix(in srgb, var(--color-muted, #f5f5f5) 72%, transparent));
 }
 
 .contentWrap {
   position: relative;
+  background: var(--builder-input-bg, transparent);
 }
 
 .placeholder {
   position: absolute;
-  top: 8px;
-  left: 12px;
-  right: 12px;
+  top: 10px;
+  left: 13px;
+  right: 13px;
   font-size: 12px;
   line-height: 1.4;
-  color: var(--color-muted-foreground, #6b7280);
+  color: var(--builder-input-placeholder, var(--color-muted-foreground, #6b7280));
   pointer-events: none;
 }
 
 .content {
-  padding: 8px 12px;
+  padding: 10px 13px;
   font-size: 14px;
   line-height: 1.6;
   color: inherit;

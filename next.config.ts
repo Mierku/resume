@@ -28,6 +28,9 @@ const nextConfig: NextConfig = {
       {
         pathname: '/icons/**',
       },
+      {
+        pathname: '/home/**',
+      },
     ],
     remotePatterns: [
       ...(cdnHostname

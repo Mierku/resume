@@ -32,12 +32,6 @@
   border-color: var(--resume-button-border-hover) !important;
 }
 
-.resume-module-scope button.border-primary,
-.resume-module-scope button[class*='border-primary/'],
-.resume-module-scope button[class*='hover:border-primary']:hover {
-  border-color: var(--resume-button-border-hover) !important;
-}
-
 .resume-module-scope button.text-primary,
 .resume-module-scope button[class*='hover:text-primary']:hover {
   color: var(--resume-button-text) !important;

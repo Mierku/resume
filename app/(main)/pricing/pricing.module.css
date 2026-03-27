@@ -1,38 +1,24 @@
 .page {
-  --price-bg: #fdf6f5;
-  --price-card: rgba(255, 255, 255, 0.86);
-  --price-card-soft: rgba(248, 242, 239, 0.78);
-  --price-border: rgba(232, 213, 209, 0.72);
-  --price-text-main: #4a4240;
-  --price-text-sub: #8e8583;
-  --price-accent: #c5a880;
-  --price-accent-strong: #8a6948;
-  --price-btn-bg: #4a4240;
-  --price-btn-text: #ffffff;
-  --price-shadow: 0 14px 36px rgba(74, 66, 64, 0.08);
+  --price-bg: var(--app-page-bg);
+  --price-card: color-mix(in srgb, var(--app-surface) 95%, transparent);
+  --price-card-soft: var(--app-surface-soft);
+  --price-border: var(--app-border);
+  --price-text-main: var(--app-text-main);
+  --price-text-sub: var(--app-text-sub);
+  --price-accent: var(--app-accent);
+  --price-accent-strong: var(--app-accent-strong);
+  --price-btn-bg: var(--app-primary-bg);
+  --price-btn-text: var(--app-primary-text);
+  --price-shadow: var(--app-shadow-md);
 
   min-height: 100vh;
   padding: 104px 18px 56px;
   background:
     radial-gradient(circle at 10% 10%, color-mix(in srgb, var(--price-accent) 24%, transparent), transparent 35%),
-    radial-gradient(circle at 92% 8%, rgba(232, 213, 209, 0.34), transparent 28%),
+    radial-gradient(circle at 92% 8%, color-mix(in srgb, var(--price-border) 52%, transparent), transparent 28%),
     var(--price-bg);
   color: var(--price-text-main);
   transition: background-color 320ms ease, color 320ms ease;
-}
-
-:global([data-theme='dark']) .page {
-  --price-bg: #12100f;
-  --price-card: rgba(28, 24, 23, 0.84);
-  --price-card-soft: rgba(36, 30, 28, 0.76);
-  --price-border: rgba(61, 52, 50, 0.78);
-  --price-text-main: #ece0de;
-  --price-text-sub: #a89e9c;
-  --price-accent: #d4bc9a;
-  --price-accent-strong: #d4bc9a;
-  --price-btn-bg: #d4bc9a;
-  --price-btn-text: #1c1817;
-  --price-shadow: 0 18px 42px rgba(0, 0, 0, 0.32);
 }
 
 .container {

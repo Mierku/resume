@@ -4,6 +4,7 @@ import { ReactNode, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 import { Button } from './Button'
+import { cn } from '@/lib/utils'
 
 interface ModalProps {
   open: boolean
@@ -11,9 +12,21 @@ interface ModalProps {
   title?: string
   children: ReactNode
   footer?: ReactNode
+  panelClassName?: string
+  contentClassName?: string
+  footerClassName?: string
 }
 
-export function Modal({ open, onClose, title, children, footer }: ModalProps) {
+export function Modal({
+  open,
+  onClose,
+  title,
+  children,
+  footer,
+  panelClassName,
+  contentClassName,
+  footerClassName,
+}: ModalProps) {
   useEffect(() => {
     if (open) {
       document.body.style.overflow = 'hidden'
@@ -43,7 +56,12 @@ export function Modal({ open, onClose, title, children, footer }: ModalProps) {
         className="absolute inset-0 bg-black/50 animate-fade-in"
         onClick={onClose}
       />
-      <div className="relative bg-background rounded-[22px] border border-border shadow-lg max-w-md w-full mx-4 p-6 animate-slide-up">
+      <div
+        className={cn(
+          'relative bg-background rounded-[22px] border border-border shadow-lg max-w-md w-full mx-4 p-6 animate-slide-up',
+          panelClassName,
+        )}
+      >
         {title && (
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-foreground">{title}</h2>
@@ -55,11 +73,11 @@ export function Modal({ open, onClose, title, children, footer }: ModalProps) {
             </button>
           </div>
         )}
-        <div className="text-sm text-muted-foreground">
+        <div className={cn('text-sm text-muted-foreground', contentClassName)}>
           {children}
         </div>
         {footer && (
-          <div className="mt-6 flex justify-end gap-3">
+          <div className={cn('mt-6 flex justify-end gap-3', footerClassName)}>
             {footer}
           </div>
         )}

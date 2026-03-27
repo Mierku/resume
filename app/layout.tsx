@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Script from 'next/script'
 import { Toaster } from 'sonner'
 import { SITE_NAME, SITE_DESCRIPTION } from '@/lib/constants'
 import { siteOrigin } from '@/lib/seo'
@@ -33,19 +34,15 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="zh-CN" suppressHydrationWarning className="font-sans">
+    <html lang="zh-CN" suppressHydrationWarning className="font-sans" data-scroll-behavior="smooth">
       <body className="min-h-screen bg-background text-foreground antialiased" suppressHydrationWarning>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                const theme = localStorage.getItem('theme') || 
-                  (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-                document.documentElement.setAttribute('data-theme', theme);
-              })();
-            `,
-          }}
-        />
+        <Script id="theme-init" strategy="beforeInteractive">
+          {`(function () {
+            const theme = localStorage.getItem('theme')
+              || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            document.documentElement.setAttribute('data-theme', theme);
+          })();`}
+        </Script>
         {children}
         <Toaster
           position="top-center"
@@ -53,11 +50,11 @@ export default function RootLayout({
           toastOptions={{
             duration: 2000,
             style: {
-              background: 'color-mix(in srgb, var(--color-background) 94%, white)',
-              border: '1px solid var(--color-border)',
-              color: 'var(--color-foreground)',
+              background: 'var(--toast-bg)',
+              border: '1px solid var(--toast-border)',
+              color: 'var(--toast-text)',
               borderRadius: '18px',
-              boxShadow: '0 18px 40px rgba(0, 0, 0, 0.12)',
+              boxShadow: 'var(--toast-shadow)',
               padding: '12px 14px',
             },
           }}

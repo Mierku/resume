@@ -1,11 +1,12 @@
 'use client'
 
 import './resume-module-theme.css'
-import { ReactNode, useCallback, useEffect, useState } from 'react'
+import { ReactNode, useState } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { Database, FileText, LayoutTemplate, type LucideIcon } from 'lucide-react'
 import { AuthRequiredModal } from '@/components/ui/Modal'
+import { useAuthSnapshot } from '@/lib/hooks/useAuthSnapshot'
 
 const sidebarLinks: Array<{ href: string; label: string; icon: LucideIcon }> = [
   { href: '/resume/templates', label: '模版', icon: LayoutTemplate },
@@ -15,45 +16,14 @@ const sidebarLinks: Array<{ href: string; label: string; icon: LucideIcon }> = [
 
 export default function ResumeLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname()
-  const [authChecked, setAuthChecked] = useState(false)
-  const [authenticated, setAuthenticated] = useState(false)
+  const router = useRouter()
   const [showAuthModal, setShowAuthModal] = useState(false)
+  const isEditorRoute = pathname.startsWith('/resume/editor/')
+  const { auth, checked, refresh } = useAuthSnapshot({ eager: !isEditorRoute })
   const isTemplatesRoute = pathname === '/resume' || pathname.startsWith('/resume/templates')
 
-  const fetchAuthState = useCallback(async () => {
-    try {
-      const res = await fetch('/api/auth/me', { cache: 'no-store' })
-      return res.ok
-    } catch {
-      return false
-    }
-  }, [])
-
-  const checkAuth = useCallback(async () => {
-    const authed = await fetchAuthState()
-    setAuthenticated(authed)
-    setAuthChecked(true)
-    return authed
-  }, [fetchAuthState])
-
-  useEffect(() => {
-    let cancelled = false
-
-    void (async () => {
-      const authed = await fetchAuthState()
-      if (cancelled) return
-
-      setAuthenticated(authed)
-      setAuthChecked(true)
-    })()
-
-    return () => {
-      cancelled = true
-    }
-  }, [fetchAuthState])
-
   // Full-screen editor mode
-  if (pathname.startsWith('/resume/editor/')) {
+  if (isEditorRoute) {
     return (
       <>
         <div className="resume-module-scope h-[100dvh] overflow-hidden">{children}</div>
@@ -68,94 +38,53 @@ export default function ResumeLayout({ children }: { children: ReactNode }) {
     return pathname.startsWith(href)
   }
 
-  const showResumeNav = !isTemplatesRoute || (authChecked && authenticated)
+  const showResumeNav = !isTemplatesRoute || (checked && auth.authenticated)
 
   return (
     <>
       <div className="resume-module-scope flex h-[calc(100vh-64px)] overflow-hidden pt-[64px]">
-        {/* Sidebar */}
-        {showResumeNav ? (
-          <aside className="hidden w-56 border-r border-border bg-background md:block">
-            <nav className="space-y-1 p-4">
-              {sidebarLinks.map(link => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={`
-                    flex items-center gap-2 px-3 py-2 text-sm rounded-sm transition-colors
-                    ${isActive(link.href)
-                      ? 'text-foreground bg-muted/55 border border-border/70'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-                    }
-                  `}
-                  onClick={async event => {
-                    if (link.href !== '/resume/my-resumes') return
-                    if (authenticated) return
+        <div className="flex min-h-0 w-full flex-col">
+          {showResumeNav ? (
+            <div className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+              <nav className="mx-auto flex w-full max-w-[1440px] gap-2 overflow-x-auto px-4 py-3 sm:px-6 lg:px-10">
+                {sidebarLinks.map(link => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className={`
+                      flex shrink-0 items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition-colors
+                      ${isActive(link.href)
+                        ? 'border-border bg-muted/65 text-foreground'
+                        : 'border-transparent text-muted-foreground hover:border-border/60 hover:bg-muted/35 hover:text-foreground'
+                      }
+                    `}
+                    onClick={async event => {
+                      if (link.href !== '/resume/my-resumes') return
+                      if (auth.authenticated) return
 
-                    event.preventDefault()
+                      event.preventDefault()
 
-                    const authed = authChecked ? authenticated : await checkAuth()
-                    if (authed) {
-                      window.location.href = link.href
-                      return
-                    }
+                      const authed = checked ? auth.authenticated : (await refresh()).authenticated
+                      if (authed) {
+                        router.push(link.href)
+                        return
+                      }
 
-                    setShowAuthModal(true)
-                  }}
-                >
-                  <link.icon className="size-4" />
-                  {link.label}
-                </Link>
-              ))}
-            </nav>
-          </aside>
-        ) : null}
+                      setShowAuthModal(true)
+                    }}
+                  >
+                    <link.icon className="size-4" />
+                    {link.label}
+                  </Link>
+                ))}
+              </nav>
+            </div>
+          ) : null}
 
-        {/* Mobile tabs */}
-        {showResumeNav ? (
-          <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-border bg-background md:hidden">
-            <nav className="flex">
-              {sidebarLinks.map(link => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={`
-                    flex-1 flex flex-col items-center gap-1 py-3 text-xs transition-colors rounded-none
-                    ${isActive(link.href)
-                      ? 'text-foreground bg-muted/55'
-                      : 'text-muted-foreground hover:bg-muted/35'
-                    }
-                  `}
-                  onClick={async event => {
-                    if (link.href !== '/resume/my-resumes') return
-                    if (authenticated) return
-
-                    event.preventDefault()
-
-                    const authed = authChecked ? authenticated : await checkAuth()
-                    if (authed) {
-                      window.location.href = link.href
-                      return
-                    }
-
-                    setShowAuthModal(true)
-                  }}
-                >
-                  <link.icon className="size-5" />
-                  {link.label}
-                </Link>
-              ))}
-            </nav>
-          </div>
-        ) : null}
-
-        {/* Content */}
-        <main
-          data-resume-scroll-container="true"
-          className={`min-h-0 flex-1 overflow-auto ${showResumeNav ? 'pb-20 md:pb-0' : 'pb-0'}`}
-        >
-          {children}
-        </main>
+          <main data-resume-scroll-container="true" className="min-h-0 flex-1 overflow-auto">
+            {children}
+          </main>
+        </div>
       </div>
       <AuthRequiredModal
         open={showAuthModal}

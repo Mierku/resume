@@ -20,6 +20,7 @@ import { Button } from "../ui/Button";
 import { getUserDisplayName, type SessionUser } from "@/lib/user";
 import { AuthRequiredModal } from "@/components/ui/Modal";
 import { BrandFlowerIcon } from "@/components/BrandFlowerIcon";
+import { useAuthSnapshot } from "@/lib/hooks/useAuthSnapshot";
 
 interface NavLink {
   href: string;
@@ -36,8 +37,7 @@ const navLinks: NavLink[] = [
 export function Header() {
   const pathname = usePathname();
   const hideHeader = pathname.startsWith("/resume/editor/");
-  const [user, setUser] = useState<SessionUser | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { auth, checked, refresh } = useAuthSnapshot<SessionUser>({ eager: !hideHeader });
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileUserMenuOpen, setMobileUserMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -47,10 +47,11 @@ export function Header() {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const themeToggleRef = useRef<HTMLButtonElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const user = auth.user;
+  const loading = !checked;
 
   useEffect(() => {
     if (hideHeader) return;
-    fetchUser();
     // Init theme from localStorage or system preference
     const saved = localStorage.getItem("theme") as "light" | "dark" | null;
     const initial = saved || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
@@ -101,42 +102,17 @@ export function Header() {
     };
   }, [userMenuOpen]);
 
-  const fetchUser = async () => {
-    try {
-      const res = await fetch("/api/auth/me");
-      if (res.ok) {
-        const data = await res.json();
-        setUser(data.user);
-      }
-    } catch {
-      // Not logged in
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleLogout = async () => {
     setUserMenuOpen(false);
     setMobileUserMenuOpen(false);
     setMenuOpen(false);
-    setUser(null);
     await signOut({ redirectTo: "/" });
   };
 
   const checkAuthStatus = async () => {
-    try {
-      const res = await fetch("/api/auth/me", { cache: "no-store" });
-      if (!res.ok) {
-        setUser(null);
-        return false;
-      }
-      const data = await res.json();
-      setUser(data.user ?? null);
-      return Boolean(data.user);
-    } catch {
-      setUser(null);
-      return false;
-    }
+    if (auth.authenticated) return true;
+    const latest = await refresh();
+    return latest.authenticated;
   };
 
   const isActive = (href: string) => {
@@ -232,7 +208,7 @@ export function Header() {
                   className="text-sm font-medium px-3 py-2 rounded-sm transition-colors"
                   style={{
                     color: isActive(link.href) ? auraTextPrimary : auraTextMuted,
-                    fontSize: "10px",
+                    fontSize: "12px",
                     letterSpacing: "0.28em",
                     textTransform: "uppercase",
                   }}
@@ -302,7 +278,7 @@ export function Header() {
                   >
                     <Link
                       href="/dashboard"
-                      className="flex items-center gap-2 rounded-[8px] px-3 py-2 text-xs transition-colors"
+                      className="flex items-center gap-2 rounded-[8px] px-3 py-2 text-sm transition-colors"
                       style={{ color: auraTextMuted }}
                       onClick={() => setUserMenuOpen(false)}
                     >
@@ -311,7 +287,7 @@ export function Header() {
                     </Link>
                     <Link
                       href="/pricing"
-                      className="flex items-center gap-2 rounded-[8px] px-3 py-2 text-xs transition-colors"
+                      className="flex items-center gap-2 rounded-[8px] px-3 py-2 text-sm transition-colors"
                       style={{ color: auraTextMuted }}
                       onClick={() => setUserMenuOpen(false)}
                     >
@@ -320,7 +296,7 @@ export function Header() {
                     </Link>
                     <Link
                       href="/terms"
-                      className="flex items-center gap-2 rounded-[8px] px-3 py-2 text-xs transition-colors"
+                      className="flex items-center gap-2 rounded-[8px] px-3 py-2 text-sm transition-colors"
                       style={{ color: auraTextMuted }}
                       onClick={() => setUserMenuOpen(false)}
                     >
@@ -329,7 +305,7 @@ export function Header() {
                     </Link>
                     <Link
                       href="/privacy"
-                      className="flex items-center gap-2 rounded-[8px] px-3 py-2 text-xs transition-colors"
+                      className="flex items-center gap-2 rounded-[8px] px-3 py-2 text-sm transition-colors"
                       style={{ color: auraTextMuted }}
                       onClick={() => setUserMenuOpen(false)}
                     >
@@ -338,7 +314,7 @@ export function Header() {
                     </Link>
                     <button
                       type="button"
-                      className="flex w-full items-center gap-2 rounded-[8px] px-3 py-2 text-left text-xs transition-colors"
+                      className="flex w-full items-center gap-2 rounded-[8px] px-3 py-2 text-left text-sm transition-colors"
                       style={{ color: auraTextMuted }}
                       onClick={() => void handleLogout()}
                     >
@@ -412,7 +388,7 @@ export function Header() {
                   className="text-sm font-medium px-3 py-2 rounded-sm transition-colors uppercase tracking-[0.18em]"
                   style={{
                     color: isActive(link.href) ? auraTextPrimary : auraTextMuted,
-                    fontSize: "10px",
+                    fontSize: "12px",
                     background: isActive(link.href) ? "var(--aura-header-menu-border)" : "transparent",
                   }}
                 >
@@ -440,22 +416,22 @@ export function Header() {
                     </button>
                     {mobileUserMenuOpen ? (
                       <div className="flex flex-col gap-1 pl-9 pr-2 pb-1">
-                        <Link href="/dashboard" onClick={() => setMenuOpen(false)} className="px-2 py-1.5 text-xs rounded-[8px]" style={{ color: auraTextMuted }}>
+                        <Link href="/dashboard" onClick={() => setMenuOpen(false)} className="px-2 py-1.5 text-sm rounded-[8px]" style={{ color: auraTextMuted }}>
                           个人工作台
                         </Link>
-                        <Link href="/pricing" onClick={() => setMenuOpen(false)} className="px-2 py-1.5 text-xs rounded-[8px]" style={{ color: auraTextMuted }}>
+                        <Link href="/pricing" onClick={() => setMenuOpen(false)} className="px-2 py-1.5 text-sm rounded-[8px]" style={{ color: auraTextMuted }}>
                           定价
                         </Link>
-                        <Link href="/terms" onClick={() => setMenuOpen(false)} className="px-2 py-1.5 text-xs rounded-[8px]" style={{ color: auraTextMuted }}>
+                        <Link href="/terms" onClick={() => setMenuOpen(false)} className="px-2 py-1.5 text-sm rounded-[8px]" style={{ color: auraTextMuted }}>
                           用户服务协议
                         </Link>
-                        <Link href="/privacy" onClick={() => setMenuOpen(false)} className="px-2 py-1.5 text-xs rounded-[8px]" style={{ color: auraTextMuted }}>
+                        <Link href="/privacy" onClick={() => setMenuOpen(false)} className="px-2 py-1.5 text-sm rounded-[8px]" style={{ color: auraTextMuted }}>
                           隐私政策
                         </Link>
                         <button
                           type="button"
                           onClick={() => void handleLogout()}
-                          className="px-2 py-1.5 text-left text-xs rounded-[8px]"
+                          className="px-2 py-1.5 text-left text-sm rounded-[8px]"
                           style={{ color: auraTextMuted }}
                         >
                           退出登录

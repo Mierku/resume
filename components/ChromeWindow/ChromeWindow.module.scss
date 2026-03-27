@@ -82,23 +82,36 @@
   color: #9aa0a6;
   display: flex;
   gap: 12px;
-  font-size: 18px;
   user-select: none;
 
-  span {
+  .navIcon {
+    color: #ebebeb;
     cursor: pointer;
     transition: color 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 
     &:hover {
       color: #e8eaed;
     }
   }
-}
 
-.refresh {
-  font-size: 16px !important;
+  svg {
+    width: 18px;
+    height: 18px;
+    stroke-width: 1.9;
+  }
 }
-
+.lockIcon {
+  margin-right: 6px;
+  svg {
+    width: 17px;
+    height: 17px;
+    stroke-width: 2;
+    stroke: currentColor;
+  }
+}
 .addressBar {
   flex: 1;
   background: #292a2d;
@@ -136,16 +149,24 @@
   transition: background 0.2s;
   font-size: 16px;
   user-select: none;
+  color: #ebebeb;
 
   &:hover {
     background: rgba(255, 255, 255, 0.08);
+  }
+
+  svg {
+    width: 17px;
+    height: 17px;
+    stroke-width: 2;
+    stroke: currentColor;
   }
 }
 
 // ─── 网页内容区 ───
 .webContent {
   flex: 1;
-  background: #ffffff;
+  color: #ebebeb;
   position: relative;
   overflow: hidden;
   display: flex;

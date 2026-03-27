@@ -67,7 +67,7 @@ export function MonthPickerField({
 
   return (
     <Field className={cn('resume-month-picker-field', className)}>
-      {showLabel && label ? <FieldLabel nativeLabel={false}>{label}</FieldLabel> : null}
+      {showLabel && label ? <FieldLabel>{label}</FieldLabel> : null}
       {name ? <input type="hidden" name={name} value={value} /> : null}
 
       <Popover.Root open={open} onOpenChange={handleOpenChange}>

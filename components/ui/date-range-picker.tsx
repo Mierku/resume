@@ -110,7 +110,7 @@ export function DateRangePickerField({
 
   return (
     <Field className={cn('resume-period-range-field', className)}>
-      {label ? <FieldLabel nativeLabel={false}>{label}</FieldLabel> : null}
+      {label ? <FieldLabel>{label}</FieldLabel> : null}
       {name ? <input type="hidden" name={name} value={displayText} /> : null}
 
       <Popover.Root open={open} onOpenChange={handleOpenChange}>

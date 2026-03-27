@@ -2,9 +2,9 @@ import { toAssetUrl } from '@/lib/assets'
 
 export const SITE_ORIGIN = process.env.SITE_ORIGIN || 'http://localhost:3000'
 
-export const SITE_NAME = '沉浸式投递'
-export const SITE_NAME_EN = 'Immersive Delivery'
-export const SITE_DESCRIPTION = '从「反复填表」到「一键投递」'
+export const SITE_NAME = '沉浸式网申'
+export const SITE_NAME_EN = 'Immersive Apply'
+export const SITE_DESCRIPTION = '免费简历制作｜自动化网申'
 
 export const PROTECTED_ROUTES = [
   '/dashboard',

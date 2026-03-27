@@ -960,7 +960,7 @@ function Template1({ data, sectionIds, onNavigate }: TemplateRenderContext) {
 
       <main className={styles.t1Main}>
         <div className={styles.t1MainHeader}>
-          <h1 {...getPreviewActionProps(onNavigate, { sectionId: 'basics', fieldKey: 'name' })}>{data.basics.name || '全民简历'}</h1>
+          <h1 {...getPreviewActionProps(onNavigate, { sectionId: 'basics', fieldKey: 'name' })}>{data.basics.name || '沉浸式网申'}</h1>
           {intentionItems.length > 0 ? (
             <div className={styles.t1IntentGrid}>
               {intentionItems.map(item => (
@@ -993,7 +993,7 @@ function Template2({ data, sectionIds, onNavigate }: TemplateRenderContext) {
   const facts = extractResumeFacts(data)
   const personalLocation = resolvePersonalLocation(facts)
   const basicFields = [
-    { label: '姓 名', value: data.basics.name || '全民简历', fieldKey: 'name', sectionId: 'basics' },
+    { label: '姓 名', value: data.basics.name || '沉浸式网申', fieldKey: 'name', sectionId: 'basics' },
     { label: '出生年月', value: facts.birthDate, fieldKey: 'birthDate', sectionId: 'basics' },
     { label: '年 龄', value: facts.age, fieldKey: 'birthDate', sectionId: 'basics' },
     { label: '性 别', value: facts.gender, fieldKey: 'gender', sectionId: 'basics' },
@@ -1095,7 +1095,7 @@ function Template3({ data, sectionIds, onNavigate }: TemplateRenderContext) {
     <div className={styles.template3}>
       <div className={styles.t3Header}>
         <div className={styles.t3HeaderMain}>
-          <h1 {...getPreviewActionProps(onNavigate, { sectionId: 'basics', fieldKey: 'name' })}>{data.basics.name || '全民简历'}</h1>
+          <h1 {...getPreviewActionProps(onNavigate, { sectionId: 'basics', fieldKey: 'name' })}>{data.basics.name || '沉浸式网申'}</h1>
           {headline ? (
             <p {...getPreviewActionProps(onNavigate, { sectionId: 'intention', fieldKey: 'intentionPosition' }, styles.t3Subtitle)}>
               {headline}
@@ -1174,7 +1174,7 @@ function Template4({ data, sectionIds, onNavigate }: TemplateRenderContext) {
     <div className={styles.template4}>
       <div className={styles.t4Header}>
         <div className={styles.t4TitleLine}>
-          <h1 {...getPreviewActionProps(onNavigate, { sectionId: 'basics', fieldKey: 'name' })}>{data.basics.name || '全民简历'}</h1>
+          <h1 {...getPreviewActionProps(onNavigate, { sectionId: 'basics', fieldKey: 'name' })}>{data.basics.name || '沉浸式网申'}</h1>
         </div>
         {intentionItems.some(item => hasMeaningfulText(item.value)) ? <p>{renderInlineTargetList(intentionItems, onNavigate)}</p> : null}
         {profileItems.some(item => hasMeaningfulText(item.value)) ? <p>{renderInlineTargetList(profileItems, onNavigate)}</p> : null}
@@ -1224,7 +1224,7 @@ function Template5({ data, sectionIds, onNavigate }: TemplateRenderContext) {
     <div className={styles.template5}>
       <div className={styles.t5Header}>
         <div className={styles.t5HeaderMain}>
-          <h1 {...getPreviewActionProps(onNavigate, { sectionId: 'basics', fieldKey: 'name' })}>{data.basics.name || '全民简历'}</h1>
+          <h1 {...getPreviewActionProps(onNavigate, { sectionId: 'basics', fieldKey: 'name' })}>{data.basics.name || '沉浸式网申'}</h1>
           {profileItems.some(item => hasMeaningfulText(item.value)) ? <p>{renderInlineTargetList(profileItems, onNavigate)}</p> : null}
           {profileExtraItems.some(item => hasMeaningfulText(item.value)) ? <p>{renderInlineTargetList(profileExtraItems, onNavigate)}</p> : null}
           {contactItems.length > 0 ? (
@@ -1287,7 +1287,7 @@ function Template6({ data, sectionIds, onNavigate }: TemplateRenderContext) {
     <div className={styles.template6}>
       <div className={styles.t6Header}>
         <div className={styles.t6HeaderMain}>
-          <h1 {...getPreviewActionProps(onNavigate, { sectionId: 'basics', fieldKey: 'name' })}>{data.basics.name || '全民简历'}</h1>
+          <h1 {...getPreviewActionProps(onNavigate, { sectionId: 'basics', fieldKey: 'name' })}>{data.basics.name || '沉浸式网申'}</h1>
           {intentFields.length > 0 ? (
             <div className={styles.t6IntentGrid}>
               {intentFields.map(item => (
@@ -1361,7 +1361,7 @@ function Template7({ data, sectionIds, onNavigate }: TemplateRenderContext) {
         </div>
 
         <div className={styles.t7HeaderMain}>
-          <h1 {...getPreviewActionProps(onNavigate, { sectionId: 'basics', fieldKey: 'name' })}>{data.basics.name || '全民简历'}</h1>
+          <h1 {...getPreviewActionProps(onNavigate, { sectionId: 'basics', fieldKey: 'name' })}>{data.basics.name || '沉浸式网申'}</h1>
           {hasMeaningfulText(facts.position) ? (
             <p {...getPreviewActionProps(onNavigate, { sectionId: 'intention', fieldKey: 'intentionPosition' })}>求职岗位：{facts.position}</p>
           ) : null}

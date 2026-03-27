@@ -4,12 +4,11 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Copy, X } from 'lucide-react'
 import { Message } from '@/components/ui/radix-adapter'
+import { ChromeWindow } from '@/components/ChromeWindow'
+import Image from 'next/image'
+import { DiagonalCircuitPulseCanvas } from './DiagonalCircuitPulseCanvas'
 import s from '../landing.module.scss'
 
-const pluginFields = [
-  { label: 'Full Name', value: '林静宜 Celine Lin' },
-  { label: 'Experience', value: 'Senior Designer @ Aura Tech' },
-]
 
 type LogoShape = 'square' | 'circle' | 'ring' | 'pill' | 'stack'
 
@@ -271,6 +270,7 @@ export function HomePageClient() {
       )}
 
       <section className={s.hero}>
+        <DiagonalCircuitPulseCanvas className={s.heroPulseLayer} />
         <div className={s.heroGrid}>
           <div className={s.copyCol}>
             <div className={s.copyHeader}>
@@ -280,14 +280,12 @@ export function HomePageClient() {
                 <br />
                 <span className={s.titleAccent}>化为指尖的从容</span>
               </h1>
+              <p className={s.subtitle}>
+                简历与网申一站式解决           
+              <br />
+                在每一个快节奏的机会面前，为您保留最后一份优雅。
+              </p>
             </div>
-
-            <p className={s.subtitle}>
-              简历与网申一站式解决           
-             <br />
-              在每一个快节奏的机会面前，为您保留最后一份优雅。
-            </p>
-
             <div className={s.actions}>
               <button type="button" className={s.ctaPrimary} onClick={() => setInstallGuideOpen(true)}>
                 安装插件
@@ -303,38 +301,17 @@ export function HomePageClient() {
           </div>
 
           <div className={s.visualCol}>
-            <div className={s.pluginCard}>
-              <div className={s.pluginHeader}>
-                <div className={s.pluginDots}>
-                  <span />
-                  <span />
-                  <span />
-                </div>
-                <span className={s.pluginMeta}>AURA PLUGIN</span>
-              </div>
+            <ChromeWindow title="####" url="www.immersive-apply.com" className={s.chromeWindowHero}>
+              <Image
+                src="/home/hero/image.png"
+                alt=""
+                fill
+                loading="eager"
+                sizes="(max-width: 920px) 100vw, (max-width: 1440px) 58vw, 840px"
+                style={{ objectFit: 'cover' }}
+              />
 
-              <div className={s.pluginBody}>
-                {pluginFields.map(field => (
-                  <div key={field.label} className={s.mockInput}>
-                    <span className={s.mockLabel}>{field.label}</span>
-                    <span className={s.mockValue}>{field.value}</span>
-                  </div>
-                ))}
-
-                <div className={s.locationRow}>
-                  <div className={s.mockInput}>
-                    <span className={s.mockLabel}>Location</span>
-                    <span className={s.mockValue}>Shanghai, China</span>
-                  </div>
-
-                  <div className={s.checkBubble} aria-hidden>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-                      <path d="M20 6 9 17l-5-5" />
-                    </svg>
-                  </div>
-                </div>
-              </div>
-            </div>
+            </ChromeWindow>
 
             <div className={s.glowOrbTop} aria-hidden />
             <div className={s.glowOrbBottom} aria-hidden />

@@ -1,13 +1,13 @@
 'use client'
 
 import { type KeyboardEvent as ReactKeyboardEvent, type ReactNode, useRef, useState } from 'react'
-import Link from 'next/link'
 import { Button, IconDownload, IconLeft, IconSave, Input, Space } from '../primitives'
 
 interface ResumeBuilderToolbarProps {
   resumeTitle: string
   saveStatus: ReactNode
   saveLoading: boolean
+  onBack: () => void
   onResumeTitleChange: (value: string) => void
   onResumeTitleBlur: () => void
   onOpenExportPreview: () => void
@@ -18,6 +18,7 @@ export function ResumeBuilderToolbar({
   resumeTitle,
   saveStatus,
   saveLoading,
+  onBack,
   onResumeTitleChange,
   onResumeTitleBlur,
   onOpenExportPreview,
@@ -45,9 +46,7 @@ export function ResumeBuilderToolbar({
   return (
     <div className="resume-toolbar border-b px-4 py-2 grid grid-cols-[1fr_auto_1fr] items-center gap-3 no-print flex-shrink-0">
       <div className="flex min-w-0 items-center gap-2 justify-self-start">
-        <Link href="/resume/my-resumes">
-          <Button type="text" icon={<IconLeft />} />
-        </Link>
+        <Button type="text" icon={<IconLeft />} onClick={onBack} aria-label="返回" />
       </div>
 
       <div className="flex min-w-0 items-center px-2 justify-self-center">

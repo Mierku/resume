@@ -1,9 +1,10 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useMemo, useState } from 'react'
-import { AuthGuard } from '@/components/AuthGuard'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { Skeleton } from '@/components/ui/Skeleton'
+import { useAuthedPageData } from '@/lib/hooks/useAuthedPageData'
 import { getUserDisplayName, type SessionUser } from '@/lib/user'
 import styles from './dashboard.module.css'
 
@@ -73,59 +74,96 @@ function toDestination(record: TrackingRecord) {
 }
 
 export default function DashboardPage() {
-  return (
-    <AuthGuard unauthBehavior="redirect">
-      <DashboardContent />
-    </AuthGuard>
-  )
+  return <DashboardContent />
 }
 
 function DashboardContent() {
-  const [user, setUser] = useState<SessionUser | null>(null)
-  const [defaultDataSource, setDefaultDataSource] = useState<DataSource | null>(null)
-  const [recentRecords, setRecentRecords] = useState<TrackingRecord[]>([])
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
   const [diagnosing, setDiagnosing] = useState(false)
   const [diagnosisLines, setDiagnosisLines] = useState<string[]>([])
-  const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    void load()
-  }, [])
+  const nextPath = useMemo(() => {
+    const query = searchParams.toString()
+    return query ? `${pathname}?${query}` : pathname
+  }, [pathname, searchParams])
 
-  const load = async () => {
-    try {
-      const [userRes, dsRes, recordsRes] = await Promise.all([
-        fetch('/api/auth/me'),
-        fetch('/api/data-sources'),
-        fetch('/api/records?limit=6'),
-      ])
-
-      const userPayload = userRes.ok ? await userRes.json() : null
-      const defaultDataSourceId = userPayload?.user?.defaultDataSourceId || null
-
-      if (userPayload?.user) {
-        setUser(userPayload.user)
-      }
-
-      if (dsRes.ok) {
-        const dsPayload = await dsRes.json()
-        const sources = (dsPayload?.dataSources || []) as DataSource[]
-        if (sources.length > 0) {
-          const picked = sources.find(item => item.id === defaultDataSourceId) || sources[0]
-          setDefaultDataSource(picked)
+  const loadDashboardData = useCallback(
+    async ({ signal, auth }: { signal: AbortSignal; auth: { authenticated: boolean; user: SessionUser | null } }) => {
+      if (!auth.authenticated) {
+        return {
+          defaultDataSource: null as DataSource | null,
+          recentRecords: [] as TrackingRecord[],
         }
       }
 
-      if (recordsRes.ok) {
-        const recordsPayload = await recordsRes.json()
-        setRecentRecords((recordsPayload?.records || []) as TrackingRecord[])
+      const [dsRes, recordsRes] = await Promise.all([
+        fetch('/api/data-sources', { cache: 'no-store', signal }),
+        fetch('/api/records?limit=6', { cache: 'no-store', signal }),
+      ])
+
+      if (dsRes.status === 401 || recordsRes.status === 401) {
+        return {
+          defaultDataSource: null as DataSource | null,
+          recentRecords: [] as TrackingRecord[],
+        }
       }
-    } catch (error) {
-      console.error('加载个人工作台数据失败:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
+
+      if (!dsRes.ok || !recordsRes.ok) {
+        throw new Error('加载个人工作台数据失败')
+      }
+
+      const defaultDataSourceId = auth.user?.defaultDataSourceId || null
+      const dsPayload = await dsRes.json().catch(() => null)
+      const sources = Array.isArray((dsPayload as { dataSources?: unknown[] } | null)?.dataSources)
+        ? (((dsPayload as { dataSources?: unknown[] }).dataSources || []) as DataSource[])
+        : []
+      const pickedDefaultDataSource = sources.find(item => item.id === defaultDataSourceId) || sources[0] || null
+
+      const recordsPayload = await recordsRes.json().catch(() => null)
+      const records = Array.isArray((recordsPayload as { records?: unknown[] } | null)?.records)
+        ? (((recordsPayload as { records?: unknown[] }).records || []) as TrackingRecord[])
+        : []
+
+      return {
+        defaultDataSource: pickedDefaultDataSource,
+        recentRecords: records,
+      }
+    },
+    [],
+  )
+
+  const {
+    data: dashboardData,
+    loading,
+    error,
+    auth,
+    reload,
+  } = useAuthedPageData<
+    { defaultDataSource: DataSource | null; recentRecords: TrackingRecord[] },
+    SessionUser
+  >({
+    initialData: {
+      defaultDataSource: null,
+      recentRecords: [],
+    },
+    load: loadDashboardData,
+    onError: loadError => {
+      console.error('加载个人工作台数据失败:', loadError)
+    },
+  })
+
+  const user = auth.user
+  const authenticated = auth.authenticated
+  const defaultDataSource = dashboardData.defaultDataSource
+  const recentRecords = dashboardData.recentRecords
+
+  useEffect(() => {
+    if (loading) return
+    if (authenticated) return
+    router.replace(`/login?next=${encodeURIComponent(nextPath)}`)
+  }, [authenticated, loading, nextPath, router])
 
   const completionScore = useMemo(() => {
     let score = 42
@@ -238,7 +276,7 @@ function DashboardContent() {
     return planExpireFormatter.format(parsed)
   })()
 
-  if (loading) {
+  if (loading || !authenticated) {
     return (
       <div className={styles.loadingPage}>
         <div className={styles.loadingGrid}>
@@ -246,6 +284,24 @@ function DashboardContent() {
           <Skeleton className={styles.loadingCardTall} />
           <Skeleton className={styles.loadingCardTall} />
           <Skeleton className={styles.loadingTable} />
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className={styles.loadingPage}>
+        <div className={styles.loadingGrid}>
+          <article className={`${styles.glassCard} ${styles.analysisCard}`}>
+            <div className={styles.sectionTitle}>
+              <span>加载失败</span>
+            </div>
+            <p className={styles.scoreDesc}>{error}</p>
+            <button type="button" className={styles.reportButton} onClick={reload}>
+              重试加载
+            </button>
+          </article>
         </div>
       </div>
     )

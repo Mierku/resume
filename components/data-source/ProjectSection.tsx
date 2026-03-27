@@ -63,7 +63,7 @@ export default function ProjectSection({ data, onChange, onAdd, onRemove }: Prop
               <Input value={p.role || ''} onChange={value => onChange(index, 'role', value)} placeholder="前端负责人" />
             </FormItem>
             <FormItem label="项目名称" style={{ gridColumn: 'span 3' }}>
-              <Input value={p.name} onChange={value => onChange(index, 'name', value)} placeholder="沉浸式投递" />
+              <Input value={p.name} onChange={value => onChange(index, 'name', value)} placeholder="沉浸式网申" />
             </FormItem>
             <FormItem label="项目内容" style={{ gridColumn: 'span 3' }}>
               <TextArea value={p.description} onChange={value => onChange(index, 'description', value)} placeholder="描述项目内容..." rows={3} />

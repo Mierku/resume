@@ -17,6 +17,7 @@ export interface CreateResumeInput {
   title: string
   templateId: string
   dataSourceId?: string
+  themeColor?: string
   mode?: ResumeMode
   content?: unknown
 }
@@ -48,6 +49,10 @@ function toResumeDataSource(dataSource: unknown): ResumeDataSource | undefined {
 
 function stripHtml(text: string): string {
   return text.replace(/<[^>]*>/g, '').trim()
+}
+
+function isHexColor(value: string | undefined): value is string {
+  return Boolean(value && /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/.test(value))
 }
 
 function itemMarkdown(item: Record<string, unknown>, keys: string[]): string {
@@ -376,6 +381,9 @@ export async function createResume(userId: string, input: CreateResumeInput) {
 
   const templateId = normalizedInputTemplate
   content.data.metadata.template = templateId
+  if (isHexColor(input.themeColor)) {
+    content.data.metadata.design.colors.primary = input.themeColor
+  }
 
   return prisma.resume.create({
     data: {

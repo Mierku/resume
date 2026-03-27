@@ -1,23 +1,42 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Check, Chrome, Globe } from 'lucide-react'
-import { AuthGuard } from '@/components/AuthGuard'
 import { Card } from '@/components/ui/Card'
 import { Input, Button, Message } from '@/components/ui/radix-adapter'
+import { Skeleton } from '@/components/ui/Skeleton'
+import { useAuthSnapshot } from '@/lib/hooks/useAuthSnapshot'
 
 const TextArea = Input.TextArea
 
 type Step = 'data-source' | 'install' | 'tutorial'
 
 export default function OnboardingPage() {
-  return (
-    <AuthGuard>
-      <OnboardingContent />
-    </AuthGuard>
-  )
+  const router = useRouter()
+  const pathname = usePathname()
+  const { auth, checked, checking } = useAuthSnapshot()
+
+  useEffect(() => {
+    if (checking || !checked) return
+    if (auth.authenticated) return
+    router.replace(`/login?next=${encodeURIComponent(pathname || '/onboarding')}`)
+  }, [auth.authenticated, checked, checking, pathname, router])
+
+  if (checking || !checked || !auth.authenticated) {
+    return (
+      <div className="container py-8">
+        <div className="mx-auto max-w-2xl space-y-4">
+          <Skeleton className="h-8 w-40" />
+          <Skeleton className="h-4 w-80" />
+          <Skeleton className="h-72 w-full rounded-[12px]" />
+        </div>
+      </div>
+    )
+  }
+
+  return <OnboardingContent />
 }
 
 function OnboardingContent() {

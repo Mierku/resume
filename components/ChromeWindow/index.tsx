@@ -1,5 +1,14 @@
 'use client'
 
+import {
+  ArrowLeft,
+  ArrowRight,
+  MoreVertical,
+  Puzzle,
+  RotateCw,
+  Settings2,
+  User,
+} from 'lucide-react'
 import styles from './ChromeWindow.module.scss'
 
 interface ChromeWindowProps {
@@ -25,26 +34,41 @@ export function ChromeWindow({
           <div className={`${styles.light} ${styles.green}`} />
         </div>
         <div className={styles.chromeTab}>
-          <span className={styles.favicon}>🔖</span>
+          <span className={styles.favicon}>
           {title}
+          </span>
         </div>
       </div>
 
       {/* 地址栏工具栏 */}
       <div className={styles.chromeToolbar}>
         <div className={styles.navIcons}>
-          <span>‹</span>
-          <span>›</span>
-          <span className={styles.refresh}>↻</span>
+          <span className={styles.navIcon} aria-hidden>
+            <ArrowLeft />
+          </span>
+          <span className={styles.navIcon} aria-hidden>
+            <ArrowRight />
+          </span>
+          <span className={styles.navIcon} aria-hidden>
+            <RotateCw />
+          </span>
         </div>
         <div className={styles.addressBar}>
-          <span className={styles.lock}>🔒</span>
+          <div className={styles.lockIcon}>
+            <Settings2 />
+          </div>
           {url}
         </div>
         <div className={styles.pluginArea}>
-          <div className={styles.pluginIcon}>🧩</div>
-          <div className={styles.pluginIcon}>👤</div>
-          <div className={styles.pluginIcon}>⋮</div>
+          <div className={styles.pluginIcon} aria-hidden>
+            <Puzzle />
+          </div>
+          <div className={styles.pluginIcon} aria-hidden>
+            <User />
+          </div>
+          <div className={styles.pluginIcon} aria-hidden>
+            <MoreVertical />
+          </div>
         </div>
       </div>
 

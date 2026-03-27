@@ -26,7 +26,18 @@ import {
 } from 'react'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
-import { FilePenLine, LayoutTemplate, Moon, SlidersHorizontal, Sun, Type as TypeIcon, FileText, PenLine, ZoomIn, ZoomOut } from 'lucide-react'
+import {
+  FilePenLine,
+  LayoutTemplate,
+  Moon,
+  SlidersHorizontal,
+  Sun,
+  Type as TypeIcon,
+  FileText,
+  PenLine,
+  ZoomIn,
+  ZoomOut,
+} from 'lucide-react'
 import {
   Button,
   Checkbox,
@@ -70,11 +81,13 @@ import { getTemplateDefaultPrimaryColor, RESUME_TEMPLATES } from '@/lib/constant
 import { AuthRequiredModal, Modal } from '@/components/ui/Modal'
 import { DateRangePickerField } from '@/components/ui/date-range-picker'
 import { MonthPickerField } from '@/components/ui/month-picker'
+import { toast } from '@/lib/toast'
 import type { PreviewNavigationTarget } from '@/components/resume-reactive-preview'
 import { useResumeBuilderStore } from './store/useResumeBuilderStore'
 import { FillToolPanel } from './panels/FillToolPanel'
 import { ExportWorkbench } from './export/ExportWorkbench'
 import { ResumeBuilderToolbar } from './layout/ResumeBuilderToolbar'
+import { useAuthSnapshot } from '@/lib/hooks/useAuthSnapshot'
 import './builder-theme.css'
 
 const ResumeReactivePreview = dynamic(
@@ -136,9 +149,24 @@ const POLITICAL_STATUS_OPTIONS = [
   { value: '民主党派', label: '民主党派' },
 ]
 
+const BASICS_HEIGHT_LIMIT: NumericLimitConfig = {
+  min: 120,
+  max: 230,
+  step: 1,
+  defaultValue: 170,
+  presets: [150, 160, 170, 175, 180, 185, 190, 200],
+}
+
+const BASICS_WEIGHT_LIMIT: NumericLimitConfig = {
+  min: 35,
+  max: 180,
+  step: 1,
+  defaultValue: 60,
+  presets: [45, 50, 55, 60, 65, 70, 75, 80],
+}
+
 const THEME_STORAGE_KEY = 'theme'
 const DEFAULT_TEXT_COLOR = '#111827'
-
 function toSingleSelectValue(value: string | string[]) {
   return Array.isArray(value) ? value[0] || '' : value
 }
@@ -331,6 +359,164 @@ function NumberComboField({ label, value, config, suffix, onChange }: NumberComb
   )
 }
 
+interface ScrubbableNumberInputProps {
+  value: string
+  placeholder: string
+  suffix: string
+  config: NumericLimitConfig
+  onChange: (value: string) => void
+}
+
+function ScrubbableNumberInput({ value, placeholder, suffix, config, onChange }: ScrubbableNumberInputProps) {
+  const [focused, setFocused] = useState(false)
+  const [draft, setDraft] = useState(value)
+  const dragRef = useRef<{ pointerId: number; startX: number; startValue: number } | null>(null)
+
+  const currentNumeric = useMemo(() => {
+    const parsed = Number(value)
+    if (Number.isFinite(parsed)) {
+      return clampToRange(parsed, config.min, config.max)
+    }
+    return config.defaultValue
+  }, [config.defaultValue, config.max, config.min, value])
+
+  useEffect(() => {
+    if (!focused) {
+      setDraft(value)
+    }
+  }, [focused, value])
+
+  useEffect(() => {
+    return () => {
+      if (typeof document !== 'undefined') {
+        document.body.classList.remove('resume-number-scrubbing')
+      }
+    }
+  }, [])
+
+  const commitDraft = () => {
+    const trimmed = draft.trim()
+    if (!trimmed) {
+      onChange('')
+      return
+    }
+
+    const parsed = parseNumericInput(trimmed, config, currentNumeric)
+    const formatted = formatNumericValue(parsed, config.step)
+    setDraft(formatted)
+    onChange(formatted)
+  }
+
+  const adjustBySteps = (steps: number) => {
+    if (!steps) return
+    const nextValue = clampToRange(currentNumeric + steps * config.step, config.min, config.max)
+    const formatted = formatNumericValue(nextValue, config.step)
+    setDraft(formatted)
+    onChange(formatted)
+  }
+
+  const startScrub = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    event.preventDefault()
+    event.stopPropagation()
+    dragRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startValue: currentNumeric,
+    }
+    event.currentTarget.setPointerCapture(event.pointerId)
+    if (typeof document !== 'undefined') {
+      document.body.classList.add('resume-number-scrubbing')
+    }
+  }
+
+  const moveScrub = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    const drag = dragRef.current
+    if (!drag || drag.pointerId !== event.pointerId) return
+
+    event.preventDefault()
+    const deltaX = event.clientX - drag.startX
+    const steps = Math.round(deltaX / 8)
+    if (!steps) return
+    const nextValue = clampToRange(drag.startValue + steps * config.step, config.min, config.max)
+    const formatted = formatNumericValue(nextValue, config.step)
+    setDraft(formatted)
+    onChange(formatted)
+  }
+
+  const endScrub = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    const drag = dragRef.current
+    if (!drag || drag.pointerId !== event.pointerId) return
+
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId)
+    }
+    dragRef.current = null
+    if (typeof document !== 'undefined') {
+      document.body.classList.remove('resume-number-scrubbing')
+    }
+  }
+
+  return (
+    <div className="resume-scrub-number">
+      <div className="resume-scrub-number-input-wrap">
+        <Input
+          className="resume-scrub-number-input"
+          value={focused ? draft : value}
+          onChange={setDraft}
+          onFocus={() => {
+            setFocused(true)
+            setDraft(value)
+          }}
+          onBlur={() => {
+            setFocused(false)
+            commitDraft()
+          }}
+          onKeyDown={event => {
+            if (event.key === 'Enter') {
+              event.currentTarget.blur()
+              return
+            }
+
+            if (event.key === 'ArrowUp') {
+              event.preventDefault()
+              adjustBySteps(1)
+              return
+            }
+
+            if (event.key === 'ArrowDown') {
+              event.preventDefault()
+              adjustBySteps(-1)
+            }
+          }}
+          inputMode="numeric"
+          placeholder={placeholder}
+        />
+        <button
+          type="button"
+          className="resume-scrub-number-edge is-left"
+          aria-label={`${placeholder} 左侧拖动调整`}
+          title="按住左右拖动调整"
+          onPointerDown={startScrub}
+          onPointerMove={moveScrub}
+          onPointerUp={endScrub}
+          onPointerCancel={endScrub}
+        />
+        <button
+          type="button"
+          className="resume-scrub-number-edge is-right"
+          aria-label={`${placeholder} 右侧拖动调整`}
+          title="按住左右拖动调整"
+          onPointerDown={startScrub}
+          onPointerMove={moveScrub}
+          onPointerUp={endScrub}
+          onPointerCancel={endScrub}
+        />
+      </div>
+      <span className="resume-scrub-number-unit">{suffix}</span>
+    </div>
+  )
+}
+
 const STANDARD_SECTION_LABELS: Record<StandardSectionType, string> = {
   profiles: '社交资料',
   experience: '工作经历',
@@ -476,6 +662,62 @@ function createNestedPatch(target: Record<string, unknown>, key: string, value: 
   return { [root]: nested }
 }
 
+interface StandardSectionItemSummaryConfig {
+  primaryKey: string
+  secondaryKey: string
+  primaryFallback: string
+  secondaryFallback: string
+}
+
+const STANDARD_SECTION_ITEM_SUMMARY_CONFIG: Partial<Record<StandardSectionType, StandardSectionItemSummaryConfig>> = {
+  experience: {
+    primaryKey: 'company',
+    secondaryKey: 'period',
+    primaryFallback: '公司',
+    secondaryFallback: '时间',
+  },
+  education: {
+    primaryKey: 'school',
+    secondaryKey: 'period',
+    primaryFallback: '学校',
+    secondaryFallback: '时间',
+  },
+  projects: {
+    primaryKey: 'name',
+    secondaryKey: 'period',
+    primaryFallback: '项目',
+    secondaryFallback: '时间',
+  },
+  awards: {
+    primaryKey: 'title',
+    secondaryKey: 'date',
+    primaryFallback: '奖项',
+    secondaryFallback: '时间',
+  },
+  volunteer: {
+    primaryKey: 'organization',
+    secondaryKey: 'period',
+    primaryFallback: '组织',
+    secondaryFallback: '时间',
+  },
+}
+
+function toSummaryText(value: unknown) {
+  if (typeof value === 'string') return value.trim()
+  if (typeof value === 'number') return String(value)
+  return ''
+}
+
+function resolveStandardSectionItemSummary(sectionId: StandardSectionType, record: Record<string, unknown>) {
+  const config = STANDARD_SECTION_ITEM_SUMMARY_CONFIG[sectionId]
+  if (!config) return null
+
+  const primary = toSummaryText(getNestedValue(record, config.primaryKey)) || `未填写${config.primaryFallback}`
+  const secondary = toSummaryText(getNestedValue(record, config.secondaryKey)) || `未填写${config.secondaryFallback}`
+
+  return { primary, secondary }
+}
+
 function isStandardSectionId(sectionId: string): sectionId is StandardSectionType {
   return STANDARD_SECTION_IDS.includes(sectionId as StandardSectionType)
 }
@@ -531,7 +773,12 @@ declare global {
 }
 
 const HTML2CANVAS_SCRIPT_ID = 'resume-html2canvas-script'
-const HTML2CANVAS_SCRIPT_SRC = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js'
+const HTML2CANVAS_SCRIPT_SOURCES = [
+  'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',
+  'https://cdn.bootcdn.net/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',
+  'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js',
+] as const
+let html2CanvasLoadingPromise: Promise<Html2Canvas> | null = null
 const SMART_ONE_PAGE_MAX_SCALE = 5
 const SIDEBAR_WIDTH_MIN = 360
 const SIDEBAR_WIDTH_MAX = 680
@@ -644,40 +891,85 @@ function downloadBlob(blob: Blob, filename: string) {
   URL.revokeObjectURL(url)
 }
 
+function removeHtml2CanvasScript(script: HTMLScriptElement | null) {
+  if (!script) return
+  if (script.parentNode) {
+    script.parentNode.removeChild(script)
+  }
+}
+
+function waitForHtml2Canvas(script: HTMLScriptElement) {
+  if (window.html2canvas) {
+    return Promise.resolve(window.html2canvas)
+  }
+
+  return new Promise<Html2Canvas>((resolve, reject) => {
+    const cleanup = () => {
+      script.removeEventListener('load', onLoad)
+      script.removeEventListener('error', onError)
+    }
+
+    const onLoad = () => {
+      cleanup()
+      if (window.html2canvas) {
+        resolve(window.html2canvas)
+        return
+      }
+      reject(new Error('html2canvas 加载失败'))
+    }
+
+    const onError = () => {
+      cleanup()
+      reject(new Error('html2canvas 加载失败'))
+    }
+
+    script.addEventListener('load', onLoad)
+    script.addEventListener('error', onError)
+  })
+}
+
 function loadHtml2Canvas(): Promise<Html2Canvas> {
   if (window.html2canvas) {
     return Promise.resolve(window.html2canvas)
   }
 
-  return new Promise((resolve, reject) => {
+  if (html2CanvasLoadingPromise) {
+    return html2CanvasLoadingPromise
+  }
+
+  html2CanvasLoadingPromise = (async () => {
     const existing = document.getElementById(HTML2CANVAS_SCRIPT_ID) as HTMLScriptElement | null
     if (existing) {
-      existing.addEventListener('load', () => {
-        if (window.html2canvas) {
-          resolve(window.html2canvas)
-          return
-        }
-        reject(new Error('html2canvas 加载失败'))
-      }, { once: true })
-
-      existing.addEventListener('error', () => reject(new Error('html2canvas 加载失败')), { once: true })
-      return
-    }
-
-    const script = document.createElement('script')
-    script.id = HTML2CANVAS_SCRIPT_ID
-    script.src = HTML2CANVAS_SCRIPT_SRC
-    script.async = true
-    script.onload = () => {
-      if (window.html2canvas) {
-        resolve(window.html2canvas)
-      } else {
-        reject(new Error('html2canvas 加载失败'))
+      try {
+        return await waitForHtml2Canvas(existing)
+      } catch {
+        removeHtml2CanvasScript(existing)
       }
     }
-    script.onerror = () => reject(new Error('html2canvas 加载失败'))
-    document.body.appendChild(script)
+
+    for (const source of HTML2CANVAS_SCRIPT_SOURCES) {
+      const stale = document.getElementById(HTML2CANVAS_SCRIPT_ID) as HTMLScriptElement | null
+      removeHtml2CanvasScript(stale)
+
+      const script = document.createElement('script')
+      script.id = HTML2CANVAS_SCRIPT_ID
+      script.src = source
+      script.async = true
+      document.body.appendChild(script)
+
+      try {
+        return await waitForHtml2Canvas(script)
+      } catch {
+        removeHtml2CanvasScript(script)
+      }
+    }
+
+    throw new Error('html2canvas 加载失败')
+  })().finally(() => {
+    html2CanvasLoadingPromise = null
   })
+
+  return html2CanvasLoadingPromise
 }
 
 function hasPreviewOverflow(previewRoot: Element | null) {
@@ -906,11 +1198,21 @@ function BasicsEditor() {
 
         <EditorAnchor sectionId="basics" fieldKey="heightCm weightKg">
           <label className="text-xs text-muted-foreground block mb-1">身高 / 体重</label>
-          <div className="grid grid-cols-[1fr_auto_1fr_auto] items-center gap-2">
-            <Input type="number" value={basics.heightCm} onChange={value => updateField('heightCm', value)} placeholder="身高" />
-            <span className="text-xs text-muted-foreground">cm</span>
-            <Input type="number" value={basics.weightKg} onChange={value => updateField('weightKg', value)} placeholder="体重" />
-            <span className="text-xs text-muted-foreground">kg</span>
+          <div className="grid grid-cols-2 gap-2">
+            <ScrubbableNumberInput
+              value={basics.heightCm}
+              placeholder="身高"
+              suffix="cm"
+              config={BASICS_HEIGHT_LIMIT}
+              onChange={nextValue => updateField('heightCm', nextValue)}
+            />
+            <ScrubbableNumberInput
+              value={basics.weightKg}
+              placeholder="体重"
+              suffix="kg"
+              config={BASICS_WEIGHT_LIMIT}
+              onChange={nextValue => updateField('weightKg', nextValue)}
+            />
           </div>
         </EditorAnchor>
 
@@ -946,7 +1248,7 @@ function BasicsEditor() {
         </EditorAnchor>
       </div>
 
-      <EditorAnchor sectionId="basics" fieldKey="picture" className="rounded-sm border border-border/60 bg-muted/20 p-3 space-y-2">
+      <EditorAnchor sectionId="basics" fieldKey="picture" className="resume-soft-card p-3 space-y-2">
         <div className="flex items-center justify-between gap-3">
           <span className="resume-anchor-label text-xs text-muted-foreground">照片设置</span>
           <div className="flex items-center gap-3">
@@ -1098,6 +1400,8 @@ function StandardSectionEditor({ sectionId }: { sectionId: StandardSectionType }
   const section = useResumeBuilderStore(state => state.data.sections[sectionId])
   const updateItem = useResumeBuilderStore(state => state.updateStandardSectionItem)
   const removeItem = useResumeBuilderStore(state => state.removeStandardSectionItem)
+  const [collapsedItemIds, setCollapsedItemIds] = useState<string[]>([])
+  const collapseEnabled = Boolean(STANDARD_SECTION_ITEM_SUMMARY_CONFIG[sectionId])
 
   return (
     <div className="space-y-3">
@@ -1105,125 +1409,163 @@ function StandardSectionEditor({ sectionId }: { sectionId: StandardSectionType }
         {section.items.map((item, index) => {
           const record = item as unknown as Record<string, unknown>
           const fields = SECTION_FIELD_CONFIG[sectionId]
-          const itemId = String(item.id || index)
+          const itemId = String(item.id || `${sectionId}-${index}`)
+          const summary = resolveStandardSectionItemSummary(sectionId, record)
+          const collapsed = collapseEnabled && collapsedItemIds.includes(itemId)
+          const toggleCollapsed = () => {
+            if (!collapseEnabled) return
+            setCollapsedItemIds(prev => (prev.includes(itemId) ? prev.filter(id => id !== itemId) : [...prev, itemId]))
+          }
 
           return (
             <EditorAnchor
-              key={String(item.id)}
+              key={itemId}
               sectionId={sectionId}
               itemId={itemId}
-              className="rounded-sm border border-border/60 bg-muted/20 p-3 space-y-2"
+              className={`resume-soft-card resume-standard-item-card p-3 ${collapsed ? 'is-collapsed' : 'is-expanded'}`}
             >
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">#{index + 1}</span>
+              <div
+                className={`resume-standard-item-head ${collapseEnabled ? 'is-collapsible' : ''}`}
+                role={collapseEnabled ? 'button' : undefined}
+                tabIndex={collapseEnabled ? 0 : undefined}
+                aria-expanded={collapseEnabled ? !collapsed : undefined}
+                onClick={toggleCollapsed}
+                onKeyDown={event => {
+                  if (!collapseEnabled) return
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault()
+                    toggleCollapsed()
+                  }
+                }}
+              >
+                <div className="resume-standard-item-head-main">
+                  {collapseEnabled ? (
+                    <span className={joinClassNames('resume-standard-item-head-toggle', !collapsed && 'is-expanded')}>
+                      <IconChevronRight />
+                    </span>
+                  ) : null}
+                  {summary ? (
+                    <div className="resume-standard-item-summary" title={`${summary.primary} / ${summary.secondary}`}>
+                      <span className="resume-standard-item-summary-primary">{summary.primary}</span>
+                      <span className="resume-standard-item-summary-sep">/</span>
+                      <span className="resume-standard-item-summary-secondary">{summary.secondary}</span>
+                    </div>
+                  ) : null}
+                </div>
                 <Space>
                   <Button
                     type="text"
                     size="mini"
                     status="danger"
                     icon={<IconDelete />}
-                    onClick={() => removeItem(sectionId, index)}
+                    onClick={event => {
+                      event.stopPropagation()
+                      removeItem(sectionId, index)
+                    }}
                   />
                 </Space>
               </div>
 
-              {fields.map(field => {
-                const currentValue = getNestedValue(record, field.key)
+              <CollapseMotion open={!collapsed} className="resume-standard-item-collapse">
+                <div className="resume-standard-item-content">
+                  {fields.map(field => {
+                    const currentValue = getNestedValue(record, field.key)
+                    const fieldClassName = joinClassNames(
+                      'resume-standard-item-field',
+                      (field.type === 'rich' || field.type === 'keywords') && 'is-wide',
+                    )
 
-                if (field.type === 'rich') {
-                  return (
-                    <EditorAnchor key={field.key} sectionId={sectionId} itemId={itemId} fieldKey={field.key}>
-                      <label className="text-xs text-muted-foreground block mb-1">{field.label}</label>
-                      <RichTextEditor
-                        value={String(currentValue || '')}
-                        onChange={value => updateItem(sectionId, index, createNestedPatch(record, field.key, value))}
-                        minHeight={110}
-                      />
-                    </EditorAnchor>
-                  )
-                }
+                    if (field.type === 'rich') {
+                      return (
+                        <EditorAnchor key={field.key} sectionId={sectionId} itemId={itemId} fieldKey={field.key} className={fieldClassName}>
+                          <label className="text-xs text-muted-foreground block mb-1">{field.label}</label>
+                          <RichTextEditor
+                            value={String(currentValue || '')}
+                            onChange={value => updateItem(sectionId, index, createNestedPatch(record, field.key, value))}
+                            minHeight={110}
+                          />
+                        </EditorAnchor>
+                      )
+                    }
 
-                if (field.type === 'keywords') {
-                  return (
-                    <EditorAnchor key={field.key} sectionId={sectionId} itemId={itemId} fieldKey={field.key}>
-                      <label className="text-xs text-muted-foreground block mb-1">{field.label}</label>
-                      <Input
-                        value={Array.isArray(currentValue) ? currentValue.join(', ') : ''}
-                        onChange={value => {
-                          const keywords = value
-                            .split(/[,，]/)
-                            .map(item => item.trim())
-                            .filter(Boolean)
-                          updateItem(sectionId, index, createNestedPatch(record, field.key, keywords))
-                        }}
-                        placeholder="逗号分隔"
-                      />
-                    </EditorAnchor>
-                  )
-                }
+                    if (field.type === 'keywords') {
+                      return (
+                        <EditorAnchor key={field.key} sectionId={sectionId} itemId={itemId} fieldKey={field.key} className={fieldClassName}>
+                          <label className="text-xs text-muted-foreground block mb-1">{field.label}</label>
+                          <Input
+                            value={Array.isArray(currentValue) ? currentValue.join(', ') : ''}
+                            onChange={value => {
+                              const keywords = value
+                                .split(/[,，]/)
+                                .map(item => item.trim())
+                                .filter(Boolean)
+                              updateItem(sectionId, index, createNestedPatch(record, field.key, keywords))
+                            }}
+                            placeholder="逗号分隔"
+                          />
+                        </EditorAnchor>
+                      )
+                    }
 
-                if (field.type === 'number') {
-                  return (
-                    <EditorAnchor key={field.key} sectionId={sectionId} itemId={itemId} fieldKey={field.key}>
-                      <label className="text-xs text-muted-foreground block mb-1">{field.label}</label>
-                      <Input
-                        type="number"
-                        value={String(currentValue || '')}
-                        onChange={value => updateItem(sectionId, index, createNestedPatch(record, field.key, Number(value || 0)))}
-                      />
-                    </EditorAnchor>
-                  )
-                }
+                    if (field.type === 'number') {
+                      return (
+                        <EditorAnchor key={field.key} sectionId={sectionId} itemId={itemId} fieldKey={field.key} className={fieldClassName}>
+                          <label className="text-xs text-muted-foreground block mb-1">{field.label}</label>
+                          <Input
+                            type="number"
+                            value={String(currentValue || '')}
+                            onChange={value => updateItem(sectionId, index, createNestedPatch(record, field.key, Number(value || 0)))}
+                          />
+                        </EditorAnchor>
+                      )
+                    }
 
-                if (field.key === 'period') {
-                  const { start, end } = splitPeriodValue(String(currentValue || ''))
+                    if (field.key === 'period') {
+                      const { start, end } = splitPeriodValue(String(currentValue || ''))
 
-                  return (
-                    <EditorAnchor key={field.key} sectionId={sectionId} itemId={itemId} fieldKey={field.key}>
-                      <DateRangePickerField
-                        label={field.label}
-                        start={start}
-                        end={end}
-                        onChange={(nextStart, nextEnd) => {
-                          updateItem(sectionId, index, createNestedPatch(record, field.key, joinPeriodValue(nextStart, nextEnd)))
-                        }}
-                      />
-                    </EditorAnchor>
-                  )
-                }
+                      return (
+                        <EditorAnchor key={field.key} sectionId={sectionId} itemId={itemId} fieldKey={field.key} className={fieldClassName}>
+                          <DateRangePickerField
+                            label={field.label}
+                            start={start}
+                            end={end}
+                            onChange={(nextStart, nextEnd) => {
+                              updateItem(sectionId, index, createNestedPatch(record, field.key, joinPeriodValue(nextStart, nextEnd)))
+                            }}
+                          />
+                        </EditorAnchor>
+                      )
+                    }
 
-                if (field.key.toLowerCase().includes('date')) {
-                  return (
-                    <EditorAnchor key={field.key} sectionId={sectionId} itemId={itemId} fieldKey={field.key}>
-                      <MonthPickerField
-                        label={field.label}
-                        value={String(currentValue || '')}
-                        placeholder="不填"
-                        onChange={nextValue => updateItem(sectionId, index, createNestedPatch(record, field.key, nextValue))}
-                      />
-                    </EditorAnchor>
-                  )
-                }
+                    if (field.key.toLowerCase().includes('date')) {
+                      return (
+                        <EditorAnchor key={field.key} sectionId={sectionId} itemId={itemId} fieldKey={field.key} className={fieldClassName}>
+                          <MonthPickerField
+                            label={field.label}
+                            value={String(currentValue || '')}
+                            placeholder="不填"
+                            onChange={nextValue => updateItem(sectionId, index, createNestedPatch(record, field.key, nextValue))}
+                          />
+                        </EditorAnchor>
+                      )
+                    }
 
-                return (
-                  <EditorAnchor key={field.key} sectionId={sectionId} itemId={itemId} fieldKey={field.key}>
-                    <label className="text-xs text-muted-foreground block mb-1">{field.label}</label>
-                    <Input
-                      value={String(currentValue || '')}
-                      onChange={value => updateItem(sectionId, index, createNestedPatch(record, field.key, value))}
-                    />
-                  </EditorAnchor>
-                )
-              })}
+                    return (
+                      <EditorAnchor key={field.key} sectionId={sectionId} itemId={itemId} fieldKey={field.key} className={fieldClassName}>
+                        <label className="text-xs text-muted-foreground block mb-1">{field.label}</label>
+                        <Input
+                          value={String(currentValue || '')}
+                          onChange={value => updateItem(sectionId, index, createNestedPatch(record, field.key, value))}
+                        />
+                      </EditorAnchor>
+                    )
+                  })}
+                </div>
+              </CollapseMotion>
             </EditorAnchor>
           )
         })}
 
-        {section.items.length === 0 ? (
-          <div className="text-xs text-muted-foreground text-center py-4 border border-dashed border-border rounded-sm">
-            暂无条目
-          </div>
-        ) : null}
       </div>
     </div>
   )
@@ -1264,10 +1606,9 @@ function CustomSectionInlineEditor({ sectionId }: { sectionId: string }) {
           key={String(item.id)}
           sectionId={section.id}
           itemId={String(item.id || index)}
-          className="rounded-sm border border-border/60 bg-muted/20 p-2"
+          className="resume-soft-card p-2"
         >
-          <div className="mb-2 flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">条目 #{index + 1}</span>
+          <div className="mb-2 flex items-center justify-end">
             <Space>
               <Button
                 type="text"
@@ -1346,6 +1687,103 @@ function AddRowButton({
       </span>
       <span>{label}</span>
     </button>
+  )
+}
+
+interface CollapseMotionProps {
+  open: boolean
+  className?: string
+  children: ReactNode
+}
+
+function CollapseMotion({ open, className, children }: CollapseMotionProps) {
+  const [animate, setAnimate] = useState(false)
+  const [height, setHeight] = useState<string>(open ? 'auto' : '0px')
+  const contentRef = useRef<HTMLDivElement | null>(null)
+  const firstRenderRef = useRef(true)
+  const firstFrameRef = useRef<number | null>(null)
+  const secondFrameRef = useRef<number | null>(null)
+
+  const cancelScheduledFrames = () => {
+    if (firstFrameRef.current !== null) {
+      cancelAnimationFrame(firstFrameRef.current)
+      firstFrameRef.current = null
+    }
+
+    if (secondFrameRef.current !== null) {
+      cancelAnimationFrame(secondFrameRef.current)
+      secondFrameRef.current = null
+    }
+  }
+
+  const scheduleTransition = (callback: () => void) => {
+    firstFrameRef.current = requestAnimationFrame(() => {
+      firstFrameRef.current = null
+      secondFrameRef.current = requestAnimationFrame(() => {
+        secondFrameRef.current = null
+        callback()
+      })
+    })
+  }
+
+  useEffect(() => {
+    if (firstRenderRef.current) {
+      firstRenderRef.current = false
+      return
+    }
+
+    cancelScheduledFrames()
+
+    if (open) {
+      const nextHeight = contentRef.current?.scrollHeight || 0
+      setAnimate(false)
+      setHeight('0px')
+
+      scheduleTransition(() => {
+        setAnimate(true)
+        setHeight(`${nextHeight}px`)
+      })
+      return
+    }
+
+    const currentHeight = contentRef.current?.scrollHeight || 0
+    setAnimate(false)
+    setHeight(`${currentHeight}px`)
+
+    scheduleTransition(() => {
+      setAnimate(true)
+      setHeight('0px')
+    })
+  }, [open])
+
+  useEffect(() => {
+    return () => {
+      cancelScheduledFrames()
+    }
+  }, [])
+
+  return (
+    <div
+      className={joinClassNames('resume-collapse-motion', animate && 'is-animating', className)}
+      style={{ height, pointerEvents: open ? 'auto' : 'none' }}
+      aria-hidden={!open}
+      onTransitionEnd={event => {
+        if (event.target !== event.currentTarget || event.propertyName !== 'height') return
+
+        if (open) {
+          setAnimate(false)
+          setHeight('auto')
+          return
+        }
+
+        setAnimate(false)
+        setHeight('0px')
+      }}
+    >
+      <div ref={contentRef} className="resume-collapse-motion-inner">
+        {children}
+      </div>
+    </div>
   )
 }
 
@@ -1439,7 +1877,9 @@ function SortableSectionEditorItem({
           }
         }}
       >
-        <span className="resume-section-item-chevron text-muted-foreground">{expanded ? <IconChevronDown /> : <IconChevronRight />}</span>
+        <span className={joinClassNames('resume-section-item-chevron text-muted-foreground', expanded && 'is-expanded')}>
+          <IconChevronRight />
+        </span>
         <span className="resume-section-item-title">{title}</span>
         <div className="resume-section-item-actions" onClick={event => event.stopPropagation()}>
           <Tooltip content={hidden ? '显示板块' : '隐藏板块'}>
@@ -1498,7 +1938,7 @@ function SortableSectionEditorItem({
         </div>
       </div>
 
-      {expanded ? (
+      <CollapseMotion open={expanded} className="resume-section-item-collapse">
         <div className="resume-section-item-body">
           <SectionEditorBody sectionId={sectionId} />
           {canAddItem ? (
@@ -1507,7 +1947,7 @@ function SortableSectionEditorItem({
             </div>
           ) : null}
         </div>
-      ) : null}
+      </CollapseMotion>
     </div>
   )
 }
@@ -1783,7 +2223,7 @@ function IntegratedSectionsEditor({
   }
 
   const renderSectionList = (sortableEnabled: boolean) => (
-    <div className="space-y-1 resume-sections-column">
+    <div className="resume-sections-column">
       {orderedSectionIds.map(sectionId => (
         <SortableSectionEditorItem
           key={sectionId}
@@ -1800,7 +2240,7 @@ function IntegratedSectionsEditor({
   )
 
   return (
-    <div className="space-y-3">
+    <div className="resume-sections-stack">
       <div
         data-editor-section-id="basics"
         className={joinClassNames('resume-section-item', 'resume-focus-target', expandedSectionIds.includes('basics') && 'is-expanded')}
@@ -1817,8 +2257,13 @@ function IntegratedSectionsEditor({
             }
           }}
         >
-          <span className="resume-section-item-chevron text-muted-foreground">
-            {expandedSectionIds.includes('basics') ? <IconChevronDown /> : <IconChevronRight />}
+          <span
+            className={joinClassNames(
+              'resume-section-item-chevron text-muted-foreground',
+              expandedSectionIds.includes('basics') && 'is-expanded',
+            )}
+          >
+            <IconChevronRight />
           </span>
           <span className="resume-section-item-title">基本信息</span>
           <div className="resume-section-item-actions" onClick={event => event.stopPropagation()}>
@@ -1853,11 +2298,11 @@ function IntegratedSectionsEditor({
             </div>
           </div>
         </div>
-        {expandedSectionIds.includes('basics') ? (
+        <CollapseMotion open={expandedSectionIds.includes('basics')} className="resume-section-item-collapse">
           <div className="resume-section-item-body">
             <BasicsEditor />
           </div>
-        ) : null}
+        </CollapseMotion>
       </div>
 
       <div
@@ -1876,8 +2321,13 @@ function IntegratedSectionsEditor({
             }
           }}
         >
-          <span className="resume-section-item-chevron text-muted-foreground">
-            {expandedSectionIds.includes('intention') ? <IconChevronDown /> : <IconChevronRight />}
+          <span
+            className={joinClassNames(
+              'resume-section-item-chevron text-muted-foreground',
+              expandedSectionIds.includes('intention') && 'is-expanded',
+            )}
+          >
+            <IconChevronRight />
           </span>
           <span className="resume-section-item-title">求职意向</span>
           <div className="resume-section-item-actions" onClick={event => event.stopPropagation()}>
@@ -1886,11 +2336,11 @@ function IntegratedSectionsEditor({
             </Tooltip>
           </div>
         </div>
-        {expandedSectionIds.includes('intention') ? (
+        <CollapseMotion open={expandedSectionIds.includes('intention')} className="resume-section-item-collapse">
           <div className="resume-section-item-body">
             <IntentionEditor />
           </div>
-        ) : null}
+        </CollapseMotion>
       </div>
 
       {dndReady ? (
@@ -2224,7 +2674,7 @@ function LayoutAndStylePanel({ pane }: { pane: StyleTool }) {
         />
       </div>
 
-      <div className="rounded-sm border border-border/60 bg-muted/20 p-3">
+      <div className="resume-soft-card p-3">
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <span>智能一页</span>
           <Switch
@@ -2527,9 +2977,9 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
   const [previewScale, setPreviewScale] = useState(PREVIEW_INITIAL_SCALE)
   const [previewContentHeight, setPreviewContentHeight] = useState(0)
   const [editorFocusRequest, setEditorFocusRequest] = useState<EditorFocusRequest | null>(null)
-  const [authChecked, setAuthChecked] = useState(false)
-  const [authenticated, setAuthenticated] = useState(false)
   const [authModalOpen, setAuthModalOpen] = useState(false)
+  const { auth, checked: authChecked, ensureAuthenticated } = useAuthSnapshot()
+  const authenticated = auth.authenticated
   const focusRequestCounterRef = useRef(0)
   const resumeTitleRef = useRef(initialResume.title)
   const sidePanelScrollTimerRef = useRef<number | null>(null)
@@ -2573,36 +3023,47 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
     setActiveTool(tool)
   }, [])
 
-  const checkAuthStatus = useCallback(async () => {
-    try {
-      const response = await fetch('/api/auth/me', { cache: 'no-store' })
-      const authed = response.ok
-      setAuthenticated(authed)
-      setAuthChecked(true)
-      return authed
-    } catch {
-      setAuthenticated(false)
-      setAuthChecked(true)
-      return false
-    }
-  }, [])
-
   useEffect(() => {
-    void checkAuthStatus()
-  }, [checkAuthStatus])
+    if (typeof window === 'undefined') return
+
+    const loadingToastId = window.sessionStorage.getItem('resume:editor-loading-toast-id')
+    if (loadingToastId) {
+      toast.dismiss(loadingToastId)
+      window.sessionStorage.removeItem('resume:editor-loading-toast-id')
+    }
+
+    const key = 'resume:just-created-id'
+    const justCreatedId = window.sessionStorage.getItem(key)
+    if (justCreatedId && justCreatedId === initialResume.id) {
+      toast.success('简历创建成功')
+      window.sessionStorage.removeItem(key)
+      return
+    }
+
+    const guestEntryKey = 'resume:guest-editor-entry'
+    if (window.sessionStorage.getItem(guestEntryKey) === '1' && initialResume.id.startsWith('guest-')) {
+      toast.message('当前为游客模式，登录后可保存和管理简历')
+      window.sessionStorage.removeItem(guestEntryKey)
+    }
+  }, [initialResume.id])
+
+  const handleBackFromEditor = useCallback(async () => {
+    const authed = authChecked ? authenticated : await ensureAuthenticated()
+    router.push(authed ? '/resume/my-resumes' : '/resume/templates')
+  }, [authChecked, authenticated, ensureAuthenticated, router])
 
   const ensureAuthForAction = useCallback(
     async (actionName: string) => {
       if (authenticated) return true
 
-      const authed = authChecked ? authenticated : await checkAuthStatus()
+      const authed = authChecked ? authenticated : await ensureAuthenticated()
       if (authed) return true
 
       Message.warning(`${actionName}需要登录后继续`)
       setAuthModalOpen(true)
       return false
     },
-    [authChecked, authenticated, checkAuthStatus],
+    [authChecked, authenticated, ensureAuthenticated],
   )
 
   const setPreviewScaleCentered = useCallback((nextScaleRaw: number) => {
@@ -3235,6 +3696,7 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
           resumeTitle={resumeTitle}
           saveStatus={<SaveStatusTag />}
           saveLoading={isSavingTitle || saveState.status === 'saving'}
+          onBack={() => void handleBackFromEditor()}
           onResumeTitleChange={setResumeTitle}
           onResumeTitleBlur={() => void saveResumeTitle()}
           onOpenExportPreview={() => openExportPreview('pdf')}
