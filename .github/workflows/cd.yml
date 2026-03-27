@@ -179,23 +179,21 @@ jobs:
               repo="$1"
               keep_image="$2"
 
-              docker_cmd image ls "$repo" --format '{{.Repository}}:{{.Tag}}' \
-                | while IFS= read -r image; do
-                    if [ -z "$image" ]; then
-                      continue
-                    fi
+              old_images="$(docker_cmd image ls "$repo" --format '{{.Repository}}:{{.Tag}}' | grep ':sha-' || true)"
 
-                    case "$image" in
-                      "$keep_image")
-                        echo "Keeping current release image: $image"
-                        continue
-                        ;;
-                      *:sha-*)
-                        echo "Removing old release image: $image"
-                        docker_cmd image rm "$image" || true
-                        ;;
-                    esac
-                  done
+              if [ -z "$old_images" ]; then
+                return 0
+              fi
+
+              for image in $old_images; do
+                if [ "$image" = "$keep_image" ]; then
+                  echo "Keeping current release image: $image"
+                  continue
+                fi
+
+                echo "Removing old release image: $image"
+                docker_cmd image rm "$image" || true
+              done
             }
 
             # Build artifacts are still published to ghcr.io.
