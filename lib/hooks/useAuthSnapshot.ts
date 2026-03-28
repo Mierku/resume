@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { fetchAuthSnapshot, type AuthSnapshot } from '@/lib/auth/client'
+import { fetchAuthSnapshot, hasAuthSessionHint, type AuthSnapshot } from '@/lib/auth/client'
 import { useOptionalAuthContext } from '@/lib/auth/context'
 
 interface UseAuthSnapshotOptions {
@@ -57,6 +57,8 @@ export function useAuthSnapshot<TUser = Record<string, unknown>>(
 
   const ensureAuthenticated = useCallback(async () => {
     if (auth.authenticated) return true
+    if (!hasAuthSessionHint()) return false
+
     const latest = await refresh()
     return latest.authenticated
   }, [auth.authenticated, refresh])

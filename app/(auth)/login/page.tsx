@@ -8,6 +8,7 @@ import { FlaskConical, MessageCircleMore } from 'lucide-react'
 import { Message } from '@/components/ui/radix-adapter'
 import { Button } from '@/components/ui/Button'
 import { BrandFlowerIcon } from '@/components/BrandFlowerIcon'
+import { markAuthSessionHintAuthenticated } from '@/lib/auth/client'
 import { sanitizeNextPath } from '@/lib/auth-redirect'
 import { LEGAL_PRIVACY_VERSION, LEGAL_TERMS_VERSION } from '@/lib/legal'
 import s from './login.module.css'
@@ -136,6 +137,7 @@ function LoginPageContent() {
                   return
                 }
 
+                markAuthSessionHintAuthenticated()
                 setPendingProvider('wechat')
                 try {
                   await signIn('wechat', { redirectTo: redirectPathWithLegalAck })
@@ -181,6 +183,7 @@ function LoginPageContent() {
                       throw new Error(data?.error || '测试账号登录失败')
                     }
 
+                    markAuthSessionHintAuthenticated()
                     Message.success('测试账号已登录')
                     window.location.href = data?.redirectTo || redirectPathWithLegalAck
                   } catch (devLoginError) {

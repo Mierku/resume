@@ -11,7 +11,6 @@ import {
   normalizeTemplateId,
   type ResumeDataSource,
 } from '@/lib/resume/mappers'
-import { fetchAuthSnapshotWithStatus } from '@/lib/auth/client'
 
 const HEX_COLOR_PATTERN = /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/
 
@@ -102,31 +101,13 @@ async function resolveEditorPayload({
   search: string
   signal: AbortSignal
 }): Promise<ResolveResult> {
-  const auth = await fetchAuthSnapshotWithStatus(signal)
-  const isUnauthed = auth.status === 401
-  if (!auth.authenticated && !isUnauthed) {
-    throw new Error('登录状态校验失败，请稍后重试')
-  }
-
-  if (isUnauthed) {
-    if (resumeId !== 'new') {
-      return { kind: 'redirect', to: buildLoginRedirect(pathname, search) }
-    }
-
+  if (resumeId === 'new') {
     const guestParams = new URLSearchParams(search)
     return { kind: 'ready', payload: buildGuestPayload(guestParams) }
   }
 
-  if (resumeId === 'new') {
-    return { kind: 'redirect', to: '/resume/my-resumes' }
-  }
-
-  const [resumeRes, dataSourcesRes] = await Promise.all([
-    fetch(`/api/resumes/${encodeURIComponent(resumeId)}`, { cache: 'no-store', signal }),
-    fetch('/api/data-sources', { cache: 'no-store', signal }),
-  ])
-
-  if (resumeRes.status === 401 || dataSourcesRes.status === 401) {
+  const resumeRes = await fetch(`/api/resumes/${encodeURIComponent(resumeId)}`, { cache: 'no-store', signal })
+  if (resumeRes.status === 401) {
     return { kind: 'redirect', to: buildLoginRedirect(pathname, search) }
   }
 
@@ -157,6 +138,11 @@ async function resolveEditorPayload({
   }
 
   let dataSources: ResumeDataSource[] = []
+  const dataSourcesRes = await fetch('/api/data-sources', { cache: 'no-store', signal })
+  if (dataSourcesRes.status === 401) {
+    return { kind: 'redirect', to: buildLoginRedirect(pathname, search) }
+  }
+
   if (dataSourcesRes.ok) {
     const dataSourcePayload = await dataSourcesRes.json()
     const rawList = isRecord(dataSourcePayload) && Array.isArray(dataSourcePayload.dataSources)

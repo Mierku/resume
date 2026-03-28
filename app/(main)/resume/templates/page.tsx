@@ -8,7 +8,7 @@ import { Modal } from '@/components/ui/Modal'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Button } from '@/components/ui/Button'
-import { useAuthedPageData } from '@/lib/hooks/useAuthedPageData'
+import { useAuthSnapshot } from '@/lib/hooks/useAuthSnapshot'
 
 interface DataSource {
   id: string
@@ -36,7 +36,12 @@ const HEX_COLOR_PATTERN = /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/
 
 export default function TemplatesPage() {
   const router = useRouter()
+  const { auth, checked, refresh } = useAuthSnapshot({ eager: true })
 
+  const [dataSources, setDataSources] = useState<DataSource[]>([])
+  const [dataSourcesLoaded, setDataSourcesLoaded] = useState(false)
+  const [dataSourcesLoading, setDataSourcesLoading] = useState(false)
+  const [dataSourceAccess, setDataSourceAccess] = useState<'unknown' | 'authed' | 'guest'>('unknown')
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateMeta | null>(null)
   const [creating, setCreating] = useState(false)
@@ -79,15 +84,17 @@ export default function TemplatesPage() {
   const selectedTemplateName = selectedTemplate?.name || '模板'
   const selectedTemplatePreview = selectedTemplate?.preview || ''
 
-  const loadDataSources = useCallback(
-    async ({ signal, auth }: { signal: AbortSignal; auth: { authenticated: boolean } }) => {
-      if (!auth.authenticated) {
-        return []
-      }
+  const loadDataSources = useCallback(async () => {
+    if (dataSourcesLoading || dataSourceAccess === 'guest') return
 
-      const response = await fetch('/api/data-sources', { cache: 'no-store', signal })
+    setDataSourcesLoading(true)
+    try {
+      const response = await fetch('/api/data-sources', { cache: 'no-store' })
       if (response.status === 401) {
-        return []
+        setDataSources([])
+        setDataSourcesLoaded(true)
+        setDataSourceAccess('guest')
+        return
       }
 
       if (!response.ok) {
@@ -96,23 +103,28 @@ export default function TemplatesPage() {
 
       const payload = await response.json().catch(() => null)
       if (!payload || typeof payload !== 'object') {
-        return []
+        setDataSources([])
+        setDataSourcesLoaded(true)
+        return
       }
 
-      const dataSources = (payload as { dataSources?: unknown[] }).dataSources
-      return Array.isArray(dataSources) ? (dataSources as DataSource[]) : []
-    },
-    [],
-  )
-
-  const { data: dataSources, auth } = useAuthedPageData<DataSource[]>({
-    initialData: [],
-    load: loadDataSources,
-    onError: error => {
+      const nextDataSources = (payload as { dataSources?: unknown[] }).dataSources
+      setDataSources(Array.isArray(nextDataSources) ? (nextDataSources as DataSource[]) : [])
+      setDataSourcesLoaded(true)
+      setDataSourceAccess('authed')
+    } catch (error) {
       console.error('Failed to fetch data sources:', error)
-    },
-  })
-  const authenticated = auth.authenticated
+      setDataSources([])
+      setDataSourcesLoaded(false)
+    } finally {
+      setDataSourcesLoading(false)
+    }
+  }, [dataSourceAccess, dataSourcesLoading])
+
+  const handleDataSourceFieldFocus = useCallback(async () => {
+    if (dataSourcesLoading || dataSourcesLoaded || dataSourceAccess === 'guest') return
+    void loadDataSources()
+  }, [dataSourceAccess, dataSourcesLoaded, dataSourcesLoading, loadDataSources])
 
   const enterGuestEditor = () => {
     if (!selectedTemplate) return
@@ -147,6 +159,16 @@ export default function TemplatesPage() {
   const handleCreateResume = async () => {
     if (!selectedTemplate || !newResume.title.trim()) {
       toast.error('请填写简历标题')
+      return
+    }
+
+    let authenticated = auth.authenticated
+    if (!authenticated && !checked) {
+      const latest = await refresh()
+      authenticated = latest.authenticated
+    }
+    if (!authenticated) {
+      enterGuestEditor()
       return
     }
 
@@ -355,14 +377,17 @@ export default function TemplatesPage() {
                 <Select
                   value={newResume.dataSourceId}
                   onChange={e => setNewResume(prev => ({ ...prev, dataSourceId: e.target.value }))}
-                  disabled={!authenticated}
+                  onFocus={() => {
+                    void handleDataSourceFieldFocus()
+                  }}
+                  disabled={dataSourcesLoading || dataSourceAccess === 'guest'}
                   options={[
-                    { value: '', label: authenticated ? '不选择数据源' : '游客模式不可选' },
+                    { value: '', label: dataSourcesLoading ? '正在加载数据源...' : dataSourceAccess === 'guest' ? '游客模式不可选' : '不选择数据源' },
                     ...dataSources.map(ds => ({ value: ds.id, label: ds.name })),
                   ]}
                 />
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {authenticated ? '可先不选，进入编辑器后再执行一键填充。' : '游客模式可直接编辑，登录后可绑定数据源并填充。'}
+                  {dataSourceAccess === 'authed' ? '可先不选，进入编辑器后再执行一键填充。' : '游客模式可直接编辑，登录后可绑定数据源并填充。'}
                   {dataSources.length === 0 ? '首次创建且无数据源时，将自动填充一套示例内容。' : ''}
                 </p>
               </div>

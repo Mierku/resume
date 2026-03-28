@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { useAuthedPageData } from '@/lib/hooks/useAuthedPageData'
@@ -74,7 +74,24 @@ function toDestination(record: TrackingRecord) {
 }
 
 export default function DashboardPage() {
-  return <DashboardContent />
+  return (
+    <Suspense fallback={<DashboardLoadingFallback />}>
+      <DashboardContent />
+    </Suspense>
+  )
+}
+
+function DashboardLoadingFallback() {
+  return (
+    <div className={styles.loadingPage}>
+      <div className={styles.loadingGrid}>
+        <Skeleton className={styles.loadingCardTall} />
+        <Skeleton className={styles.loadingCardTall} />
+        <Skeleton className={styles.loadingCardTall} />
+        <Skeleton className={styles.loadingTable} />
+      </div>
+    </div>
+  )
 }
 
 function DashboardContent() {

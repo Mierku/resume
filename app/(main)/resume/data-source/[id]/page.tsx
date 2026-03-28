@@ -40,7 +40,6 @@ import {
   DATA_SOURCE_SECTION_NAV,
   DATA_SOURCE_STICKY_TOP,
 } from '@/components/data-source/section-meta'
-import { useAuthSnapshot } from '@/lib/hooks/useAuthSnapshot'
 
 const FormItem = Form.Item
 const TextArea = Input.TextArea
@@ -110,7 +109,6 @@ export default function DataSourceEditPage() {
   const [activeSection, setActiveSection] = useState<DataSourceSectionId>(DATA_SOURCE_SECTION_NAV[0].id)
   const [blockedByAuth, setBlockedByAuth] = useState(false)
   const [showAuthModal, setShowAuthModal] = useState(false)
-  const { ensureAuthenticated } = useAuthSnapshot()
 
   useEffect(() => {
     if (isNew) return
@@ -199,13 +197,6 @@ export default function DataSourceEditPage() {
   }, [loading])
 
   const handleSave = async () => {
-    const authed = await ensureAuthenticated()
-    if (!authed) {
-      Message.warning('保存数据源需要登录后继续')
-      setShowAuthModal(true)
-      return
-    }
-
     if (!form.name) {
       Message.error('请填写数据源名称')
       return
@@ -233,6 +224,9 @@ export default function DataSourceEditPage() {
           const data = await res.json()
           router.push(`/resume/data-source/${data.dataSource.id}`)
         }
+      } else if (res.status === 401) {
+        Message.warning('保存数据源需要登录后继续')
+        setShowAuthModal(true)
       } else {
         const data = await res.json()
         Message.error(data.error || '保存失败')

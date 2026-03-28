@@ -21,6 +21,7 @@ import { getUserDisplayName, type SessionUser } from "@/lib/user";
 import { AuthRequiredModal } from "@/components/ui/Modal";
 import { BrandFlowerIcon } from "@/components/BrandFlowerIcon";
 import { useAuthSnapshot } from "@/lib/hooks/useAuthSnapshot";
+import { clearAuthSessionHint, invalidateAuthSnapshotCache } from "@/lib/auth/client";
 
 interface NavLink {
   href: string;
@@ -106,6 +107,8 @@ export function Header() {
     setUserMenuOpen(false);
     setMobileUserMenuOpen(false);
     setMenuOpen(false);
+    clearAuthSessionHint();
+    invalidateAuthSnapshotCache();
     await signOut({ redirectTo: "/" });
   };
 

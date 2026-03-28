@@ -87,7 +87,6 @@ import { useResumeBuilderStore } from './store/useResumeBuilderStore'
 import { FillToolPanel } from './panels/FillToolPanel'
 import { ExportWorkbench } from './export/ExportWorkbench'
 import { ResumeBuilderToolbar } from './layout/ResumeBuilderToolbar'
-import { useAuthSnapshot } from '@/lib/hooks/useAuthSnapshot'
 import './builder-theme.css'
 
 const ResumeReactivePreview = dynamic(
@@ -2978,8 +2977,6 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
   const [previewContentHeight, setPreviewContentHeight] = useState(0)
   const [editorFocusRequest, setEditorFocusRequest] = useState<EditorFocusRequest | null>(null)
   const [authModalOpen, setAuthModalOpen] = useState(false)
-  const { auth, checked: authChecked, ensureAuthenticated } = useAuthSnapshot()
-  const authenticated = auth.authenticated
   const focusRequestCounterRef = useRef(0)
   const resumeTitleRef = useRef(initialResume.title)
   const sidePanelScrollTimerRef = useRef<number | null>(null)
@@ -3047,23 +3044,19 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
     }
   }, [initialResume.id])
 
-  const handleBackFromEditor = useCallback(async () => {
-    const authed = authChecked ? authenticated : await ensureAuthenticated()
-    router.push(authed ? '/resume/my-resumes' : '/resume/templates')
-  }, [authChecked, authenticated, ensureAuthenticated, router])
+  const handleBackFromEditor = useCallback(() => {
+    router.push(isGuestDraft ? '/resume/templates' : '/resume/my-resumes')
+  }, [isGuestDraft, router])
 
   const ensureAuthForAction = useCallback(
     async (actionName: string) => {
-      if (authenticated) return true
-
-      const authed = authChecked ? authenticated : await ensureAuthenticated()
-      if (authed) return true
+      if (!isGuestDraft) return true
 
       Message.warning(`${actionName}需要登录后继续`)
       setAuthModalOpen(true)
       return false
     },
-    [authChecked, authenticated, ensureAuthenticated],
+    [isGuestDraft],
   )
 
   const setPreviewScaleCentered = useCallback((nextScaleRaw: number) => {
@@ -3459,7 +3452,7 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
       return true
     }
 
-    if (!authenticated || isGuestDraft) {
+    if (isGuestDraft) {
       resumeTitleRef.current = normalizedTitle
       setResumeTitle(normalizedTitle)
       return true
@@ -3489,7 +3482,7 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
     } finally {
       setIsSavingTitle(false)
     }
-  }, [authenticated, initialResume.id, initialResume.title, isGuestDraft, resumeTitle])
+  }, [initialResume.id, initialResume.title, isGuestDraft, resumeTitle])
 
   const handleManualSave = useCallback(async () => {
     if (!(await ensureAuthForAction('保存简历'))) {

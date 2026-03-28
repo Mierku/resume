@@ -1,13 +1,17 @@
 'use client'
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { fetchAuthSnapshot, type AuthSnapshot } from '@/lib/auth/client'
+import { fetchAuthSnapshot, hasAuthSessionHint, invalidateAuthSnapshotCache, type AuthSnapshot } from '@/lib/auth/client'
+
+interface RefreshAuthOptions {
+  force?: boolean
+}
 
 interface AuthContextValue {
   auth: AuthSnapshot<Record<string, unknown>>
   checked: boolean
   checking: boolean
-  refresh: () => Promise<AuthSnapshot<Record<string, unknown>>>
+  refresh: (options?: RefreshAuthOptions) => Promise<AuthSnapshot<Record<string, unknown>>>
   ensureAuthenticated: () => Promise<boolean>
 }
 
@@ -18,9 +22,12 @@ interface AuthProviderProps {
   eager?: boolean
 }
 
+const UNAUTH_REFRESH_COOLDOWN_MS = 4_000
+
 export function AuthProvider({ children, eager = false }: AuthProviderProps) {
   const mountedRef = useRef(true)
   const inflightRef = useRef<Promise<AuthSnapshot<Record<string, unknown>>> | null>(null)
+  const lastCheckedAtRef = useRef(0)
   const [checked, setChecked] = useState(false)
   const [checking, setChecking] = useState(false)
   const [auth, setAuth] = useState<AuthSnapshot<Record<string, unknown>>>({
@@ -35,18 +42,26 @@ export function AuthProvider({ children, eager = false }: AuthProviderProps) {
     }
   }, [])
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (options: RefreshAuthOptions = {}) => {
+    const { force = false } = options
+
     if (inflightRef.current) {
       return inflightRef.current
     }
 
     setChecking(true)
-    const request = fetchAuthSnapshot<Record<string, unknown>>()
+    const request = fetchAuthSnapshot<Record<string, unknown>>({ force })
       .then(snapshot => {
+        lastCheckedAtRef.current = Date.now()
         if (mountedRef.current) {
           setAuth(snapshot)
           setChecked(true)
         }
+
+        if (!snapshot.authenticated) {
+          invalidateAuthSnapshotCache()
+        }
+
         return snapshot
       })
       .finally(() => {
@@ -62,9 +77,18 @@ export function AuthProvider({ children, eager = false }: AuthProviderProps) {
 
   const ensureAuthenticated = useCallback(async () => {
     if (auth.authenticated) return true
-    const latest = await refresh()
+    if (!hasAuthSessionHint()) {
+      return false
+    }
+
+    const now = Date.now()
+    if (checked && now - lastCheckedAtRef.current < UNAUTH_REFRESH_COOLDOWN_MS) {
+      return false
+    }
+
+    const latest = await refresh({ force: true })
     return latest.authenticated
-  }, [auth.authenticated, refresh])
+  }, [auth.authenticated, checked, refresh])
 
   useEffect(() => {
     if (!eager || checked || checking) return

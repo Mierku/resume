@@ -7,42 +7,21 @@ import { Check, Chrome, Globe } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Input, Button, Message } from '@/components/ui/radix-adapter'
 import { Skeleton } from '@/components/ui/Skeleton'
-import { useAuthSnapshot } from '@/lib/hooks/useAuthSnapshot'
 
 const TextArea = Input.TextArea
 
 type Step = 'data-source' | 'install' | 'tutorial'
 
 export default function OnboardingPage() {
-  const router = useRouter()
-  const pathname = usePathname()
-  const { auth, checked, checking } = useAuthSnapshot()
-
-  useEffect(() => {
-    if (checking || !checked) return
-    if (auth.authenticated) return
-    router.replace(`/login?next=${encodeURIComponent(pathname || '/onboarding')}`)
-  }, [auth.authenticated, checked, checking, pathname, router])
-
-  if (checking || !checked || !auth.authenticated) {
-    return (
-      <div className="container py-8">
-        <div className="mx-auto max-w-2xl space-y-4">
-          <Skeleton className="h-8 w-40" />
-          <Skeleton className="h-4 w-80" />
-          <Skeleton className="h-72 w-full rounded-[12px]" />
-        </div>
-      </div>
-    )
-  }
-
   return <OnboardingContent />
 }
 
 function OnboardingContent() {
   const router = useRouter()
+  const pathname = usePathname()
   const [step, setStep] = useState<Step>('data-source')
   const [loading, setLoading] = useState(false)
+  const [bootstrapping, setBootstrapping] = useState(true)
   const [dataSourceForm, setDataSourceForm] = useState({
     name: '我的数据源',
     nameZh: '',
@@ -56,7 +35,12 @@ function OnboardingContent() {
   useEffect(() => {
     const checkStatus = async () => {
       try {
-        const res = await fetch('/api/onboarding/status')
+        const res = await fetch('/api/onboarding/status', { cache: 'no-store' })
+        if (res.status === 401) {
+          router.replace(`/login?next=${encodeURIComponent(pathname || '/onboarding')}`)
+          return
+        }
+
         if (res.ok) {
           const data = await res.json()
           if (data.hasDataSource) setStep('install')
@@ -64,11 +48,25 @@ function OnboardingContent() {
         }
       } catch (error) {
         console.error('Failed to check status:', error)
+      } finally {
+        setBootstrapping(false)
       }
     }
 
     void checkStatus()
-  }, [router])
+  }, [pathname, router])
+
+  if (bootstrapping) {
+    return (
+      <div className="container py-8">
+        <div className="mx-auto max-w-2xl space-y-4">
+          <Skeleton className="h-8 w-40" />
+          <Skeleton className="h-4 w-80" />
+          <Skeleton className="h-72 w-full rounded-[12px]" />
+        </div>
+      </div>
+    )
+  }
 
   const handleCreateDataSource = async (e: React.FormEvent) => {
     e.preventDefault()
