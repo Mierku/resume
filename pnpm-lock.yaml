@@ -65,6 +65,9 @@ importers:
       immer:
         specifier: ^11.1.4
         version: 11.1.4
+      immersive-delivery-website:
+        specifier: 'link:'
+        version: 'link:'
       ioredis:
         specifier: ^5.4.2
         version: 5.9.2
