@@ -1,0 +1,62 @@
+.template5 {
+  --template-accent: var(--resume-theme-primary, #2f74ba);
+  min-height: 100%;
+  background: var(--resume-theme-bg);
+}
+
+.t5Header {
+  background: color-mix(in srgb, var(--resume-theme-primary) 82%, #0f172a);
+  color: #fff;
+  padding: var(--page-margin-y) var(--page-margin-x);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8pt;
+}
+
+.t5HeaderMain h1 {
+  margin: 0;
+  font-size: calc(var(--page-heading-font-size, 14) * 1.42pt);
+  letter-spacing: 0.03em;
+}
+
+.t5HeaderMain p {
+  margin: 5px 0 0;
+  opacity: 0.92;
+  font-weight: 600;
+}
+
+.t5Contact {
+  margin-top: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.t5Contact span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.t5Avatar {
+  border-width: 3px;
+  border-color: rgba(255, 255, 255, 0.9);
+}
+
+.t5Body {
+  padding: calc(var(--page-margin-y) * 0.9) var(--page-margin-x) var(--page-margin-y);
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--page-space-y) * 1.34);
+}
+
+.t5Heading :global(.sectionTitle) {
+  color: color-mix(in srgb, var(--resume-theme-primary) 88%, black);
+  font-size: 1.16em;
+}
+
+.t5Heading :global(.sectionDivider) {
+  display: none;
+}
+

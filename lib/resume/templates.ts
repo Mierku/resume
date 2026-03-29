@@ -59,6 +59,13 @@ export const REACTIVE_TEMPLATES: ReactiveTemplateMetadata[] = [
     preview: toAssetUrl('/templates/numbered/template.png'),
     tags: ['蓝色', '标签', '单栏'],
   },
+  {
+    id: 'template-8',
+    name: '高保真复刻',
+    description: '居中标题 + 右上头像 + 蓝线分节',
+    preview: toAssetUrl('/templates/numbered/template.png'),
+    tags: ['高保真', '蓝线', '单栏'],
+  },
 ]
 
 export function getReactiveTemplate(templateId: string) {

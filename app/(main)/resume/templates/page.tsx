@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { Search } from 'lucide-react'
 import { toast } from '@/lib/toast'
 import { RESUME_TEMPLATES } from '@/lib/constants'
 import { Modal } from '@/components/ui/Modal'
@@ -9,6 +10,8 @@ import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Button } from '@/components/ui/Button'
 import { useAuthSnapshot } from '@/lib/hooks/useAuthSnapshot'
+import { cn } from '@/lib/utils'
+import s from './templates.module.css'
 
 interface DataSource {
   id: string
@@ -34,6 +37,32 @@ const BASE_THEME_COLORS = [
 
 const HEX_COLOR_PATTERN = /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/
 
+const TEMPLATE_CATEGORIES = [
+  { id: 'all', label: '全部', hint: '全部模板' },
+  { id: 'featured', label: '热门', hint: '高频选择' },
+  { id: 'blue', label: '蓝系商务', hint: '商务稳重' },
+  { id: 'minimal', label: '极简留白', hint: '信息清爽' },
+  { id: 'iconic', label: '图标结构', hint: '导览明确' },
+  { id: 'bilingual', label: '双语', hint: '中英版本' },
+] as const
+
+type TemplateCategory = (typeof TEMPLATE_CATEGORIES)[number]['id']
+
+const TEMPLATE_CATEGORY_MAP: Record<string, TemplateCategory[]> = {
+  'template-1': ['featured', 'blue'],
+  'template-2': ['featured', 'blue', 'bilingual'],
+  'template-3': ['featured', 'blue', 'iconic'],
+  'template-4': ['featured', 'minimal'],
+  'template-5': ['blue'],
+  'template-6': ['iconic'],
+  'template-7': ['blue'],
+  'template-8': ['featured'],
+}
+
+function getTemplateCategories(templateId: string): TemplateCategory[] {
+  return TEMPLATE_CATEGORY_MAP[templateId] || []
+}
+
 export default function TemplatesPage() {
   const router = useRouter()
   const { auth, checked, refresh } = useAuthSnapshot({ eager: true })
@@ -47,6 +76,7 @@ export default function TemplatesPage() {
   const [creating, setCreating] = useState(false)
   const [brokenPreviews, setBrokenPreviews] = useState<Record<string, boolean>>({})
   const [templateQuery, setTemplateQuery] = useState('')
+  const [activeCategory, setActiveCategory] = useState<TemplateCategory>('all')
   const [newResume, setNewResume] = useState({
     title: '',
     dataSourceId: '',
@@ -56,14 +86,38 @@ export default function TemplatesPage() {
   const templates = useMemo(() => RESUME_TEMPLATES as TemplateMeta[], [])
   const filteredTemplates = useMemo(() => {
     const keyword = templateQuery.trim().toLowerCase()
-    if (!keyword) return templates
 
     return templates.filter(template => {
+      const categoryMatched = activeCategory === 'all' || getTemplateCategories(template.id).includes(activeCategory)
+      if (!categoryMatched) return false
+      if (!keyword) return true
+
       const name = template.name.toLowerCase()
       const description = template.description.toLowerCase()
       return name.includes(keyword) || description.includes(keyword)
     })
-  }, [templates, templateQuery])
+  }, [activeCategory, templateQuery, templates])
+  const categoryCounts = useMemo(() => {
+    const counts = TEMPLATE_CATEGORIES.reduce(
+      (acc, category) => {
+        acc[category.id] = 0
+        return acc
+      },
+      {} as Record<TemplateCategory, number>,
+    )
+
+    counts.all = templates.length
+    templates.forEach(template => {
+      getTemplateCategories(template.id).forEach(category => {
+        counts[category] += 1
+      })
+    })
+
+    return counts
+  }, [templates])
+  const activeCategoryMeta = useMemo(() => {
+    return TEMPLATE_CATEGORIES.find(category => category.id === activeCategory) || TEMPLATE_CATEGORIES[0]
+  }, [activeCategory])
   const templateTags = useMemo(() => {
     if (!selectedTemplate) return []
 
@@ -213,70 +267,118 @@ export default function TemplatesPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-[1440px] py-6 px-10">
-      <div className="mb-4 max-w-[420px]">
-        <Input
-          value={templateQuery}
-          onChange={event => setTemplateQuery(event.target.value)}
-          placeholder="搜索模版：例如 蓝金、双语、极简"
-          aria-label="搜索模版"
-        />
-      </div>
+    <div className="mx-auto w-full max-w-[1440px]">
+      <div className={s.page}>
+        <section className={s.banner}>
+          <div className={s.bannerContent}>
+            <p className={s.bannerEyebrow}>TEMPLATE LIBRARY</p>
+            <h1 className={s.bannerTitle}>热门模板库</h1>
+            <p className={s.bannerSubtitle}>先筛选风格，再进入编辑器一键套用，快速完成投递简历。</p>
 
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground md:text-4xl">热门模版库</h1>
-        <p className="text-sm text-muted-foreground mt-1">按风格选择模板创建简历。</p>
-      </div>
+            <div className={s.searchWrap}>
+              <div className={s.searchField}>
+                <Search className={s.searchIcon} aria-hidden />
+                <input
+                  value={templateQuery}
+                  onChange={event => setTemplateQuery(event.target.value)}
+                  placeholder="搜索模板关键词：蓝金、双语、极简、图标"
+                  aria-label="搜索模板"
+                  className={s.searchInput}
+                />
+              </div>
+            </div>
 
-      {filteredTemplates.length > 0 ? (
-        <div className="grid gap-5 grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {filteredTemplates.map(template => (
+            <div className={s.categoryWrap}>
+              {TEMPLATE_CATEGORIES.map(category => {
+                const isActive = activeCategory === category.id
+                return (
+                  <button
+                    key={category.id}
+                    type="button"
+                    onClick={() => setActiveCategory(category.id)}
+                    className={cn(s.categoryChip, isActive && s.categoryChipActive)}
+                    aria-pressed={isActive}
+                    title={category.hint}
+                  >
+                    <span>{category.label}</span>
+                    <span className={s.categoryCount}>{categoryCounts[category.id]}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        </section>
+
+        <div className={s.toolbar}>
+          <p className={s.toolbarMeta}>
+            当前分类：{activeCategoryMeta.label}
+            <span className={s.toolbarDot}>·</span>
+            共 {filteredTemplates.length} 个模板
+          </p>
+          {(templateQuery || activeCategory !== 'all') && (
             <button
-              key={template.id}
               type="button"
-              className="group relative rounded-[12px] overflow-hidden border border-foreground/30 bg-background text-left transition-colors duration-200 hover:border-primary/65"
-              onClick={() => openCreateModal(template)}
+              className={s.toolbarReset}
+              onClick={() => {
+                setTemplateQuery('')
+                setActiveCategory('all')
+              }}
             >
-              <div className="aspect-[210/297] relative overflow-hidden bg-muted">
-                {template.preview && !brokenPreviews[template.id] ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    key={`${template.id}:${template.preview}`}
-                    src={template.preview}
-                    alt={template.name}
-                    loading="lazy"
-                    decoding="async"
-                    draggable={false}
-                    className="h-full w-full object-cover"
-                    onError={() =>
-                      setBrokenPreviews(prev => ({
-                        ...prev,
-                        [template.id]: true,
-                      }))
-                    }
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground">预览图缺失</div>
-                )}
-
-                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <span className="btn-primary">使用模板</span>
-                </div>
-              </div>
-
-              <div className="p-3 border-t border-foreground/15 bg-muted/55">
-                <h3 className="font-medium text-foreground text-sm transition-colors duration-200 group-hover:text-primary">{template.name}</h3>
-                <p className="text-xs text-foreground/75 mt-1 line-clamp-2 transition-colors duration-200 group-hover:text-foreground">{template.description}</p>
-              </div>
+              清空筛选
             </button>
-          ))}
+          )}
         </div>
-      ) : (
-        <div className="rounded-[12px] border border-dashed border-border bg-muted/20 py-14 text-center">
-          <p className="text-sm text-foreground">未找到匹配的模版</p>
-          <p className="mt-1 text-xs text-muted-foreground">试试更短的关键词，或者清空后查看全部模版。</p>
-        </div>
-      )}
+
+        {filteredTemplates.length > 0 ? (
+          <div className="grid gap-5 grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {filteredTemplates.map(template => (
+              <button
+                key={template.id}
+                type="button"
+                className="group relative rounded-[12px] overflow-hidden border border-foreground/30 bg-background text-left transition-colors duration-200 hover:border-primary/65"
+                onClick={() => openCreateModal(template)}
+              >
+                <div className="aspect-[210/297] relative overflow-hidden bg-muted">
+                  {template.preview && !brokenPreviews[template.id] ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      key={`${template.id}:${template.preview}`}
+                      src={template.preview}
+                      alt={template.name}
+                      loading="lazy"
+                      decoding="async"
+                      draggable={false}
+                      className="h-full w-full object-cover"
+                      onError={() =>
+                        setBrokenPreviews(prev => ({
+                          ...prev,
+                          [template.id]: true,
+                        }))
+                      }
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground">预览图缺失</div>
+                  )}
+
+                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <span className="btn-primary">使用模板</span>
+                  </div>
+                </div>
+
+                <div className="p-3 border-t border-foreground/15 bg-muted/55">
+                  <h3 className="font-medium text-foreground text-sm transition-colors duration-200 group-hover:text-primary">{template.name}</h3>
+                  <p className="text-xs text-foreground/75 mt-1 line-clamp-2 transition-colors duration-200 group-hover:text-foreground">{template.description}</p>
+                </div>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-[12px] border border-dashed border-border bg-muted/20 py-14 text-center">
+            <p className="text-sm text-foreground">未找到匹配的模板</p>
+            <p className="mt-1 text-xs text-muted-foreground">试试更短的关键词，或者清空筛选后查看全部模板。</p>
+          </div>
+        )}
+      </div>
 
       <Modal
         title="创建简历"

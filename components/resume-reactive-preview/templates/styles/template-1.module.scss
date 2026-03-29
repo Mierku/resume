@@ -1,0 +1,138 @@
+.template1 {
+  --template-accent: var(--resume-theme-primary, #274f79);
+  min-height: 100%;
+  display: grid;
+  grid-template-columns: 30.4% 1fr;
+  background: color-mix(in srgb, var(--resume-theme-bg) 96%, white);
+}
+
+.t1Sidebar {
+  background: color-mix(in srgb, var(--resume-theme-primary) 78%, #111827);
+  color: rgba(245, 249, 255, 0.95);
+  padding: calc(var(--page-margin-y) * 1.05) calc(var(--page-margin-x) * 0.78) var(--page-margin-y);
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--page-space-y) * 3);
+}
+
+.t1AvatarWrap {
+  display: flex;
+  justify-content: center;
+}
+
+.t1Avatar {
+  border-width: 4px;
+  border-color: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 2px 4px rgba(15, 23, 42, 0.2);
+}
+
+.t1SidebarInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.t1SidebarInfoItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.t1SidebarInfoIcon {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  text-decoration: none !important;
+  background: transparent !important;
+}
+
+.t1SidebarSections {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--page-space-y) * 1.08);
+}
+
+.t1SidebarHeading :global(.sectionTitle) {
+  color: rgba(243, 248, 255, 0.96);
+  font-size: 0.96em;
+  letter-spacing: 0.02em;
+}
+
+.t1SidebarSection :global(.sectionContent) {
+  gap: calc(var(--page-space-y) * 0.74);
+}
+
+.t1SidebarSection :global(.recordPrimary),
+.t1SidebarSection :global(.recordMeta),
+.t1SidebarSection :global(.itemDescription),
+.t1SidebarSection :global(.recordPeriod),
+.t1SidebarSection :global(.itemMeta),
+.t1SidebarSection :global(.recordRole) {
+  color: rgba(238, 246, 255, 0.94);
+}
+
+.t1SidebarSection :global(.tag) {
+  border-color: rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.16);
+  color: rgba(248, 250, 252, 0.95);
+}
+
+.t1SidebarSection :global(.levelTrack) {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.t1SidebarSection :global(.levelFill) {
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.t1Main {
+  padding: var(--page-margin-y) var(--page-margin-x) calc(var(--page-margin-y) * 0.9);
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--page-space-y) * 1.2);
+  background: color-mix(in srgb, var(--resume-theme-bg) 92%, white);
+}
+
+.t1MainHeader h1 {
+  margin: 0;
+  color: color-mix(in srgb, var(--resume-theme-primary) 88%, black);
+  font-size: calc(var(--page-heading-font-size, 14) * 1.4pt);
+  letter-spacing: 0.03em;
+}
+
+.t1IntentGrid {
+  margin-top: 7px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px 12px;
+}
+
+.t1IntentItem {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.t1IntentItem span {
+  color: rgba(44, 65, 90, 0.78);
+}
+
+.t1IntentItem strong {
+  color: rgba(30, 44, 62, 0.93);
+}
+
+.t1MainHeading :global(.sectionIcon) {
+  border-color: color-mix(in srgb, var(--resume-theme-primary) 42%, transparent);
+  background: color-mix(in srgb, var(--resume-theme-primary) 12%, transparent);
+  color: color-mix(in srgb, var(--resume-theme-primary) 88%, black);
+}
+
+.t1MainHeading :global(.sectionTitle) {
+  color: color-mix(in srgb, var(--resume-theme-primary) 88%, black);
+}

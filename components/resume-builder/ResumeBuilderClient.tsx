@@ -54,6 +54,8 @@ import {
   IconPlus,
   IconRefresh,
   IconRedo,
+  IconSidebarClose,
+  IconSidebarOpen,
   IconUndo,
   Message,
   Option,
@@ -87,6 +89,7 @@ import { useResumeBuilderStore } from './store/useResumeBuilderStore'
 import { FillToolPanel } from './panels/FillToolPanel'
 import { ExportWorkbench } from './export/ExportWorkbench'
 import { ResumeBuilderToolbar } from './layout/ResumeBuilderToolbar'
+import { useAuthSnapshot } from '@/lib/hooks/useAuthSnapshot'
 import './builder-theme.css'
 
 const ResumeReactivePreview = dynamic(
@@ -165,6 +168,7 @@ const BASICS_WEIGHT_LIMIT: NumericLimitConfig = {
 }
 
 const THEME_STORAGE_KEY = 'theme'
+const SIDE_TOOLS_EXPANDED_STORAGE_KEY = 'resume:side-tools-expanded'
 const DEFAULT_TEXT_COLOR = '#111827'
 function toSingleSelectValue(value: string | string[]) {
   return Array.isArray(value) ? value[0] || '' : value
@@ -753,35 +757,81 @@ function dedupeSectionIds(sectionIds: string[]) {
   return Array.from(new Set(sectionIds.filter(Boolean)))
 }
 
-type Html2Canvas = (
-  element: HTMLElement,
-  options?: {
-    useCORS?: boolean
-    backgroundColor?: string | null
-    scale?: number
-    logging?: boolean
-    windowWidth?: number
-    windowHeight?: number
-  },
-) => Promise<HTMLCanvasElement>
+type SnapdomOptions = {
+  scale?: number
+  width?: number
+  height?: number
+  backgroundColor?: string
+  embedFonts?: boolean
+  cache?: 'disabled' | 'soft' | 'auto' | 'full'
+}
+
+type SnapdomRenderer = {
+  toCanvas: (element: HTMLElement, options?: SnapdomOptions) => Promise<HTMLCanvasElement>
+}
+
+type JsPdfPageOrientation = 'portrait' | 'landscape'
+
+type JsPdfInstance = {
+  internal: {
+    pageSize: {
+      getWidth: () => number
+      getHeight: () => number
+    }
+  }
+  addImage: (
+    imageData: string | HTMLCanvasElement,
+    format: 'PNG' | 'JPEG' | 'JPG' | 'WEBP',
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    alias?: string,
+    compression?: 'NONE' | 'FAST' | 'MEDIUM' | 'SLOW',
+    rotation?: number,
+  ) => void
+  addPage: (format?: string | number[], orientation?: JsPdfPageOrientation) => void
+  save: (filename: string) => void
+}
+
+type JsPdfConstructor = new (options?: {
+  orientation?: JsPdfPageOrientation
+  unit?: 'pt' | 'mm' | 'cm' | 'in' | 'px'
+  format?: string | number[]
+  compress?: boolean
+}) => JsPdfInstance
 
 declare global {
   interface Window {
-    html2canvas?: Html2Canvas
+    snapdom?: SnapdomRenderer
+    jspdf?: {
+      jsPDF?: JsPdfConstructor
+    }
   }
 }
 
-const HTML2CANVAS_SCRIPT_ID = 'resume-html2canvas-script'
-const HTML2CANVAS_SCRIPT_SOURCES = [
-  'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',
-  'https://cdn.bootcdn.net/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',
-  'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js',
+const SNAPDOM_SCRIPT_ID = 'resume-snapdom-script'
+const SNAPDOM_SCRIPT_SOURCES = [
+  'https://unpkg.com/@zumer/snapdom@2.7.0/dist/snapdom.js',
+  'https://cdn.jsdelivr.net/npm/@zumer/snapdom@2.7.0/dist/snapdom.js',
 ] as const
-let html2CanvasLoadingPromise: Promise<Html2Canvas> | null = null
+
+const JSPDF_SCRIPT_ID = 'resume-jspdf-script'
+const JSPDF_SCRIPT_SOURCES = [
+  'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js',
+  'https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js',
+  'https://unpkg.com/jspdf@2.5.2/dist/jspdf.umd.min.js',
+] as const
+
+let snapdomLoadingPromise: Promise<SnapdomRenderer> | null = null
+let jsPdfLoadingPromise: Promise<JsPdfConstructor> | null = null
 const SMART_ONE_PAGE_MAX_SCALE = 5
 const SIDEBAR_WIDTH_MIN = 360
 const SIDEBAR_WIDTH_MAX = 680
 const SIDEBAR_DEFAULT_WIDTH = 500
+const SIDE_TOOLS_COLLAPSED_WIDTH = 58
+const SIDE_TOOLS_EXPANDED_WIDTH = 104
+const SIDE_TOOLS_WIDTH_DELTA = SIDE_TOOLS_EXPANDED_WIDTH - SIDE_TOOLS_COLLAPSED_WIDTH
 const PREVIEW_INITIAL_SCALE = 0.6
 const PREVIEW_MIN_SCALE = 0.3
 const PREVIEW_MAX_SCALE = 6
@@ -819,10 +869,13 @@ function escapeAttributeValue(value: string) {
   return value.replace(/["\\]/g, '\\$&')
 }
 
-function SideToolHint({ label, children }: { label: string; children: ReactNode }) {
+function SideToolHint({ label, children, expanded = false }: { label: string; children: ReactNode; expanded?: boolean }) {
   return (
-    <span className="resume-side-tool-hint" data-tooltip={label}>
+    <span className={joinClassNames('resume-side-tool-hint', expanded && 'is-expanded')} data-tooltip={label}>
       {children}
+      <span className="resume-side-tool-label" aria-hidden={!expanded}>
+        {label}
+      </span>
     </span>
   )
 }
@@ -890,19 +943,24 @@ function downloadBlob(blob: Blob, filename: string) {
   URL.revokeObjectURL(url)
 }
 
-function removeHtml2CanvasScript(script: HTMLScriptElement | null) {
+function removeExternalScript(script: HTMLScriptElement | null) {
   if (!script) return
   if (script.parentNode) {
     script.parentNode.removeChild(script)
   }
 }
 
-function waitForHtml2Canvas(script: HTMLScriptElement) {
-  if (window.html2canvas) {
-    return Promise.resolve(window.html2canvas)
+function waitForScriptGlobal<T>(
+  script: HTMLScriptElement,
+  resolver: () => T | null,
+  errorMessage: string,
+) {
+  const resolved = resolver()
+  if (resolved) {
+    return Promise.resolve(resolved)
   }
 
-  return new Promise<Html2Canvas>((resolve, reject) => {
+  return new Promise<T>((resolve, reject) => {
     const cleanup = () => {
       script.removeEventListener('load', onLoad)
       script.removeEventListener('error', onError)
@@ -910,16 +968,17 @@ function waitForHtml2Canvas(script: HTMLScriptElement) {
 
     const onLoad = () => {
       cleanup()
-      if (window.html2canvas) {
-        resolve(window.html2canvas)
+      const globalObject = resolver()
+      if (globalObject) {
+        resolve(globalObject)
         return
       }
-      reject(new Error('html2canvas 加载失败'))
+      reject(new Error(errorMessage))
     }
 
     const onError = () => {
       cleanup()
-      reject(new Error('html2canvas 加载失败'))
+      reject(new Error(errorMessage))
     }
 
     script.addEventListener('load', onLoad)
@@ -927,48 +986,119 @@ function waitForHtml2Canvas(script: HTMLScriptElement) {
   })
 }
 
-function loadHtml2Canvas(): Promise<Html2Canvas> {
-  if (window.html2canvas) {
-    return Promise.resolve(window.html2canvas)
+async function loadScriptGlobalWithFallback<T>(
+  scriptId: string,
+  sources: readonly string[],
+  resolver: () => T | null,
+  errorMessage: string,
+) {
+  const existing = document.getElementById(scriptId) as HTMLScriptElement | null
+  if (existing) {
+    try {
+      return await waitForScriptGlobal(existing, resolver, errorMessage)
+    } catch {
+      removeExternalScript(existing)
+    }
   }
 
-  if (html2CanvasLoadingPromise) {
-    return html2CanvasLoadingPromise
+  for (const source of sources) {
+    const stale = document.getElementById(scriptId) as HTMLScriptElement | null
+    removeExternalScript(stale)
+
+    const script = document.createElement('script')
+    script.id = scriptId
+    script.src = source
+    script.async = true
+    document.body.appendChild(script)
+
+    try {
+      return await waitForScriptGlobal(script, resolver, errorMessage)
+    } catch {
+      removeExternalScript(script)
+    }
   }
 
-  html2CanvasLoadingPromise = (async () => {
-    const existing = document.getElementById(HTML2CANVAS_SCRIPT_ID) as HTMLScriptElement | null
-    if (existing) {
-      try {
-        return await waitForHtml2Canvas(existing)
-      } catch {
-        removeHtml2CanvasScript(existing)
+  throw new Error(errorMessage)
+}
+
+function loadSnapdom(): Promise<SnapdomRenderer> {
+  const globalSnapdom = window.snapdom
+  if (globalSnapdom && typeof globalSnapdom.toCanvas === 'function') {
+    return Promise.resolve(globalSnapdom)
+  }
+
+  if (snapdomLoadingPromise) {
+    return snapdomLoadingPromise
+  }
+
+  snapdomLoadingPromise = loadScriptGlobalWithFallback(
+    SNAPDOM_SCRIPT_ID,
+    SNAPDOM_SCRIPT_SOURCES,
+    () => {
+      const candidate = window.snapdom
+      if (candidate && typeof candidate.toCanvas === 'function') {
+        return candidate
       }
-    }
-
-    for (const source of HTML2CANVAS_SCRIPT_SOURCES) {
-      const stale = document.getElementById(HTML2CANVAS_SCRIPT_ID) as HTMLScriptElement | null
-      removeHtml2CanvasScript(stale)
-
-      const script = document.createElement('script')
-      script.id = HTML2CANVAS_SCRIPT_ID
-      script.src = source
-      script.async = true
-      document.body.appendChild(script)
-
-      try {
-        return await waitForHtml2Canvas(script)
-      } catch {
-        removeHtml2CanvasScript(script)
-      }
-    }
-
-    throw new Error('html2canvas 加载失败')
-  })().finally(() => {
-    html2CanvasLoadingPromise = null
+      return null
+    },
+    'snapdom 加载失败',
+  ).finally(() => {
+    snapdomLoadingPromise = null
   })
 
-  return html2CanvasLoadingPromise
+  return snapdomLoadingPromise
+}
+
+function loadJsPdf(): Promise<JsPdfConstructor> {
+  const globalJsPdf = window.jspdf?.jsPDF
+  if (globalJsPdf) {
+    return Promise.resolve(globalJsPdf)
+  }
+
+  if (jsPdfLoadingPromise) {
+    return jsPdfLoadingPromise
+  }
+
+  jsPdfLoadingPromise = loadScriptGlobalWithFallback(
+    JSPDF_SCRIPT_ID,
+    JSPDF_SCRIPT_SOURCES,
+    () => window.jspdf?.jsPDF || null,
+    'jsPDF 加载失败',
+  ).finally(() => {
+    jsPdfLoadingPromise = null
+  })
+
+  return jsPdfLoadingPromise
+}
+
+function nextAnimationFrame() {
+  return new Promise<void>(resolve => {
+    requestAnimationFrame(() => resolve())
+  })
+}
+
+function createOffscreenExportCaptureRoot(sourceRoot: HTMLElement) {
+  const captureHost = document.createElement('div')
+  captureHost.setAttribute('aria-hidden', 'true')
+  captureHost.style.position = 'fixed'
+  captureHost.style.left = '-20000px'
+  captureHost.style.top = '0'
+  captureHost.style.opacity = '0'
+  captureHost.style.pointerEvents = 'none'
+  captureHost.style.zIndex = '-1'
+  captureHost.style.width = 'max-content'
+  captureHost.style.maxWidth = 'none'
+
+  const clonedRoot = sourceRoot.cloneNode(true) as HTMLElement
+  clonedRoot.style.setProperty('--resume-export-preview-scale', '1')
+  clonedRoot.style.setProperty('zoom', '1')
+  clonedRoot.style.setProperty('transform', 'none')
+  clonedRoot.style.setProperty('margin-inline', '0')
+  clonedRoot.style.setProperty('width', 'max-content')
+  captureHost.appendChild(clonedRoot)
+
+  document.body.appendChild(captureHost)
+  return { captureHost, captureRoot: clonedRoot }
 }
 
 function hasPreviewOverflow(previewRoot: Element | null) {
@@ -1088,10 +1218,68 @@ function BasicsEditor() {
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-2">
+      <div className="resume-basics-grid grid grid-cols-2 gap-2">
         <EditorAnchor sectionId="basics" fieldKey="name">
           <label className="text-xs text-muted-foreground block mb-1">您的姓名</label>
           <Input value={basics.name} onChange={value => updateField('name', value)} placeholder="请输入姓名" />
+        </EditorAnchor>
+
+        <EditorAnchor sectionId="basics" fieldKey="picture" className="resume-basics-photo-field p-3">
+          <div className="resume-basics-photo-head">
+            <span className="resume-anchor-label text-xs text-muted-foreground">证件照</span>
+            <label className="resume-basics-inline-checkbox">
+              <Checkbox
+                checked={!picture.hidden}
+                onChange={checked =>
+                  updateResumeData(draft => {
+                    draft.picture.hidden = !checked
+                  })
+                }
+              />
+              展示照片
+            </label>
+          </div>
+
+          <input
+            ref={photoInputRef}
+            type="file"
+            accept="image/jpeg,image/jpg,image/png,image/webp"
+            className="hidden"
+            onChange={event => {
+              const file = event.target.files?.[0]
+              if (file) {
+                void handleUploadPhoto(file)
+              }
+              event.target.value = ''
+            }}
+          />
+
+          <button
+            type="button"
+            className={joinClassNames('resume-basics-photo-preview', !picture.url && 'is-empty')}
+            onClick={() => photoInputRef.current?.click()}
+            disabled={photoUploading}
+            aria-label={picture.url ? '更换证件照' : '上传证件照'}
+          >
+            {photoUploading ? (
+              <div className="resume-basics-photo-placeholder">
+                <span>上传中...</span>
+              </div>
+            ) : picture.url ? (
+              <div
+                role="img"
+                aria-label="证件照预览"
+                className="resume-basics-photo-image"
+                style={{ backgroundImage: `url(${picture.url})` }}
+              />
+            ) : (
+              <div className="resume-basics-photo-placeholder">
+                <span>点击上传证件照</span>
+                <span>一寸比例（5:7）</span>
+              </div>
+            )}
+          </button>
+
         </EditorAnchor>
 
         <EditorAnchor sectionId="basics" fieldKey="gender">
@@ -1105,29 +1293,30 @@ function BasicsEditor() {
           </Select>
         </EditorAnchor>
 
-        <EditorAnchor sectionId="basics" fieldKey="birthDate">
+        <EditorAnchor sectionId="basics" fieldKey="birthDate convertBirthToAge">
+          <div className="resume-basics-label-row">
+            <label className="text-xs text-muted-foreground block">出生年月</label>
+            <label className="resume-basics-inline-checkbox">
+              <Checkbox
+                checked={basics.convertBirthToAge}
+                onChange={checked =>
+                  updateResumeData(draft => {
+                    draft.basics.convertBirthToAge = checked
+                  })
+                }
+              />
+              显示年龄
+            </label>
+          </div>
           <MonthPickerField
             label="出生年月"
             value={basics.birthDate}
             placeholder="不填"
             maxValue={dateToYearMonth(new Date())}
+            showLabel={false}
             showTriggerIcon={false}
             onChange={nextValue => updateField('birthDate', nextValue)}
           />
-        </EditorAnchor>
-
-        <EditorAnchor sectionId="basics" fieldKey="birthDate" className="flex items-end pb-1">
-          <label className="inline-flex h-9 cursor-pointer select-none items-center gap-2 text-xs text-muted-foreground">
-            <Checkbox
-              checked={basics.convertBirthToAge}
-              onChange={checked =>
-                updateResumeData(draft => {
-                  draft.basics.convertBirthToAge = checked
-                })
-              }
-            />
-            显示年龄
-          </label>
         </EditorAnchor>
 
         <EditorAnchor sectionId="basics" fieldKey="workYears">
@@ -1246,49 +1435,6 @@ function BasicsEditor() {
           />
         </EditorAnchor>
       </div>
-
-      <EditorAnchor sectionId="basics" fieldKey="picture" className="resume-soft-card p-3 space-y-2">
-        <div className="flex items-center justify-between gap-3">
-          <span className="resume-anchor-label text-xs text-muted-foreground">照片设置</span>
-          <div className="flex items-center gap-3">
-            <input
-              ref={photoInputRef}
-              type="file"
-              accept="image/jpeg,image/jpg,image/png,image/webp"
-              className="hidden"
-              onChange={event => {
-                const file = event.target.files?.[0]
-                if (file) {
-                  void handleUploadPhoto(file)
-                }
-                event.target.value = ''
-              }}
-            />
-            <Button type="secondary" size="small" onClick={() => photoInputRef.current?.click()} loading={photoUploading}>
-              上传照片
-            </Button>
-            <label className="inline-flex items-center gap-2 text-xs text-muted-foreground">
-              <Switch
-                checked={!picture.hidden}
-                onChange={checked =>
-                  updateResumeData(draft => {
-                    draft.picture.hidden = !checked
-                  })
-                }
-                size="small"
-              />
-              展示照片
-            </label>
-          </div>
-        </div>
-        {picture.url ? (
-          <p className="text-[11px] text-muted-foreground truncate" title={picture.url}>
-            已上传：{picture.url}
-          </p>
-        ) : (
-          <p className="text-[11px] text-muted-foreground">暂未上传照片，将使用默认示意证件照；关闭“展示照片”可隐藏。</p>
-        )}
-      </EditorAnchor>
     </div>
   )
 }
@@ -2936,6 +3082,7 @@ function ResumePreviewDock({
 
 export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilderClientProps) {
   const router = useRouter()
+  const { auth, ensureAuthenticated } = useAuthSnapshot({ eager: true })
   const previewContentRef = useRef<HTMLDivElement>(null)
   const previewViewportRef = useRef<HTMLDivElement | null>(null)
   const exportPreviewRef = useRef<HTMLDivElement>(null)
@@ -2964,9 +3111,12 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
   const [exportFormat, setExportFormat] = useState<'pdf' | 'image'>('pdf')
   const [exportScope, setExportScope] = useState<'current' | 'all'>('all')
   const [exportImageMode, setExportImageMode] = useState<'paged' | 'continuous'>('paged')
+  const [exporting, setExporting] = useState(false)
   const [fillStrategy, setFillStrategy] = useState<'overwrite' | 'preserve'>('overwrite')
+  const [sideToolsExpanded, setSideToolsExpanded] = useState(false)
   const [sidePanelScrolling, setSidePanelScrolling] = useState(false)
   const [sidebarWidth, setSidebarWidth] = useState(SIDEBAR_DEFAULT_WIDTH)
+  const [isSidebarResizing, setIsSidebarResizing] = useState(false)
   const [resumeTitle, setResumeTitle] = useState(initialResume.title)
   const [isSavingTitle, setIsSavingTitle] = useState(false)
   const [isTypographyPopoverOpen, setIsTypographyPopoverOpen] = useState(false)
@@ -2990,6 +3140,7 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
   const previewFitKey = `${initialResume.id}:${initialized ? data.metadata.layout.pages.length : 0}`
   const previewScaledHeight = Math.max(previewContentHeight * previewScale, 0)
   const previewScrollSpaceHeight = previewScaledHeight + PREVIEW_SCROLL_VERTICAL_PADDING * 2
+  const sidePanelWidth = sidebarWidth + (sideToolsExpanded ? SIDE_TOOLS_WIDTH_DELTA : 0)
   const handlePreviewNavigate = useCallback((target: PreviewNavigationTarget) => {
     setIsTypographyPopoverOpen(false)
     setActiveTool('sections')
@@ -3018,6 +3169,21 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
   const handleSelectTool = useCallback((tool: BuilderTool) => {
     setIsTypographyPopoverOpen(false)
     setActiveTool(tool)
+  }, [])
+
+  const toggleSideToolsExpanded = useCallback(() => {
+    setSideToolsExpanded(previous => {
+      const next = !previous
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem(SIDE_TOOLS_EXPANDED_STORAGE_KEY, next ? '1' : '0')
+      }
+      return next
+    })
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    setSideToolsExpanded(window.localStorage.getItem(SIDE_TOOLS_EXPANDED_STORAGE_KEY) === '1')
   }, [])
 
   useEffect(() => {
@@ -3052,11 +3218,22 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
     async (actionName: string) => {
       if (!isGuestDraft) return true
 
+      if (auth.authenticated) {
+        setAuthModalOpen(false)
+        return true
+      }
+
+      const authed = await ensureAuthenticated()
+      if (authed) {
+        setAuthModalOpen(false)
+        return true
+      }
+
       Message.warning(`${actionName}需要登录后继续`)
       setAuthModalOpen(true)
       return false
     },
-    [isGuestDraft],
+    [auth.authenticated, ensureAuthenticated, isGuestDraft],
   )
 
   const setPreviewScaleCentered = useCallback((nextScaleRaw: number) => {
@@ -3406,6 +3583,7 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
       startX: event.clientX,
       startWidth: sidebarWidth,
     }
+    setIsSidebarResizing(true)
     event.currentTarget.setPointerCapture(event.pointerId)
   }
 
@@ -3424,6 +3602,7 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
       event.currentTarget.releasePointerCapture(event.pointerId)
     }
     sidebarResizingRef.current = null
+    setIsSidebarResizing(false)
   }
 
   const handleFill = async (strategy: 'overwrite' | 'preserve') => {
@@ -3563,8 +3742,8 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
   const exportResumePagesAsImages = async (scope: 'current' | 'all' = 'all', imageMode: 'paged' | 'continuous' = 'paged') => {
     try {
       await ensureFontsReady()
-      const html2canvas = await loadHtml2Canvas()
-      const previewRoot = exportPreviewRef.current?.querySelector('.resume-preview-root')
+      const snapdom = await loadSnapdom()
+      const previewRoot = exportPreviewRef.current?.querySelector<HTMLElement>('.resume-preview-root')
       if (!previewRoot) {
         Message.error('请先进入导出预览后再导出图片')
         return
@@ -3576,80 +3755,166 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
         return
       }
 
-      const selectedPages = scope === 'all' ? pages : [pages[0]]
       const normalizedTitle = (resumeTitleRef.current || initialResume.title || 'resume').trim().replace(/[^\w\u4e00-\u9fa5-]+/g, '-') || 'resume'
-      const renderOptions = {
-        useCORS: true,
+      const renderOptions: SnapdomOptions = {
         backgroundColor: '#ffffff',
         scale: 2,
-        logging: false,
+        embedFonts: true,
+        cache: 'auto',
+      }
+      const renderPageToCanvas = async (page: HTMLElement) => {
+        return snapdom.toCanvas(page, renderOptions)
       }
 
-      if (imageMode === 'continuous') {
-        const renderedCanvases: HTMLCanvasElement[] = []
-        for (const page of selectedPages) {
-          const canvas = await html2canvas(page, {
-            ...renderOptions,
-            windowWidth: page.scrollWidth,
-            windowHeight: page.scrollHeight,
+      const { captureHost, captureRoot } = createOffscreenExportCaptureRoot(previewRoot)
+
+      try {
+        await nextAnimationFrame()
+        await nextAnimationFrame()
+
+        const capturePages = Array.from(captureRoot.querySelectorAll<HTMLElement>('[data-template]'))
+        if (capturePages.length === 0) {
+          throw new Error('图片生成失败')
+        }
+        const selectedCapturePages = scope === 'all' ? capturePages : [capturePages[0]]
+
+        if (imageMode === 'continuous') {
+          const renderedCanvases: HTMLCanvasElement[] = []
+          for (const page of selectedCapturePages) {
+            const canvas = await renderPageToCanvas(page)
+            renderedCanvases.push(canvas)
+          }
+
+          const exportWidth = Math.max(...renderedCanvases.map(canvas => canvas.width))
+          const exportHeight = renderedCanvases.reduce((sum, canvas) => sum + canvas.height, 0)
+          if (!exportWidth || !exportHeight) {
+            throw new Error('图片生成失败')
+          }
+
+          const stitchedCanvas = document.createElement('canvas')
+          stitchedCanvas.width = exportWidth
+          stitchedCanvas.height = exportHeight
+          const context = stitchedCanvas.getContext('2d')
+          if (!context) {
+            throw new Error('图片生成失败')
+          }
+
+          context.fillStyle = '#ffffff'
+          context.fillRect(0, 0, exportWidth, exportHeight)
+          let drawTop = 0
+          renderedCanvases.forEach(canvas => {
+            const drawLeft = Math.max(0, Math.floor((exportWidth - canvas.width) / 2))
+            context.drawImage(canvas, drawLeft, drawTop)
+            drawTop += canvas.height
           })
-          renderedCanvases.push(canvas)
+
+          const blob = await new Promise<Blob | null>(resolve => stitchedCanvas.toBlob(resolve, 'image/png', 1))
+          if (!blob) {
+            throw new Error('图片生成失败')
+          }
+
+          const filename = selectedCapturePages.length === 1 ? `${normalizedTitle}.png` : `${normalizedTitle}-continuous.png`
+          downloadBlob(blob, filename)
+          Message.success(selectedCapturePages.length === 1 ? '已导出当前页图片' : '已导出连续长图')
+          return
         }
 
-        const exportWidth = Math.max(...renderedCanvases.map(canvas => canvas.width))
-        const exportHeight = renderedCanvases.reduce((sum, canvas) => sum + canvas.height, 0)
-        if (!exportWidth || !exportHeight) {
-          throw new Error('图片生成失败')
+        for (let index = 0; index < selectedCapturePages.length; index += 1) {
+          const page = selectedCapturePages[index]
+          const canvas = await renderPageToCanvas(page)
+
+          const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png', 1))
+          if (!blob) {
+            throw new Error('图片生成失败')
+          }
+
+          const filename = selectedCapturePages.length === 1 ? `${normalizedTitle}.png` : `${normalizedTitle}-p${index + 1}.png`
+          downloadBlob(blob, filename)
         }
 
-        const stitchedCanvas = document.createElement('canvas')
-        stitchedCanvas.width = exportWidth
-        stitchedCanvas.height = exportHeight
-        const context = stitchedCanvas.getContext('2d')
-        if (!context) {
-          throw new Error('图片生成失败')
-        }
+        Message.success(scope === 'all' ? `已导出 ${selectedCapturePages.length} 张图片` : '已导出当前页图片')
+      } finally {
+        captureHost.remove()
+      }
+    } catch (error) {
+      Message.error(error instanceof Error ? error.message : '导出图片失败')
+    }
+  }
 
-        context.fillStyle = '#ffffff'
-        context.fillRect(0, 0, exportWidth, exportHeight)
-        let drawTop = 0
-        renderedCanvases.forEach(canvas => {
-          const drawLeft = Math.max(0, Math.floor((exportWidth - canvas.width) / 2))
-          context.drawImage(canvas, drawLeft, drawTop)
-          drawTop += canvas.height
-        })
-
-        const blob = await new Promise<Blob | null>(resolve => stitchedCanvas.toBlob(resolve, 'image/png', 1))
-        if (!blob) {
-          throw new Error('图片生成失败')
-        }
-
-        const filename = selectedPages.length === 1 ? `${normalizedTitle}.png` : `${normalizedTitle}-continuous.png`
-        downloadBlob(blob, filename)
-        Message.success(selectedPages.length === 1 ? '已导出当前页图片' : '已导出连续长图')
+  const exportResumePagesAsPdf = async () => {
+    try {
+      await ensureFontsReady()
+      const [snapdom, JsPDF] = await Promise.all([loadSnapdom(), loadJsPdf()])
+      const previewRoot = exportPreviewRef.current?.querySelector<HTMLElement>('.resume-preview-root')
+      if (!previewRoot) {
+        Message.error('请先进入导出预览后再导出 PDF')
         return
       }
 
-      for (let index = 0; index < selectedPages.length; index += 1) {
-        const page = selectedPages[index]
-        const canvas = await html2canvas(page, {
-          ...renderOptions,
-          windowWidth: page.scrollWidth,
-          windowHeight: page.scrollHeight,
-        })
-
-        const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png', 1))
-        if (!blob) {
-          throw new Error('图片生成失败')
-        }
-
-        const filename = selectedPages.length === 1 ? `${normalizedTitle}.png` : `${normalizedTitle}-p${index + 1}.png`
-        downloadBlob(blob, filename)
+      const pages = Array.from(previewRoot.querySelectorAll<HTMLElement>('[data-template]'))
+      if (pages.length === 0) {
+        Message.error('当前没有可导出的页面')
+        return
       }
 
-      Message.success(scope === 'all' ? `已导出 ${selectedPages.length} 张图片` : '已导出当前页图片')
+      const normalizedTitle = (resumeTitleRef.current || initialResume.title || 'resume').trim().replace(/[^\w\u4e00-\u9fa5-]+/g, '-') || 'resume'
+      const renderOptions: SnapdomOptions = {
+        backgroundColor: '#ffffff',
+        scale: 2,
+        embedFonts: true,
+        cache: 'auto',
+      }
+      const renderPageToCanvas = async (page: HTMLElement) => {
+        return snapdom.toCanvas(page, renderOptions)
+      }
+
+      const { captureHost, captureRoot } = createOffscreenExportCaptureRoot(previewRoot)
+      try {
+        await nextAnimationFrame()
+        await nextAnimationFrame()
+
+        const capturePages = Array.from(captureRoot.querySelectorAll<HTMLElement>('[data-template]'))
+        if (capturePages.length === 0) {
+          throw new Error('PDF 生成失败')
+        }
+
+        const renderedCanvases: HTMLCanvasElement[] = []
+        for (const page of capturePages) {
+          const canvas = await renderPageToCanvas(page)
+          renderedCanvases.push(canvas)
+        }
+        if (renderedCanvases.length === 0) {
+          throw new Error('PDF 生成失败')
+        }
+
+        const firstCanvas = renderedCanvases[0]
+        const firstOrientation: JsPdfPageOrientation = firstCanvas.width >= firstCanvas.height ? 'landscape' : 'portrait'
+        const pdf = new JsPDF({
+          orientation: firstOrientation,
+          unit: 'px',
+          format: [firstCanvas.width, firstCanvas.height],
+          compress: true,
+        })
+
+        renderedCanvases.forEach((canvas, index) => {
+          if (index > 0) {
+            const orientation: JsPdfPageOrientation = canvas.width >= canvas.height ? 'landscape' : 'portrait'
+            pdf.addPage([canvas.width, canvas.height], orientation)
+          }
+
+          const pageWidth = pdf.internal.pageSize.getWidth()
+          const pageHeight = pdf.internal.pageSize.getHeight()
+          const imageData = canvas.toDataURL('image/png', 1)
+          pdf.addImage(imageData, 'PNG', 0, 0, pageWidth, pageHeight, undefined, 'FAST')
+        })
+
+        pdf.save(`${normalizedTitle}.pdf`)
+        Message.success(`已导出 PDF（${renderedCanvases.length} 页）`)
+      } finally {
+        captureHost.remove()
+      }
     } catch (error) {
-      Message.error(error instanceof Error ? error.message : '导出图片失败')
+      Message.error(error instanceof Error ? error.message : '导出 PDF 失败')
     }
   }
 
@@ -3660,26 +3925,23 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
     setIsExportPreviewOpen(true)
   }
 
-  const printFromExportPreview = async () => {
-    await ensureFontsReady()
-    requestAnimationFrame(() => {
-      window.setTimeout(() => {
-        window.print()
-      }, 100)
-    })
-  }
-
   const handleExportAction = async () => {
+    if (exporting) return
     if (!(await ensureAuthForAction('导出下载'))) {
       return
     }
 
-    if (exportFormat === 'image') {
-      await exportResumePagesAsImages(exportScope, exportImageMode)
-      return
-    }
+    setExporting(true)
+    try {
+      if (exportFormat === 'image') {
+        await exportResumePagesAsImages(exportScope, exportImageMode)
+        return
+      }
 
-    await printFromExportPreview()
+      await exportResumePagesAsPdf()
+    } finally {
+      setExporting(false)
+    }
   }
 
   return (
@@ -3697,11 +3959,26 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
         />
 
       <div className="flex-1 flex overflow-hidden">
-        <aside className="resume-side-panel flex flex-col no-print flex-shrink-0" style={{ width: sidebarWidth }}>
-          <div className="resume-side-shell">
-            <div className="resume-side-tools">
+        <aside
+          className={joinClassNames('resume-side-panel flex flex-col no-print flex-shrink-0', isSidebarResizing && 'is-resizing')}
+          style={{ width: sidePanelWidth }}
+        >
+          <div className={joinClassNames('resume-side-shell', sideToolsExpanded && 'is-tools-expanded')}>
+            <div className={joinClassNames('resume-side-tools', sideToolsExpanded && 'is-expanded')}>
               <div className="resume-side-tool-group">
-                <SideToolHint label="内容编辑">
+                <button
+                  type="button"
+                  className="resume-side-tool-btn resume-side-tool-toggle"
+                  onClick={toggleSideToolsExpanded}
+                  aria-label={sideToolsExpanded ? '收起功能栏' : '展开功能栏'}
+                >
+                  {sideToolsExpanded ? <IconSidebarClose /> : <IconSidebarOpen />}
+                </button>
+              </div>
+              <div className="resume-side-tools-divider" />
+
+              <div className="resume-side-tool-group">
+                <SideToolHint label="内容编辑" expanded={sideToolsExpanded}>
                   <button
                     type="button"
                     className={`resume-side-tool-btn ${activeTool === 'sections' ? 'is-active' : ''}`}
@@ -3711,7 +3988,7 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
                     <FilePenLine size={16} />
                   </button>
                 </SideToolHint>
-                <SideToolHint label="数据填充">
+                <SideToolHint label="数据填充" expanded={sideToolsExpanded}>
                   <button
                     type="button"
                     className={`resume-side-tool-btn ${activeTool === 'fill' ? 'is-active' : ''}`}
@@ -3725,7 +4002,7 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
               <div className="resume-side-tools-divider" />
 
               <div className="resume-side-tool-group">
-                <SideToolHint label="模板切换">
+                <SideToolHint label="模板切换" expanded={sideToolsExpanded}>
                   <button
                     type="button"
                     className={`resume-side-tool-btn ${activeTool === 'template' ? 'is-active' : ''}`}
@@ -3736,7 +4013,7 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
                   </button>
                 </SideToolHint>
                 <div ref={typographyPopoverRef} className="resume-side-tool-popover-anchor">
-                  <SideToolHint label="字体设置">
+                  <SideToolHint label="字体设置" expanded={sideToolsExpanded}>
                     <button
                       type="button"
                       className={`resume-side-tool-btn ${isTypographyPopoverOpen ? 'is-active' : ''}`}
@@ -3753,7 +4030,7 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
                     </div>
                   ) : null}
                 </div>
-                <SideToolHint label="页面设置">
+                <SideToolHint label="页面设置" expanded={sideToolsExpanded}>
                   <button
                     type="button"
                     className={`resume-side-tool-btn ${activeTool === 'page' ? 'is-active' : ''}`}
@@ -3763,7 +4040,7 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
                     <FileText size={16} />
                   </button>
                 </SideToolHint>
-                <SideToolHint label="高级设置">
+                <SideToolHint label="高级设置" expanded={sideToolsExpanded}>
                   <button
                     type="button"
                     className={`resume-side-tool-btn ${activeTool === 'advanced' ? 'is-active' : ''}`}
@@ -3777,7 +4054,7 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
 
               <div className="resume-side-tools-spacer" />
 
-              <SideToolHint label={theme === 'dark' ? '切换浅色' : '切换深色'}>
+              <SideToolHint label={theme === 'dark' ? '切换浅色' : '切换深色'} expanded={sideToolsExpanded}>
                 <button
                   type="button"
                   className="resume-side-tool-btn"
@@ -3873,6 +4150,7 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
         exportFormat={exportFormat}
         exportScope={exportScope}
         exportImageMode={exportImageMode}
+        exporting={exporting}
         onExportFormatChange={setExportFormat}
         onExportScopeChange={setExportScope}
         onExportImageModeChange={setExportImageMode}

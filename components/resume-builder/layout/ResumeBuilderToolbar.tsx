@@ -45,8 +45,9 @@ export function ResumeBuilderToolbar({
 
   return (
     <div className="resume-toolbar border-b px-4 py-2 grid grid-cols-[1fr_auto_1fr] items-center gap-3 no-print flex-shrink-0">
-      <div className="flex min-w-0 items-center gap-2 justify-self-start">
+      <div className="resume-toolbar-left flex min-w-0 items-center gap-2 justify-self-start">
         <Button type="text" icon={<IconLeft />} onClick={onBack} aria-label="返回" />
+        <div className="resume-toolbar-status-wrap">{saveStatus}</div>
       </div>
 
       <div className="flex min-w-0 items-center px-2 justify-self-center">
@@ -88,7 +89,6 @@ export function ResumeBuilderToolbar({
       </div>
 
       <div className="justify-self-end flex items-center gap-3">
-        {saveStatus}
         <Space>
           <Button
             type="secondary"

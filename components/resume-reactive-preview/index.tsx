@@ -1,11 +1,10 @@
 'use client'
 
-import { Fragment, type CSSProperties, type HTMLAttributes, type ReactElement, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, type CSSProperties, type HTMLAttributes, type ReactElement, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { sanitizeCss, sanitizeHtml } from '@/lib/resume/sanitize'
 import { RESUME_EDITOR_LIMITS, clampToRange } from '@/lib/resume/editor-limits'
 import {
   type CustomSectionType,
-  type ReactiveTemplateId,
   type ResumeData,
   type StandardSectionType,
 } from '@/lib/resume/types'
@@ -15,8 +14,6 @@ import {
   BadgeCheck,
   BookText,
   BriefcaseBusiness,
-  Cake,
-  CalendarDays,
   FileText,
   FolderKanban,
   Globe,
@@ -24,16 +21,13 @@ import {
   HandHeart,
   Heart,
   Languages,
-  Mail,
-  MapPin,
-  Phone,
-  Ruler,
   type LucideIcon,
-  UserRound,
   Users,
   Wrench,
 } from 'lucide-react'
-import styles from './preview.module.css'
+import { loadTemplateRenderer } from './templates/loader'
+import type { TemplateHelpers as RuntimeTemplateHelpers } from './templates/types'
+import styles from './preview.module.scss'
 
 interface ResumeReactivePreviewProps {
   data: ResumeData
@@ -56,7 +50,7 @@ interface TemplateRenderContext {
   onNavigate?: (target: PreviewNavigationTarget) => void
 }
 
-type TemplateRenderer = (context: TemplateRenderContext) => ReactElement
+type TemplateRenderer = (context: TemplateRenderContext, helpers: RuntimeTemplateHelpers) => ReactElement | null
 
 type HeadingVariant = 'icon-line' | 'pill' | 'text-line' | 'striped' | 'sidebar' | 'gray-tab'
 type ItemVariant = 'compact' | 'default' | 'timeline'
@@ -98,7 +92,6 @@ const SECTION_ICON_MAP: Record<string, LucideIcon> = {
   references: Users,
 }
 
-const SIDEBAR_SECTION_IDS = new Set(['skills', 'languages', 'interests', 'profiles', 'certifications', 'awards', 'publications'])
 const DEFAULT_AVATAR = '/templates/shared/avatar-default.png'
 const AVATAR_ASPECT_RATIO = 295 / 413
 const AVATAR_SIZE_SCALE = 1.6
@@ -304,19 +297,6 @@ function getOrderedSectionIds(data: ResumeData, sectionIds: string[]) {
   return [...base, ...missing]
 }
 
-function splitSectionsForSidebar(sectionIds: string[]) {
-  const sidebar: string[] = []
-  const main: string[] = []
-  sectionIds.forEach(sectionId => {
-    if (SIDEBAR_SECTION_IDS.has(sectionId)) {
-      sidebar.push(sectionId)
-    } else {
-      main.push(sectionId)
-    }
-  })
-  return { sidebar, main }
-}
-
 function shouldRenderAvatar(data: ResumeData) {
   return !data.picture.hidden
 }
@@ -472,6 +452,43 @@ function extractResumeFacts(data: ResumeData) {
 function resolvePersonalLocation(facts: ReturnType<typeof extractResumeFacts>) {
   return facts.nativePlace || facts.currentLocation
 }
+
+function resolveStandardSectionTitle(data: ResumeData, sectionId: StandardSectionType) {
+  return data.sections[sectionId].title || SECTION_TITLE_MAP[sectionId]
+}
+
+function resolveTemplate8SkillPercent(level: unknown, proficiency: string) {
+  const explicitPercent = toPercentLevel(level)
+  if (explicitPercent > 0) return explicitPercent
+
+  const normalized = normalizeToken(proficiency)
+  if (!normalized) return 0
+
+  if (/(精通|专家|母语|native|expert|advanced)/.test(normalized)) return 92
+  if (/(熟练|良好|流利|熟悉|proficient|intermediate)/.test(normalized)) return 78
+  if (/(一般|基础|了解|入门|basic|elementary)/.test(normalized)) return 62
+  return 0
+}
+
+function resolveTemplate8SkillLabel(proficiency: string, percent: number) {
+  if (hasMeaningfulText(proficiency)) return proficiency
+  if (percent >= 90) return '精通'
+  if (percent >= 75) return '良好'
+  if (percent >= 60) return '熟悉'
+  if (percent > 0) return '了解'
+  return ''
+}
+
+const fallbackTemplateRenderer: TemplateRenderer = ({ data, sectionIds, onNavigate }, helpers) => (
+  <div className={helpers.styles.templateMain}>
+    <h1 {...helpers.getPreviewActionProps(onNavigate, { sectionId: 'basics', fieldKey: 'name' })}>{data.basics.name || '沉浸式网申'}</h1>
+    {helpers.renderSectionList(data, sectionIds, {
+      headingVariant: 'icon-line',
+      itemVariant: 'compact',
+      onNavigate,
+    })}
+  </div>
+)
 
 function renderStandardItem(
   section: StandardSectionType,
@@ -900,513 +917,6 @@ function Avatar({
   )
 }
 
-function Template1({ data, sectionIds, onNavigate }: TemplateRenderContext) {
-  const facts = extractResumeFacts(data)
-  const personalLocation = resolvePersonalLocation(facts)
-  const visible = getVisibleSections(data, sectionIds)
-  const { sidebar, main } = splitSectionsForSidebar(visible)
-  const sidebarInfo: Array<{ icon: LucideIcon; value: string; fieldKey: string }> = [
-    { icon: CalendarDays, value: facts.age, fieldKey: 'birthDate' },
-    { icon: Cake, value: facts.birthDate, fieldKey: 'birthDate' },
-    { icon: UserRound, value: facts.gender, fieldKey: 'gender' },
-    { icon: Heart, value: facts.maritalStatus, fieldKey: 'maritalStatus' },
-    { icon: Users, value: facts.ethnicity, fieldKey: 'ethnicity' },
-    { icon: BadgeCheck, value: facts.politicalStatus, fieldKey: 'politicalStatus' },
-    { icon: MapPin, value: personalLocation, fieldKey: resolveLocationFieldKey(data) },
-    { icon: Ruler, value: facts.height, fieldKey: 'heightCm' },
-    { icon: Ruler, value: facts.weight, fieldKey: 'weightKg' },
-    { icon: BriefcaseBusiness, value: facts.experience, fieldKey: 'workYears' },
-    { icon: Phone, value: data.basics.phone, fieldKey: 'phone' },
-    { icon: Mail, value: data.basics.email, fieldKey: 'email' },
-    { icon: Globe, value: facts.website, fieldKey: resolveWebsiteFieldKey(data) },
-  ].filter(item => hasMeaningfulText(item.value))
-  const intentionItems = [
-    { label: '求职意向', value: facts.position, fieldKey: 'intentionPosition' },
-    { label: '意向城市', value: facts.targetCity, fieldKey: 'intentionCity' },
-    { label: '期望薪资', value: facts.salary, fieldKey: 'intentionSalary' },
-    { label: '入职时间', value: facts.availability, fieldKey: 'intentionAvailability' },
-  ].filter(item => hasMeaningfulText(item.value))
-  return (
-    <div className={styles.template1}>
-      <aside className={styles.t1Sidebar}>
-        <div {...getPreviewActionProps(onNavigate, { sectionId: 'basics', fieldKey: 'picture' }, styles.t1AvatarWrap)}>
-          <Avatar data={data} className={styles.t1Avatar} square sizePt={66} />
-        </div>
-
-        <div className={styles.t1SidebarInfo}>
-          {sidebarInfo.map(item => (
-            <div
-              key={`${item.icon.displayName || item.icon.name}-${item.value}`}
-              {...getPreviewActionProps(onNavigate, { sectionId: 'basics', fieldKey: item.fieldKey }, styles.t1SidebarInfoItem)}
-            >
-              <span className={styles.t1SidebarInfoIcon}>
-                <item.icon size={12} />
-              </span>
-              <span>{item.value}</span>
-            </div>
-          ))}
-        </div>
-
-        <div className={styles.t1SidebarSections}>
-          {renderSectionList(data, sidebar, {
-            headingVariant: 'sidebar',
-            itemVariant: 'compact',
-            sectionHeadingClassName: styles.t1SidebarHeading,
-            sectionClassName: styles.t1SidebarSection,
-            onNavigate,
-          })}
-        </div>
-      </aside>
-
-      <main className={styles.t1Main}>
-        <div className={styles.t1MainHeader}>
-          <h1 {...getPreviewActionProps(onNavigate, { sectionId: 'basics', fieldKey: 'name' })}>{data.basics.name || '沉浸式网申'}</h1>
-          {intentionItems.length > 0 ? (
-            <div className={styles.t1IntentGrid}>
-              {intentionItems.map(item => (
-                <div
-                  key={item.label}
-                  {...getPreviewActionProps(onNavigate, { sectionId: 'intention', fieldKey: item.fieldKey }, styles.t1IntentItem)}
-                >
-                  <span>{item.label}：</span>
-                  <strong>{item.value}</strong>
-                </div>
-              ))}
-            </div>
-          ) : null}
-        </div>
-
-        <div className={styles.templateMain}>
-          {renderSectionList(data, main, {
-            headingVariant: 'icon-line',
-            itemVariant: 'compact',
-            sectionHeadingClassName: styles.t1MainHeading,
-            onNavigate,
-          })}
-        </div>
-      </main>
-    </div>
-  )
-}
-
-function Template2({ data, sectionIds, onNavigate }: TemplateRenderContext) {
-  const facts = extractResumeFacts(data)
-  const personalLocation = resolvePersonalLocation(facts)
-  const basicFields = [
-    { label: '姓 名', value: data.basics.name || '沉浸式网申', fieldKey: 'name', sectionId: 'basics' },
-    { label: '出生年月', value: facts.birthDate, fieldKey: 'birthDate', sectionId: 'basics' },
-    { label: '年 龄', value: facts.age, fieldKey: 'birthDate', sectionId: 'basics' },
-    { label: '性 别', value: facts.gender, fieldKey: 'gender', sectionId: 'basics' },
-    { label: '婚姻状况', value: facts.maritalStatus, fieldKey: 'maritalStatus', sectionId: 'basics' },
-    { label: '民 族', value: facts.ethnicity, fieldKey: 'ethnicity', sectionId: 'basics' },
-    { label: '政治面貌', value: facts.politicalStatus, fieldKey: 'politicalStatus', sectionId: 'basics' },
-    { label: '身 高', value: facts.height, fieldKey: 'heightCm', sectionId: 'basics' },
-    { label: '体 重', value: facts.weight, fieldKey: 'weightKg', sectionId: 'basics' },
-    { label: '籍 贯', value: personalLocation, fieldKey: resolveLocationFieldKey(data), sectionId: 'basics' },
-    { label: '工作年限', value: facts.experience, fieldKey: 'workYears', sectionId: 'basics' },
-    { label: '求职岗位', value: facts.position, fieldKey: 'intentionPosition', sectionId: 'intention' },
-    { label: '电 话', value: data.basics.phone, fieldKey: 'phone', sectionId: 'basics' },
-    { label: '邮 箱', value: data.basics.email, fieldKey: 'email', sectionId: 'basics' },
-    { label: '网 站', value: facts.website, fieldKey: resolveWebsiteFieldKey(data), sectionId: 'basics' },
-  ].filter(item => item.label === '姓 名' || hasMeaningfulText(String(item.value || '')))
-
-  return (
-    <div className={styles.template2}>
-      <div className={styles.t2Header}>
-        <div className={styles.t2HeaderTitle}>
-          <h1>个人简历</h1>
-          <span className={styles.t2HeaderDivider} />
-          <div className={styles.t2HeaderSubtitle}>
-            <span>细心从每一个细节开始</span>
-            <strong>求职简历</strong>
-          </div>
-        </div>
-
-        <div className={styles.t2HeaderActions}>
-          <span className={styles.t2ActionIcon}>
-            <Mail size={12} />
-          </span>
-          <span className={styles.t2ActionIcon}>
-            <BriefcaseBusiness size={12} />
-          </span>
-        </div>
-      </div>
-
-      <div className={styles.t2Ribbon}>
-        <span className={styles.t2RibbonLabel}>基本信息</span>
-      </div>
-
-      <section className={styles.t2Basics}>
-        <div className={styles.t2BasicsGrid}>
-          {basicFields.map(item => (
-            <div
-              key={item.label}
-              {...getPreviewActionProps(onNavigate, { sectionId: item.sectionId, fieldKey: item.fieldKey }, styles.t2BasicItem)}
-            >
-              <span>{item.label}：</span>
-              <strong>{item.value}</strong>
-            </div>
-          ))}
-        </div>
-        <div {...getPreviewActionProps(onNavigate, { sectionId: 'basics', fieldKey: 'picture' })}>
-          <Avatar data={data} className={styles.t2Avatar} square sizePt={58} />
-        </div>
-      </section>
-
-      <div className={styles.templateMain}>
-        {renderSectionList(data, sectionIds, {
-          headingVariant: 'striped',
-          itemVariant: 'compact',
-          sectionHeadingClassName: styles.t2Heading,
-          onNavigate,
-        })}
-      </div>
-    </div>
-  )
-}
-
-function Template3({ data, sectionIds, onNavigate }: TemplateRenderContext) {
-  const facts = extractResumeFacts(data)
-  const personalLocation = resolvePersonalLocation(facts)
-  const headline = String(data.basics.headline || '').trim()
-  const intentionItems = [
-    { key: 'position', value: facts.position, target: { sectionId: 'intention', fieldKey: 'intentionPosition' } },
-    { key: 'target-city', value: facts.targetCity, target: { sectionId: 'intention', fieldKey: 'intentionCity' } },
-    { key: 'salary', value: facts.salary, target: { sectionId: 'intention', fieldKey: 'intentionSalary' } },
-    { key: 'availability', value: facts.availability, target: { sectionId: 'intention', fieldKey: 'intentionAvailability' } },
-  ]
-  const infoItems: Array<{ icon: LucideIcon; label: string; value: string; fieldKey: string }> = [
-    { icon: Cake, label: '出生年月', value: facts.birthDate, fieldKey: 'birthDate' },
-    { icon: CalendarDays, label: '年 龄', value: facts.age, fieldKey: 'birthDate' },
-    { icon: UserRound, label: '性 别', value: facts.gender, fieldKey: 'gender' },
-    { icon: Heart, label: '婚姻状况', value: facts.maritalStatus, fieldKey: 'maritalStatus' },
-    { icon: Users, label: '民 族', value: facts.ethnicity, fieldKey: 'ethnicity' },
-    { icon: BadgeCheck, label: '政治面貌', value: facts.politicalStatus, fieldKey: 'politicalStatus' },
-    { icon: MapPin, label: '籍 贯', value: personalLocation, fieldKey: resolveLocationFieldKey(data) },
-    { icon: Ruler, label: '身 高', value: facts.height, fieldKey: 'heightCm' },
-    { icon: Ruler, label: '体 重', value: facts.weight, fieldKey: 'weightKg' },
-    { icon: BriefcaseBusiness, label: '工作年限', value: facts.experience, fieldKey: 'workYears' },
-    { icon: Phone, label: '电 话', value: data.basics.phone, fieldKey: 'phone' },
-    { icon: Mail, label: '邮 箱', value: data.basics.email, fieldKey: 'email' },
-    { icon: Globe, label: '网 站', value: facts.website, fieldKey: resolveWebsiteFieldKey(data) },
-  ].filter(item => hasMeaningfulText(item.value))
-
-  return (
-    <div className={styles.template3}>
-      <div className={styles.t3Header}>
-        <div className={styles.t3HeaderMain}>
-          <h1 {...getPreviewActionProps(onNavigate, { sectionId: 'basics', fieldKey: 'name' })}>{data.basics.name || '沉浸式网申'}</h1>
-          {headline ? (
-            <p {...getPreviewActionProps(onNavigate, { sectionId: 'intention', fieldKey: 'intentionPosition' }, styles.t3Subtitle)}>
-              {headline}
-            </p>
-          ) : null}
-          {intentionItems.some(item => hasMeaningfulText(item.value)) ? (
-            <p className={styles.t3IntentLine}>
-              <span>求职意向：</span>
-              <strong>{renderInlineTargetList(intentionItems, onNavigate)}</strong>
-            </p>
-          ) : null}
-
-          {infoItems.length > 0 ? (
-            <div className={styles.t3InfoGrid}>
-              {infoItems.map(item => (
-                <div
-                  key={item.label}
-                  {...getPreviewActionProps(onNavigate, { sectionId: 'basics', fieldKey: item.fieldKey }, styles.t3InfoItem)}
-                >
-                  <item.icon size={12} />
-                  <span>{item.label}：</span>
-                  <strong>{item.value}</strong>
-                </div>
-              ))}
-            </div>
-          ) : null}
-        </div>
-
-        <div {...getPreviewActionProps(onNavigate, { sectionId: 'basics', fieldKey: 'picture' })}>
-          <Avatar data={data} className={styles.t3Avatar} square sizePt={64} />
-        </div>
-      </div>
-
-      <div className={styles.t3Body}>
-        {renderSectionList(data, sectionIds, {
-          headingVariant: 'icon-line',
-          itemVariant: 'timeline',
-          sectionHeadingClassName: styles.t3Heading,
-          onNavigate,
-        })}
-      </div>
-    </div>
-  )
-}
-
-function Template4({ data, sectionIds, onNavigate }: TemplateRenderContext) {
-  const facts = extractResumeFacts(data)
-  const personalLocation = resolvePersonalLocation(facts)
-  const intentionItems = [
-    { key: 'position', value: facts.position, target: { sectionId: 'intention', fieldKey: 'intentionPosition' } },
-    { key: 'target-city', value: facts.targetCity, target: { sectionId: 'intention', fieldKey: 'intentionCity' } },
-    { key: 'salary', value: facts.salary, target: { sectionId: 'intention', fieldKey: 'intentionSalary' } },
-    { key: 'availability', value: facts.availability, target: { sectionId: 'intention', fieldKey: 'intentionAvailability' } },
-  ]
-  const profileItems = [
-    { key: 'birth', value: facts.birthDate, target: { sectionId: 'basics', fieldKey: 'birthDate' } },
-    { key: 'age', value: facts.age, target: { sectionId: 'basics', fieldKey: 'birthDate' } },
-    { key: 'gender', value: facts.gender, target: { sectionId: 'basics', fieldKey: 'gender' } },
-    { key: 'marital', value: facts.maritalStatus, target: { sectionId: 'basics', fieldKey: 'maritalStatus' } },
-    { key: 'ethnicity', value: facts.ethnicity, target: { sectionId: 'basics', fieldKey: 'ethnicity' } },
-    { key: 'political', value: facts.politicalStatus, target: { sectionId: 'basics', fieldKey: 'politicalStatus' } },
-  ]
-  const profileExtraItems = [
-    { key: 'location', value: personalLocation, target: { sectionId: 'basics', fieldKey: resolveLocationFieldKey(data) } },
-    { key: 'height', value: facts.height, target: { sectionId: 'basics', fieldKey: 'heightCm' } },
-    { key: 'weight', value: facts.weight, target: { sectionId: 'basics', fieldKey: 'weightKg' } },
-    { key: 'experience', value: facts.experience, target: { sectionId: 'basics', fieldKey: 'workYears' } },
-  ]
-  const contactItems = [
-    { key: 'phone', value: data.basics.phone, target: { sectionId: 'basics', fieldKey: 'phone' } },
-    { key: 'email', value: data.basics.email, target: { sectionId: 'basics', fieldKey: 'email' } },
-    { key: 'website', value: facts.website, target: { sectionId: 'basics', fieldKey: resolveWebsiteFieldKey(data) } },
-  ]
-
-  return (
-    <div className={styles.template4}>
-      <div className={styles.t4Header}>
-        <div className={styles.t4TitleLine}>
-          <h1 {...getPreviewActionProps(onNavigate, { sectionId: 'basics', fieldKey: 'name' })}>{data.basics.name || '沉浸式网申'}</h1>
-        </div>
-        {intentionItems.some(item => hasMeaningfulText(item.value)) ? <p>{renderInlineTargetList(intentionItems, onNavigate)}</p> : null}
-        {profileItems.some(item => hasMeaningfulText(item.value)) ? <p>{renderInlineTargetList(profileItems, onNavigate)}</p> : null}
-        {profileExtraItems.some(item => hasMeaningfulText(item.value)) ? <p>{renderInlineTargetList(profileExtraItems, onNavigate)}</p> : null}
-        {contactItems.some(item => hasMeaningfulText(item.value)) ? <p>{renderInlineTargetList(contactItems, onNavigate)}</p> : null}
-        <div {...getPreviewActionProps(onNavigate, { sectionId: 'basics', fieldKey: 'picture' })}>
-          <Avatar data={data} className={styles.t4Avatar} square sizePt={62} />
-        </div>
-      </div>
-
-      <div className={styles.templateMain}>
-        {renderSectionList(data, sectionIds, {
-          headingVariant: 'text-line',
-          itemVariant: 'compact',
-          sectionHeadingClassName: styles.t4Heading,
-          onNavigate,
-        })}
-      </div>
-    </div>
-  )
-}
-
-function Template5({ data, sectionIds, onNavigate }: TemplateRenderContext) {
-  const facts = extractResumeFacts(data)
-  const personalLocation = resolvePersonalLocation(facts)
-  const profileItems = [
-    { key: facts.age ? 'age' : 'birth', value: facts.age || facts.birthDate, target: { sectionId: 'basics', fieldKey: 'birthDate' } },
-    { key: 'gender', value: facts.gender, target: { sectionId: 'basics', fieldKey: 'gender' } },
-    { key: 'marital', value: facts.maritalStatus, target: { sectionId: 'basics', fieldKey: 'maritalStatus' } },
-    { key: 'ethnicity', value: facts.ethnicity, target: { sectionId: 'basics', fieldKey: 'ethnicity' } },
-    { key: 'political', value: facts.politicalStatus, target: { sectionId: 'basics', fieldKey: 'politicalStatus' } },
-  ]
-  const profileExtraItems = [
-    { key: 'height', value: facts.height, target: { sectionId: 'basics', fieldKey: 'heightCm' } },
-    { key: 'weight', value: facts.weight, target: { sectionId: 'basics', fieldKey: 'weightKg' } },
-    { key: 'location', value: personalLocation, target: { sectionId: 'basics', fieldKey: resolveLocationFieldKey(data) } },
-    { key: 'position', value: facts.position, target: { sectionId: 'intention', fieldKey: 'intentionPosition' } },
-    { key: 'experience', value: facts.experience, target: { sectionId: 'basics', fieldKey: 'workYears' } },
-  ]
-  const contactItems = [
-    { icon: Phone, label: '电话', value: data.basics.phone, fieldKey: 'phone' },
-    { icon: Mail, label: '邮箱', value: data.basics.email, fieldKey: 'email' },
-    { icon: Globe, label: '网站', value: facts.website, fieldKey: resolveWebsiteFieldKey(data) },
-  ].filter(item => hasMeaningfulText(item.value))
-
-  return (
-    <div className={styles.template5}>
-      <div className={styles.t5Header}>
-        <div className={styles.t5HeaderMain}>
-          <h1 {...getPreviewActionProps(onNavigate, { sectionId: 'basics', fieldKey: 'name' })}>{data.basics.name || '沉浸式网申'}</h1>
-          {profileItems.some(item => hasMeaningfulText(item.value)) ? <p>{renderInlineTargetList(profileItems, onNavigate)}</p> : null}
-          {profileExtraItems.some(item => hasMeaningfulText(item.value)) ? <p>{renderInlineTargetList(profileExtraItems, onNavigate)}</p> : null}
-          {contactItems.length > 0 ? (
-            <div className={styles.t5Contact}>
-              {contactItems.map(item => (
-                <span
-                  key={item.label}
-                  {...getPreviewActionProps(onNavigate, { sectionId: 'basics', fieldKey: item.fieldKey })}
-                >
-                  <item.icon size={11} />
-                  {item.label}：{item.value}
-                </span>
-              ))}
-            </div>
-          ) : null}
-        </div>
-        <div {...getPreviewActionProps(onNavigate, { sectionId: 'basics', fieldKey: 'picture' })}>
-          <Avatar data={data} className={styles.t5Avatar} square sizePt={62} />
-        </div>
-      </div>
-
-      <div className={styles.t5Body}>
-        {renderSectionList(data, sectionIds, {
-          headingVariant: 'text-line',
-          itemVariant: 'compact',
-          sectionHeadingClassName: styles.t5Heading,
-          onNavigate,
-        })}
-      </div>
-    </div>
-  )
-}
-
-function Template6({ data, sectionIds, onNavigate }: TemplateRenderContext) {
-  const facts = extractResumeFacts(data)
-  const personalLocation = resolvePersonalLocation(facts)
-  const intentFields = [
-    { label: '求职意向', value: facts.position, fieldKey: 'intentionPosition' },
-    { label: '意向城市', value: facts.targetCity, fieldKey: 'intentionCity' },
-    { label: '期望薪资', value: facts.salary, fieldKey: 'intentionSalary' },
-    { label: '入职时间', value: facts.availability, fieldKey: 'intentionAvailability' },
-  ].filter(item => hasMeaningfulText(item.value))
-  const infoItems: Array<{ icon: LucideIcon; value: string; fieldKey: string }> = [
-    { icon: Cake, value: facts.birthDate, fieldKey: 'birthDate' },
-    { icon: CalendarDays, value: facts.age, fieldKey: 'birthDate' },
-    { icon: UserRound, value: facts.gender, fieldKey: 'gender' },
-    { icon: Heart, value: facts.maritalStatus, fieldKey: 'maritalStatus' },
-    { icon: Users, value: facts.ethnicity, fieldKey: 'ethnicity' },
-    { icon: BadgeCheck, value: facts.politicalStatus, fieldKey: 'politicalStatus' },
-    { icon: MapPin, value: personalLocation, fieldKey: resolveLocationFieldKey(data) },
-    { icon: Ruler, value: facts.height, fieldKey: 'heightCm' },
-    { icon: Ruler, value: facts.weight, fieldKey: 'weightKg' },
-    { icon: BriefcaseBusiness, value: facts.experience, fieldKey: 'workYears' },
-    { icon: Phone, value: data.basics.phone, fieldKey: 'phone' },
-    { icon: Mail, value: data.basics.email, fieldKey: 'email' },
-    { icon: Globe, value: facts.website, fieldKey: resolveWebsiteFieldKey(data) },
-  ].filter(item => hasMeaningfulText(item.value))
-
-  return (
-    <div className={styles.template6}>
-      <div className={styles.t6Header}>
-        <div className={styles.t6HeaderMain}>
-          <h1 {...getPreviewActionProps(onNavigate, { sectionId: 'basics', fieldKey: 'name' })}>{data.basics.name || '沉浸式网申'}</h1>
-          {intentFields.length > 0 ? (
-            <div className={styles.t6IntentGrid}>
-              {intentFields.map(item => (
-                <div
-                  key={item.label}
-                  {...getPreviewActionProps(onNavigate, { sectionId: 'intention', fieldKey: item.fieldKey }, styles.t6IntentItem)}
-                >
-                  <span>{item.label}：</span>
-                  <strong>{item.value}</strong>
-                </div>
-              ))}
-            </div>
-          ) : null}
-        </div>
-
-        {infoItems.length > 0 ? (
-          <div className={styles.t6InfoGrid}>
-            {infoItems.map(item => (
-              <div
-                key={`${item.icon.displayName || item.icon.name}-${item.value}`}
-                {...getPreviewActionProps(onNavigate, { sectionId: 'basics', fieldKey: item.fieldKey }, styles.t6InfoItem)}
-              >
-                <item.icon size={12} />
-                <strong>{item.value}</strong>
-              </div>
-            ))}
-          </div>
-        ) : null}
-
-        <div {...getPreviewActionProps(onNavigate, { sectionId: 'basics', fieldKey: 'picture' })}>
-          <Avatar data={data} className={styles.t6Avatar} square sizePt={62} />
-        </div>
-      </div>
-
-      <div className={styles.t6Body}>
-        {renderSectionList(data, sectionIds, {
-          headingVariant: 'icon-line',
-          itemVariant: 'compact',
-          sectionHeadingClassName: styles.t6Heading,
-          onNavigate,
-        })}
-      </div>
-    </div>
-  )
-}
-
-function Template7({ data, sectionIds, onNavigate }: TemplateRenderContext) {
-  const facts = extractResumeFacts(data)
-  const personalLocation = resolvePersonalLocation(facts)
-  const infoItems: Array<{ icon: LucideIcon; label: string; value: string; fieldKey: string }> = [
-    { icon: Cake, label: '出生年月', value: facts.birthDate, fieldKey: 'birthDate' },
-    { icon: CalendarDays, label: '年 龄', value: facts.age, fieldKey: 'birthDate' },
-    { icon: UserRound, label: '性 别', value: facts.gender, fieldKey: 'gender' },
-    { icon: Heart, label: '婚姻状况', value: facts.maritalStatus, fieldKey: 'maritalStatus' },
-    { icon: Users, label: '民 族', value: facts.ethnicity, fieldKey: 'ethnicity' },
-    { icon: BadgeCheck, label: '政治面貌', value: facts.politicalStatus, fieldKey: 'politicalStatus' },
-    { icon: MapPin, label: '籍 贯', value: personalLocation, fieldKey: resolveLocationFieldKey(data) },
-    { icon: Ruler, label: '身 高', value: facts.height, fieldKey: 'heightCm' },
-    { icon: Ruler, label: '体 重', value: facts.weight, fieldKey: 'weightKg' },
-    { icon: BriefcaseBusiness, label: '工作年限', value: facts.experience, fieldKey: 'workYears' },
-    { icon: Phone, label: '电 话', value: data.basics.phone, fieldKey: 'phone' },
-    { icon: Mail, label: '邮 箱', value: data.basics.email, fieldKey: 'email' },
-    { icon: Globe, label: '网 站', value: facts.website, fieldKey: resolveWebsiteFieldKey(data) },
-  ].filter(item => hasMeaningfulText(item.value))
-
-  return (
-    <div className={styles.template7}>
-      <div className={styles.t7Header}>
-        <div {...getPreviewActionProps(onNavigate, { sectionId: 'basics', fieldKey: 'picture' })}>
-          <Avatar data={data} className={styles.t7Avatar} square sizePt={54} />
-        </div>
-
-        <div className={styles.t7HeaderMain}>
-          <h1 {...getPreviewActionProps(onNavigate, { sectionId: 'basics', fieldKey: 'name' })}>{data.basics.name || '沉浸式网申'}</h1>
-          {hasMeaningfulText(facts.position) ? (
-            <p {...getPreviewActionProps(onNavigate, { sectionId: 'intention', fieldKey: 'intentionPosition' })}>求职岗位：{facts.position}</p>
-          ) : null}
-          {infoItems.length > 0 ? (
-            <div className={styles.t7InfoGrid}>
-              {infoItems.map(item => (
-                <div
-                  key={item.label}
-                  {...getPreviewActionProps(onNavigate, { sectionId: 'basics', fieldKey: item.fieldKey }, styles.t7InfoItem)}
-                >
-                  <item.icon size={11} />
-                  <span>{item.label}：</span>
-                  <strong>{item.value}</strong>
-                </div>
-              ))}
-            </div>
-          ) : null}
-        </div>
-
-        <div className={styles.t7Badge}>个人简历</div>
-      </div>
-
-      <div className={styles.t7Separator} />
-
-      <div className={styles.t7Body}>
-        {renderSectionList(data, sectionIds, {
-          headingVariant: 'gray-tab',
-          itemVariant: 'compact',
-          sectionHeadingClassName: styles.t7Heading,
-          onNavigate,
-        })}
-      </div>
-    </div>
-  )
-}
-
-const templateRenderers: Record<ReactiveTemplateId, TemplateRenderer> = {
-  'template-1': Template1,
-  'template-2': Template2,
-  'template-3': Template3,
-  'template-4': Template4,
-  'template-5': Template5,
-  'template-6': Template6,
-  'template-7': Template7,
-}
 
 function scopeCustomCss(css: string) {
   return css
@@ -1691,15 +1201,59 @@ export function ResumeReactivePreview({
   const [editorHasOverflow, setEditorHasOverflow] = useState(false)
   const [editorHasTextOverflow, setEditorHasTextOverflow] = useState(false)
   const [editorSplitLineVisible, setEditorSplitLineVisible] = useState(true)
+  const [renderer, setRenderer] = useState<TemplateRenderer>(() => fallbackTemplateRenderer)
+
+  const templateHelpers = useMemo<RuntimeTemplateHelpers>(
+    () => ({
+      styles,
+      cx,
+      extractResumeFacts: data => extractResumeFacts(data),
+      resolvePersonalLocation: facts => resolvePersonalLocation(facts),
+      resolveLocationFieldKey: data => resolveLocationFieldKey(data),
+      resolveWebsiteFieldKey: data => resolveWebsiteFieldKey(data),
+      hasMeaningfulText: value => hasMeaningfulText(value),
+      getPreviewActionProps: (navigate, target, className) => getPreviewActionProps(navigate, target, className),
+      renderSectionList: (data, sectionIds, options) => renderSectionList(data, sectionIds, options),
+      renderInlineTargetList: (items, navigate) => renderInlineTargetList(items, navigate),
+      renderRichText: (content, className, navigate, target) => renderRichText(content, className, navigate, target),
+      resolveStandardSectionTitle: (data, sectionId) => resolveStandardSectionTitle(data, sectionId),
+      resolveTemplate8SkillPercent: (level, proficiency) => resolveTemplate8SkillPercent(level, proficiency),
+      resolveTemplate8SkillLabel: (proficiency, percent) => resolveTemplate8SkillLabel(proficiency, percent),
+      hasRenderableStandardItem: (sectionId, item) => hasRenderableStandardItem(sectionId, item),
+      stripHtml: text => stripHtml(text),
+      Avatar: props => <Avatar {...props} />,
+    }),
+    [],
+  )
 
   const scopedCss = useMemo(() => {
     if (!data.metadata.css.enabled || !data.metadata.css.value.trim()) return null
     return scopeCustomCss(sanitizeCss(data.metadata.css.value))
   }, [data.metadata.css.enabled, data.metadata.css.value])
   const editorSplitTip = '以下内容将自动分页'
-
-  const renderer = templateRenderers[data.metadata.template] || templateRenderers['template-1']
   const runtimePages = useRuntimePagination ? Math.max(1, runtimePageOffsets.length) : 1
+
+  useEffect(() => {
+    let cancelled = false
+
+    const loadRenderer = async () => {
+      try {
+        const loaded = await loadTemplateRenderer(data.metadata.template)
+        if (cancelled) return
+        const normalized: TemplateRenderer = (context, helpers) => loaded(context, helpers) as ReactElement | null
+        setRenderer(() => normalized)
+      } catch {
+        if (!cancelled) {
+          setRenderer(() => fallbackTemplateRenderer)
+        }
+      }
+    }
+
+    loadRenderer()
+    return () => {
+      cancelled = true
+    }
+  }, [data.metadata.template])
 
   useLayoutEffect(() => {
     let frameId = 0
@@ -1780,7 +1334,7 @@ export function ResumeReactivePreview({
       resizeObserver?.disconnect()
       window.removeEventListener('resize', scheduleUpdate)
     }
-  }, [data, useRuntimePagination, renderer, runtimeSectionIds])
+  }, [data, useRuntimePagination, renderer, runtimeSectionIds, templateHelpers])
 
   useLayoutEffect(() => {
     let frameId = 0
@@ -1856,7 +1410,7 @@ export function ResumeReactivePreview({
       resizeObserver?.disconnect()
       window.removeEventListener('resize', scheduleUpdate)
     }
-  }, [data, isEditorSinglePage, renderer, runtimeSectionIds])
+  }, [data, isEditorSinglePage, renderer, runtimeSectionIds, templateHelpers])
 
   const renderRuntimeTemplate = () =>
     renderer({
@@ -1864,7 +1418,7 @@ export function ResumeReactivePreview({
       pageIndex: 0,
       sectionIds: runtimeSectionIds,
       onNavigate: interactiveNavigate,
-    })
+    }, templateHelpers)
 
   return (
     <div
@@ -1989,7 +1543,7 @@ export function ResumeReactivePreview({
                 pageIndex,
                 sectionIds: visibleIds,
                 onNavigate: interactiveNavigate,
-              })}
+              }, templateHelpers)}
 
               {showPageNumbers ? (
                 <div className={styles.pageNumber}>{`${pageIndex + 1}/${data.metadata.layout.pages.length}`}</div>

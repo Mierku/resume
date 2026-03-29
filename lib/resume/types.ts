@@ -8,6 +8,7 @@ export const REACTIVE_TEMPLATE_IDS = [
   'template-5',
   'template-6',
   'template-7',
+  'template-8',
 ] as const
 
 export type ReactiveTemplateId = (typeof REACTIVE_TEMPLATE_IDS)[number]

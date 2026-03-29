@@ -1,0 +1,80 @@
+.template6 {
+  --template-accent: var(--resume-theme-primary, #323f55);
+  min-height: 100%;
+  padding: var(--page-margin-y) var(--page-margin-x);
+  background: var(--resume-theme-bg);
+}
+
+.t6Header {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr) auto;
+  gap: 10pt;
+  border-bottom: 1px solid rgba(59, 80, 107, 0.3);
+  padding-bottom: 9pt;
+  margin-bottom: 10pt;
+}
+
+.t6HeaderMain h1 {
+  margin: 0;
+  color: color-mix(in srgb, var(--resume-theme-primary) 84%, black);
+  font-size: calc(var(--page-heading-font-size, 14) * 1.4pt);
+  letter-spacing: 0.03em;
+}
+
+.t6IntentGrid {
+  margin-top: 6px;
+  display: grid;
+  gap: 4px;
+}
+
+.t6IntentItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.t6IntentItem span {
+  color: rgba(51, 65, 85, 0.82);
+}
+
+.t6IntentItem strong {
+  color: rgba(31, 41, 55, 0.95);
+}
+
+.t6InfoGrid {
+  display: grid;
+  gap: 4px;
+}
+
+.t6InfoItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: rgba(45, 59, 79, 0.9);
+}
+
+.t6InfoItem strong {
+  color: rgba(31, 41, 55, 0.95);
+}
+
+.t6Avatar {
+  border-width: 2px;
+  border-color: rgba(51, 65, 85, 0.28);
+}
+
+.t6Body {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--page-space-y) * 1.3);
+}
+
+.t6Heading :global(.sectionIcon) {
+  border-color: color-mix(in srgb, var(--resume-theme-primary) 42%, transparent);
+  background: color-mix(in srgb, var(--resume-theme-primary) 12%, transparent);
+  color: color-mix(in srgb, var(--resume-theme-primary) 88%, black);
+}
+
+.t6Heading :global(.sectionTitle) {
+  color: color-mix(in srgb, var(--resume-theme-primary) 88%, black);
+}
+

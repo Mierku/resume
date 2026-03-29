@@ -1,0 +1,114 @@
+.template7 {
+  --template-accent: var(--resume-theme-primary, #2f4c72);
+  min-height: 100%;
+  padding: var(--page-margin-y) var(--page-margin-x);
+  background: var(--resume-theme-bg);
+}
+
+.t7Header {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) ;
+  gap: 24pt;
+  align-items: start;
+}
+
+.t7Avatar {
+  border-color: rgba(47, 76, 114, 0.3);
+}
+
+.t7HeaderMain h1 {
+  margin: 0;
+  color: color-mix(in srgb, var(--resume-theme-primary) 86%, black);
+  font-size: calc(var(--page-heading-font-size, 14) * 1.38pt);
+  letter-spacing: 0.03em;
+}
+
+.t7HeaderMain p {
+  margin: 4px 0 0;
+  color: rgba(35, 52, 73, 0.88);
+  font-weight: 600;
+}
+
+.t7InfoGrid {
+  margin-top: 6px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px 14px;
+}
+
+.t7InfoItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: rgba(45, 60, 81, 0.88);
+}
+
+.t7InfoItem strong {
+  color: rgba(31, 41, 55, 0.95);
+}
+
+.t7Badge {
+  position: absolute;
+  right: 0;
+  background: color-mix(in srgb, var(--resume-theme-primary) 82%, #0f172a);
+  color: #fff;
+  font-size: 1.22em;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  padding: 3px 18px;
+  line-height: var(--page-heading-line-height, 1.35);
+}
+
+.t7Badge::before,
+.t7Badge::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  width: 2px;
+  bottom: 4px;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.t7Badge::before {
+  left: 6px;
+}
+
+.t7Badge::after {
+  right: 6px;
+}
+
+.t7Separator {
+  margin: 8px 0 9px;
+  height: 4px;
+  background: color-mix(in srgb, var(--resume-theme-primary) 82%, #0f172a);
+}
+
+.t7Body {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--page-space-y) * 1.34);
+}
+
+.t7Heading {
+  background: color-mix(in srgb, var(--resume-theme-text) 9%, var(--resume-theme-bg));
+  margin-bottom: 6px;
+}
+
+.t7Heading :global(.sectionTitle) {
+  display: inline-flex;
+  align-items: center;
+  min-width: 66px;
+  background: color-mix(in srgb, var(--resume-theme-primary) 82%, #0f172a);
+  color: #fff;
+  font-size: 0.96em;
+  padding: 1px 12px;
+}
+
+.t7Heading :global(.sectionDivider) {
+  display: none;
+}
+
+.template7 :global(.recordHeader) {
+  grid-template-columns: 0.95fr 1.24fr 0.92fr;
+}

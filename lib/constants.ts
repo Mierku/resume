@@ -112,6 +112,13 @@ export const RESUME_TEMPLATES = [
     preview: toAssetUrl('/templates/numbered/template.png'),
     defaultPrimaryColor: '#2f4c72',
   },
+  {
+    id: 'template-8',
+    name: '高保真复刻',
+    description: '居中标题 + 右上头像 + 蓝线分节',
+    preview: toAssetUrl('/templates/numbered/template.png'),
+    defaultPrimaryColor: '#5c7f99',
+  },
 ]
 
 export function getTemplateDefaultPrimaryColor(templateId: string): string {

@@ -1,0 +1,173 @@
+.template2 {
+  --template-accent: var(--resume-theme-primary, #486a82);
+  min-height: 100%;
+  padding: var(--page-margin-y) var(--page-margin-x);
+  background: var(--resume-theme-bg);
+}
+
+.t2Header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12pt;
+}
+
+.t2HeaderTitle {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.t2HeaderTitle h1 {
+  margin: 0;
+  color: color-mix(in srgb, var(--resume-theme-primary) 86%, black);
+  font-size: calc(var(--page-heading-font-size, 14) * 1.55pt);
+  letter-spacing: 0.02em;
+}
+
+.t2HeaderDivider {
+  width: 1px;
+  height: 29px;
+  background: rgba(72, 105, 128, 0.46);
+}
+
+.t2HeaderSubtitle {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  color: rgba(59, 74, 92, 0.84);
+}
+
+.t2HeaderSubtitle strong {
+  color: color-mix(in srgb, var(--resume-theme-primary) 82%, black);
+  font-size: 1.26em;
+  line-height: var(--page-heading-line-height, 1);
+  letter-spacing: 0.01em;
+  font-weight: 500;
+}
+
+.t2HeaderActions {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.t2ActionIcon {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--resume-theme-primary) 74%, black);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.t2Ribbon {
+  margin-top: 8px;
+  margin-bottom: 8px;
+  height: 13px;
+  position: relative;
+  background: linear-gradient(90deg, #547289 0%, #547289 68%, #c0a269 68%, #c0a269 100%);
+}
+
+.t2Ribbon::before {
+  content: '';
+  position: absolute;
+  right: calc(32% + 12px);
+  top: 0;
+  width: 18px;
+  height: 13px;
+  background: #fff;
+  transform: skewX(42deg);
+}
+
+.t2RibbonLabel {
+  position: absolute;
+  left: 0;
+  top: 14px;
+  min-width: 82px;
+  background: color-mix(in srgb, var(--resume-theme-primary) 76%, black);
+  color: #fff;
+  font-weight: 700;
+  font-size: calc(var(--page-heading-font-size, 14) * 0.86pt);
+  line-height: var(--page-heading-line-height, 1.2);
+  letter-spacing: 0.01em;
+  padding: 2px 16px 2px 18px;
+}
+
+.t2RibbonLabel::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: -10px;
+  width: 10px;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.36) 0 45%, transparent 45% 58%, rgba(255, 255, 255, 0.36) 58% 100%);
+}
+
+.t2Basics {
+  margin-top: 14px;
+  margin-bottom: 8px;
+  border-left: 1px solid rgba(91, 113, 131, 0.35);
+  border-right: 1px solid rgba(91, 113, 131, 0.35);
+  border-bottom: 1px solid rgba(91, 113, 131, 0.35);
+  padding: calc(var(--page-space-y) * 3) calc(var(--page-space-x) * 1.12) calc(var(--page-space-y) * 0.78);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 9pt;
+  align-items: start;
+}
+
+.t2BasicsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: minmax(calc(var(--page-body-font-size, 10) * 1.58pt), auto);
+  align-content: start;
+  gap: 5px 12px;
+}
+
+.t2BasicItem {
+  min-height: calc(var(--page-body-font-size, 10) * 1.58pt);
+}
+
+.t2BasicItem span {
+  color: rgba(45, 61, 81, 0.86);
+}
+
+.t2BasicItem strong {
+  color: rgba(24, 38, 56, 0.96);
+  font-weight: 600;
+}
+
+.t2Avatar {
+  border-width: 2px;
+  border-color: rgba(84, 107, 127, 0.26);
+}
+
+.t2Heading :global(.sectionTitle) {
+  position: relative;
+  background: color-mix(in srgb, var(--resume-theme-primary) 76%, black);
+  color: #fff;
+  padding: 2px 16px 2px 18px;
+  line-height: var(--page-heading-line-height, 1.2);
+}
+
+.t2Heading :global(.sectionTitle)::after {
+  content: '';
+  position: absolute;
+  right: -9px;
+  top: 0;
+  width: 9px;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.45) 0 42%, transparent 42% 56%, rgba(255, 255, 255, 0.45) 56% 100%);
+}
+
+.t2Heading :global(.sectionDivider) {
+  background: rgba(63, 86, 108, 0.36);
+}
+
+.template2 :global(.recordHeader) {
+  grid-template-columns: 0.95fr 1.15fr 0.9fr;
+}
+

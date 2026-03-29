@@ -10,6 +10,7 @@ interface ExportWorkbenchProps {
   exportFormat: 'pdf' | 'image'
   exportScope: 'current' | 'all'
   exportImageMode: 'paged' | 'continuous'
+  exporting: boolean
   onExportFormatChange: (value: 'pdf' | 'image') => void
   onExportScopeChange: (value: 'current' | 'all') => void
   onExportImageModeChange: (value: 'paged' | 'continuous') => void
@@ -24,6 +25,7 @@ export function ExportWorkbench({
   exportFormat,
   exportScope,
   exportImageMode,
+  exporting,
   onExportFormatChange,
   onExportScopeChange,
   onExportImageModeChange,
@@ -108,7 +110,7 @@ export function ExportWorkbench({
             </div>
 
             <div className="resume-export-panel-actions">
-              <Button type="secondary" icon={<IconDownload />} onClick={onExportAction}>
+              <Button type="secondary" icon={<IconDownload />} onClick={onExportAction} loading={exporting}>
                 {exportFormat === 'image' ? (exportImageMode === 'continuous' ? '导出连续长图' : '导出图片') : '导出 PDF'}
               </Button>
             </div>

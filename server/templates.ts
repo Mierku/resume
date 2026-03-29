@@ -63,6 +63,12 @@ export const templateStyles: Record<string, {
     contentStyle: 'text-sm',
     accentColor: '#f07b2b',
   },
+  'template-8': {
+    headerStyle: 'text-center pb-6 mb-6',
+    sectionStyle: 'mb-6',
+    contentStyle: 'text-sm leading-relaxed',
+    accentColor: '#5c7f99',
+  },
 }
 
 export function getTemplateStyle(templateId: string) {
