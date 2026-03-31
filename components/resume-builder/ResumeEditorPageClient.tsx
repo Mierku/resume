@@ -112,7 +112,7 @@ async function resolveEditorPayload({
   }
 
   if (resumeRes.status === 404) {
-    return { kind: 'redirect', to: '/resume/my-resumes' }
+    return { kind: 'redirect', to: '/dashboard' }
   }
 
   if (!resumeRes.ok) {

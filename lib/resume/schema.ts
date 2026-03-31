@@ -229,10 +229,6 @@ export const metadataSchema = z.object({
     sidebarWidth: z.number().min(10).max(50),
     pages: z.array(pageLayoutSchema),
   }),
-  css: z.object({
-    enabled: z.boolean(),
-    value: z.string(),
-  }),
   page: z.object({
     gapX: z.number().min(0),
     gapY: z.number().min(0),
@@ -241,17 +237,6 @@ export const metadataSchema = z.object({
     format: z.enum(['a4', 'letter', 'free-form']),
     locale: z.string(),
     hideIcons: z.boolean(),
-    smartOnePage: z
-      .object({
-        enabled: z.boolean(),
-        status: z.enum(['idle', 'fitted', 'overflow']),
-        appliedScale: z.number().min(0).max(5),
-      })
-      .default({
-        enabled: false,
-        status: 'idle',
-        appliedScale: 0,
-      }),
   }),
   design: z.object({
     level: z.object({

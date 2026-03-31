@@ -47,7 +47,6 @@ interface BuilderActions {
   addPage: () => void
   removePage: (pageIndex: number) => void
   setPageSections: (pageIndex: number, column: 'main' | 'sidebar', sectionIds: string[]) => void
-  setSmartOnePage: (patch: Partial<ResumeData['metadata']['page']['smartOnePage']>) => void
   addStandardSectionItem: (sectionId: StandardSectionType) => void
   updateStandardSectionItem: (sectionId: StandardSectionType, index: number, patch: Record<string, unknown>) => void
   removeStandardSectionItem: (sectionId: StandardSectionType, index: number) => void
@@ -129,23 +128,6 @@ function normalizeDataForSingleColumnLayout(input: ResumeData): ResumeData {
   })
 
   return data
-}
-
-function ensureSmartOnePage(data: ResumeData) {
-  if (!data.metadata.page.smartOnePage) {
-    data.metadata.page.smartOnePage = {
-      enabled: false,
-      status: 'idle',
-      appliedScale: 0,
-    }
-    return
-  }
-
-  data.metadata.page.smartOnePage = {
-    enabled: Boolean(data.metadata.page.smartOnePage.enabled),
-    status: data.metadata.page.smartOnePage.status || 'idle',
-    appliedScale: Math.max(0, Math.min(5, Number(data.metadata.page.smartOnePage.appliedScale || 0))),
-  }
 }
 
 function createSectionItem(sectionId: StandardSectionType): Record<string, unknown> {
@@ -340,7 +322,6 @@ const actions: BuilderActions = {
     setState(draft => {
       draft.resumeId = payload.resumeId
       draft.data = normalizeDataForSingleColumnLayout(payload.data)
-      ensureSmartOnePage(draft.data)
       draft.initialized = true
       draft.dirty = false
       draft.dataSources = [...payload.dataSources]
@@ -456,27 +437,6 @@ const actions: BuilderActions = {
 
       draft.dirty = true
     })
-  },
-
-  setSmartOnePage: patch => {
-    setState(draft => {
-      ensureSmartOnePage(draft.data)
-      const previous = draft.data.metadata.page.smartOnePage
-      draft.data.metadata.page.smartOnePage = {
-        ...previous,
-        ...patch,
-      }
-      if (
-        previous.enabled !== draft.data.metadata.page.smartOnePage.enabled ||
-        previous.status !== draft.data.metadata.page.smartOnePage.status ||
-        previous.appliedScale !== draft.data.metadata.page.smartOnePage.appliedScale
-      ) {
-        draft.dirty = true
-        if (draft.save.status === 'saved') {
-          draft.save.status = 'idle'
-        }
-      }
-    }, { trackHistory: false })
   },
 
   addStandardSectionItem: sectionId => {

@@ -330,7 +330,7 @@ export default function TemplatesPage() {
         </div>
 
         {filteredTemplates.length > 0 ? (
-          <div className="grid gap-5 grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid gap-5 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             {filteredTemplates.map(template => (
               <button
                 key={template.id}

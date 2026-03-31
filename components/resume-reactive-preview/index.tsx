@@ -1,7 +1,7 @@
 'use client'
 
 import { Fragment, type CSSProperties, type HTMLAttributes, type ReactElement, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { sanitizeCss, sanitizeHtml } from '@/lib/resume/sanitize'
+import { sanitizeHtml } from '@/lib/resume/sanitize'
 import { RESUME_EDITOR_LIMITS, clampToRange } from '@/lib/resume/editor-limits'
 import {
   type CustomSectionType,
@@ -10,7 +10,6 @@ import {
 } from '@/lib/resume/types'
 import {
   Award,
-  AlertCircle,
   BadgeCheck,
   BookText,
   BriefcaseBusiness,
@@ -33,7 +32,6 @@ interface ResumeReactivePreviewProps {
   data: ResumeData
   className?: string
   showPageNumbers?: boolean
-  mode?: 'editor' | 'export'
   onNavigate?: (target: PreviewNavigationTarget) => void
 }
 
@@ -917,57 +915,11 @@ function Avatar({
   )
 }
 
-
-function scopeCustomCss(css: string) {
-  return css
-    .split(/\n(?=\s*[.#a-zA-Z])/)
-    .map(rule => {
-      const trimmed = rule.trim()
-      if (!trimmed || trimmed.startsWith('@')) return trimmed
-      return trimmed.replace(/^([^{]+)(\{)/, (_match, selectors, brace) => {
-        const scopedSelectors = selectors
-          .split(',')
-          .map((selector: string) => `.resume-preview-root ${selector.trim()}`)
-          .join(', ')
-        return `${scopedSelectors}${brace}`
-      })
-    })
-    .join('\n')
-}
-
 function buildCssVariables(data: ResumeData): CSSProperties {
   const dimensions = PAGE_DIMENSIONS[data.metadata.page.format]
   const headingWeights = data.metadata.typography.heading.fontWeights.map(Number)
   const bodyWeights = data.metadata.typography.body.fontWeights.map(Number)
-  const typographyLimits = RESUME_EDITOR_LIMITS.typography
-  const pageLimits = RESUME_EDITOR_LIMITS.page
-  const smartOnePage = data.metadata.page.smartOnePage || { enabled: false, status: 'idle', appliedScale: 0 }
-  const smartScale = smartOnePage.enabled ? Math.max(0, Math.min(5, smartOnePage.appliedScale || 0)) : 0
-  const spaceScale = Math.max(0.6, 1 - smartScale * 0.08)
-  const bodyFontSize = clampToRange(
-    data.metadata.typography.body.fontSize - smartScale * 0.3,
-    typographyLimits.bodyFontSize.min,
-    typographyLimits.bodyFontSize.max,
-  )
-  const headingFontSize = clampToRange(
-    data.metadata.typography.heading.fontSize - smartScale * 0.4,
-    typographyLimits.headingFontSize.min,
-    typographyLimits.headingFontSize.max,
-  )
-  const bodyLineHeight = clampToRange(
-    data.metadata.typography.body.lineHeight - smartScale * 0.05,
-    typographyLimits.bodyLineHeight.min,
-    typographyLimits.bodyLineHeight.max,
-  )
-  const headingLineHeight = clampToRange(
-    data.metadata.typography.heading.lineHeight - smartScale * 0.05,
-    typographyLimits.headingLineHeight.min,
-    typographyLimits.headingLineHeight.max,
-  )
-  const marginX = clampToRange(data.metadata.page.marginX - smartScale * 1.2, pageLimits.marginX.min, pageLimits.marginX.max)
-  const marginY = clampToRange(data.metadata.page.marginY - smartScale * 1.2, pageLimits.marginY.min, pageLimits.marginY.max)
-  const gapX = clampToRange(data.metadata.page.gapX - smartScale * 0.6, pageLimits.gapX.min, pageLimits.gapX.max)
-  const gapY = clampToRange(data.metadata.page.gapY - smartScale * 0.6, pageLimits.gapY.min, pageLimits.gapY.max)
+  const spaceScale = 1
 
   return {
     ['--page-width' as string]: dimensions.width,
@@ -978,17 +930,33 @@ function buildCssVariables(data: ResumeData): CSSProperties {
     ['--page-body-font-family' as string]: `'${data.metadata.typography.body.fontFamily}', system-ui, -apple-system, sans-serif`,
     ['--page-body-font-weight' as string]: Math.min(...bodyWeights),
     ['--page-body-font-weight-bold' as string]: Math.max(...bodyWeights),
-    ['--page-body-font-size' as string]: bodyFontSize,
-    ['--page-body-line-height' as string]: bodyLineHeight,
+    ['--page-body-font-size' as string]: clampToRange(
+      data.metadata.typography.body.fontSize,
+      RESUME_EDITOR_LIMITS.typography.bodyFontSize.min,
+      RESUME_EDITOR_LIMITS.typography.bodyFontSize.max,
+    ),
+    ['--page-body-line-height' as string]: clampToRange(
+      data.metadata.typography.body.lineHeight,
+      RESUME_EDITOR_LIMITS.typography.bodyLineHeight.min,
+      RESUME_EDITOR_LIMITS.typography.bodyLineHeight.max,
+    ),
     ['--page-heading-font-family' as string]: `'${data.metadata.typography.heading.fontFamily}', system-ui, -apple-system, sans-serif`,
     ['--page-heading-font-weight' as string]: Math.min(...headingWeights),
     ['--page-heading-font-weight-bold' as string]: Math.max(...headingWeights),
-    ['--page-heading-font-size' as string]: headingFontSize,
-    ['--page-heading-line-height' as string]: headingLineHeight,
-    ['--page-margin-x' as string]: `${marginX}pt`,
-    ['--page-margin-y' as string]: `${marginY}pt`,
-    ['--page-gap-x' as string]: `${gapX}pt`,
-    ['--page-gap-y' as string]: `${gapY}pt`,
+    ['--page-heading-font-size' as string]: clampToRange(
+      data.metadata.typography.heading.fontSize,
+      RESUME_EDITOR_LIMITS.typography.headingFontSize.min,
+      RESUME_EDITOR_LIMITS.typography.headingFontSize.max,
+    ),
+    ['--page-heading-line-height' as string]: clampToRange(
+      data.metadata.typography.heading.lineHeight,
+      RESUME_EDITOR_LIMITS.typography.headingLineHeight.min,
+      RESUME_EDITOR_LIMITS.typography.headingLineHeight.max,
+    ),
+    ['--page-margin-x' as string]: `${clampToRange(data.metadata.page.marginX, RESUME_EDITOR_LIMITS.page.marginX.min, RESUME_EDITOR_LIMITS.page.marginX.max)}pt`,
+    ['--page-margin-y' as string]: `${clampToRange(data.metadata.page.marginY, RESUME_EDITOR_LIMITS.page.marginY.min, RESUME_EDITOR_LIMITS.page.marginY.max)}pt`,
+    ['--page-gap-x' as string]: `${clampToRange(data.metadata.page.gapX, RESUME_EDITOR_LIMITS.page.gapX.min, RESUME_EDITOR_LIMITS.page.gapX.max)}pt`,
+    ['--page-gap-y' as string]: `${clampToRange(data.metadata.page.gapY, RESUME_EDITOR_LIMITS.page.gapY.min, RESUME_EDITOR_LIMITS.page.gapY.max)}pt`,
     ['--smart-space-scale' as string]: spaceScale,
   }
 }
@@ -1073,6 +1041,10 @@ function collectTextLineBoxes(root: HTMLElement | null) {
   if (!root) return [] as TextLineBox[]
 
   const rootRect = root.getBoundingClientRect()
+  const rootLayoutHeight = root.offsetHeight || root.scrollHeight || 0
+  const rawScaleY = rootLayoutHeight > 0 ? rootRect.height / rootLayoutHeight : 1
+  const scaleY = Number.isFinite(rawScaleY) && rawScaleY > 0.0001 ? rawScaleY : 1
+  const normalizeY = (value: number) => value / scaleY
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT)
   const lineBoxes: TextLineBox[] = []
   const range = document.createRange()
@@ -1084,8 +1056,8 @@ function collectTextLineBoxes(root: HTMLElement | null) {
     range.selectNodeContents(node)
     const rects = range.getClientRects()
     for (const rect of rects) {
-      const top = rect.top - rootRect.top
-      const bottom = rect.bottom - rootRect.top
+      const top = normalizeY(rect.top - rootRect.top)
+      const bottom = normalizeY(rect.bottom - rootRect.top)
       if (bottom - top < 1) continue
       lineBoxes.push({ top, bottom })
     }
@@ -1180,27 +1152,19 @@ export function ResumeReactivePreview({
   data,
   className,
   showPageNumbers = false,
-  mode = 'editor',
   onNavigate,
 }: ResumeReactivePreviewProps) {
   const cssVars = useMemo(() => buildCssVariables(data), [data])
   const runtimeSectionIds = useMemo(() => collectRuntimeSectionIds(data), [data])
   const isFixedFormat = data.metadata.page.format !== 'free-form'
-  const isEditorSinglePage = mode === 'editor' && isFixedFormat
-  const useRuntimePagination = mode === 'export' && isFixedFormat
-  const interactiveNavigate = mode === 'editor' ? onNavigate : undefined
+  const useRuntimePagination = isFixedFormat
+  const interactiveNavigate = onNavigate
   const measurePageRef = useRef<HTMLDivElement | null>(null)
   const measureViewportRef = useRef<HTMLDivElement | null>(null)
-  const editorPageRef = useRef<HTMLDivElement | null>(null)
-  const editorPageHeightProbeRef = useRef<HTMLDivElement | null>(null)
   const [runtimePageHeightPx, setRuntimePageHeightPx] = useState(0)
   const [runtimePageViewportTopPx, setRuntimePageViewportTopPx] = useState(0)
   const [runtimePageViewportHeightPx, setRuntimePageViewportHeightPx] = useState(0)
   const [runtimePageOffsets, setRuntimePageOffsets] = useState<number[]>([0])
-  const [editorSplitTopPx, setEditorSplitTopPx] = useState(0)
-  const [editorHasOverflow, setEditorHasOverflow] = useState(false)
-  const [editorHasTextOverflow, setEditorHasTextOverflow] = useState(false)
-  const [editorSplitLineVisible, setEditorSplitLineVisible] = useState(true)
   const [renderer, setRenderer] = useState<TemplateRenderer>(() => fallbackTemplateRenderer)
 
   const templateHelpers = useMemo<RuntimeTemplateHelpers>(
@@ -1226,11 +1190,6 @@ export function ResumeReactivePreview({
     [],
   )
 
-  const scopedCss = useMemo(() => {
-    if (!data.metadata.css.enabled || !data.metadata.css.value.trim()) return null
-    return scopeCustomCss(sanitizeCss(data.metadata.css.value))
-  }, [data.metadata.css.enabled, data.metadata.css.value])
-  const editorSplitTip = '以下内容将自动分页'
   const runtimePages = useRuntimePagination ? Math.max(1, runtimePageOffsets.length) : 1
 
   useEffect(() => {
@@ -1336,82 +1295,6 @@ export function ResumeReactivePreview({
     }
   }, [data, useRuntimePagination, renderer, runtimeSectionIds, templateHelpers])
 
-  useLayoutEffect(() => {
-    let frameId = 0
-    const resetEditorOverflowHint = () => {
-      setEditorSplitTopPx(prev => (prev === 0 ? prev : 0))
-      setEditorHasOverflow(prev => (prev ? false : prev))
-      setEditorHasTextOverflow(prev => (prev ? false : prev))
-      setEditorSplitLineVisible(prev => (prev ? prev : true))
-    }
-    const scheduleEditorReset = () => {
-      cancelAnimationFrame(frameId)
-      frameId = requestAnimationFrame(resetEditorOverflowHint)
-    }
-
-    if (!isEditorSinglePage) {
-      scheduleEditorReset()
-      return () => {
-        cancelAnimationFrame(frameId)
-      }
-    }
-
-    const editorPage = editorPageRef.current
-    const pageHeightProbe = editorPageHeightProbeRef.current
-    if (!editorPage || !pageHeightProbe) return
-
-    const updateEditorOverflowHint = () => {
-      const pageHeight = pageHeightProbe.clientHeight || pageHeightProbe.offsetHeight || 0
-      const contentNode = editorPage.firstElementChild as HTMLElement | null
-      const contentHeight = Math.max(
-        editorPage.scrollHeight,
-        contentNode?.scrollHeight || 0,
-        contentNode?.offsetHeight || 0,
-      )
-
-      if (!pageHeight || !Number.isFinite(pageHeight)) {
-        resetEditorOverflowHint()
-        return
-      }
-
-      const viewportMetrics = resolvePageViewportMetrics(editorPage, contentNode, pageHeight)
-      const overflowTolerancePx = 2
-      const splitBoundary = viewportMetrics.firstBoundary
-      const lineBoxes = collectTextLineBoxes(contentNode)
-      const hasTextBeyondSplit = lineBoxes.some(line => line.bottom > splitBoundary + 1)
-      const hasOverflow = contentHeight - splitBoundary > overflowTolerancePx
-      const shouldShowSplitHint = hasTextBeyondSplit
-
-      setEditorSplitTopPx(prev => (Math.abs(prev - splitBoundary) < 0.5 ? prev : splitBoundary))
-      setEditorHasOverflow(prev => (prev === hasOverflow ? prev : hasOverflow))
-      setEditorHasTextOverflow(prev => (prev === shouldShowSplitHint ? prev : shouldShowSplitHint))
-      if (!shouldShowSplitHint) {
-        setEditorSplitLineVisible(prev => (prev ? prev : true))
-      }
-    }
-
-    const scheduleUpdate = () => {
-      cancelAnimationFrame(frameId)
-      frameId = requestAnimationFrame(updateEditorOverflowHint)
-    }
-
-    scheduleUpdate()
-
-    const resizeObserver = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(scheduleUpdate)
-    resizeObserver?.observe(editorPage)
-    resizeObserver?.observe(pageHeightProbe)
-    if (editorPage.firstElementChild) {
-      resizeObserver?.observe(editorPage.firstElementChild)
-    }
-    window.addEventListener('resize', scheduleUpdate)
-
-    return () => {
-      cancelAnimationFrame(frameId)
-      resizeObserver?.disconnect()
-      window.removeEventListener('resize', scheduleUpdate)
-    }
-  }, [data, isEditorSinglePage, renderer, runtimeSectionIds, templateHelpers])
-
   const renderRuntimeTemplate = () =>
     renderer({
       data,
@@ -1424,15 +1307,12 @@ export function ResumeReactivePreview({
     <div
       className={cx(
         styles.previewRoot,
-        (mode === 'editor' || mode === 'export') && styles.previewFramelessMode,
+        styles.previewFramelessMode,
         'resume-preview-root',
-        data.metadata.page.smartOnePage?.enabled && 'resume-smart-one-page',
         className,
       )}
       style={cssVars}
     >
-      {scopedCss ? <style dangerouslySetInnerHTML={{ __html: scopedCss }} /> : null}
-
       {useRuntimePagination ? (
         <div className={styles.measureLayer} aria-hidden>
           <div ref={measureViewportRef} className={cx(styles.page, styles.pageFixed, styles.measureViewport)} />
@@ -1442,40 +1322,7 @@ export function ResumeReactivePreview({
         </div>
       ) : null}
 
-      {isEditorSinglePage ? (
-        <>
-          <div className={styles.measureLayer} aria-hidden>
-            <div ref={editorPageHeightProbeRef} className={cx(styles.page, styles.pageFixed, styles.pageMeasureProbe)} />
-          </div>
-          <div
-            ref={editorPageRef}
-            className={cx(styles.page, styles.pageEditorFlow)}
-            data-template={data.metadata.template}
-            data-page-overflow={editorHasOverflow ? 'true' : 'false'}
-          >
-            {renderRuntimeTemplate()}
-
-            {editorHasTextOverflow && editorSplitTopPx > 0 ? (
-              <div className={styles.pageSplitHint} style={{ top: `${editorSplitTopPx}px` }}>
-                <button
-                  type="button"
-                  className={styles.pageSplitHintIcon}
-                  aria-label={editorSplitTip}
-                  title={editorSplitTip}
-                  aria-pressed={editorSplitLineVisible}
-                  onClick={() => setEditorSplitLineVisible(prev => !prev)}
-                >
-                  <AlertCircle size={14} />
-                  <span className={styles.pageSplitHintNote}>{editorSplitTip}</span>
-                </button>
-                {editorSplitLineVisible ? <span className={styles.pageSplitHintLine} /> : null}
-              </div>
-            ) : null}
-
-            {showPageNumbers ? <div className={styles.pageNumber}>1/1</div> : null}
-          </div>
-        </>
-      ) : useRuntimePagination ? (
+      {useRuntimePagination ? (
         Array.from({ length: runtimePages }, (_item, pageIndex) => {
           const isFirstExportPage = pageIndex === 0
           const pageViewportTop = isFirstExportPage ? 0 : runtimePageViewportTopPx
@@ -1487,6 +1334,9 @@ export function ResumeReactivePreview({
                   ? 0
                   : runtimePageViewportHeightPx + runtimePageViewportTopPx + (pageIndex - 1) * runtimePageViewportHeightPx
                 : 0
+          // Keep page slices strictly non-overlapping. The viewport top inset
+          // is visual padding only and must not shift content offset backward.
+          const pageSliceOffset = Math.max(0, pageOffset)
           const nextPageOffset = runtimePageOffsets[pageIndex + 1]
           const pageViewportHeight = (() => {
             if (typeof nextPageOffset === 'number' && Number.isFinite(nextPageOffset)) {
@@ -1519,7 +1369,7 @@ export function ResumeReactivePreview({
                   className={styles.pageSlice}
                   style={{
                     ...(runtimePageHeightPx > 0 ? { height: `${runtimePageHeightPx}px`, minHeight: `${runtimePageHeightPx}px` } : null),
-                    ...(pageOffset ? { transform: `translateY(-${pageOffset}px)` } : null),
+                    ...(pageSliceOffset ? { transform: `translateY(-${pageSliceOffset}px)` } : null),
                   }}
                 >
                   {renderRuntimeTemplate()}

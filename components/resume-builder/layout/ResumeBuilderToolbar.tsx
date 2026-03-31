@@ -1,6 +1,6 @@
 'use client'
 
-import { type KeyboardEvent as ReactKeyboardEvent, type ReactNode, useRef, useState } from 'react'
+import { type KeyboardEvent as ReactKeyboardEvent, type ReactNode, useEffect, useRef, useState } from 'react'
 import { Button, IconDownload, IconLeft, IconSave, Input, Space } from '../primitives'
 
 interface ResumeBuilderToolbarProps {
@@ -10,7 +10,9 @@ interface ResumeBuilderToolbarProps {
   onBack: () => void
   onResumeTitleChange: (value: string) => void
   onResumeTitleBlur: () => void
-  onOpenExportPreview: () => void
+  downloadLoading: boolean
+  onDownloadImage: () => void
+  onDownloadPdf: () => void
   onSave: () => void
 }
 
@@ -21,13 +23,41 @@ export function ResumeBuilderToolbar({
   onBack,
   onResumeTitleChange,
   onResumeTitleBlur,
-  onOpenExportPreview,
+  downloadLoading,
+  onDownloadImage,
+  onDownloadPdf,
   onSave,
 }: ResumeBuilderToolbarProps) {
   const [isTitleEditing, setIsTitleEditing] = useState(false)
+  const [downloadMenuOpen, setDownloadMenuOpen] = useState(false)
+  const downloadMenuRef = useRef<HTMLDivElement | null>(null)
   const titleBeforeEditingRef = useRef(resumeTitle)
   const skipCommitOnBlurRef = useRef(false)
   const displayTitle = resumeTitle.trim() || '未命名简历'
+
+  useEffect(() => {
+    if (!downloadMenuOpen) return
+
+    const handlePointerDownOutside = (event: PointerEvent) => {
+      const target = event.target
+      if (!(target instanceof Node)) return
+      if (downloadMenuRef.current?.contains(target)) return
+      setDownloadMenuOpen(false)
+    }
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setDownloadMenuOpen(false)
+      }
+    }
+
+    window.addEventListener('pointerdown', handlePointerDownOutside)
+    window.addEventListener('keydown', handleEscape)
+    return () => {
+      window.removeEventListener('pointerdown', handlePointerDownOutside)
+      window.removeEventListener('keydown', handleEscape)
+    }
+  }, [downloadMenuOpen])
 
   const startTitleEditing = () => {
     titleBeforeEditingRef.current = resumeTitle
@@ -90,14 +120,48 @@ export function ResumeBuilderToolbar({
 
       <div className="justify-self-end flex items-center gap-3">
         <Space>
-          <Button
-            type="secondary"
-            icon={<IconDownload />}
-            onClick={onOpenExportPreview}
-            className="resume-toolbar-action resume-toolbar-action-export"
+          <div
+            ref={downloadMenuRef}
+            className={`resume-export-hover-menu${downloadMenuOpen ? ' is-open' : ''}`}
           >
-            导出
-          </Button>
+            <Button
+              type="secondary"
+              icon={<IconDownload />}
+              onClick={() => setDownloadMenuOpen(open => !open)}
+              className="resume-toolbar-action resume-toolbar-action-export"
+              aria-haspopup="menu"
+              aria-expanded={downloadMenuOpen}
+              loading={downloadLoading}
+            >
+              下载
+            </Button>
+            <div className="resume-export-hover-menu-panel" role="menu" aria-label="下载选项">
+              <button
+                type="button"
+                className="resume-export-hover-menu-item"
+                role="menuitem"
+                onClick={() => {
+                  setDownloadMenuOpen(false)
+                  onDownloadImage()
+                }}
+                disabled={downloadLoading}
+              >
+                图片下载
+              </button>
+              <button
+                type="button"
+                className="resume-export-hover-menu-item"
+                role="menuitem"
+                onClick={() => {
+                  setDownloadMenuOpen(false)
+                  onDownloadPdf()
+                }}
+                disabled={downloadLoading}
+              >
+                PDF 下载
+              </button>
+            </div>
+          </div>
           <Button
             type="secondary"
             icon={<IconSave />}

@@ -44,7 +44,7 @@ export function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [authRedirectPath, setAuthRedirectPath] = useState("/resume/my-resumes");
+  const [authRedirectPath, setAuthRedirectPath] = useState("/dashboard");
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const themeToggleRef = useRef<HTMLButtonElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);

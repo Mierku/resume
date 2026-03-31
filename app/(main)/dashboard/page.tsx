@@ -5,6 +5,7 @@ import { Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { useAuthedPageData } from '@/lib/hooks/useAuthedPageData'
+import { RESUME_TEMPLATES } from '@/lib/constants'
 import { getUserDisplayName, type SessionUser } from '@/lib/user'
 import styles from './dashboard.module.css'
 
@@ -24,6 +25,13 @@ interface TrackingRecord {
   status: RecordStatus
   url?: string
   createdAt: string
+  updatedAt: string
+}
+
+interface ResumeSummary {
+  id: string
+  title: string
+  templateId: string
   updatedAt: string
 }
 
@@ -112,22 +120,25 @@ function DashboardContent() {
         return {
           defaultDataSource: null as DataSource | null,
           recentRecords: [] as TrackingRecord[],
+          recentResumes: [] as ResumeSummary[],
         }
       }
 
-      const [dsRes, recordsRes] = await Promise.all([
+      const [dsRes, recordsRes, resumesRes] = await Promise.all([
         fetch('/api/data-sources', { cache: 'no-store', signal }),
         fetch('/api/records?limit=6', { cache: 'no-store', signal }),
+        fetch('/api/resumes', { cache: 'no-store', signal }),
       ])
 
-      if (dsRes.status === 401 || recordsRes.status === 401) {
+      if (dsRes.status === 401 || recordsRes.status === 401 || resumesRes.status === 401) {
         return {
           defaultDataSource: null as DataSource | null,
           recentRecords: [] as TrackingRecord[],
+          recentResumes: [] as ResumeSummary[],
         }
       }
 
-      if (!dsRes.ok || !recordsRes.ok) {
+      if (!dsRes.ok || !recordsRes.ok || !resumesRes.ok) {
         throw new Error('加载个人工作台数据失败')
       }
 
@@ -142,10 +153,15 @@ function DashboardContent() {
       const records = Array.isArray((recordsPayload as { records?: unknown[] } | null)?.records)
         ? (((recordsPayload as { records?: unknown[] }).records || []) as TrackingRecord[])
         : []
+      const resumesPayload = await resumesRes.json().catch(() => null)
+      const resumes = Array.isArray((resumesPayload as { resumes?: unknown[] } | null)?.resumes)
+        ? (((resumesPayload as { resumes?: unknown[] }).resumes || []) as ResumeSummary[])
+        : []
 
       return {
         defaultDataSource: pickedDefaultDataSource,
         recentRecords: records,
+        recentResumes: resumes.slice(0, 4),
       }
     },
     [],
@@ -158,12 +174,13 @@ function DashboardContent() {
     auth,
     reload,
   } = useAuthedPageData<
-    { defaultDataSource: DataSource | null; recentRecords: TrackingRecord[] },
+    { defaultDataSource: DataSource | null; recentRecords: TrackingRecord[]; recentResumes: ResumeSummary[] },
     SessionUser
   >({
     initialData: {
       defaultDataSource: null,
       recentRecords: [],
+      recentResumes: [],
     },
     load: loadDashboardData,
     onError: loadError => {
@@ -175,6 +192,7 @@ function DashboardContent() {
   const authenticated = auth.authenticated
   const defaultDataSource = dashboardData.defaultDataSource
   const recentRecords = dashboardData.recentRecords
+  const recentResumes = dashboardData.recentResumes
 
   useEffect(() => {
     if (loading) return
@@ -380,7 +398,7 @@ function DashboardContent() {
                 </dl>
 
                 <div className={styles.profileActions}>
-                  <Link href="/resume/my-resumes" className={styles.profileAction}>
+                  <Link href="/resume/templates" className={styles.profileAction}>
                     我的简历
                   </Link>
                   <Link href="/resume/data-source" className={styles.profileAction}>
@@ -390,60 +408,103 @@ function DashboardContent() {
               </div>
             </article>
 
-            <article className={`${styles.glassCard} ${styles.resumeCard}`}>
-              <div className={styles.sectionTitle}>
-                <span>简历矩阵</span>
-                <Link href="/resume/data-source" className={styles.sectionAction}>
-                  编辑列表
-                </Link>
-              </div>
-
-              <div className={styles.resumeList}>
-                {defaultDataSource ? (
-                  <Link href={`/resume/data-source/${defaultDataSource.id}`} className={styles.resumeItem}>
-                    <div>
-                      <p>{defaultDataSource.name}.json</p>
-                      <span>最近同步：{formatDate(defaultDataSource.updatedAt)}</span>
-                    </div>
-                    <em className={styles.badgeActive}>已启用</em>
+            <div className={styles.rightTopColumn}>
+              <article className={`${styles.glassCard} ${styles.resumeCard}`}>
+                <div className={styles.sectionTitle}>
+                  <span>简历矩阵</span>
+                  <Link href="/resume/data-source" className={styles.sectionAction}>
+                    编辑列表
                   </Link>
+                </div>
+
+                <div className={styles.resumeList}>
+                  {defaultDataSource ? (
+                    <Link href={`/resume/data-source/${defaultDataSource.id}`} className={styles.resumeItem}>
+                      <div>
+                        <p>{defaultDataSource.name}.json</p>
+                        <span>最近同步：{formatDate(defaultDataSource.updatedAt)}</span>
+                      </div>
+                      <em className={styles.badgeActive}>已启用</em>
+                    </Link>
+                  ) : (
+                    <Link href="/resume/data-source" className={styles.resumeItem}>
+                      <div>
+                        <p>创建默认数据源</p>
+                        <span>最近同步：未初始化</span>
+                      </div>
+                      <em>初始化</em>
+                    </Link>
+                  )}
+
+                  <Link href="/resume/templates" className={styles.resumeItem}>
+                    <div>
+                      <p>岗位定制简历.pdf</p>
+                      <span>最近同步：{recentRecords[0] ? formatDate(recentRecords[0].updatedAt) : '待同步'}</span>
+                    </div>
+                    <em>{recentRecords.length > 0 ? '备份' : '待处理'}</em>
+                  </Link>
+                </div>
+              </article>
+
+              <article className={`${styles.glassCard} ${styles.liveCard}`}>
+                <div className={styles.sectionTitle}>
+                  <span>实时洞察</span>
+                  <span className={styles.liveBadge}>实时</span>
+                </div>
+
+                <div className={styles.liveFeed}>
+                  {liveInsights.map(item => (
+                    <div key={item.id} className={styles.liveItem}>
+                      <span className={styles.liveTime}>{item.time}</span>
+                      <p className={`${styles.liveText} ${item.level === 'success' ? styles.statusOk : item.level === 'warn' ? styles.statusWarn : styles.statusMuted}`}>
+                        {item.message}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </article>
+
+              <article className={`${styles.glassCard} ${styles.savedResumesCard}`}>
+                <div className={styles.sectionTitle}>
+                  <span>我的简历</span>
+                  <Link href="/resume/templates" className={styles.sectionAction}>
+                    查看全部
+                  </Link>
+                </div>
+
+                {recentResumes.length > 0 ? (
+                  <div className={styles.savedResumeGrid}>
+                    {recentResumes.map(resume => {
+                      const template = RESUME_TEMPLATES.find(item => item.id === resume.templateId) || RESUME_TEMPLATES[0]
+
+                      return (
+                        <Link key={resume.id} href={`/resume/editor/${resume.id}`} className={styles.savedResumeItem}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={template.preview}
+                            alt={`${template.name} 模板预览`}
+                            className={styles.savedResumePreview}
+                            loading="lazy"
+                            decoding="async"
+                            draggable={false}
+                          />
+                          <div className={styles.savedResumeBody}>
+                            <p className={styles.savedResumeTitle}>{resume.title}</p>
+                            <span className={styles.savedResumeMeta}>{template.name}</span>
+                            <span className={styles.savedResumeMeta}>更新于 {formatDate(resume.updatedAt)}</span>
+                          </div>
+                        </Link>
+                      )
+                    })}
+                  </div>
                 ) : (
-                  <Link href="/resume/data-source" className={styles.resumeItem}>
-                    <div>
-                      <p>创建默认数据源</p>
-                      <span>最近同步：未初始化</span>
-                    </div>
-                    <em>初始化</em>
-                  </Link>
+                  <div className={styles.savedResumeEmpty}>
+                    <p>还没有保存的简历</p>
+                    <Link href="/resume/templates">立即创建</Link>
+                  </div>
                 )}
-
-                <Link href="/resume/templates" className={styles.resumeItem}>
-                  <div>
-                    <p>岗位定制简历.pdf</p>
-                    <span>最近同步：{recentRecords[0] ? formatDate(recentRecords[0].updatedAt) : '待同步'}</span>
-                  </div>
-                  <em>{recentRecords.length > 0 ? '备份' : '待处理'}</em>
-                </Link>
-              </div>
-            </article>
-
-            <article className={`${styles.glassCard} ${styles.liveCard}`}>
-              <div className={styles.sectionTitle}>
-                <span>实时洞察</span>
-                <span className={styles.liveBadge}>实时</span>
-              </div>
-
-              <div className={styles.liveFeed}>
-                {liveInsights.map(item => (
-                  <div key={item.id} className={styles.liveItem}>
-                    <span className={styles.liveTime}>{item.time}</span>
-                    <p className={`${styles.liveText} ${item.level === 'success' ? styles.statusOk : item.level === 'warn' ? styles.statusWarn : styles.statusMuted}`}>
-                      {item.message}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </article>
+              </article>
+            </div>
           </section>
 
           <section className={styles.workspaceSplit}>

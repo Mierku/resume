@@ -15,7 +15,8 @@ const nextConfig: NextConfig = {
   // Enable React strict mode
   reactStrictMode: true,
 
-  allowedDevOrigins: ['http://localhost:3000', 'http://127.0.0.1:3000'],
+  // Allow local dev hosts to access Next.js dev resources (HMR, chunks, etc.)
+  allowedDevOrigins: ['localhost', '127.0.0.1'],
 
   assetPrefix: assetPrefix || undefined,
 

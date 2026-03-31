@@ -14,6 +14,7 @@ import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } 
 import { CSS } from '@dnd-kit/utilities'
 import {
   type CSSProperties,
+  type MouseEvent as ReactMouseEvent,
   type ReactNode,
   type RefObject,
   useCallback,
@@ -32,7 +33,6 @@ import {
   Moon,
   SlidersHorizontal,
   Sun,
-  Type as TypeIcon,
   FileText,
   PenLine,
   ZoomIn,
@@ -45,7 +45,6 @@ import {
   IconChevronDown,
   IconChevronRight,
   IconDelete,
-  IconDownload,
   IconEye,
   IconEyeOff,
   IconGrip,
@@ -87,9 +86,10 @@ import { toast } from '@/lib/toast'
 import type { PreviewNavigationTarget } from '@/components/resume-reactive-preview'
 import { useResumeBuilderStore } from './store/useResumeBuilderStore'
 import { FillToolPanel } from './panels/FillToolPanel'
-import { ExportWorkbench } from './export/ExportWorkbench'
+import { AIChatPanel } from './panels/AIChatPanel'
 import { ResumeBuilderToolbar } from './layout/ResumeBuilderToolbar'
 import { useAuthSnapshot } from '@/lib/hooks/useAuthSnapshot'
+import { BrandFlowerIcon } from '@/components/BrandFlowerIcon'
 import './builder-theme.css'
 
 const ResumeReactivePreview = dynamic(
@@ -169,7 +169,28 @@ const BASICS_WEIGHT_LIMIT: NumericLimitConfig = {
 
 const THEME_STORAGE_KEY = 'theme'
 const SIDE_TOOLS_EXPANDED_STORAGE_KEY = 'resume:side-tools-expanded'
-const DEFAULT_TEXT_COLOR = '#111827'
+const AUTH_REDIRECT_DRAFT_CACHE_KEY = 'resume:auth-redirect-draft'
+const AUTH_REDIRECT_DRAFT_MAX_AGE_MS = 30 * 60 * 1000
+const AUTH_REDIRECT_RUNTIME_DRAFT_MAX_AGE_MS = 15 * 1000
+const DEFAULT_TEXT_COLOR = '#111111'
+
+interface AuthRedirectDraftCachePayload {
+  version: number
+  resumeId: string
+  path: string
+  savedAt: number
+  resumeTitle: string
+  selectedDataSourceId: string
+  data: ResumeData
+}
+
+let authRedirectRuntimeDraft:
+  | {
+      payload: AuthRedirectDraftCachePayload
+      cachedAt: number
+    }
+  | null = null
+
 function toSingleSelectValue(value: string | string[]) {
   return Array.isArray(value) ? value[0] || '' : value
 }
@@ -628,6 +649,17 @@ interface ResumeBuilderClientProps {
   dataSources: ResumeDataSource[]
 }
 
+type AIPreviewIntent = 'translate_resume' | 'polish_resume' | 'adapt_to_jd'
+
+interface AIPreviewState {
+  data: ResumeData
+  intent: AIPreviewIntent
+  draftId?: string
+  sourceResumeId?: string
+  title?: string
+  previewUrl?: string
+}
+
 function getNestedValue(target: Record<string, unknown>, key: string) {
   const keys = key.split('.')
   let current: unknown = target
@@ -825,7 +857,6 @@ const JSPDF_SCRIPT_SOURCES = [
 
 let snapdomLoadingPromise: Promise<SnapdomRenderer> | null = null
 let jsPdfLoadingPromise: Promise<JsPdfConstructor> | null = null
-const SMART_ONE_PAGE_MAX_SCALE = 5
 const SIDEBAR_WIDTH_MIN = 360
 const SIDEBAR_WIDTH_MAX = 680
 const SIDEBAR_DEFAULT_WIDTH = 500
@@ -840,8 +871,8 @@ const PREVIEW_FIT_HEIGHT_PADDING = 16
 const PREVIEW_SCROLL_VERTICAL_PADDING = 24
 const PREVIEW_ZOOM_STEP_BUTTON = 0.06
 const PREVIEW_ZOOM_STEP_WHEEL = 0.01  
-type BuilderTool = 'sections' | 'fill' | 'template' | 'typography' | 'page' | 'advanced'
-type StyleTool = Exclude<BuilderTool, 'sections' | 'fill'>
+type BuilderTool = 'sections' | 'fill' | 'ai' | 'template' | 'typesetting' | 'advanced'
+type StyleTool = Exclude<BuilderTool, 'sections' | 'fill' | 'ai'>
 type EditorFocusRequest = PreviewNavigationTarget & { requestId: number }
 const EDITOR_FOCUSABLE_SELECTOR = 'input, textarea, select, button, [role="combobox"], [contenteditable="true"]'
 
@@ -869,11 +900,19 @@ function escapeAttributeValue(value: string) {
   return value.replace(/["\\]/g, '\\$&')
 }
 
-function SideToolHint({ label, children, expanded = false }: { label: string; children: ReactNode; expanded?: boolean }) {
+function SideToolHint({ label, children, active = false }: { label: string; children: ReactNode; active?: boolean }) {
+  const handleClick = (event: ReactMouseEvent<HTMLSpanElement>) => {
+    const target = event.target
+    if (!(target instanceof HTMLElement)) return
+    if (target.closest('button')) return
+    const button = event.currentTarget.querySelector<HTMLButtonElement>('.resume-side-tool-btn')
+    button?.click()
+  }
+
   return (
-    <span className={joinClassNames('resume-side-tool-hint', expanded && 'is-expanded')} data-tooltip={label}>
+    <span className={joinClassNames('resume-side-tool-hint', active && 'is-active')} data-tooltip={label} onClick={handleClick}>
       {children}
-      <span className="resume-side-tool-label" aria-hidden={!expanded}>
+      <span className="resume-side-tool-label" aria-hidden="true">
         {label}
       </span>
     </span>
@@ -1099,21 +1138,6 @@ function createOffscreenExportCaptureRoot(sourceRoot: HTMLElement) {
 
   document.body.appendChild(captureHost)
   return { captureHost, captureRoot: clonedRoot }
-}
-
-function hasPreviewOverflow(previewRoot: Element | null) {
-  if (!previewRoot) return false
-  const pages = Array.from(previewRoot.querySelectorAll<HTMLElement>('[data-template]'))
-  if (pages.length !== 1) return true
-  const page = pages[0]
-  if (page.dataset.pageOverflow === 'true') return true
-  return page.scrollHeight - page.clientHeight > 2 || page.scrollWidth - page.clientWidth > 2
-}
-
-function getSmartOnePageStatusText(status: ResumeData['metadata']['page']['smartOnePage']['status']) {
-  if (status === 'fitted') return '已适配一页'
-  if (status === 'overflow') return '内容较多，压缩后仍超过一页'
-  return '压缩中...'
 }
 
 function SaveStatusTag() {
@@ -2552,12 +2576,14 @@ function IntegratedSectionsEditor({
   )
 }
 
-function LayoutAndStylePanel({ pane }: { pane: StyleTool }) {
+function LayoutAndStylePanel({
+  pane,
+}: {
+  pane: StyleTool
+}) {
   const data = useResumeBuilderStore(state => state.data)
   const setTemplate = useResumeBuilderStore(state => state.setTemplate)
   const updateResumeData = useResumeBuilderStore(state => state.updateResumeData)
-  const setSmartOnePage = useResumeBuilderStore(state => state.setSmartOnePage)
-  const smartOnePage = data.metadata.page.smartOnePage || { enabled: false, status: 'idle', appliedScale: 0 }
   const templateDefaultColor = getTemplateDefaultPrimaryColor(data.metadata.template)
   const currentTemplateName = RESUME_TEMPLATES.find(template => template.id === data.metadata.template)?.name || '默认模板'
   const primaryColor = resolveColorInputValue(data.metadata.design.colors.primary, templateDefaultColor)
@@ -2620,7 +2646,7 @@ function LayoutAndStylePanel({ pane }: { pane: StyleTool }) {
     )
   }
 
-  if (pane === 'typography') {
+  if (pane === 'typesetting') {
     return (
       <div className="space-y-4">
         <div>
@@ -2640,6 +2666,7 @@ function LayoutAndStylePanel({ pane }: { pane: StyleTool }) {
             aria-label="字体色"
           />
         </div>
+
         <div className="grid grid-cols-1 gap-2">
           <div>
             <label className="text-xs text-muted-foreground block mb-1">主字体</label>
@@ -2676,6 +2703,7 @@ function LayoutAndStylePanel({ pane }: { pane: StyleTool }) {
             </Select>
           </div>
         </div>
+
         <div className="grid grid-cols-1 gap-2">
           <NumberComboField
             label="正文字号 (pt)"
@@ -2698,6 +2726,7 @@ function LayoutAndStylePanel({ pane }: { pane: StyleTool }) {
             }
           />
         </div>
+
         <div className="grid grid-cols-1 gap-2">
           <NumberComboField
             label="正文行高"
@@ -2720,13 +2749,7 @@ function LayoutAndStylePanel({ pane }: { pane: StyleTool }) {
             }
           />
         </div>
-      </div>
-    )
-  }
 
-  if (pane === 'page') {
-    return (
-      <div className="space-y-4">
         <div className="grid grid-cols-2 gap-2">
           <div>
             <label className="text-xs text-muted-foreground block mb-1">纸张</label>
@@ -2817,75 +2840,6 @@ function LayoutAndStylePanel({ pane }: { pane: StyleTool }) {
             })
           }
         />
-      </div>
-
-      <div className="resume-soft-card p-3">
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>智能一页</span>
-          <Switch
-            checked={smartOnePage.enabled}
-            onChange={checked => {
-              if (checked) {
-                setSmartOnePage({
-                  enabled: true,
-                  status: 'idle',
-                })
-                return
-              }
-
-              setSmartOnePage({
-                enabled: false,
-                status: 'idle',
-                appliedScale: 0,
-              })
-            }}
-          />
-        </div>
-        <div className="mt-2 text-[11px] text-muted-foreground">
-          状态：{smartOnePage.enabled ? getSmartOnePageStatusText(smartOnePage.status) : '未开启'}
-          {smartOnePage.enabled ? `（档位 ${smartOnePage.appliedScale}/${SMART_ONE_PAGE_MAX_SCALE}）` : ''}
-        </div>
-        {smartOnePage.enabled ? (
-          <Button
-            type="outline"
-            size="small"
-            className="mt-2"
-            onClick={() =>
-              setSmartOnePage({
-                enabled: false,
-                status: 'idle',
-                appliedScale: 0,
-              })
-            }
-          >
-            恢复默认排版
-          </Button>
-        ) : null}
-      </div>
-
-      <div>
-        <label className="text-xs text-muted-foreground block mb-1">自定义 CSS</label>
-        <Switch
-          checked={data.metadata.css.enabled}
-          onChange={checked =>
-            updateResumeData(draft => {
-              draft.metadata.css.enabled = checked
-            })
-          }
-        />
-        {data.metadata.css.enabled ? (
-          <Input.TextArea
-            className="mt-2"
-            value={data.metadata.css.value}
-            onChange={value =>
-              updateResumeData(draft => {
-                draft.metadata.css.value = value
-              })
-            }
-            autoSize={{ minRows: 4, maxRows: 12 }}
-            placeholder="输入 CSS 覆盖样式"
-          />
-        ) : null}
       </div>
     </div>
   )
@@ -2990,7 +2944,6 @@ function ResumePreviewCanvas({
 }
 
 function ResumePreviewDock({
-  onExportImage,
   scale,
   ready,
   onZoomIn,
@@ -2998,7 +2951,6 @@ function ResumePreviewDock({
   onCenter,
   onFit,
 }: {
-  onExportImage: () => void
   scale: number
   ready: boolean
   onZoomIn: () => void
@@ -3061,16 +3013,6 @@ function ResumePreviewDock({
             aria-label="适应画布"
           />
         </Tooltip>
-        <Tooltip content="导出">
-          <Button
-            type="text"
-            size="small"
-            icon={<IconDownload />}
-            onClick={onExportImage}
-            className="resume-dock-btn"
-            aria-label="导出"
-          />
-        </Tooltip>
 
         <Button type="text" size="small" onClick={onCenter} className="resume-dock-btn text-xs tabular-nums">
           {ready ? `${Math.round(scale * 100)}%` : '适配中'}
@@ -3085,10 +3027,7 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
   const { auth, ensureAuthenticated } = useAuthSnapshot({ eager: true })
   const previewContentRef = useRef<HTMLDivElement>(null)
   const previewViewportRef = useRef<HTMLDivElement | null>(null)
-  const exportPreviewRef = useRef<HTMLDivElement>(null)
   const sidePanelScrollRef = useRef<HTMLDivElement | null>(null)
-  const smartOnePageFrameRef = useRef<number | null>(null)
-  const typographyPopoverRef = useRef<HTMLDivElement | null>(null)
   const previewScaleRef = useRef(PREVIEW_INITIAL_SCALE)
   const initialPreviewScaleRef = useRef(PREVIEW_INITIAL_SCALE)
   const previewAutoFitDoneKeyRef = useRef('')
@@ -3098,36 +3037,35 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
   const initialize = useResumeBuilderStore(state => state.initialize)
   const data = useResumeBuilderStore(state => state.data)
   const initialized = useResumeBuilderStore(state => state.initialized)
+  const storeResumeId = useResumeBuilderStore(state => state.resumeId)
+  const updateResumeData = useResumeBuilderStore(state => state.updateResumeData)
   const selectedDataSourceId = useResumeBuilderStore(state => state.selectedDataSourceId)
   const setSelectedDataSourceId = useResumeBuilderStore(state => state.setSelectedDataSourceId)
   const applyDataSource = useResumeBuilderStore(state => state.applyDataSource)
   const saveNow = useResumeBuilderStore(state => state.saveNow)
   const saveState = useResumeBuilderStore(state => state.save)
-  const setSmartOnePage = useResumeBuilderStore(state => state.setSmartOnePage)
 
   const [activeTool, setActiveTool] = useState<BuilderTool>('sections')
   const [theme, setTheme] = useState<'light' | 'dark'>('light')
-  const [isExportPreviewOpen, setIsExportPreviewOpen] = useState(false)
-  const [exportFormat, setExportFormat] = useState<'pdf' | 'image'>('pdf')
-  const [exportScope, setExportScope] = useState<'current' | 'all'>('all')
-  const [exportImageMode, setExportImageMode] = useState<'paged' | 'continuous'>('paged')
   const [exporting, setExporting] = useState(false)
   const [fillStrategy, setFillStrategy] = useState<'overwrite' | 'preserve'>('overwrite')
   const [sideToolsExpanded, setSideToolsExpanded] = useState(false)
   const [sidePanelScrolling, setSidePanelScrolling] = useState(false)
   const [sidebarWidth, setSidebarWidth] = useState(SIDEBAR_DEFAULT_WIDTH)
-  const [isSidebarResizing, setIsSidebarResizing] = useState(false)
   const [resumeTitle, setResumeTitle] = useState(initialResume.title)
   const [isSavingTitle, setIsSavingTitle] = useState(false)
-  const [isTypographyPopoverOpen, setIsTypographyPopoverOpen] = useState(false)
   const [spaceZoomActive, setSpaceZoomActive] = useState(false)
   const [previewInteractionActive, setPreviewInteractionActive] = useState(false)
   const [previewAutoFitReady, setPreviewAutoFitReady] = useState(false)
   const [previewScale, setPreviewScale] = useState(PREVIEW_INITIAL_SCALE)
   const [previewContentHeight, setPreviewContentHeight] = useState(0)
+  const [aiPreviewState, setAiPreviewState] = useState<AIPreviewState | null>(null)
+  const [aiPreviewActionLoading, setAiPreviewActionLoading] = useState<'new_version' | 'overwrite' | 'discard' | null>(null)
+  const [resolvedDraftId, setResolvedDraftId] = useState<string | null>(null)
   const [editorFocusRequest, setEditorFocusRequest] = useState<EditorFocusRequest | null>(null)
   const [authModalOpen, setAuthModalOpen] = useState(false)
   const focusRequestCounterRef = useRef(0)
+  const restoredAuthDraftRef = useRef(false)
   const resumeTitleRef = useRef(initialResume.title)
   const sidePanelScrollTimerRef = useRef<number | null>(null)
   const sidebarResizingRef = useRef<{
@@ -3136,13 +3074,20 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
     startWidth: number
   } | null>(null)
   const isGuestDraft = initialResume.id.startsWith('guest-')
-  const smartOnePage = data.metadata.page.smartOnePage || { enabled: false, status: 'idle', appliedScale: 0 }
-  const previewFitKey = `${initialResume.id}:${initialized ? data.metadata.layout.pages.length : 0}`
+  const isTranslateCompareMode = activeTool === 'ai' && aiPreviewState?.intent === 'translate_resume'
+  const activeAIDraftId = activeTool === 'ai' ? aiPreviewState?.draftId : undefined
+  const previewRenderData = activeTool === 'ai' && aiPreviewState ? aiPreviewState.data : data
+  const previewFitKey = useMemo(() => {
+    if (!initialized) return `${initialResume.id}:0`
+    if (isTranslateCompareMode && aiPreviewState) {
+      return `${initialResume.id}:compare:${data.metadata.layout.pages.length}:${aiPreviewState.data.metadata.layout.pages.length}`
+    }
+    return `${initialResume.id}:${previewRenderData.metadata.layout.pages.length}`
+  }, [aiPreviewState, data.metadata.layout.pages.length, initialResume.id, initialized, isTranslateCompareMode, previewRenderData.metadata.layout.pages.length])
   const previewScaledHeight = Math.max(previewContentHeight * previewScale, 0)
   const previewScrollSpaceHeight = previewScaledHeight + PREVIEW_SCROLL_VERTICAL_PADDING * 2
   const sidePanelWidth = sidebarWidth + (sideToolsExpanded ? SIDE_TOOLS_WIDTH_DELTA : 0)
   const handlePreviewNavigate = useCallback((target: PreviewNavigationTarget) => {
-    setIsTypographyPopoverOpen(false)
     setActiveTool('sections')
     focusRequestCounterRef.current += 1
     setEditorFocusRequest({
@@ -3150,9 +3095,151 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
       requestId: focusRequestCounterRef.current,
     })
   }, [])
-  const previewDocument = useMemo(
-    () => <ResumeReactivePreview data={data} mode="editor" onNavigate={handlePreviewNavigate} />,
-    [data, handlePreviewNavigate],
+  const previewDocument = useMemo(() => {
+    if (isTranslateCompareMode && aiPreviewState) {
+      return (
+        <div className="resume-ai-compare-stage">
+          <div className="resume-ai-compare-column">
+            <div className="resume-ai-compare-label">原简历</div>
+            <ResumeReactivePreview data={data} onNavigate={handlePreviewNavigate} />
+          </div>
+          <div className="resume-ai-compare-column">
+            <div className="resume-ai-compare-label">翻译简历</div>
+            <ResumeReactivePreview data={aiPreviewState.data} onNavigate={handlePreviewNavigate} />
+          </div>
+        </div>
+      )
+    }
+
+    return (
+      <ResumeReactivePreview
+        data={previewRenderData}
+        onNavigate={handlePreviewNavigate}
+      />
+    )
+  }, [aiPreviewState, data, handlePreviewNavigate, isTranslateCompareMode, previewRenderData])
+
+  const handlePreviewDraftInCanvas = useCallback((payload: {
+    draftId: string
+    sourceResumeId: string
+    title: string
+    previewUrl: string
+    draftData: ResumeData
+    intent: AIPreviewIntent
+  }) => {
+    setResolvedDraftId(null)
+    setAiPreviewState({
+      data: structuredClone(payload.draftData),
+      intent: payload.intent,
+      draftId: payload.draftId,
+      sourceResumeId: payload.sourceResumeId,
+      title: payload.title,
+      previewUrl: payload.previewUrl,
+    })
+  }, [])
+
+  const handleCardPreviewRequest = useCallback(
+    async (payload: { draftId: string; sourceResumeId?: string; intent?: AIPreviewIntent }) => {
+      try {
+        const response = await fetch(`/api/resumes/${encodeURIComponent(payload.draftId)}`)
+        const result = (await response.json().catch(() => null)) as
+          | {
+              error?: string
+              resume?: {
+                id: string
+                title?: string
+                templateId?: string
+                dataSourceId?: string | null
+                content?: unknown
+              }
+            }
+          | null
+
+        if (!response.ok || !result?.resume) {
+          Message.error(result?.error || '加载草稿预览失败')
+          return
+        }
+
+        const draftResume = result.resume
+        const normalized = normalizeResumeContent(draftResume.content, {
+          dataSource: dataSources.find(item => item.id === draftResume.dataSourceId) || null,
+          templateId: draftResume.templateId || initialResume.templateId,
+          withBackup: true,
+        })
+
+        setResolvedDraftId(null)
+        setAiPreviewState({
+          data: structuredClone(normalized.data),
+          intent: payload.intent || 'polish_resume',
+          draftId: payload.draftId,
+          sourceResumeId: payload.sourceResumeId,
+          title: draftResume.title || 'AI 草稿',
+          previewUrl: `/resume/editor/${payload.draftId}?panel=ai&previewDraft=1`,
+        })
+      } catch {
+        Message.error('加载草稿预览失败')
+      }
+    },
+    [dataSources, initialResume.templateId],
+  )
+
+  const runPreviewDraftAction = useCallback(
+    async (action: 'new_version' | 'overwrite' | 'discard') => {
+      if (!activeAIDraftId || aiPreviewActionLoading) return
+      if (action === 'overwrite' && !aiPreviewState?.sourceResumeId) {
+        Message.warning('当前草稿缺少原简历 ID，暂时无法覆盖原版')
+        return
+      }
+
+      setAiPreviewActionLoading(action)
+      try {
+        if (action === 'discard') {
+          const response = await fetch(`/api/ai/drafts/${encodeURIComponent(activeAIDraftId)}/discard`, {
+            method: 'POST',
+          })
+          const result = (await response.json().catch(() => null)) as { success?: boolean; error?: string } | null
+          if (!response.ok || !result?.success) {
+            Message.error(result?.error || '放弃草稿失败')
+            return
+          }
+          Message.success('草稿已放弃')
+        } else {
+          const response = await fetch(`/api/ai/drafts/${encodeURIComponent(activeAIDraftId)}/confirm`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              saveMode: action,
+              sourceResumeId: aiPreviewState?.sourceResumeId,
+            }),
+          })
+          const result = (await response.json().catch(() => null)) as
+            | {
+                success?: boolean
+                error?: string
+              }
+            | null
+          if (!response.ok || !result?.success) {
+            Message.error(result?.error || '保存失败')
+            return
+          }
+          Message.success(action === 'overwrite' ? '已覆盖原简历' : '已保存为新版本')
+        }
+
+        setResolvedDraftId(activeAIDraftId)
+        setAiPreviewState(previous =>
+          previous && previous.draftId === activeAIDraftId
+            ? {
+                ...previous,
+                draftId: undefined,
+                sourceResumeId: undefined,
+              }
+            : previous,
+        )
+      } finally {
+        setAiPreviewActionLoading(null)
+      }
+    },
+    [activeAIDraftId, aiPreviewActionLoading, aiPreviewState?.sourceResumeId],
   )
 
   const handleSidePanelScroll = useCallback(() => {
@@ -3167,9 +3254,21 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
   }, [])
 
   const handleSelectTool = useCallback((tool: BuilderTool) => {
-    setIsTypographyPopoverOpen(false)
     setActiveTool(tool)
   }, [])
+
+  useEffect(() => {
+    if (activeTool !== 'ai' && aiPreviewState) {
+      setAiPreviewState(null)
+      setAiPreviewActionLoading(null)
+    }
+  }, [activeTool, aiPreviewState])
+
+  useEffect(() => {
+    setAiPreviewState(null)
+    setAiPreviewActionLoading(null)
+    setResolvedDraftId(null)
+  }, [initialResume.id])
 
   const toggleSideToolsExpanded = useCallback(() => {
     setSideToolsExpanded(previous => {
@@ -3211,11 +3310,56 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
   }, [initialResume.id])
 
   const handleBackFromEditor = useCallback(() => {
-    router.push(isGuestDraft ? '/resume/templates' : '/resume/my-resumes')
+    router.push(isGuestDraft ? '/resume/templates' : '/dashboard')
   }, [isGuestDraft, router])
 
+  const cacheDraftBeforeLoginRedirect = useCallback(async () => {
+    if (typeof window === 'undefined') return
+
+    const flushPendingInputs = () => {
+      const active = document.activeElement
+      if (!(active instanceof HTMLElement)) return
+      if (!active.matches('input, textarea, [contenteditable="true"]') && !active.closest('[contenteditable="true"]')) {
+        return
+      }
+      active.blur()
+    }
+
+    flushPendingInputs()
+    await Promise.resolve()
+    await new Promise<void>(resolve => {
+      requestAnimationFrame(() => resolve())
+    })
+    await new Promise<void>(resolve => {
+      requestAnimationFrame(() => resolve())
+    })
+
+    try {
+      const state = useResumeBuilderStore.getState()
+      if (!state.initialized) return
+
+      const payload: AuthRedirectDraftCachePayload = {
+        version: 1,
+        resumeId: initialResume.id,
+        path: `${window.location.pathname}${window.location.search}`,
+        savedAt: Date.now(),
+        resumeTitle: resumeTitle,
+        selectedDataSourceId: state.selectedDataSourceId || '',
+        data: state.data,
+      }
+
+      window.sessionStorage.setItem(AUTH_REDIRECT_DRAFT_CACHE_KEY, JSON.stringify(payload))
+      authRedirectRuntimeDraft = {
+        payload,
+        cachedAt: Date.now(),
+      }
+    } catch {
+      // ignore caching failures before login redirect
+    }
+  }, [initialResume.id, resumeTitle])
+
   const ensureAuthForAction = useCallback(
-    async (actionName: string) => {
+    async () => {
       if (!isGuestDraft) return true
 
       if (auth.authenticated) {
@@ -3229,7 +3373,6 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
         return true
       }
 
-      Message.warning(`${actionName}需要登录后继续`)
       setAuthModalOpen(true)
       return false
     },
@@ -3398,6 +3541,10 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
   }, [initialResume.title])
 
   useEffect(() => {
+    if (initialized && storeResumeId === initialResume.id) {
+      return
+    }
+
     const normalized = normalizeResumeContent(initialResume.content, {
       dataSource: dataSources.find(source => source.id === initialResume.dataSourceId) || null,
       templateId: initialResume.templateId,
@@ -3409,7 +3556,104 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
       dataSources,
       selectedDataSourceId: initialResume.dataSourceId || dataSources[0]?.id || '',
     })
-  }, [dataSources, initialResume.content, initialResume.dataSourceId, initialResume.id, initialResume.templateId, initialize])
+  }, [dataSources, initialResume.content, initialResume.dataSourceId, initialResume.id, initialResume.templateId, initialize, initialized, storeResumeId])
+
+  useEffect(() => {
+    if (!initialized || restoredAuthDraftRef.current) return
+    if (typeof window === 'undefined') return
+
+    const now = Date.now()
+    const runtimePayload =
+      authRedirectRuntimeDraft && now - authRedirectRuntimeDraft.cachedAt <= AUTH_REDIRECT_RUNTIME_DRAFT_MAX_AGE_MS
+        ? authRedirectRuntimeDraft.payload
+        : null
+    if (authRedirectRuntimeDraft && !runtimePayload) {
+      authRedirectRuntimeDraft = null
+    }
+
+    const raw = window.sessionStorage.getItem(AUTH_REDIRECT_DRAFT_CACHE_KEY)
+    let payload: Partial<AuthRedirectDraftCachePayload> | null = null
+    let source: 'storage' | 'runtime' | null = null
+
+    if (raw) {
+      try {
+        payload = JSON.parse(raw) as Partial<AuthRedirectDraftCachePayload>
+        source = 'storage'
+      } catch {
+        window.sessionStorage.removeItem(AUTH_REDIRECT_DRAFT_CACHE_KEY)
+      }
+    }
+
+    if (!payload && runtimePayload) {
+      payload = runtimePayload
+      source = 'runtime'
+    }
+
+    if (!payload) return
+
+    const isExpired = typeof payload.savedAt !== 'number' || now - payload.savedAt > AUTH_REDIRECT_DRAFT_MAX_AGE_MS
+    if (isExpired) {
+      window.sessionStorage.removeItem(AUTH_REDIRECT_DRAFT_CACHE_KEY)
+      authRedirectRuntimeDraft = null
+      return
+    }
+
+    const currentPath = `${window.location.pathname}${window.location.search}`
+    const currentPathname = window.location.pathname
+    const payloadPathname =
+      typeof payload.path === 'string' && payload.path
+        ? new URL(payload.path, window.location.origin).pathname
+        : ''
+    const sameResume = payload.resumeId === initialResume.id
+    const samePath = payload.path === currentPath
+    const samePathname = payloadPathname === currentPathname
+    const guestToAuthedEditorFlow =
+      typeof payload.resumeId === 'string' &&
+      payload.resumeId.startsWith('guest-') &&
+      !initialResume.id.startsWith('guest-') &&
+      payloadPathname.startsWith('/resume/editor/') &&
+      currentPathname.startsWith('/resume/editor/')
+
+    if ((!sameResume && !samePath && !samePathname && !guestToAuthedEditorFlow) || !payload.data || typeof payload.data !== 'object') {
+      return
+    }
+
+    restoredAuthDraftRef.current = true
+    const restoredData = structuredClone(payload.data as ResumeData)
+    const resolvedResumeTitle =
+      typeof payload.resumeTitle === 'string' && payload.resumeTitle.trim()
+        ? payload.resumeTitle
+        : resumeTitleRef.current
+    updateResumeData(draft => {
+      Object.assign(draft, restoredData)
+    })
+
+    if (typeof payload.selectedDataSourceId === 'string') {
+      setSelectedDataSourceId(payload.selectedDataSourceId)
+    }
+    if (resolvedResumeTitle.trim()) {
+      setResumeTitle(resolvedResumeTitle)
+      resumeTitleRef.current = resolvedResumeTitle
+    }
+
+    window.sessionStorage.removeItem(AUTH_REDIRECT_DRAFT_CACHE_KEY)
+    if (process.env.NODE_ENV !== 'production' && source === 'storage') {
+      authRedirectRuntimeDraft = {
+        payload: {
+          version: typeof payload.version === 'number' ? payload.version : 1,
+          resumeId: typeof payload.resumeId === 'string' ? payload.resumeId : initialResume.id,
+          path: typeof payload.path === 'string' && payload.path ? payload.path : currentPath,
+          savedAt: typeof payload.savedAt === 'number' ? payload.savedAt : now,
+          resumeTitle: resolvedResumeTitle,
+          selectedDataSourceId: typeof payload.selectedDataSourceId === 'string' ? payload.selectedDataSourceId : '',
+          data: restoredData,
+        },
+        cachedAt: now,
+      }
+    } else {
+      authRedirectRuntimeDraft = null
+    }
+  }, [initialResume.id, initialized, setSelectedDataSourceId, updateResumeData])
 
   useEffect(() => {
     if (typeof document === 'undefined') return
@@ -3466,116 +3710,6 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
     }
   }, [previewInteractionActive])
 
-  useEffect(() => {
-    if (!isTypographyPopoverOpen) return
-
-    const handlePointerDown = (event: PointerEvent) => {
-      const target = event.target
-      if (!typographyPopoverRef.current || !(target instanceof Node)) {
-        return
-      }
-
-      if (target instanceof Element && target.closest('.control-panel')) {
-        return
-      }
-
-      if (!typographyPopoverRef.current.contains(target)) {
-        setIsTypographyPopoverOpen(false)
-      }
-    }
-
-    const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setIsTypographyPopoverOpen(false)
-      }
-    }
-
-    window.addEventListener('pointerdown', handlePointerDown)
-    window.addEventListener('keydown', handleEscape)
-
-    return () => {
-      window.removeEventListener('pointerdown', handlePointerDown)
-      window.removeEventListener('keydown', handleEscape)
-    }
-  }, [isTypographyPopoverOpen])
-
-  useEffect(() => {
-    if (typeof document === 'undefined') return
-    if (isExportPreviewOpen) {
-      document.body.classList.add('resume-print-preview-open')
-    } else {
-      document.body.classList.remove('resume-print-preview-open')
-    }
-    return () => {
-      document.body.classList.remove('resume-print-preview-open')
-    }
-  }, [isExportPreviewOpen])
-
-  useEffect(() => {
-    if (!isExportPreviewOpen) return
-
-    const handleEscapeClose = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setIsExportPreviewOpen(false)
-      }
-    }
-
-    window.addEventListener('keydown', handleEscapeClose)
-    return () => window.removeEventListener('keydown', handleEscapeClose)
-  }, [isExportPreviewOpen])
-
-  useEffect(() => {
-    if (!initialized) return
-
-    if (smartOnePageFrameRef.current) {
-      cancelAnimationFrame(smartOnePageFrameRef.current)
-      smartOnePageFrameRef.current = null
-    }
-
-    if (!smartOnePage.enabled) {
-      if (smartOnePage.status !== 'idle' || smartOnePage.appliedScale !== 0) {
-        setSmartOnePage({ status: 'idle', appliedScale: 0 })
-      }
-      return
-    }
-
-    smartOnePageFrameRef.current = requestAnimationFrame(() => {
-      const previewRoot =
-        exportPreviewRef.current?.querySelector('.resume-preview-root') ||
-        previewContentRef.current?.querySelector('.resume-preview-root')
-
-      if (!previewRoot) return
-
-      const overflow = hasPreviewOverflow(previewRoot)
-
-      if (!overflow) {
-        if (smartOnePage.status !== 'fitted') {
-          setSmartOnePage({ status: 'fitted' })
-        }
-        return
-      }
-
-      if (smartOnePage.appliedScale < SMART_ONE_PAGE_MAX_SCALE) {
-        setSmartOnePage({
-          status: 'idle',
-          appliedScale: smartOnePage.appliedScale + 1,
-        })
-        return
-      }
-
-      if (smartOnePage.status !== 'overflow') {
-        setSmartOnePage({ status: 'overflow' })
-      }
-    })
-
-    return () => {
-      if (smartOnePageFrameRef.current) {
-        cancelAnimationFrame(smartOnePageFrameRef.current)
-        smartOnePageFrameRef.current = null
-      }
-    }
-  }, [data, initialized, setSmartOnePage, smartOnePage.appliedScale, smartOnePage.enabled, smartOnePage.status])
-
   const handleSidebarResizeStart = (event: ReactPointerEvent<HTMLDivElement>) => {
     preventDefaultIfCancelable(event)
     sidebarResizingRef.current = {
@@ -3583,7 +3717,6 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
       startX: event.clientX,
       startWidth: sidebarWidth,
     }
-    setIsSidebarResizing(true)
     event.currentTarget.setPointerCapture(event.pointerId)
   }
 
@@ -3602,11 +3735,10 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
       event.currentTarget.releasePointerCapture(event.pointerId)
     }
     sidebarResizingRef.current = null
-    setIsSidebarResizing(false)
   }
 
   const handleFill = async (strategy: 'overwrite' | 'preserve') => {
-    if (!(await ensureAuthForAction('数据填充'))) {
+    if (!(await ensureAuthForAction())) {
       return
     }
 
@@ -3664,7 +3796,7 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
   }, [initialResume.id, initialResume.title, isGuestDraft, resumeTitle])
 
   const handleManualSave = useCallback(async () => {
-    if (!(await ensureAuthForAction('保存简历'))) {
+    if (!(await ensureAuthForAction())) {
       return
     }
 
@@ -3739,13 +3871,13 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
     return () => window.removeEventListener('keydown', onKeydown, { capture: true })
   }, [handleManualSave])
 
-  const exportResumePagesAsImages = async (scope: 'current' | 'all' = 'all', imageMode: 'paged' | 'continuous' = 'paged') => {
+  const exportResumePagesAsImages = async () => {
     try {
       await ensureFontsReady()
       const snapdom = await loadSnapdom()
-      const previewRoot = exportPreviewRef.current?.querySelector<HTMLElement>('.resume-preview-root')
+      const previewRoot = previewContentRef.current?.querySelector<HTMLElement>('.resume-preview-root')
       if (!previewRoot) {
-        Message.error('请先进入导出预览后再导出图片')
+        Message.error('预览尚未准备完成，请稍后重试')
         return
       }
 
@@ -3776,68 +3908,48 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
         if (capturePages.length === 0) {
           throw new Error('图片生成失败')
         }
-        const selectedCapturePages = scope === 'all' ? capturePages : [capturePages[0]]
-
-        if (imageMode === 'continuous') {
-          const renderedCanvases: HTMLCanvasElement[] = []
-          for (const page of selectedCapturePages) {
-            const canvas = await renderPageToCanvas(page)
-            renderedCanvases.push(canvas)
-          }
-
-          const exportWidth = Math.max(...renderedCanvases.map(canvas => canvas.width))
-          const exportHeight = renderedCanvases.reduce((sum, canvas) => sum + canvas.height, 0)
-          if (!exportWidth || !exportHeight) {
-            throw new Error('图片生成失败')
-          }
-
-          const stitchedCanvas = document.createElement('canvas')
-          stitchedCanvas.width = exportWidth
-          stitchedCanvas.height = exportHeight
-          const context = stitchedCanvas.getContext('2d')
-          if (!context) {
-            throw new Error('图片生成失败')
-          }
-
-          context.fillStyle = '#ffffff'
-          context.fillRect(0, 0, exportWidth, exportHeight)
-          let drawTop = 0
-          renderedCanvases.forEach(canvas => {
-            const drawLeft = Math.max(0, Math.floor((exportWidth - canvas.width) / 2))
-            context.drawImage(canvas, drawLeft, drawTop)
-            drawTop += canvas.height
-          })
-
-          const blob = await new Promise<Blob | null>(resolve => stitchedCanvas.toBlob(resolve, 'image/png', 1))
-          if (!blob) {
-            throw new Error('图片生成失败')
-          }
-
-          const filename = selectedCapturePages.length === 1 ? `${normalizedTitle}.png` : `${normalizedTitle}-continuous.png`
-          downloadBlob(blob, filename)
-          Message.success(selectedCapturePages.length === 1 ? '已导出当前页图片' : '已导出连续长图')
-          return
-        }
-
-        for (let index = 0; index < selectedCapturePages.length; index += 1) {
-          const page = selectedCapturePages[index]
+        const renderedCanvases: HTMLCanvasElement[] = []
+        for (const page of capturePages) {
           const canvas = await renderPageToCanvas(page)
-
-          const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png', 1))
-          if (!blob) {
-            throw new Error('图片生成失败')
-          }
-
-          const filename = selectedCapturePages.length === 1 ? `${normalizedTitle}.png` : `${normalizedTitle}-p${index + 1}.png`
-          downloadBlob(blob, filename)
+          renderedCanvases.push(canvas)
         }
 
-        Message.success(scope === 'all' ? `已导出 ${selectedCapturePages.length} 张图片` : '已导出当前页图片')
+        const exportWidth = Math.max(...renderedCanvases.map(canvas => canvas.width))
+        const exportHeight = renderedCanvases.reduce((sum, canvas) => sum + canvas.height, 0)
+        if (!exportWidth || !exportHeight) {
+          throw new Error('图片生成失败')
+        }
+
+        const stitchedCanvas = document.createElement('canvas')
+        stitchedCanvas.width = exportWidth
+        stitchedCanvas.height = exportHeight
+        const context = stitchedCanvas.getContext('2d')
+        if (!context) {
+          throw new Error('图片生成失败')
+        }
+
+        context.fillStyle = '#ffffff'
+        context.fillRect(0, 0, exportWidth, exportHeight)
+        let drawTop = 0
+        renderedCanvases.forEach(canvas => {
+          const drawLeft = Math.max(0, Math.floor((exportWidth - canvas.width) / 2))
+          context.drawImage(canvas, drawLeft, drawTop)
+          drawTop += canvas.height
+        })
+
+        const blob = await new Promise<Blob | null>(resolve => stitchedCanvas.toBlob(resolve, 'image/png', 1))
+        if (!blob) {
+          throw new Error('图片生成失败')
+        }
+
+        const filename = capturePages.length === 1 ? `${normalizedTitle}.png` : `${normalizedTitle}-continuous.png`
+        downloadBlob(blob, filename)
+        Message.success(capturePages.length === 1 ? '已下载图片' : '已下载长图')
       } finally {
         captureHost.remove()
       }
     } catch (error) {
-      Message.error(error instanceof Error ? error.message : '导出图片失败')
+      Message.error(error instanceof Error ? error.message : '下载图片失败')
     }
   }
 
@@ -3845,9 +3957,9 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
     try {
       await ensureFontsReady()
       const [snapdom, JsPDF] = await Promise.all([loadSnapdom(), loadJsPdf()])
-      const previewRoot = exportPreviewRef.current?.querySelector<HTMLElement>('.resume-preview-root')
+      const previewRoot = previewContentRef.current?.querySelector<HTMLElement>('.resume-preview-root')
       if (!previewRoot) {
-        Message.error('请先进入导出预览后再导出 PDF')
+        Message.error('预览尚未准备完成，请稍后重试')
         return
       }
 
@@ -3909,35 +4021,37 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
         })
 
         pdf.save(`${normalizedTitle}.pdf`)
-        Message.success(`已导出 PDF（${renderedCanvases.length} 页）`)
+        Message.success(`已下载 PDF（${renderedCanvases.length} 页）`)
       } finally {
         captureHost.remove()
       }
     } catch (error) {
-      Message.error(error instanceof Error ? error.message : '导出 PDF 失败')
+      Message.error(error instanceof Error ? error.message : '下载 PDF 失败')
     }
   }
 
-  const openExportPreview = (format: 'pdf' | 'image' = 'pdf') => {
-    setExportFormat(format)
-    setExportScope('all')
-    setExportImageMode('paged')
-    setIsExportPreviewOpen(true)
-  }
-
-  const handleExportAction = async () => {
+  const handleDownloadImage = async () => {
     if (exporting) return
-    if (!(await ensureAuthForAction('导出下载'))) {
+    if (!(await ensureAuthForAction())) {
       return
     }
 
     setExporting(true)
     try {
-      if (exportFormat === 'image') {
-        await exportResumePagesAsImages(exportScope, exportImageMode)
-        return
-      }
+      await exportResumePagesAsImages()
+    } finally {
+      setExporting(false)
+    }
+  }
 
+  const handleDownloadPdf = async () => {
+    if (exporting) return
+    if (!(await ensureAuthForAction())) {
+      return
+    }
+
+    setExporting(true)
+    try {
       await exportResumePagesAsPdf()
     } finally {
       setExporting(false)
@@ -3954,13 +4068,15 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
           onBack={() => void handleBackFromEditor()}
           onResumeTitleChange={setResumeTitle}
           onResumeTitleBlur={() => void saveResumeTitle()}
-          onOpenExportPreview={() => openExportPreview('pdf')}
+          downloadLoading={exporting}
+          onDownloadImage={() => void handleDownloadImage()}
+          onDownloadPdf={() => void handleDownloadPdf()}
           onSave={() => void handleManualSave()}
         />
 
       <div className="flex-1 flex overflow-hidden">
         <aside
-          className={joinClassNames('resume-side-panel flex flex-col no-print flex-shrink-0', isSidebarResizing && 'is-resizing')}
+          className="resume-side-panel flex flex-col no-print flex-shrink-0"
           style={{ width: sidePanelWidth }}
         >
           <div className={joinClassNames('resume-side-shell', sideToolsExpanded && 'is-tools-expanded')}>
@@ -3978,72 +4094,64 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
               <div className="resume-side-tools-divider" />
 
               <div className="resume-side-tool-group">
-                <SideToolHint label="内容编辑" expanded={sideToolsExpanded}>
+                <SideToolHint label="内容编辑" active={activeTool === 'sections'}>
                   <button
                     type="button"
-                    className={`resume-side-tool-btn ${activeTool === 'sections' ? 'is-active' : ''}`}
+                    className="resume-side-tool-btn"
                     onClick={() => handleSelectTool('sections')}
                     aria-label="内容编辑"
                   >
                     <FilePenLine size={16} />
                   </button>
                 </SideToolHint>
-                <SideToolHint label="数据填充" expanded={sideToolsExpanded}>
+                <SideToolHint label="数据填充" active={activeTool === 'fill'}>
                   <button
                     type="button"
-                    className={`resume-side-tool-btn ${activeTool === 'fill' ? 'is-active' : ''}`}
+                    className="resume-side-tool-btn"
                     onClick={() => handleSelectTool('fill')}
                     aria-label="数据填充"
                   >
                     <PenLine size={16} />
                   </button>
                 </SideToolHint>
+                <SideToolHint label="AI 助手" active={activeTool === 'ai'}>
+                  <button
+                    type="button"
+                    className="resume-side-tool-btn resume-side-tool-btn-ai"
+                    onClick={() => handleSelectTool('ai')}
+                    aria-label="AI 助手"
+                  >
+                    <BrandFlowerIcon className="resume-side-tool-ai-logo" />
+                  </button>
+                </SideToolHint>
               </div>
               <div className="resume-side-tools-divider" />
 
               <div className="resume-side-tool-group">
-                <SideToolHint label="模板切换" expanded={sideToolsExpanded}>
+                <SideToolHint label="模板切换" active={activeTool === 'template'}>
                   <button
                     type="button"
-                    className={`resume-side-tool-btn ${activeTool === 'template' ? 'is-active' : ''}`}
+                    className="resume-side-tool-btn"
                     onClick={() => handleSelectTool('template')}
                     aria-label="模板切换"
                   >
                     <LayoutTemplate size={16} />
                   </button>
                 </SideToolHint>
-                <div ref={typographyPopoverRef} className="resume-side-tool-popover-anchor">
-                  <SideToolHint label="字体设置" expanded={sideToolsExpanded}>
-                    <button
-                      type="button"
-                      className={`resume-side-tool-btn ${isTypographyPopoverOpen ? 'is-active' : ''}`}
-                      onClick={() => setIsTypographyPopoverOpen(prev => !prev)}
-                      aria-label="字体设置"
-                    >
-                      <TypeIcon size={16} />
-                    </button>
-                  </SideToolHint>
-                  {isTypographyPopoverOpen ? (
-                    <div className="resume-side-tool-popover">
-                      <div className="resume-side-tool-popover-title">字体设置</div>
-                      <LayoutAndStylePanel pane="typography" />
-                    </div>
-                  ) : null}
-                </div>
-                <SideToolHint label="页面设置" expanded={sideToolsExpanded}>
+                <SideToolHint label="排版设置" active={activeTool === 'typesetting'}>
                   <button
                     type="button"
-                    className={`resume-side-tool-btn ${activeTool === 'page' ? 'is-active' : ''}`}
-                    onClick={() => handleSelectTool('page')}
-                    aria-label="页面设置"
+                    className="resume-side-tool-btn"
+                    onClick={() => handleSelectTool('typesetting')}
+                    aria-label="排版设置"
                   >
                     <FileText size={16} />
                   </button>
                 </SideToolHint>
-                <SideToolHint label="高级设置" expanded={sideToolsExpanded}>
+                <SideToolHint label="高级设置" active={activeTool === 'advanced'}>
                   <button
                     type="button"
-                    className={`resume-side-tool-btn ${activeTool === 'advanced' ? 'is-active' : ''}`}
+                    className="resume-side-tool-btn"
                     onClick={() => handleSelectTool('advanced')}
                     aria-label="高级设置"
                   >
@@ -4054,7 +4162,7 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
 
               <div className="resume-side-tools-spacer" />
 
-              <SideToolHint label={theme === 'dark' ? '切换浅色' : '切换深色'} expanded={sideToolsExpanded}>
+              <SideToolHint label={theme === 'dark' ? '切换浅色' : '切换深色'}>
                 <button
                   type="button"
                   className="resume-side-tool-btn"
@@ -4076,10 +4184,14 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
             <div className="resume-side-content">
               <div
                 ref={sidePanelScrollRef}
-                className={`resume-scroll-shell ${sidePanelScrolling ? 'is-scrolling' : ''}`}
+                className={joinClassNames(
+                  'resume-scroll-shell',
+                  sidePanelScrolling && 'is-scrolling',
+                  activeTool === 'ai' && 'is-ai-panel',
+                )}
                 onScroll={handleSidePanelScroll}
               >
-                <div className="resume-side-panel-body p-4">
+                <div className={joinClassNames('resume-side-panel-body', activeTool === 'ai' ? 'is-ai-panel' : 'p-4')}>
                   {activeTool === 'sections' ? (
                     <IntegratedSectionsEditor focusRequest={editorFocusRequest} scrollContainerRef={sidePanelScrollRef} />
                   ) : null}
@@ -4095,7 +4207,21 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
                       }}
                     />
                   ) : null}
-                  {activeTool !== 'sections' && activeTool !== 'fill' ? <LayoutAndStylePanel pane={activeTool} /> : null}
+                  {activeTool === 'ai' ? (
+                    <AIChatPanel
+                      resumeId={initialResume.id}
+                      resumeTitle={resumeTitle}
+                      isGuestDraft={isGuestDraft}
+                      resolvedDraftId={resolvedDraftId}
+                      onPreviewDraftInCanvas={handlePreviewDraftInCanvas}
+                      onCardPreviewRequest={payload => {
+                        void handleCardPreviewRequest(payload)
+                      }}
+                    />
+                  ) : null}
+                  {activeTool !== 'sections' && activeTool !== 'fill' && activeTool !== 'ai'
+                    ? <LayoutAndStylePanel pane={activeTool} />
+                    : null}
                 </div>
               </div>
             </div>
@@ -4120,6 +4246,40 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
             setSpaceZoomActive(false)
           }}
         >
+          {activeTool === 'ai' && activeAIDraftId ? (
+            <div className="resume-ai-preview-actions no-print">
+              <button
+                type="button"
+                className="resume-ai-mini-btn"
+                disabled={Boolean(aiPreviewActionLoading)}
+                onClick={() => {
+                  void runPreviewDraftAction('new_version')
+                }}
+              >
+                {aiPreviewActionLoading === 'new_version' ? '保存中...' : '确认保存'}
+              </button>
+              <button
+                type="button"
+                className="resume-ai-mini-btn is-outline"
+                disabled={Boolean(aiPreviewActionLoading)}
+                onClick={() => {
+                  void runPreviewDraftAction('overwrite')
+                }}
+              >
+                {aiPreviewActionLoading === 'overwrite' ? '覆盖中...' : '覆盖原版'}
+              </button>
+              <button
+                type="button"
+                className="resume-ai-mini-btn is-ghost"
+                disabled={Boolean(aiPreviewActionLoading)}
+                onClick={() => {
+                  void runPreviewDraftAction('discard')
+                }}
+              >
+                {aiPreviewActionLoading === 'discard' ? '处理中...' : '放弃草稿'}
+              </button>
+            </div>
+          ) : null}
           <div className="flex-1 overflow-hidden">
             <ResumePreviewCanvas
               content={previewDocument}
@@ -4137,30 +4297,15 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
               onZoomOut={handlePreviewZoomOut}
               onCenter={handlePreviewCenter}
               onFit={() => void fitPreviewToHeight()}
-              onExportImage={() => openExportPreview('image')}
             />
           </div>
         </div>
       </div>
-
-      <ExportWorkbench
-        open={isExportPreviewOpen}
-        onClose={() => setIsExportPreviewOpen(false)}
-        exportPreviewRef={exportPreviewRef}
-        exportFormat={exportFormat}
-        exportScope={exportScope}
-        exportImageMode={exportImageMode}
-        exporting={exporting}
-        onExportFormatChange={setExportFormat}
-        onExportScopeChange={setExportScope}
-        onExportImageModeChange={setExportImageMode}
-        onExportAction={() => void handleExportAction()}
-        preview={<ResumeReactivePreview data={data} mode="export" showPageNumbers className="resume-export-preview-root" />}
-      />
       <AuthRequiredModal
         open={authModalOpen}
         onClose={() => setAuthModalOpen(false)}
         redirectPath={typeof window !== 'undefined' ? window.location.pathname + window.location.search : '/resume/templates'}
+        onBeforeLogin={cacheDraftBeforeLoginRedirect}
       />
       </div>
     </div>

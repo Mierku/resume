@@ -161,15 +161,3 @@ export function sanitizeHtml(html: string): string {
   if (!html) return ''
   return sanitizeWithDomParser(html)
 }
-
-export function sanitizeCss(css: string): string {
-  if (!css) return ''
-
-  return css
-    .replace(/javascript\s*:/gi, '')
-    .replace(/expression\s*\(/gi, '')
-    .replace(/url\s*\(\s*["']?\s*(?:javascript|data):/gi, 'url(')
-    .replace(/behavior\s*:/gi, '')
-    .replace(/-moz-binding\s*:/gi, '')
-    .replace(/@import\s+(?:url\s*\()?\s*["']?\s*(?:javascript|data):/gi, '')
-}

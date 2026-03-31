@@ -254,17 +254,6 @@ export interface LayoutData {
   pages: PageLayout[]
 }
 
-export interface CssData {
-  enabled: boolean
-  value: string
-}
-
-export interface SmartOnePageConfig {
-  enabled: boolean
-  status: 'idle' | 'fitted' | 'overflow'
-  appliedScale: number
-}
-
 export interface PageData {
   gapX: number
   gapY: number
@@ -273,7 +262,6 @@ export interface PageData {
   format: 'a4' | 'letter' | 'free-form'
   locale: string
   hideIcons: boolean
-  smartOnePage: SmartOnePageConfig
 }
 
 export interface LevelDesign {
@@ -302,7 +290,6 @@ export interface TypographyData {
 export interface MetadataData {
   template: ReactiveTemplateId
   layout: LayoutData
-  css: CssData
   page: PageData
   design: {
     level: LevelDesign
@@ -432,7 +419,6 @@ export function createDefaultResumeData(template: ReactiveTemplateId = 'template
           },
         ],
       },
-      css: { enabled: false, value: '' },
       page: {
         gapX: 4,
         gapY: 6,
@@ -441,11 +427,6 @@ export function createDefaultResumeData(template: ReactiveTemplateId = 'template
         format: 'a4',
         locale: 'zh-CN',
         hideIcons: false,
-        smartOnePage: {
-          enabled: false,
-          status: 'idle',
-          appliedScale: 0,
-        },
       },
       design: {
         colors: {

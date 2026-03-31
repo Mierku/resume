@@ -1,6 +1,6 @@
 'use client'
 
-import { ReactNode, useEffect } from 'react'
+import { ReactNode, useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 import { Button } from './Button'
@@ -12,7 +12,10 @@ interface ModalProps {
   title?: string
   children: ReactNode
   footer?: ReactNode
+  overlayClassName?: string
   panelClassName?: string
+  titleClassName?: string
+  closeButtonClassName?: string
   contentClassName?: string
   footerClassName?: string
 }
@@ -23,7 +26,10 @@ export function Modal({
   title,
   children,
   footer,
+  overlayClassName,
   panelClassName,
+  titleClassName,
+  closeButtonClassName,
   contentClassName,
   footerClassName,
 }: ModalProps) {
@@ -53,21 +59,21 @@ export function Modal({
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div 
-        className="absolute inset-0 bg-black/50 animate-fade-in"
+        className={cn('absolute inset-0 bg-black/50 animate-fade-in', overlayClassName)}
         onClick={onClose}
       />
       <div
         className={cn(
-          'relative bg-background rounded-[22px] border border-border shadow-lg max-w-md w-full mx-4 p-6 animate-slide-up',
+          'relative bg-background rounded-[12px] shadow-lg max-w-md w-full mx-4 p-6 animate-slide-up',
           panelClassName,
         )}
       >
         {title && (
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-foreground">{title}</h2>
+            <h2 className={cn('text-lg font-semibold text-foreground', titleClassName)}>{title}</h2>
             <button 
               onClick={onClose}
-              className="p-1 hover:bg-muted rounded-[10px] transition-colors"
+              className={cn('p-1 hover:bg-muted rounded-[10px] transition-colors', closeButtonClassName)}
             >
               <X className="size-5" />
             </button>
@@ -133,10 +139,26 @@ interface AuthRequiredModalProps {
   open: boolean
   onClose: () => void
   redirectPath?: string
+  onBeforeLogin?: () => void | Promise<void>
 }
 
-export function AuthRequiredModal({ open, onClose, redirectPath }: AuthRequiredModalProps) {
-  const handleLogin = () => {
+export function AuthRequiredModal({ open, onClose, redirectPath, onBeforeLogin }: AuthRequiredModalProps) {
+  const [loggingIn, setLoggingIn] = useState(false)
+
+  useEffect(() => {
+    if (!open) {
+      setLoggingIn(false)
+    }
+  }, [open])
+
+  const handleLogin = async () => {
+    if (loggingIn) return
+    setLoggingIn(true)
+    try {
+      await onBeforeLogin?.()
+    } catch {
+      // ignore pre-login cache errors and continue login redirect
+    }
     const next = redirectPath || window.location.pathname
     window.location.href = `/login?next=${encodeURIComponent(next)}`
   }
@@ -145,19 +167,24 @@ export function AuthRequiredModal({ open, onClose, redirectPath }: AuthRequiredM
     <Modal
       open={open}
       onClose={onClose}
-      title="需要登录"
+      title="请登录"
+      overlayClassName="bg-black/[0.66] backdrop-blur-[2px]"
+      panelClassName="border border-[rgba(218,220,224,0.15)] bg-[rgba(22,23,24,0.5)] backdrop-blur-2xl shadow-[0_24px_80px_rgba(0,0,0,0.55)]"
+      titleClassName="text-white"
+      closeButtonClassName="text-white/70 hover:text-white hover:bg-white/10"
+      contentClassName="text-white/85"
       footer={
         <>
-          <Button variant="ghost" onClick={onClose}>
+          <Button variant="ghost" onClick={onClose} disabled={loggingIn} className="text-white/78 hover:text-white hover:bg-white/10">
             取消
           </Button>
-          <Button onClick={handleLogin}>
+          <Button loading={loggingIn} onClick={() => void handleLogin()} className="bg-[rgba(56,59,61,0.576)] backdrop-blur-2xl text-[rgb(241,243,244)]">
             去登录
           </Button>
         </>
       }
     >
-      <p>请先登录后继续</p>
+      <p>请登录体验完整功能。</p>
     </Modal>
   )
 }
