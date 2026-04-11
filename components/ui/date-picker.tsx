@@ -91,12 +91,12 @@ export function DatePickerField({
           data-open={open ? 'true' : undefined}
           disabled={disabled}
           className={cn(
-            'control-field flex h-9 w-full items-center gap-2 px-3 py-2 text-sm leading-5 text-foreground outline-none transition-all duration-200',
+            'control-field control-date-trigger resume-date-picker-trigger',
             'disabled:cursor-not-allowed disabled:opacity-60',
           )}
         >
           <span className={cn('min-w-0 flex-1 truncate text-left', !value && 'text-muted-foreground')}>{displayText}</span>
-          <span className="inline-flex shrink-0 text-muted-foreground" aria-hidden>
+          <span className="control-date-trigger-icon resume-date-picker-trigger-icon" aria-hidden>
             <CalendarDays size={16} strokeWidth={1.8} />
           </span>
         </Popover.Trigger>
@@ -119,7 +119,7 @@ export function DatePickerField({
             <Popover.Popup
               ref={panelRef}
               initialFocus={() => getInitialFocusTarget()}
-              className={cn('control-panel control-floating-panel overflow-hidden rounded-[18px] p-3', popupClassName)}
+              className={cn('control-panel control-floating-panel control-date-panel resume-date-picker-panel', popupClassName)}
             >
               <Calendar
                 mode="single"
@@ -132,7 +132,7 @@ export function DatePickerField({
                 reverseYears
                 fixedWeeks
                 showOutsideDays
-                className="resume-date-picker-calendar"
+                className="control-date-calendar resume-date-picker-calendar"
                 onSelect={date => {
                   onChange(date ? dateToValue(date) : '')
                   if (date) {
@@ -141,10 +141,10 @@ export function DatePickerField({
                 }}
               />
 
-              <div className="mt-3 flex items-center justify-end gap-2 border-t border-border pt-3">
+              <div className="control-date-actions resume-date-picker-actions">
                 <button
                   type="button"
-                  className="inline-flex h-8 items-center rounded-[10px] px-3 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  className="control-date-action resume-date-picker-action"
                   onClick={() => {
                     onChange('')
                     setOpen(false)
@@ -154,7 +154,7 @@ export function DatePickerField({
                 </button>
                 <button
                   type="button"
-                  className="inline-flex h-8 items-center rounded-[10px] px-3 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  className="control-date-action resume-date-picker-action"
                   onClick={() => {
                     const today = dateToValue(new Date())
                     onChange(today)

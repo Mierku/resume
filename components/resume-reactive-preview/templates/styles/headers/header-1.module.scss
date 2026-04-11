@@ -1,0 +1,54 @@
+.h1Root {
+  position: relative;
+  overflow: visible;
+}
+
+.h1Root::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: linear-gradient(120deg, rgba(255, 255, 255, 0.24) 0%, rgba(255, 255, 255, 0) 36%);
+}
+
+.h1Interactive {
+  transition: background-color 120ms ease;
+}
+
+.h1Interactive:hover,
+.h1Interactive:focus-visible {
+  background: color-mix(in srgb, var(--resume-theme-primary) 4%, transparent);
+}
+
+.h1Content {
+  position: relative;
+  min-height: 124px;
+}
+
+.h1Name {
+  margin: 0;
+  letter-spacing: 0.01em;
+  font-weight: 760;
+}
+
+.h1Headline {
+  margin: 0;
+  font-weight: 560;
+}
+
+.h1Meta {
+  margin-top: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.h1MetaItem {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--resume-theme-primary) 28%, transparent);
+  background: color-mix(in srgb, var(--resume-theme-primary) 12%, white);
+  padding: 2px 8px;
+}

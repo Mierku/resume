@@ -31,7 +31,7 @@ import {
   FilePenLine,
   LayoutTemplate,
   Moon,
-  SlidersHorizontal,
+  Search,
   Sun,
   FileText,
   PenLine,
@@ -60,7 +60,6 @@ import {
   Option,
   Select,
   Space,
-  Switch,
   Tooltip,
 } from './primitives'
 import { normalizeResumeContent, type ResumeDataSource } from '@/lib/resume/mappers'
@@ -77,8 +76,12 @@ import {
   type ResumeData,
   type StandardSectionType,
 } from '@/lib/resume/types'
+import { normalizeResumeFontFamily, RESUME_FONT_PRESETS } from '@/lib/resume/fonts'
 import { dateToYearMonth, joinPeriodValue, splitPeriodValue } from '@/lib/date-fields'
 import { getTemplateDefaultPrimaryColor, RESUME_TEMPLATES } from '@/lib/constants'
+import { resolveHeaderVariantForTemplate } from '@/lib/resume/header'
+import { resolveSkillPercent, resolveSkillsVariant } from '@/lib/resume/skills'
+import { resolveSectionVariantForTemplate } from '@/lib/resume/section'
 import { AuthRequiredModal, Modal } from '@/components/ui/Modal'
 import { DateRangePickerField } from '@/components/ui/date-range-picker'
 import { MonthPickerField } from '@/components/ui/month-picker'
@@ -90,6 +93,16 @@ import { AIChatPanel } from './panels/AIChatPanel'
 import { ResumeBuilderToolbar } from './layout/ResumeBuilderToolbar'
 import { useAuthSnapshot } from '@/lib/hooks/useAuthSnapshot'
 import { BrandFlowerIcon } from '@/components/BrandFlowerIcon'
+import {
+  collectVisibleSectionIds,
+  estimateCurrentTemplatePages,
+  resolveTemplateContentMetrics,
+  supportsMeasuredTemplatePagination,
+} from '@/components/resume-reactive-preview/templates/estimate-current-template-height'
+import {
+  resolveSmartOnePageComputation,
+  type SmartOnePageComputation,
+} from '@/components/resume-reactive-preview/templates/smart-one-page'
 import './builder-theme.css'
 
 const ResumeReactivePreview = dynamic(
@@ -101,20 +114,6 @@ const RichTextEditor = dynamic(
   () => import('./RichTextEditor').then(module => module.RichTextEditor),
   { ssr: false },
 )
-
-const FONT_OPTIONS = [
-  'Noto Sans SC',
-  'PingFang SC',
-  'Microsoft YaHei',
-  'Source Han Sans SC',
-  'Source Han Serif SC',
-  'Inter',
-  'IBM Plex Sans',
-  'Georgia',
-  'Times New Roman',
-  'Arial',
-  'Helvetica',
-]
 
 const GENDER_OPTIONS = [
   { value: '', label: '不填' },
@@ -137,10 +136,260 @@ const WORK_YEAR_OPTIONS = [
   { value: '10年以上', label: '10年以上' },
 ]
 
+type StyleBrowserTab = 'layout' | 'elements'
+type StyleBrowserCategory = 'all' | 'header' | 'section' | 'skills'
+type StylePreviewKind =
+  | 'layout-grid'
+  | 'layout-split'
+  | 'layout-column'
+  | 'header-centered'
+  | 'header-avatar'
+  | 'title-band'
+  | 'timeline-vertical'
+  | 'skills-pill'
+  | 'skills-bars'
+  | 'skills-inline'
+  | 'skills-rating'
+
+interface StyleBrowserCard {
+  id: string
+  label: string
+  preview: StylePreviewKind
+  previewImage: string
+  category: Exclude<StyleBrowserCategory, 'all'>
+  groupId: string
+  groupTitle: string
+  keywords: string[]
+  selected: boolean
+  wide?: boolean
+  onSelect: () => void
+}
+
+function StyleBrowserPreview({ kind, image }: { kind: StylePreviewKind; image: string }) {
+  if (kind === 'layout-grid') {
+    return (
+      <div
+        className="resume-style-browser-preview"
+        data-preview-kind={kind}
+        style={{ ['--resume-style-preview-image' as string]: `url(${image})` }}
+      >
+        <div className="resume-style-browser-preview-sheet">
+          <span className="resume-style-browser-preview-line is-lg" />
+          <span className="resume-style-browser-preview-line" />
+          <span className="resume-style-browser-preview-line is-sm" />
+        </div>
+      </div>
+    )
+  }
+
+  if (kind === 'layout-split') {
+    return (
+      <div
+        className="resume-style-browser-preview"
+        data-preview-kind={kind}
+        style={{ ['--resume-style-preview-image' as string]: `url(${image})` }}
+      >
+        <div className="resume-style-browser-preview-sheet">
+          <span className="resume-style-browser-preview-column is-narrow" />
+          <div className="resume-style-browser-preview-stack">
+            <span className="resume-style-browser-preview-line is-md" />
+            <span className="resume-style-browser-preview-line is-sm" />
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (kind === 'layout-column') {
+    return (
+      <div
+        className="resume-style-browser-preview"
+        data-preview-kind={kind}
+        style={{ ['--resume-style-preview-image' as string]: `url(${image})` }}
+      >
+        <div className="resume-style-browser-preview-sheet">
+          <div className="resume-style-browser-preview-stack">
+            <span className="resume-style-browser-preview-line is-md" />
+            <span className="resume-style-browser-preview-line" />
+            <span className="resume-style-browser-preview-line is-sm" />
+          </div>
+          <div className="resume-style-browser-preview-stack">
+            <span className="resume-style-browser-preview-line is-md" />
+            <span className="resume-style-browser-preview-line is-sm" />
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (kind === 'header-centered') {
+    return (
+      <div
+        className="resume-style-browser-preview"
+        data-preview-kind={kind}
+        style={{ ['--resume-style-preview-image' as string]: `url(${image})` }}
+      >
+        <div className="resume-style-browser-preview-sheet">
+          <span className="resume-style-browser-preview-line is-avatar-line" />
+          <span className="resume-style-browser-preview-line" />
+          <div className="resume-style-browser-preview-dots">
+            <span />
+            <span />
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (kind === 'header-avatar') {
+    return (
+      <div
+        className="resume-style-browser-preview"
+        data-preview-kind={kind}
+        style={{ ['--resume-style-preview-image' as string]: `url(${image})` }}
+      >
+        <div className="resume-style-browser-preview-sheet is-side-avatar">
+          <span className="resume-style-browser-preview-avatar" />
+          <div className="resume-style-browser-preview-stack">
+            <span className="resume-style-browser-preview-line is-md" />
+            <span className="resume-style-browser-preview-line is-sm" />
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (kind === 'title-band') {
+    return (
+      <div
+        className="resume-style-browser-preview"
+        data-preview-kind={kind}
+        style={{ ['--resume-style-preview-image' as string]: `url(${image})` }}
+      >
+        <div className="resume-style-browser-preview-sheet is-title-band">
+          <span className="resume-style-browser-preview-band" />
+          <div className="resume-style-browser-preview-stack">
+            <span className="resume-style-browser-preview-line is-md" />
+            <span className="resume-style-browser-preview-line is-sm" />
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (kind === 'timeline-vertical') {
+    return (
+      <div
+        className="resume-style-browser-preview"
+        data-preview-kind={kind}
+        style={{ ['--resume-style-preview-image' as string]: `url(${image})` }}
+      >
+        <div className="resume-style-browser-preview-sheet is-timeline">
+          <div className="resume-style-browser-preview-rail">
+            <span className="resume-style-browser-preview-node" />
+            <span className="resume-style-browser-preview-node" />
+          </div>
+          <div className="resume-style-browser-preview-stack">
+            <span className="resume-style-browser-preview-line is-md" />
+            <span className="resume-style-browser-preview-line is-sm" />
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (kind === 'skills-pill') {
+    return (
+      <div
+        className="resume-style-browser-preview"
+        data-preview-kind={kind}
+        style={{ ['--resume-style-preview-image' as string]: `url(${image})` }}
+      >
+        <div className="resume-style-browser-preview-sheet">
+          <div className="resume-style-browser-preview-tag-grid">
+            <span />
+            <span />
+            <span />
+            <span />
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (kind === 'skills-inline') {
+    return (
+      <div
+        className="resume-style-browser-preview"
+        data-preview-kind={kind}
+        style={{ ['--resume-style-preview-image' as string]: `url(${image})` }}
+      >
+        <div className="resume-style-browser-preview-sheet">
+          <div className="resume-style-browser-preview-inline">
+            <span />
+            <span />
+            <span />
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (kind === 'skills-rating') {
+    return (
+      <div
+        className="resume-style-browser-preview"
+        data-preview-kind={kind}
+        style={{ ['--resume-style-preview-image' as string]: `url(${image})` }}
+      >
+        <div className="resume-style-browser-preview-sheet">
+          <div className="resume-style-browser-preview-leaders">
+            <div className="resume-style-browser-preview-leader-row">
+              <span className="resume-style-browser-preview-line is-md" />
+              <i className="resume-style-browser-preview-leader-line" />
+              <b className="resume-style-browser-preview-leader-value" />
+            </div>
+            <div className="resume-style-browser-preview-leader-row">
+              <span className="resume-style-browser-preview-line is-sm" />
+              <i className="resume-style-browser-preview-leader-line" />
+              <b className="resume-style-browser-preview-leader-value is-short" />
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div
+      className="resume-style-browser-preview"
+      data-preview-kind={kind}
+      style={{ ['--resume-style-preview-image' as string]: `url(${image})` }}
+    >
+      <div className="resume-style-browser-preview-sheet">
+        <div className="resume-style-browser-preview-bars">
+          <span className="resume-style-browser-preview-bar is-strong" />
+          <span className="resume-style-browser-preview-bar is-soft" />
+          <span className="resume-style-browser-preview-bar is-mid" />
+          <span className="resume-style-browser-preview-bar is-soft" />
+        </div>
+      </div>
+    </div>
+  )
+}
+
 const MARITAL_STATUS_OPTIONS = [
   { value: '', label: '不填' },
   { value: '未婚', label: '未婚' },
   { value: '已婚', label: '已婚' },
+]
+
+const SKILL_PROFICIENCY_OPTIONS = [
+  { value: '', label: '不填' },
+  { value: '了解', label: '了解' },
+  { value: '熟悉', label: '熟悉' },
+  { value: '熟练', label: '熟练' },
+  { value: '精通', label: '精通' },
 ]
 
 const POLITICAL_STATUS_OPTIONS = [
@@ -243,6 +492,48 @@ function formatClockTime(value?: number) {
     minute: '2-digit',
     second: '2-digit',
   })
+}
+
+function collectRuntimeSectionIdsForEstimate(data: ResumeData) {
+  const layoutSectionIds = data.metadata.layout.pages.flatMap(page => [...(page.main || []), ...(page.sidebar || [])].filter(Boolean))
+  return collectVisibleSectionIds(data, layoutSectionIds)
+}
+
+function estimateTemplatePageCountForData(data: ResumeData) {
+  if (!supportsMeasuredTemplatePagination(data.metadata.template)) {
+    return Math.max(data.metadata.layout.pages.length, 1)
+  }
+
+  const contentMetrics = resolveTemplateContentMetrics(data)
+  if (!Number.isFinite(contentMetrics.contentMaxHeightPx) || contentMetrics.contentWidthPx <= 1) {
+    return 1
+  }
+
+  const sectionIds = collectRuntimeSectionIdsForEstimate(data)
+  return Math.max(
+    estimateCurrentTemplatePages({
+      data,
+      sectionIds,
+      contentWidthPx: contentMetrics.contentWidthPx,
+      locale: data.metadata.page.locale,
+    }).pages.length,
+    1,
+  )
+}
+
+function buildPreviewFitFingerprint(data: ResumeData) {
+  return [
+    data.metadata.template,
+    data.metadata.page.format,
+    data.metadata.page.marginX.toFixed(2),
+    data.metadata.page.marginY.toFixed(2),
+    data.metadata.page.gapX.toFixed(2),
+    data.metadata.page.gapY.toFixed(2),
+    data.metadata.typography.body.fontSize.toFixed(2),
+    data.metadata.typography.body.lineHeight.toFixed(2),
+    data.metadata.typography.heading.fontSize.toFixed(2),
+    data.metadata.typography.heading.lineHeight.toFixed(2),
+  ].join(':')
 }
 
 function resolveThemePreference(): 'light' | 'dark' {
@@ -781,6 +1072,152 @@ function isSectionHidden(data: ResumeData, sectionId: string) {
   return custom?.hidden ?? false
 }
 
+type SectionItemSortMode = 'date' | 'name' | 'proficiency'
+
+const SECTION_ITEM_SORT_OPTIONS: Array<{ mode: SectionItemSortMode; label: string }> = [
+  { mode: 'date', label: '按日期' },
+  { mode: 'name', label: '按名称' },
+  { mode: 'proficiency', label: '按熟练度' },
+]
+
+const DATE_SORT_SECTION_TYPES = new Set<StandardSectionType>([
+  'experience',
+  'education',
+  'projects',
+  'awards',
+  'certifications',
+  'publications',
+  'volunteer',
+])
+
+const NAME_SORT_SECTION_TYPES = new Set<StandardSectionType>(STANDARD_SECTION_IDS)
+const PROFICIENCY_SORT_SECTION_TYPES = new Set<StandardSectionType>(['skills', 'languages'])
+
+function parseDateSortScore(rawValue: unknown) {
+  const value = String(rawValue || '').trim()
+  if (!value) return Number.NEGATIVE_INFINITY
+  if (/(至今|现在|present|current)/i.test(value)) return 999912
+
+  const normalized = value
+    .replace(/[./年]/g, '-')
+    .replace(/月/g, '')
+    .replace(/日/g, '')
+    .replace(/\s+/g, '')
+  const match = normalized.match(/(\d{4})(?:-(\d{1,2}))?/)
+  if (!match) return Number.NEGATIVE_INFINITY
+
+  const year = Number(match[1] || 0)
+  const month = Number(match[2] || 12)
+  if (!Number.isFinite(year) || year <= 0) return Number.NEGATIVE_INFINITY
+  return year * 100 + Math.max(1, Math.min(12, month || 12))
+}
+
+function resolvePeriodSortScore(period: unknown) {
+  const { start, end } = splitPeriodValue(String(period || ''))
+  return Math.max(parseDateSortScore(end), parseDateSortScore(start))
+}
+
+function resolveNameSortValue(sectionType: StandardSectionType, record: Record<string, unknown>) {
+  switch (sectionType) {
+    case 'profiles':
+      return toSummaryText(record.network) || toSummaryText(record.username)
+    case 'experience':
+      return toSummaryText(record.company) || toSummaryText(record.position)
+    case 'education':
+      return toSummaryText(record.school) || toSummaryText(record.degree)
+    case 'projects':
+      return toSummaryText(record.name)
+    case 'skills':
+      return toSummaryText(record.name)
+    case 'languages':
+      return toSummaryText(record.language)
+    case 'interests':
+      return toSummaryText(record.name)
+    case 'awards':
+    case 'certifications':
+    case 'publications':
+      return toSummaryText(record.title)
+    case 'volunteer':
+      return toSummaryText(record.organization)
+    case 'references':
+      return toSummaryText(record.name)
+    default:
+      return ''
+  }
+}
+
+function resolveDateSortValue(sectionType: StandardSectionType, record: Record<string, unknown>) {
+  switch (sectionType) {
+    case 'experience':
+    case 'education':
+    case 'projects':
+    case 'volunteer':
+      return resolvePeriodSortScore(record.period)
+    case 'awards':
+    case 'certifications':
+    case 'publications':
+      return parseDateSortScore(record.date)
+    default:
+      return Number.NEGATIVE_INFINITY
+  }
+}
+
+function resolveProficiencySortValue(sectionType: StandardSectionType, record: Record<string, unknown>) {
+  if (sectionType === 'skills') {
+    return resolveSkillPercent(record.level, String(record.proficiency || ''))
+  }
+
+  if (sectionType === 'languages') {
+    return resolveSkillPercent(record.level, String(record.fluency || ''))
+  }
+
+  return Number.NEGATIVE_INFINITY
+}
+
+function supportsSectionItemSortMode(sectionType: StandardSectionType, mode: SectionItemSortMode) {
+  if (mode === 'date') return DATE_SORT_SECTION_TYPES.has(sectionType)
+  if (mode === 'name') return NAME_SORT_SECTION_TYPES.has(sectionType)
+  return PROFICIENCY_SORT_SECTION_TYPES.has(sectionType)
+}
+
+function resolveSectionSortType(data: ResumeData, sectionId: string): StandardSectionType | null {
+  if (isStandardSectionId(sectionId)) return sectionId
+  const custom = data.customSections.find(section => section.id === sectionId)
+  if (!custom || custom.type === 'summary' || custom.type === 'cover-letter') return null
+  return custom.type as StandardSectionType
+}
+
+function sortSectionItemsInPlace(items: Record<string, unknown>[], sectionType: StandardSectionType, mode: SectionItemSortMode) {
+  if (!supportsSectionItemSortMode(sectionType, mode)) return
+
+  const getNumberValue = (record: Record<string, unknown>) => {
+    if (mode === 'date') return resolveDateSortValue(sectionType, record)
+    return resolveProficiencySortValue(sectionType, record)
+  }
+
+  const getTextValue = (record: Record<string, unknown>) => resolveNameSortValue(sectionType, record)
+
+  const decorated = items.map((item, index) => ({ item, index }))
+  decorated.sort((left, right) => {
+    if (mode === 'name') {
+      const leftValue = getTextValue(left.item)
+      const rightValue = getTextValue(right.item)
+      const leftEmpty = !leftValue
+      const rightEmpty = !rightValue
+      if (leftEmpty !== rightEmpty) return leftEmpty ? 1 : -1
+      const compare = leftValue.localeCompare(rightValue, 'zh-Hans-CN')
+      return compare !== 0 ? compare : left.index - right.index
+    }
+
+    const leftValue = getNumberValue(left.item)
+    const rightValue = getNumberValue(right.item)
+    if (leftValue !== rightValue) return rightValue - leftValue
+    return left.index - right.index
+  })
+
+  items.splice(0, items.length, ...decorated.map(entry => entry.item))
+}
+
 function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value))
 }
@@ -859,7 +1296,7 @@ let snapdomLoadingPromise: Promise<SnapdomRenderer> | null = null
 let jsPdfLoadingPromise: Promise<JsPdfConstructor> | null = null
 const SIDEBAR_WIDTH_MIN = 360
 const SIDEBAR_WIDTH_MAX = 680
-const SIDEBAR_DEFAULT_WIDTH = 500
+const SIDEBAR_DEFAULT_WIDTH = 620
 const SIDE_TOOLS_COLLAPSED_WIDTH = 58
 const SIDE_TOOLS_EXPANDED_WIDTH = 104
 const SIDE_TOOLS_WIDTH_DELTA = SIDE_TOOLS_EXPANDED_WIDTH - SIDE_TOOLS_COLLAPSED_WIDTH
@@ -871,7 +1308,7 @@ const PREVIEW_FIT_HEIGHT_PADDING = 16
 const PREVIEW_SCROLL_VERTICAL_PADDING = 24
 const PREVIEW_ZOOM_STEP_BUTTON = 0.06
 const PREVIEW_ZOOM_STEP_WHEEL = 0.01  
-type BuilderTool = 'sections' | 'fill' | 'ai' | 'template' | 'typesetting' | 'advanced'
+type BuilderTool = 'sections' | 'fill' | 'ai' | 'template' | 'typesetting'
 type StyleTool = Exclude<BuilderTool, 'sections' | 'fill' | 'ai'>
 type EditorFocusRequest = PreviewNavigationTarget & { requestId: number }
 const EDITOR_FOCUSABLE_SELECTOR = 'input, textarea, select, button, [role="combobox"], [contenteditable="true"]'
@@ -1186,6 +1623,84 @@ function EditorAnchor({
       className={joinClassNames('resume-focus-target', className)}
     >
       {children}
+    </div>
+  )
+}
+
+const ITEM_SORT_ACTIVATION_CONSTRAINT = {
+  delay: 180,
+  tolerance: 6,
+} as const
+
+function useEditorItemSortSensors() {
+  return useSensors(useSensor(PointerSensor, { activationConstraint: ITEM_SORT_ACTIVATION_CONSTRAINT }))
+}
+
+function resolveEditorItemId(rawId: unknown, fallback: string) {
+  return String(rawId || fallback)
+}
+
+function resolveItemReorderIndexes(itemIds: string[], event: DragEndEvent) {
+  const { active, over } = event
+  if (!over) return null
+
+  const activeId = String(active.id)
+  const overId = String(over.id)
+  if (!activeId || !overId || activeId === overId) return null
+
+  const fromIndex = itemIds.indexOf(activeId)
+  const toIndex = itemIds.indexOf(overId)
+  if (fromIndex < 0 || toIndex < 0 || fromIndex === toIndex) return null
+
+  return {
+    fromIndex,
+    toIndex,
+  }
+}
+
+function SortableEditorItemFrame({
+  id,
+  disabled = false,
+  className,
+  children,
+}: {
+  id: string
+  disabled?: boolean
+  className?: string
+  children: (dragHandle: ReactNode) => ReactNode
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id,
+    disabled,
+  })
+
+  const style: CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  }
+
+  const dragHandle = (
+    <button
+      type="button"
+      className="resume-item-drag-handle"
+      aria-label={disabled ? '当前只有一项，无法拖动排序' : '长按拖动排序'}
+      disabled={disabled}
+      onClick={event => event.stopPropagation()}
+      {...(!disabled ? attributes : {})}
+      {...(!disabled ? listeners : {})}
+    >
+      <IconGrip />
+    </button>
+  )
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      data-dragging={isDragging ? 'true' : undefined}
+      className={joinClassNames('resume-editor-sortable-item', className)}
+    >
+      {children(dragHandle)}
     </div>
   )
 }
@@ -1545,7 +2060,21 @@ function SummaryEditor() {
 
 function SkillsSectionEditor() {
   const section = useResumeBuilderStore(state => state.data.sections.skills)
+  const reorderItem = useResumeBuilderStore(state => state.reorderStandardSectionItem)
   const updateResumeData = useResumeBuilderStore(state => state.updateResumeData)
+  const updateItem = useResumeBuilderStore(state => state.updateStandardSectionItem)
+  const removeItem = useResumeBuilderStore(state => state.removeStandardSectionItem)
+  const sortSensors = useEditorItemSortSensors()
+  const sortableItemIds = useMemo(
+    () => section.items.map((item, index) => resolveEditorItemId(item.id, `skills-${index}`)),
+    [section.items],
+  )
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const indexes = resolveItemReorderIndexes(sortableItemIds, event)
+    if (!indexes) return
+    reorderItem('skills', indexes.fromIndex, indexes.toIndex)
+  }
 
   return (
     <div className="space-y-3">
@@ -1561,181 +2090,267 @@ function SkillsSectionEditor() {
           minHeight={180}
         />
       </EditorAnchor>
+
+      {section.items.length > 0 ? (
+        <DndContext sensors={sortSensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={sortableItemIds} strategy={verticalListSortingStrategy}>
+            <div className="resume-skill-inline-list">
+              {section.items.map((item, index) => {
+                const itemId = resolveEditorItemId(item.id, `skills-${index}`)
+
+                return (
+                  <SortableEditorItemFrame key={itemId} id={itemId} disabled={section.items.length < 2}>
+                    {dragHandle => (
+                      <div className="resume-soft-card resume-skill-inline-card">
+                        <div className="resume-skill-inline-content">
+                          <div className="resume-skill-inline-drag">{dragHandle}</div>
+
+                          <EditorAnchor sectionId="skills" itemId={itemId} fieldKey="name" className="resume-skill-inline-field is-name">
+                            <Input
+                              value={item.name}
+                              onChange={value => updateItem('skills', index, { name: value })}
+                              placeholder="技能名称"
+                            />
+                          </EditorAnchor>
+
+                          <EditorAnchor
+                            sectionId="skills"
+                            itemId={itemId}
+                            fieldKey="proficiency"
+                            className="resume-skill-inline-field is-proficiency"
+                          >
+                            <Select
+                              value={item.proficiency}
+                              onChange={value => updateItem('skills', index, { proficiency: toSingleSelectValue(value) })}
+                              placeholder="选择熟练度"
+                              allowClear
+                              style={{ width: '100%' }}
+                            >
+                              {SKILL_PROFICIENCY_OPTIONS.map(option => (
+                                <Option key={option.value} value={option.value}>
+                                  {option.label}
+                                </Option>
+                              ))}
+                            </Select>
+                          </EditorAnchor>
+
+                          <div className="resume-skill-inline-actions">
+                            <Button
+                              type="text"
+                              size="mini"
+                              status="danger"
+                              icon={<IconDelete />}
+                              onClick={() => removeItem('skills', index)}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </SortableEditorItemFrame>
+                )
+              })}
+            </div>
+          </SortableContext>
+        </DndContext>
+      ) : (
+        <div className="resume-skill-inline-empty text-xs text-muted-foreground">点击下方“新增条目”添加技能词条</div>
+      )}
     </div>
   )
 }
 
 function StandardSectionEditor({ sectionId }: { sectionId: StandardSectionType }) {
   const section = useResumeBuilderStore(state => state.data.sections[sectionId])
+  const reorderItem = useResumeBuilderStore(state => state.reorderStandardSectionItem)
   const updateItem = useResumeBuilderStore(state => state.updateStandardSectionItem)
   const removeItem = useResumeBuilderStore(state => state.removeStandardSectionItem)
   const [collapsedItemIds, setCollapsedItemIds] = useState<string[]>([])
   const collapseEnabled = Boolean(STANDARD_SECTION_ITEM_SUMMARY_CONFIG[sectionId])
+  const sortSensors = useEditorItemSortSensors()
+  const sortableItemIds = useMemo(
+    () => section.items.map((item, index) => resolveEditorItemId(item.id, `${sectionId}-${index}`)),
+    [section.items, sectionId],
+  )
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const indexes = resolveItemReorderIndexes(sortableItemIds, event)
+    if (!indexes) return
+    reorderItem(sectionId, indexes.fromIndex, indexes.toIndex)
+  }
 
   return (
     <div className="space-y-3">
-      <div className="space-y-3">
-        {section.items.map((item, index) => {
-          const record = item as unknown as Record<string, unknown>
-          const fields = SECTION_FIELD_CONFIG[sectionId]
-          const itemId = String(item.id || `${sectionId}-${index}`)
-          const summary = resolveStandardSectionItemSummary(sectionId, record)
-          const collapsed = collapseEnabled && collapsedItemIds.includes(itemId)
-          const toggleCollapsed = () => {
-            if (!collapseEnabled) return
-            setCollapsedItemIds(prev => (prev.includes(itemId) ? prev.filter(id => id !== itemId) : [...prev, itemId]))
-          }
+      <DndContext sensors={sortSensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={sortableItemIds} strategy={verticalListSortingStrategy}>
+          <div className="space-y-3">
+            {section.items.map((item, index) => {
+              const record = item as unknown as Record<string, unknown>
+              const fields = SECTION_FIELD_CONFIG[sectionId]
+              const itemId = resolveEditorItemId(item.id, `${sectionId}-${index}`)
+              const summary = resolveStandardSectionItemSummary(sectionId, record)
+              const collapsed = collapseEnabled && collapsedItemIds.includes(itemId)
+              const toggleCollapsed = () => {
+                if (!collapseEnabled) return
+                setCollapsedItemIds(prev => (prev.includes(itemId) ? prev.filter(id => id !== itemId) : [...prev, itemId]))
+              }
 
-          return (
-            <EditorAnchor
-              key={itemId}
-              sectionId={sectionId}
-              itemId={itemId}
-              className={`resume-soft-card resume-standard-item-card p-3 ${collapsed ? 'is-collapsed' : 'is-expanded'}`}
-            >
-              <div
-                className={`resume-standard-item-head ${collapseEnabled ? 'is-collapsible' : ''}`}
-                role={collapseEnabled ? 'button' : undefined}
-                tabIndex={collapseEnabled ? 0 : undefined}
-                aria-expanded={collapseEnabled ? !collapsed : undefined}
-                onClick={toggleCollapsed}
-                onKeyDown={event => {
-                  if (!collapseEnabled) return
-                  if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault()
-                    toggleCollapsed()
-                  }
-                }}
-              >
-                <div className="resume-standard-item-head-main">
-                  {collapseEnabled ? (
-                    <span className={joinClassNames('resume-standard-item-head-toggle', !collapsed && 'is-expanded')}>
-                      <IconChevronRight />
-                    </span>
-                  ) : null}
-                  {summary ? (
-                    <div className="resume-standard-item-summary" title={`${summary.primary} / ${summary.secondary}`}>
-                      <span className="resume-standard-item-summary-primary">{summary.primary}</span>
-                      <span className="resume-standard-item-summary-sep">/</span>
-                      <span className="resume-standard-item-summary-secondary">{summary.secondary}</span>
-                    </div>
-                  ) : null}
-                </div>
-                <Space>
-                  <Button
-                    type="text"
-                    size="mini"
-                    status="danger"
-                    icon={<IconDelete />}
-                    onClick={event => {
-                      event.stopPropagation()
-                      removeItem(sectionId, index)
-                    }}
-                  />
-                </Space>
-              </div>
+              return (
+                <SortableEditorItemFrame key={itemId} id={itemId} disabled={section.items.length < 2}>
+                  {dragHandle => (
+                    <EditorAnchor
+                      sectionId={sectionId}
+                      itemId={itemId}
+                      className={`resume-soft-card resume-standard-item-card p-3 ${collapsed ? 'is-collapsed' : 'is-expanded'}`}
+                    >
+                      <div
+                        className={`resume-standard-item-head ${collapseEnabled ? 'is-collapsible' : ''}`}
+                        role={collapseEnabled ? 'button' : undefined}
+                        tabIndex={collapseEnabled ? 0 : undefined}
+                        aria-expanded={collapseEnabled ? !collapsed : undefined}
+                        onClick={toggleCollapsed}
+                        onKeyDown={event => {
+                          if (!collapseEnabled) return
+                          if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault()
+                            toggleCollapsed()
+                          }
+                        }}
+                      >
+                        <div className="resume-standard-item-head-main">
+                          {dragHandle}
+                          {collapseEnabled ? (
+                            <span className={joinClassNames('resume-standard-item-head-toggle', !collapsed && 'is-expanded')}>
+                              <IconChevronRight />
+                            </span>
+                          ) : null}
+                          {summary ? (
+                            <div className="resume-standard-item-summary" title={`${summary.primary} / ${summary.secondary}`}>
+                              <span className="resume-standard-item-summary-primary">{summary.primary}</span>
+                              <span className="resume-standard-item-summary-sep">/</span>
+                              <span className="resume-standard-item-summary-secondary">{summary.secondary}</span>
+                            </div>
+                          ) : null}
+                        </div>
+                        <div className="resume-standard-item-head-actions">
+                          <Space>
+                            <Button
+                              type="text"
+                              size="mini"
+                              status="danger"
+                              icon={<IconDelete />}
+                              onClick={event => {
+                                event.stopPropagation()
+                                removeItem(sectionId, index)
+                              }}
+                            />
+                          </Space>
+                        </div>
+                      </div>
 
-              <CollapseMotion open={!collapsed} className="resume-standard-item-collapse">
-                <div className="resume-standard-item-content">
-                  {fields.map(field => {
-                    const currentValue = getNestedValue(record, field.key)
-                    const fieldClassName = joinClassNames(
-                      'resume-standard-item-field',
-                      (field.type === 'rich' || field.type === 'keywords') && 'is-wide',
-                    )
+                      <CollapseMotion open={!collapsed} className="resume-standard-item-collapse">
+                        <div className="resume-standard-item-content">
+                          {fields.map(field => {
+                            const currentValue = getNestedValue(record, field.key)
+                            const fieldClassName = joinClassNames(
+                              'resume-standard-item-field',
+                              (field.type === 'rich' || field.type === 'keywords') && 'is-wide',
+                            )
 
-                    if (field.type === 'rich') {
-                      return (
-                        <EditorAnchor key={field.key} sectionId={sectionId} itemId={itemId} fieldKey={field.key} className={fieldClassName}>
-                          <label className="text-xs text-muted-foreground block mb-1">{field.label}</label>
-                          <RichTextEditor
-                            value={String(currentValue || '')}
-                            onChange={value => updateItem(sectionId, index, createNestedPatch(record, field.key, value))}
-                            minHeight={110}
-                          />
-                        </EditorAnchor>
-                      )
-                    }
+                            if (field.type === 'rich') {
+                              return (
+                                <EditorAnchor key={field.key} sectionId={sectionId} itemId={itemId} fieldKey={field.key} className={fieldClassName}>
+                                  <label className="text-xs text-muted-foreground block mb-1">{field.label}</label>
+                                  <RichTextEditor
+                                    value={String(currentValue || '')}
+                                    onChange={value => updateItem(sectionId, index, createNestedPatch(record, field.key, value))}
+                                    minHeight={110}
+                                  />
+                                </EditorAnchor>
+                              )
+                            }
 
-                    if (field.type === 'keywords') {
-                      return (
-                        <EditorAnchor key={field.key} sectionId={sectionId} itemId={itemId} fieldKey={field.key} className={fieldClassName}>
-                          <label className="text-xs text-muted-foreground block mb-1">{field.label}</label>
-                          <Input
-                            value={Array.isArray(currentValue) ? currentValue.join(', ') : ''}
-                            onChange={value => {
-                              const keywords = value
-                                .split(/[,，]/)
-                                .map(item => item.trim())
-                                .filter(Boolean)
-                              updateItem(sectionId, index, createNestedPatch(record, field.key, keywords))
-                            }}
-                            placeholder="逗号分隔"
-                          />
-                        </EditorAnchor>
-                      )
-                    }
+                            if (field.type === 'keywords') {
+                              return (
+                                <EditorAnchor key={field.key} sectionId={sectionId} itemId={itemId} fieldKey={field.key} className={fieldClassName}>
+                                  <label className="text-xs text-muted-foreground block mb-1">{field.label}</label>
+                                  <Input
+                                    value={Array.isArray(currentValue) ? currentValue.join(', ') : ''}
+                                    onChange={value => {
+                                      const keywords = value
+                                        .split(/[,，]/)
+                                        .map(item => item.trim())
+                                        .filter(Boolean)
+                                      updateItem(sectionId, index, createNestedPatch(record, field.key, keywords))
+                                    }}
+                                    placeholder="逗号分隔"
+                                  />
+                                </EditorAnchor>
+                              )
+                            }
 
-                    if (field.type === 'number') {
-                      return (
-                        <EditorAnchor key={field.key} sectionId={sectionId} itemId={itemId} fieldKey={field.key} className={fieldClassName}>
-                          <label className="text-xs text-muted-foreground block mb-1">{field.label}</label>
-                          <Input
-                            type="number"
-                            value={String(currentValue || '')}
-                            onChange={value => updateItem(sectionId, index, createNestedPatch(record, field.key, Number(value || 0)))}
-                          />
-                        </EditorAnchor>
-                      )
-                    }
+                            if (field.type === 'number') {
+                              return (
+                                <EditorAnchor key={field.key} sectionId={sectionId} itemId={itemId} fieldKey={field.key} className={fieldClassName}>
+                                  <label className="text-xs text-muted-foreground block mb-1">{field.label}</label>
+                                  <Input
+                                    type="number"
+                                    value={String(currentValue || '')}
+                                    onChange={value => updateItem(sectionId, index, createNestedPatch(record, field.key, Number(value || 0)))}
+                                  />
+                                </EditorAnchor>
+                              )
+                            }
 
-                    if (field.key === 'period') {
-                      const { start, end } = splitPeriodValue(String(currentValue || ''))
+                            if (field.key === 'period') {
+                              const { start, end } = splitPeriodValue(String(currentValue || ''))
 
-                      return (
-                        <EditorAnchor key={field.key} sectionId={sectionId} itemId={itemId} fieldKey={field.key} className={fieldClassName}>
-                          <DateRangePickerField
-                            label={field.label}
-                            start={start}
-                            end={end}
-                            onChange={(nextStart, nextEnd) => {
-                              updateItem(sectionId, index, createNestedPatch(record, field.key, joinPeriodValue(nextStart, nextEnd)))
-                            }}
-                          />
-                        </EditorAnchor>
-                      )
-                    }
+                              return (
+                                <EditorAnchor key={field.key} sectionId={sectionId} itemId={itemId} fieldKey={field.key} className={fieldClassName}>
+                                  <DateRangePickerField
+                                    label={field.label}
+                                    start={start}
+                                    end={end}
+                                    onChange={(nextStart, nextEnd) => {
+                                      updateItem(sectionId, index, createNestedPatch(record, field.key, joinPeriodValue(nextStart, nextEnd)))
+                                    }}
+                                  />
+                                </EditorAnchor>
+                              )
+                            }
 
-                    if (field.key.toLowerCase().includes('date')) {
-                      return (
-                        <EditorAnchor key={field.key} sectionId={sectionId} itemId={itemId} fieldKey={field.key} className={fieldClassName}>
-                          <MonthPickerField
-                            label={field.label}
-                            value={String(currentValue || '')}
-                            placeholder="不填"
-                            onChange={nextValue => updateItem(sectionId, index, createNestedPatch(record, field.key, nextValue))}
-                          />
-                        </EditorAnchor>
-                      )
-                    }
+                            if (field.key.toLowerCase().includes('date')) {
+                              return (
+                                <EditorAnchor key={field.key} sectionId={sectionId} itemId={itemId} fieldKey={field.key} className={fieldClassName}>
+                                  <MonthPickerField
+                                    label={field.label}
+                                    value={String(currentValue || '')}
+                                    placeholder="不填"
+                                    onChange={nextValue => updateItem(sectionId, index, createNestedPatch(record, field.key, nextValue))}
+                                  />
+                                </EditorAnchor>
+                              )
+                            }
 
-                    return (
-                      <EditorAnchor key={field.key} sectionId={sectionId} itemId={itemId} fieldKey={field.key} className={fieldClassName}>
-                        <label className="text-xs text-muted-foreground block mb-1">{field.label}</label>
-                        <Input
-                          value={String(currentValue || '')}
-                          onChange={value => updateItem(sectionId, index, createNestedPatch(record, field.key, value))}
-                        />
-                      </EditorAnchor>
-                    )
-                  })}
-                </div>
-              </CollapseMotion>
-            </EditorAnchor>
-          )
-        })}
-
-      </div>
+                            return (
+                              <EditorAnchor key={field.key} sectionId={sectionId} itemId={itemId} fieldKey={field.key} className={fieldClassName}>
+                                <label className="text-xs text-muted-foreground block mb-1">{field.label}</label>
+                                <Input
+                                  value={String(currentValue || '')}
+                                  onChange={value => updateItem(sectionId, index, createNestedPatch(record, field.key, value))}
+                                />
+                              </EditorAnchor>
+                            )
+                          })}
+                        </div>
+                      </CollapseMotion>
+                    </EditorAnchor>
+                  )}
+                </SortableEditorItemFrame>
+              )
+            })}
+          </div>
+        </SortableContext>
+      </DndContext>
     </div>
   )
 }
@@ -1743,11 +2358,20 @@ function StandardSectionEditor({ sectionId }: { sectionId: StandardSectionType }
 function CustomSectionInlineEditor({ sectionId }: { sectionId: string }) {
   const section = useResumeBuilderStore(state => state.data.customSections.find(item => item.id === sectionId))
   const updateCustomSection = useResumeBuilderStore(state => state.updateCustomSection)
+  const reorderCustomItem = useResumeBuilderStore(state => state.reorderCustomSectionItem)
   const updateCustomItem = useResumeBuilderStore(state => state.updateCustomSectionItem)
   const removeCustomItem = useResumeBuilderStore(state => state.removeCustomSectionItem)
+  const sortSensors = useEditorItemSortSensors()
 
   if (!section) {
     return <div className="text-xs text-muted-foreground">该自定义板块不存在</div>
+  }
+
+  const sortableItemIds = section.items.map((item, index) => resolveEditorItemId(item.id, `${section.id}-${index}`))
+  const handleDragEnd = (event: DragEndEvent) => {
+    const indexes = resolveItemReorderIndexes(sortableItemIds, event)
+    if (!indexes) return
+    reorderCustomItem(section.id, indexes.fromIndex, indexes.toIndex)
   }
 
   return (
@@ -1770,56 +2394,66 @@ function CustomSectionInlineEditor({ sectionId }: { sectionId: string }) {
         </Select>
       </EditorAnchor>
 
-      {section.items.map((item, index) => (
-        <EditorAnchor
-          key={String(item.id)}
-          sectionId={section.id}
-          itemId={String(item.id || index)}
-          className="resume-soft-card p-2"
-        >
-          <div className="mb-2 flex items-center justify-end">
-            <Space>
-              <Button
-                type="text"
-                size="mini"
-                status="danger"
-                icon={<IconDelete />}
-                onClick={() => removeCustomItem(section.id, index)}
-              />
-            </Space>
+      <DndContext sensors={sortSensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={sortableItemIds} strategy={verticalListSortingStrategy}>
+          <div className="space-y-3">
+            {section.items.map((item, index) => {
+              const itemId = resolveEditorItemId(item.id, `${section.id}-${index}`)
+
+              return (
+                <SortableEditorItemFrame key={itemId} id={itemId} disabled={section.items.length < 2}>
+                  {dragHandle => (
+                    <EditorAnchor sectionId={section.id} itemId={itemId} className="resume-soft-card p-2">
+                      <div className="resume-custom-inline-item-head">
+                        <div className="resume-custom-inline-item-drag">{dragHandle}</div>
+                        <Space>
+                          <Button
+                            type="text"
+                            size="mini"
+                            status="danger"
+                            icon={<IconDelete />}
+                            onClick={() => removeCustomItem(section.id, index)}
+                          />
+                        </Space>
+                      </div>
+
+                      {section.type === 'cover-letter' ? (
+                        <div className="space-y-2">
+                          <EditorAnchor sectionId={section.id} itemId={itemId} fieldKey="recipient">
+                            <label className="block text-xs text-muted-foreground">收件人信息</label>
+                            <RichTextEditor
+                              value={String((item as unknown as { recipient?: string }).recipient || '')}
+                              onChange={value => updateCustomItem(section.id, index, { recipient: value })}
+                              minHeight={80}
+                            />
+                          </EditorAnchor>
+
+                          <EditorAnchor sectionId={section.id} itemId={itemId} fieldKey="content">
+                            <label className="block text-xs text-muted-foreground">正文</label>
+                            <RichTextEditor
+                              value={String((item as unknown as { content?: string }).content || '')}
+                              onChange={value => updateCustomItem(section.id, index, { content: value })}
+                              minHeight={120}
+                            />
+                          </EditorAnchor>
+                        </div>
+                      ) : (
+                        <EditorAnchor sectionId={section.id} itemId={itemId} fieldKey="content">
+                          <RichTextEditor
+                            value={String((item as unknown as { content?: string }).content || '')}
+                            onChange={value => updateCustomItem(section.id, index, { content: value })}
+                            minHeight={120}
+                          />
+                        </EditorAnchor>
+                      )}
+                    </EditorAnchor>
+                  )}
+                </SortableEditorItemFrame>
+              )
+            })}
           </div>
-
-          {section.type === 'cover-letter' ? (
-            <div className="space-y-2">
-              <EditorAnchor sectionId={section.id} itemId={String(item.id || index)} fieldKey="recipient">
-                <label className="block text-xs text-muted-foreground">收件人信息</label>
-                <RichTextEditor
-                  value={String((item as unknown as { recipient?: string }).recipient || '')}
-                  onChange={value => updateCustomItem(section.id, index, { recipient: value })}
-                  minHeight={80}
-                />
-              </EditorAnchor>
-
-              <EditorAnchor sectionId={section.id} itemId={String(item.id || index)} fieldKey="content">
-                <label className="block text-xs text-muted-foreground">正文</label>
-                <RichTextEditor
-                  value={String((item as unknown as { content?: string }).content || '')}
-                  onChange={value => updateCustomItem(section.id, index, { content: value })}
-                  minHeight={120}
-                />
-              </EditorAnchor>
-            </div>
-          ) : (
-            <EditorAnchor sectionId={section.id} itemId={String(item.id || index)} fieldKey="content">
-              <RichTextEditor
-                value={String((item as unknown as { content?: string }).content || '')}
-                onChange={value => updateCustomItem(section.id, index, { content: value })}
-                minHeight={120}
-              />
-            </EditorAnchor>
-          )}
-        </EditorAnchor>
-      ))}
+        </SortableContext>
+      </DndContext>
     </div>
   )
 }
@@ -1979,7 +2613,18 @@ function SortableSectionEditorItem({
   const updateResumeData = useResumeBuilderStore(state => state.updateResumeData)
   const title = getSectionDisplayTitle(data, sectionId)
   const hidden = isSectionHidden(data, sectionId)
-  const isCustomSection = !isStandardSectionId(sectionId) && sectionId !== 'summary'
+  const customSection = !isStandardSectionId(sectionId) && sectionId !== 'summary'
+    ? data.customSections.find(section => section.id === sectionId) || null
+    : null
+  const isCustomSection = Boolean(customSection)
+  const sectionSortType = resolveSectionSortType(data, sectionId)
+  const sortableItemCount =
+    sectionId === 'summary'
+      ? 0
+      : isStandardSectionId(sectionId)
+        ? data.sections[sectionId].items.length
+        : customSection?.items.length || 0
+  const canSortItems = Boolean(sectionSortType) && sortableItemCount > 1
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -2013,7 +2658,26 @@ function SortableSectionEditorItem({
     })
   }
 
-  const canAddItem = sectionId !== 'summary' && sectionId !== 'skills'
+  const canAddItem = sectionId !== 'summary'
+
+  const onSortItems = (mode: SectionItemSortMode) => {
+    if (!sectionSortType || !supportsSectionItemSortMode(sectionSortType, mode) || sortableItemCount < 2) {
+      return
+    }
+
+    updateResumeData(draft => {
+      if (isStandardSectionId(sectionId)) {
+        sortSectionItemsInPlace(draft.sections[sectionId].items as unknown as Record<string, unknown>[], sectionSortType, mode)
+        return
+      }
+
+      const custom = draft.customSections.find(section => section.id === sectionId)
+      if (!custom) return
+      sortSectionItemsInPlace(custom.items as unknown as Record<string, unknown>[], sectionSortType, mode)
+    })
+
+    setMenuOpen(false)
+  }
 
   useEffect(() => {
     if (!menuOpen) return
@@ -2074,6 +2738,41 @@ function SortableSectionEditorItem({
             </Tooltip>
             {menuOpen ? (
               <div className="resume-item-menu-popover">
+                <div className={joinClassNames('resume-item-menu-submenu', !canSortItems && 'is-disabled')}>
+                  <button
+                    type="button"
+                    className={joinClassNames('resume-item-menu-action', 'resume-item-menu-submenu-trigger', !canSortItems && 'is-disabled')}
+                    disabled={!canSortItems}
+                    onClick={event => {
+                      event.preventDefault()
+                      event.stopPropagation()
+                    }}
+                  >
+                    <span>排序方式</span>
+                    <IconChevronRight />
+                  </button>
+                  {canSortItems ? (
+                    <div className="resume-item-menu-submenu-panel">
+                      {SECTION_ITEM_SORT_OPTIONS.map(option => {
+                        const enabled = sectionSortType ? supportsSectionItemSortMode(sectionSortType, option.mode) : false
+                        return (
+                          <button
+                            key={option.mode}
+                            type="button"
+                            className={joinClassNames('resume-item-menu-action', !enabled && 'is-disabled')}
+                            disabled={!enabled}
+                            onClick={event => {
+                              event.stopPropagation()
+                              onSortItems(option.mode)
+                            }}
+                          >
+                            {option.label}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  ) : null}
+                </div>
                 <button
                   type="button"
                   className="resume-item-menu-action"
@@ -2578,73 +3277,339 @@ function IntegratedSectionsEditor({
 
 function LayoutAndStylePanel({
   pane,
+  smartOnePage,
 }: {
   pane: StyleTool
+  smartOnePage: SmartOnePageComputation
 }) {
+  const [browserTab, setBrowserTab] = useState<StyleBrowserTab>('elements')
+  const [styleQuery, setStyleQuery] = useState('')
+  const [elementCategory, setElementCategory] = useState<StyleBrowserCategory>('all')
   const data = useResumeBuilderStore(state => state.data)
   const setTemplate = useResumeBuilderStore(state => state.setTemplate)
   const updateResumeData = useResumeBuilderStore(state => state.updateResumeData)
   const templateDefaultColor = getTemplateDefaultPrimaryColor(data.metadata.template)
-  const currentTemplateName = RESUME_TEMPLATES.find(template => template.id === data.metadata.template)?.name || '默认模板'
   const primaryColor = resolveColorInputValue(data.metadata.design.colors.primary, templateDefaultColor)
   const textColor = resolveColorInputValue(data.metadata.design.colors.text, DEFAULT_TEXT_COLOR)
+  const activeHeaderVariant = resolveHeaderVariantForTemplate(data.metadata.template, data.metadata.design.headerVariant)
+  const activeSectionVariant = resolveSectionVariantForTemplate(data.metadata.template, data.metadata.design.sectionVariant)
+  const activeSkillsVariant = resolveSkillsVariant(data.metadata.design.skillsVariant)
+  const unifiedFontFamily = normalizeResumeFontFamily(
+    data.metadata.typography.body.fontFamily || data.metadata.typography.heading.fontFamily,
+  )
+  const searchKeyword = styleQuery.trim().toLowerCase()
+  const smartOnePageGapState =
+    smartOnePage.effectiveData.metadata.page.gapY < smartOnePage.managedData.metadata.page.gapY - 0.15
+      ? '已收紧'
+      : smartOnePage.effectiveData.metadata.page.gapY > smartOnePage.managedData.metadata.page.gapY + 0.15
+        ? '已放宽'
+        : '默认留白'
+  const smartOnePageStatusText =
+    !smartOnePage.enabled
+      ? '关闭后恢复系统默认留白，正文排版只受你手动设置影响。'
+      : smartOnePage.reason === 'free-form'
+        ? '当前是自由高度，系统会记住这个开关；切回 A4 / Letter 后会继续自动贴合单页。'
+        : smartOnePage.reason === 'unsupported-template'
+          ? '当前模板暂不支持持续一页适配。'
+          : smartOnePage.after
+            ? `当前生效：正文 ${smartOnePage.effectiveData.metadata.typography.body.fontSize.toFixed(1)}pt，行高 ${smartOnePage.effectiveData.metadata.typography.body.lineHeight.toFixed(2)}，${smartOnePageGapState}，预测差值 ${smartOnePage.after.overflowPx >= 0 ? '+' : ''}${smartOnePage.after.overflowPx.toFixed(1)}px。`
+            : '系统会在可读范围内持续调节正文行高、字号和版面留白，尽量稳定贴合单页。'
 
-  if (pane === 'template') {
-    return (
-      <div className="space-y-4">
-        <div>
-          <div className="text-xs text-muted-foreground">模板切换</div>
-          <div className="mt-1 text-[11px] text-muted-foreground">点击任意模板图标立即应用到当前简历。</div>
-        </div>
-        <div className="resume-template-theme-row">
-          <div className="resume-template-theme-current">
-            <div className="resume-template-theme-label">当前使用主题</div>
-            <div className="resume-template-theme-name">
-              <span className="resume-template-theme-swatch" style={{ backgroundColor: primaryColor }} />
-              <span>{currentTemplateName}</span>
-            </div>
-          </div>
-          <div className="resume-template-theme-picker">
-            <label className="text-xs text-muted-foreground" htmlFor="resume-template-primary-color">
-              主题色
-            </label>
-            <input
-              id="resume-template-primary-color"
-              type="color"
-              className="resume-inline-color-input"
-              value={primaryColor}
-              onChange={event =>
-                updateResumeData(draft => {
-                  draft.metadata.design.colors.primary = event.target.value
-                })
-              }
-              aria-label="主题色"
-            />
-          </div>
-        </div>
-        <div className="resume-template-grid">
-          {RESUME_TEMPLATES.map(template => (
-            <button
-              key={template.id}
-              type="button"
-              className={`resume-template-card ${data.metadata.template === template.id ? 'is-active' : ''}`}
-              style={
-                {
-                  ['--resume-template-preview' as string]: `url(${template.preview})`,
-                } as CSSProperties
-              }
-              onClick={() => setTemplate(template.id as ResumeData['metadata']['template'])}
-              aria-label={`切换到${template.name}`}
-              title={template.name}
-            >
-              <span className="resume-template-card-surface" />
-              <span className="resume-template-card-name">{template.name}</span>
-            </button>
-          ))}
-        </div>
+  const layoutCards = useMemo<StyleBrowserCard[]>(
+    () => [
+      {
+        id: 'template-1',
+        label: '标准单栏',
+        preview: 'layout-grid',
+        previewImage: '/template-style-previews/layout-standard.png',
+        category: 'section',
+        groupId: 'layout',
+        groupTitle: '布局模板 / LAYOUT',
+        keywords: ['模板', '布局', '单栏', '标准'],
+        selected: data.metadata.template === 'template-1',
+        onSelect: () => setTemplate('template-1'),
+      },
+      {
+        id: 'template-5',
+        label: '双栏分区',
+        preview: 'layout-split',
+        previewImage: '/template-style-previews/layout-split.png',
+        category: 'section',
+        groupId: 'layout',
+        groupTitle: '布局模板 / LAYOUT',
+        keywords: ['模板', '布局', '双栏', '侧栏'],
+        selected: data.metadata.template === 'template-5',
+        onSelect: () => setTemplate('template-5'),
+      },
+      {
+        id: 'template-3',
+        label: '签条布局',
+        preview: 'layout-column',
+        previewImage: '/template-style-previews/layout-strip.png',
+        category: 'skills',
+        groupId: 'layout',
+        groupTitle: '布局模板 / LAYOUT',
+        keywords: ['模板', '布局', '签条', '结构'],
+        selected: data.metadata.template === 'template-3',
+        onSelect: () => setTemplate('template-3'),
+      },
+    ],
+    [data.metadata.template, setTemplate],
+  )
+
+  const elementCards = useMemo<StyleBrowserCard[]>(
+    () => [
+      {
+        id: 'header-1',
+        label: '铜版卡片',
+        preview: 'header-centered',
+        previewImage: '/template-style-previews/header-bronze-card.png',
+        category: 'header',
+        groupId: 'header',
+        groupTitle: '页眉样式 / HEADER',
+        keywords: ['页眉', '铜版', '卡片', 'header 1'],
+        selected: activeHeaderVariant === 'header-1',
+        onSelect: () =>
+          updateResumeData(draft => {
+            draft.metadata.design.headerVariant = 'header-1'
+          }),
+      },
+      {
+        id: 'header-2',
+        label: '雪纹线性',
+        preview: 'header-centered',
+        previewImage: '/template-style-previews/header-snow-line.png',
+        category: 'header',
+        groupId: 'header',
+        groupTitle: '页眉样式 / HEADER',
+        keywords: ['页眉', '线性', '雪纹', 'header 2'],
+        selected: activeHeaderVariant === 'header-2',
+        onSelect: () =>
+          updateResumeData(draft => {
+            draft.metadata.design.headerVariant = 'header-2'
+          }),
+      },
+      {
+        id: 'header-3',
+        label: '绯红横幅',
+        preview: 'header-centered',
+        previewImage: '/template-style-previews/header-crimson-banner.png',
+        category: 'header',
+        groupId: 'header',
+        groupTitle: '页眉样式 / HEADER',
+        keywords: ['页眉', '横幅', '绯红', 'header 3'],
+        selected: activeHeaderVariant === 'header-3',
+        onSelect: () =>
+          updateResumeData(draft => {
+            draft.metadata.design.headerVariant = 'header-3'
+          }),
+      },
+      {
+        id: 'header-4',
+        label: '经典居中',
+        preview: 'header-centered',
+        previewImage: '/template-style-previews/header-classic-centered.png',
+        category: 'header',
+        groupId: 'header',
+        groupTitle: '页眉样式 / HEADER',
+        keywords: ['页眉', '居中', '经典', '姓名'],
+        selected: activeHeaderVariant === 'header-4',
+        onSelect: () =>
+          updateResumeData(draft => {
+            draft.metadata.design.headerVariant = 'header-4'
+          }),
+      },
+      {
+        id: 'header-5',
+        label: '侧重头像',
+        preview: 'header-avatar',
+        previewImage: '/template-style-previews/header-side-avatar.png',
+        category: 'header',
+        groupId: 'header',
+        groupTitle: '页眉样式 / HEADER',
+        keywords: ['页眉', '头像', '侧边'],
+        selected: activeHeaderVariant === 'header-5',
+        onSelect: () =>
+          updateResumeData(draft => {
+            draft.metadata.design.headerVariant = 'header-5'
+          }),
+      },
+      {
+        id: 'section-1',
+        label: '铜版网格',
+        preview: 'timeline-vertical',
+        previewImage: '/template-style-previews/section-bronze-grid.png',
+        category: 'section',
+        groupId: 'section',
+        groupTitle: '模块样式 / SECTION',
+        keywords: ['section', '标题', '经历', '铜版', '网格'],
+        selected: activeSectionVariant === 'section-1',
+        wide: true,
+        onSelect: () =>
+          updateResumeData(draft => {
+            draft.metadata.design.sectionVariant = 'section-1'
+          }),
+      },
+      {
+        id: 'section-2',
+        label: '雪纹简章',
+        preview: 'title-band',
+        previewImage: '/template-style-previews/section-snow-booklet.png',
+        category: 'section',
+        groupId: 'section',
+        groupTitle: '模块样式 / SECTION',
+        keywords: ['section', '标题', '经历', '雪纹', '简章'],
+        selected: activeSectionVariant === 'section-2',
+        onSelect: () =>
+          updateResumeData(draft => {
+            draft.metadata.design.sectionVariant = 'section-2'
+          }),
+      },
+      {
+        id: 'section-3',
+        label: '强调签条',
+        preview: 'title-band',
+        previewImage: '/template-style-previews/title-accent-band.png',
+        category: 'section',
+        groupId: 'section',
+        groupTitle: '模块样式 / SECTION',
+        keywords: ['标题', '签条', '强调'],
+        selected: activeSectionVariant === 'section-3',
+        onSelect: () =>
+          updateResumeData(draft => {
+            draft.metadata.design.sectionVariant = 'section-3'
+          }),
+      },
+      {
+        id: 'section-4',
+        label: '浅紫书页',
+        preview: 'timeline-vertical',
+        previewImage: '/template-style-previews/section-lavender-page.png',
+        category: 'section',
+        groupId: 'section',
+        groupTitle: '模块样式 / SECTION',
+        keywords: ['section', '标题', '经历', '浅紫', '书页'],
+        selected: activeSectionVariant === 'section-4',
+        onSelect: () =>
+          updateResumeData(draft => {
+            draft.metadata.design.sectionVariant = 'section-4'
+          }),
+      },
+      {
+        id: 'skills-1',
+        label: '标签形式',
+        preview: 'skills-pill',
+        previewImage: '/template-style-previews/skills-tags.png',
+        category: 'skills',
+        groupId: 'skills',
+        groupTitle: '技能 / SKILLS',
+        keywords: ['技能', '标签', '方块', 'chip'],
+        selected: activeSkillsVariant === 'skills-1',
+        onSelect: () =>
+          updateResumeData(draft => {
+            draft.metadata.design.skillsVariant = 'skills-1'
+          }),
+      },
+      {
+        id: 'skills-2',
+        label: '进度条',
+        preview: 'skills-bars',
+        previewImage: '/template-style-previews/skills-progress.png',
+        category: 'skills',
+        groupId: 'skills',
+        groupTitle: '技能 / SKILLS',
+        keywords: ['技能', '进度条', '百分比'],
+        selected: activeSkillsVariant === 'skills-2',
+        onSelect: () =>
+          updateResumeData(draft => {
+            draft.metadata.design.skillsVariant = 'skills-2'
+          }),
+      },
+      {
+        id: 'skills-3',
+        label: '逗号分隔',
+        preview: 'skills-inline',
+        previewImage: '/template-style-previews/skills-inline.png',
+        category: 'skills',
+        groupId: 'skills',
+        groupTitle: '技能 / SKILLS',
+        keywords: ['技能', '逗号', '一行'],
+        selected: activeSkillsVariant === 'skills-3',
+        onSelect: () =>
+          updateResumeData(draft => {
+            draft.metadata.design.skillsVariant = 'skills-3'
+          }),
+      },
+      {
+        id: 'skills-4',
+        label: '熟练度对照',
+        preview: 'skills-rating',
+        previewImage: '/template-style-previews/skills-rating.png',
+        category: 'skills',
+        groupId: 'skills',
+        groupTitle: '技能 / SKILLS',
+        keywords: ['技能', '熟练度', '左右'],
+        selected: activeSkillsVariant === 'skills-4',
+        onSelect: () =>
+          updateResumeData(draft => {
+            draft.metadata.design.skillsVariant = 'skills-4'
+          }),
+      },
+    ],
+    [activeHeaderVariant, activeSectionVariant, activeSkillsVariant, updateResumeData],
+  )
+
+  const filteredLayoutCards = useMemo(
+    () =>
+      layoutCards.filter(card => {
+        if (!searchKeyword) return true
+        return [card.label, ...card.keywords].some(keyword => keyword.toLowerCase().includes(searchKeyword))
+      }),
+    [layoutCards, searchKeyword],
+  )
+
+  const filteredElementCards = useMemo(
+    () =>
+      elementCards.filter(card => {
+        const matchesCategory = elementCategory === 'all' || card.category === elementCategory
+        if (!matchesCategory) return false
+        if (!searchKeyword) return true
+        return [card.label, card.groupTitle, ...card.keywords].some(keyword => keyword.toLowerCase().includes(searchKeyword))
+      }),
+    [elementCards, elementCategory, searchKeyword],
+  )
+
+  const groupedElementCards = useMemo(() => {
+    const groups = new Map<string, { title: string; cards: StyleBrowserCard[] }>()
+    filteredElementCards.forEach(card => {
+      const current = groups.get(card.groupId)
+      if (current) {
+        current.cards.push(card)
+        return
+      }
+      groups.set(card.groupId, {
+        title: card.groupTitle,
+        cards: [card],
+      })
+    })
+    return Array.from(groups.entries()).map(([id, value]) => ({ id, ...value }))
+  }, [filteredElementCards])
+
+  const renderStyleCard = (card: StyleBrowserCard) => (
+    <button
+      key={card.id}
+      type="button"
+      className={joinClassNames('resume-style-browser-card', card.selected && 'is-selected', card.wide && 'is-wide')}
+      onClick={card.onSelect}
+      aria-pressed={card.selected}
+      title={card.label}
+    >
+      <div className="resume-style-browser-card-frame">
+        <StyleBrowserPreview kind={card.preview} image={card.previewImage} />
       </div>
-    )
-  }
+      <span className="resume-style-browser-card-label">{card.label}</span>
+    </button>
+  )
 
   if (pane === 'typesetting') {
     return (
@@ -2669,35 +3634,21 @@ function LayoutAndStylePanel({
 
         <div className="grid grid-cols-1 gap-2">
           <div>
-            <label className="text-xs text-muted-foreground block mb-1">主字体</label>
+            <label className="text-xs text-muted-foreground block mb-1">字体（全局）</label>
             <Select
-              value={data.metadata.typography.body.fontFamily}
+              value={unifiedFontFamily}
               onChange={value =>
                 updateResumeData(draft => {
-                  draft.metadata.typography.body.fontFamily = Array.isArray(value) ? value[0] || '' : value
+                  const nextFont = Array.isArray(value) ? value[0] || '' : value
+                  const unifiedNextFont = normalizeResumeFontFamily(nextFont)
+                  draft.metadata.typography.body.fontFamily = unifiedNextFont
+                  draft.metadata.typography.heading.fontFamily = unifiedNextFont
                 })
               }
             >
-              {FONT_OPTIONS.map(font => (
-                <Option key={font} value={font}>
-                  {font}
-                </Option>
-              ))}
-            </Select>
-          </div>
-          <div>
-            <label className="text-xs text-muted-foreground block mb-1">标题字体</label>
-            <Select
-              value={data.metadata.typography.heading.fontFamily}
-              onChange={value =>
-                updateResumeData(draft => {
-                  draft.metadata.typography.heading.fontFamily = Array.isArray(value) ? value[0] || '' : value
-                })
-              }
-            >
-              {FONT_OPTIONS.map(font => (
-                <Option key={font} value={font}>
-                  {font}
+              {RESUME_FONT_PRESETS.map(font => (
+                <Option key={font.value} value={font.value}>
+                  {font.label}
                 </Option>
               ))}
             </Select>
@@ -2802,44 +3753,124 @@ function LayoutAndStylePanel({
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
-          <NumberComboField
-            label="横向间距 (pt)"
-            value={data.metadata.page.gapX}
-            config={RESUME_EDITOR_LIMITS.page.gapX}
-            onChange={next =>
-              updateResumeData(draft => {
-                draft.metadata.page.gapX = next
-              })
-            }
-          />
-          <NumberComboField
-            label="纵向间距 (pt)"
-            value={data.metadata.page.gapY}
-            config={RESUME_EDITOR_LIMITS.page.gapY}
-            onChange={next =>
-              updateResumeData(draft => {
-                draft.metadata.page.gapY = next
-              })
-            }
-          />
+        <div className="space-y-2 rounded-sm border border-border/70 bg-[var(--control-surface)] p-2.5">
+          <div className="flex items-start gap-2">
+            <Checkbox
+              checked={data.metadata.page.smartOnePageEnabled}
+              onChange={checked =>
+                updateResumeData(draft => {
+                  draft.metadata.page.smartOnePageEnabled = checked
+                })
+              }
+            />
+            <div className="min-w-0 space-y-1">
+              <div className="text-xs text-foreground">智能一页</div>
+              <div className="text-[11px] text-muted-foreground">
+                开启后系统会持续调节正文行高、字号和版面留白；你继续改内容时，它会跟着重新计算。
+              </div>
+            </div>
+          </div>
+          <div className="text-[11px] text-muted-foreground">
+            {smartOnePageStatusText}
+          </div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between text-xs text-muted-foreground">
-        <span>隐藏图标</span>
-        <Switch
-          checked={data.metadata.page.hideIcons}
-          onChange={checked =>
+    <div className="resume-style-browser-shell">
+      <div className="resume-style-browser-tabs" role="tablist" aria-label="样式浏览模式">
+        <button
+          type="button"
+          className="resume-style-browser-tab"
+          data-active={browserTab === 'layout' ? 'true' : undefined}
+          onClick={() => setBrowserTab('layout')}
+        >
+          全局布局
+        </button>
+        <button
+          type="button"
+          className="resume-style-browser-tab"
+          data-active={browserTab === 'elements' ? 'true' : undefined}
+          onClick={() => setBrowserTab('elements')}
+          >
+            局部组件
+          </button>
+      </div>
+
+      <div className="resume-style-browser-search-box">
+        <label className="resume-style-browser-search">
+          <Search size={18} />
+          <input
+            value={styleQuery}
+            onChange={event => setStyleQuery(event.target.value)}
+            placeholder="搜索样式关键词..."
+            aria-label="搜索样式关键词"
+          />
+        </label>
+      </div>
+
+      <div className="resume-style-browser-theme-row">
+        <span className="resume-style-browser-theme-label">主题色</span>
+        <input
+          type="color"
+          className="resume-inline-color-input"
+          value={primaryColor}
+          onChange={event =>
             updateResumeData(draft => {
-              draft.metadata.page.hideIcons = checked
+              draft.metadata.design.colors.primary = event.target.value
             })
           }
+          aria-label="主题色"
         />
+      </div>
+
+      {browserTab === 'elements' ? (
+          <div className="resume-style-browser-filters" role="tablist" aria-label="样式分类筛选">
+            {([
+              ['all', '全部'],
+              ['header', '页眉'],
+              ['section', 'Section'],
+              ['skills', '技能'],
+            ] as Array<[StyleBrowserCategory, string]>).map(([value, label]) => (
+              <button
+                key={value}
+              type="button"
+              className="resume-style-browser-filter"
+              data-active={elementCategory === value ? 'true' : undefined}
+              onClick={() => setElementCategory(value)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      ) : null}
+
+      <div className="resume-style-browser-content">
+        {browserTab === 'layout' ? (
+          <section className="resume-style-browser-group">
+            <div className="resume-style-browser-group-head">
+              <div className="resume-style-browser-group-title">布局模板 / LAYOUT</div>
+            </div>
+            <div className="resume-style-browser-grid">
+              {filteredLayoutCards.map(renderStyleCard)}
+            </div>
+          </section>
+        ) : null}
+
+        {browserTab === 'elements'
+          ? groupedElementCards.map(group => (
+              <section key={group.id} className="resume-style-browser-group">
+                <div className="resume-style-browser-group-head">
+                  <div className="resume-style-browser-group-title">{group.title}</div>
+                </div>
+                <div className="resume-style-browser-grid">
+                  {group.cards.map(renderStyleCard)}
+                </div>
+              </section>
+            ))
+          : null}
       </div>
     </div>
   )
@@ -3059,6 +4090,7 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
   const [previewAutoFitReady, setPreviewAutoFitReady] = useState(false)
   const [previewScale, setPreviewScale] = useState(PREVIEW_INITIAL_SCALE)
   const [previewContentHeight, setPreviewContentHeight] = useState(0)
+  const [smartPreviewFitRevision, setSmartPreviewFitRevision] = useState(0)
   const [aiPreviewState, setAiPreviewState] = useState<AIPreviewState | null>(null)
   const [aiPreviewActionLoading, setAiPreviewActionLoading] = useState<'new_version' | 'overwrite' | 'discard' | null>(null)
   const [resolvedDraftId, setResolvedDraftId] = useState<string | null>(null)
@@ -3076,14 +4108,53 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
   const isGuestDraft = initialResume.id.startsWith('guest-')
   const isTranslateCompareMode = activeTool === 'ai' && aiPreviewState?.intent === 'translate_resume'
   const activeAIDraftId = activeTool === 'ai' ? aiPreviewState?.draftId : undefined
-  const previewRenderData = activeTool === 'ai' && aiPreviewState ? aiPreviewState.data : data
+  const baseSmartOnePage = useMemo(() => resolveSmartOnePageComputation(data), [data])
+  const aiSmartOnePage = useMemo(
+    () => (aiPreviewState ? resolveSmartOnePageComputation(aiPreviewState.data) : null),
+    [aiPreviewState],
+  )
+  const basePreviewData = baseSmartOnePage.effectiveData
+  const comparePreviewData = aiSmartOnePage?.effectiveData || aiPreviewState?.data || null
+  const previewRenderSmartState = activeTool === 'ai' && aiSmartOnePage ? aiSmartOnePage : baseSmartOnePage
+  const previewRenderData = previewRenderSmartState.effectiveData
+  const smartPreviewActive =
+    previewRenderSmartState.active ||
+    (isTranslateCompareMode && (baseSmartOnePage.active || Boolean(aiSmartOnePage?.active)))
+  const basePreviewPageCount = useMemo(() => estimateTemplatePageCountForData(basePreviewData), [basePreviewData])
+  const previewRenderPageCount = useMemo(
+    () => estimateTemplatePageCountForData(previewRenderData),
+    [previewRenderData],
+  )
+  const comparePreviewPageCount = useMemo(
+    () => (comparePreviewData ? estimateTemplatePageCountForData(comparePreviewData) : 1),
+    [comparePreviewData],
+  )
+  const basePreviewFitFingerprint = useMemo(() => buildPreviewFitFingerprint(basePreviewData), [basePreviewData])
+  const previewRenderFitFingerprint = useMemo(() => buildPreviewFitFingerprint(previewRenderData), [previewRenderData])
+  const comparePreviewFitFingerprint = useMemo(
+    () => (comparePreviewData ? buildPreviewFitFingerprint(comparePreviewData) : 'no-compare-preview'),
+    [comparePreviewData],
+  )
   const previewFitKey = useMemo(() => {
     if (!initialized) return `${initialResume.id}:0`
     if (isTranslateCompareMode && aiPreviewState) {
-      return `${initialResume.id}:compare:${data.metadata.layout.pages.length}:${aiPreviewState.data.metadata.layout.pages.length}`
+      return `${initialResume.id}:compare:${basePreviewPageCount}:${comparePreviewPageCount}:${basePreviewFitFingerprint}:${comparePreviewFitFingerprint}:${smartPreviewFitRevision}`
     }
-    return `${initialResume.id}:${previewRenderData.metadata.layout.pages.length}`
-  }, [aiPreviewState, data.metadata.layout.pages.length, initialResume.id, initialized, isTranslateCompareMode, previewRenderData.metadata.layout.pages.length])
+    return `${initialResume.id}:${previewRenderPageCount}:${previewRenderFitFingerprint}:${smartPreviewActive ? smartPreviewFitRevision : 0}`
+  }, [
+    aiPreviewState,
+    basePreviewFitFingerprint,
+    basePreviewPageCount,
+    comparePreviewFitFingerprint,
+    comparePreviewPageCount,
+    initialResume.id,
+    initialized,
+    isTranslateCompareMode,
+    previewRenderFitFingerprint,
+    previewRenderPageCount,
+    smartPreviewActive,
+    smartPreviewFitRevision,
+  ])
   const previewScaledHeight = Math.max(previewContentHeight * previewScale, 0)
   const previewScrollSpaceHeight = previewScaledHeight + PREVIEW_SCROLL_VERTICAL_PADDING * 2
   const sidePanelWidth = sidebarWidth + (sideToolsExpanded ? SIDE_TOOLS_WIDTH_DELTA : 0)
@@ -3101,11 +4172,11 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
         <div className="resume-ai-compare-stage">
           <div className="resume-ai-compare-column">
             <div className="resume-ai-compare-label">原简历</div>
-            <ResumeReactivePreview data={data} onNavigate={handlePreviewNavigate} />
+            <ResumeReactivePreview data={basePreviewData} onNavigate={handlePreviewNavigate} />
           </div>
           <div className="resume-ai-compare-column">
             <div className="resume-ai-compare-label">翻译简历</div>
-            <ResumeReactivePreview data={aiPreviewState.data} onNavigate={handlePreviewNavigate} />
+            <ResumeReactivePreview data={comparePreviewData || aiPreviewState.data} onNavigate={handlePreviewNavigate} />
           </div>
         </div>
       )
@@ -3117,7 +4188,12 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
         onNavigate={handlePreviewNavigate}
       />
     )
-  }, [aiPreviewState, data, handlePreviewNavigate, isTranslateCompareMode, previewRenderData])
+  }, [aiPreviewState, basePreviewData, comparePreviewData, handlePreviewNavigate, isTranslateCompareMode, previewRenderData])
+
+  useEffect(() => {
+    if (!initialized || !smartPreviewActive) return
+    setSmartPreviewFitRevision(previous => previous + 1)
+  }, [activeTool, aiPreviewState, data, initialized, smartPreviewActive])
 
   const handlePreviewDraftInCanvas = useCallback((payload: {
     draftId: string
@@ -4148,16 +5224,6 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
                     <FileText size={16} />
                   </button>
                 </SideToolHint>
-                <SideToolHint label="高级设置" active={activeTool === 'advanced'}>
-                  <button
-                    type="button"
-                    className="resume-side-tool-btn"
-                    onClick={() => handleSelectTool('advanced')}
-                    aria-label="高级设置"
-                  >
-                    <SlidersHorizontal size={16} />
-                  </button>
-                </SideToolHint>
               </div>
 
               <div className="resume-side-tools-spacer" />
@@ -4220,7 +5286,7 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
                     />
                   ) : null}
                   {activeTool !== 'sections' && activeTool !== 'fill' && activeTool !== 'ai'
-                    ? <LayoutAndStylePanel pane={activeTool} />
+                    ? <LayoutAndStylePanel pane={activeTool} smartOnePage={baseSmartOnePage} />
                     : null}
                 </div>
               </div>

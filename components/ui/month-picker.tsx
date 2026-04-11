@@ -78,20 +78,14 @@ export function MonthPickerField({
           aria-expanded={open}
           data-open={open ? 'true' : undefined}
           className={cn(
-            'control-field resume-month-picker-trigger h-9 w-full px-3 py-2 text-sm leading-5 text-foreground outline-none',
+            'control-field control-date-trigger resume-month-picker-trigger',
             showTriggerIcon && 'has-icon',
             open && 'is-open',
           )}
         >
           <span className={cn('min-w-0 flex-1 truncate', !value && 'text-muted-foreground')}>{displayText}</span>
           {showTriggerIcon ? (
-            <span
-              className={cn(
-                'resume-month-picker-trigger-icon inline-flex shrink-0 text-muted-foreground transition-transform duration-200',
-                open && 'rotate-180',
-              )}
-              aria-hidden
-            >
+            <span className="control-date-trigger-icon resume-month-picker-trigger-icon" aria-hidden>
               <ChevronDown className="h-4 w-4" />
             </span>
           ) : null}
@@ -114,27 +108,27 @@ export function MonthPickerField({
             <Popover.Popup
               ref={panelRef}
               initialFocus={() => getInitialFocusTarget()}
-              className={cn('resume-month-picker-panel control-panel control-floating-panel rounded-[18px] p-3', popupClassName)}
+              className={cn('resume-month-picker-panel control-panel control-floating-panel control-date-panel', popupClassName)}
             >
-              <div className="resume-month-picker-panel-head mb-3 flex items-center justify-between gap-3">
+              <div className="resume-month-picker-panel-head">
                 <button
                   type="button"
-                  className="resume-month-picker-year-btn inline-flex h-8 items-center rounded-[10px] px-3 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  className="resume-month-picker-year-btn control-date-secondary-btn"
                   onClick={() => setYear(prev => clamp(prev - 1, MIN_TIME_YEAR, maxYear))}
                 >
                   上一年
                 </button>
-                <span className="resume-month-picker-year-label text-sm font-medium text-foreground">{year} 年</span>
+                <span className="resume-month-picker-year-label control-date-year-label">{year} 年</span>
                 <button
                   type="button"
-                  className="resume-month-picker-year-btn inline-flex h-8 items-center rounded-[10px] px-3 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  className="resume-month-picker-year-btn control-date-secondary-btn"
                   onClick={() => setYear(prev => clamp(prev + 1, MIN_TIME_YEAR, maxYear))}
                 >
                   下一年
                 </button>
               </div>
 
-              <div className="resume-month-picker-grid grid grid-cols-4 gap-2">
+              <div className="resume-month-picker-grid control-date-grid">
                 {MONTH_OPTIONS.map(month => {
                   const nextValue = `${year}-${month}`
                   const active = selectedYear === year && selectedMonth === month
@@ -146,11 +140,7 @@ export function MonthPickerField({
                       type="button"
                       data-month-button="true"
                       data-selected-month={active ? 'true' : undefined}
-                      className={cn(
-                        'resume-month-picker-cell inline-flex h-9 items-center justify-center rounded-[12px] text-sm text-foreground transition-colors',
-                        'hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent',
-                        active && 'is-active bg-primary text-primary-foreground hover:bg-primary',
-                      )}
+                      className={cn('resume-month-picker-cell control-date-grid-button', active && 'is-active')}
                       disabled={disabled}
                       onClick={() => {
                         if (disabled) return
@@ -164,10 +154,10 @@ export function MonthPickerField({
                 })}
               </div>
 
-              <div className="resume-month-picker-panel-actions mt-3 flex items-center justify-end gap-2 border-t border-border pt-3">
+              <div className="resume-month-picker-panel-actions control-date-actions">
                 <button
                   type="button"
-                  className="resume-month-picker-action inline-flex h-8 items-center rounded-[10px] px-3 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  className="resume-month-picker-action control-date-action"
                   onClick={() => {
                     onChange('')
                     setOpen(false)
@@ -178,10 +168,7 @@ export function MonthPickerField({
                 {allowPresent ? (
                   <button
                     type="button"
-                    className={cn(
-                      'resume-month-picker-action inline-flex h-8 items-center rounded-[10px] px-3 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground',
-                      value === '至今' && 'is-active bg-muted text-foreground',
-                    )}
+                    className={cn('resume-month-picker-action control-date-action', value === '至今' && 'is-active')}
                     onClick={() => {
                       onChange('至今')
                       setOpen(false)

@@ -1,0 +1,60 @@
+.h3Root {
+  position: relative;
+  isolation: isolate;
+  z-index: 0;
+}
+
+.h3Root::before {
+  content: '';
+  position: absolute;
+  top: calc(var(--page-margin-y) * -1);
+  left: calc(var(--page-margin-x) * -1);
+  right: calc(var(--page-margin-x) * -1);
+  bottom: 0;
+  background: var(--resume-theme-primary, var(--page-primary-color, #8b2d3f));
+  z-index: 0;
+  pointer-events: none;
+}
+
+.h3Content {
+  position: relative;
+  z-index: 1;
+  min-height: 124px;
+}
+
+.h3Interactive {
+  transition: background-color 120ms ease;
+}
+
+.h3Interactive:hover,
+.h3Interactive:focus-visible {
+  background: color-mix(in srgb, var(--resume-theme-primary) 4%, transparent);
+}
+
+.h3Name {
+  margin: 0;
+  font-family: var(--page-heading-font-family, 'Noto Serif SC', serif);
+  font-weight: 700;
+}
+
+.h3Headline {
+  margin: 0;
+  font-weight: 500;
+}
+
+.h3Meta {
+  margin-bottom: 0;
+}
+
+.h3MetaItem {
+  display: inline;
+}
+
+.h3MetaSep {
+  opacity: 0.66;
+}
+
+.h3MailMark {
+  margin-right: 8px;
+  font-size: 11px;
+}

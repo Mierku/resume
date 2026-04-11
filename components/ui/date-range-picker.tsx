@@ -120,10 +120,10 @@ export function DateRangePickerField({
           aria-haspopup="dialog"
           aria-expanded={open}
           data-open={open ? 'true' : undefined}
-          className="control-field resume-period-range-trigger has-icon h-9 w-full px-3 py-2 text-sm leading-5 text-foreground outline-none"
+          className={cn('control-field control-date-trigger resume-period-range-trigger has-icon', open && 'is-open')}
         >
           <span className={cn('min-w-0 flex-1 truncate', !start && 'text-muted-foreground')}>{displayText}</span>
-          <span className="resume-period-range-trigger-icon" aria-hidden>
+          <span className="control-date-trigger-icon resume-period-range-trigger-icon" aria-hidden>
             <CalendarDays size={16} strokeWidth={1.8} />
           </span>
         </Popover.Trigger>
@@ -146,10 +146,7 @@ export function DateRangePickerField({
             <Popover.Popup
               ref={panelRef}
               initialFocus={() => getInitialFocusTarget()}
-              className={cn(
-                'resume-period-range-panel control-panel control-floating-panel overflow-hidden rounded-[18px] p-3',
-                popupClassName,
-              )}
+              className={cn('resume-period-range-panel control-panel control-floating-panel control-date-panel overflow-hidden', popupClassName)}
             >
               <div className="grid gap-3 md:grid-cols-2">
                 <MonthColumn
@@ -169,10 +166,10 @@ export function DateRangePickerField({
                 />
               </div>
 
-              <div className="mt-3 flex items-center justify-end gap-2 border-t border-border pt-3">
+              <div className="control-date-actions resume-period-range-actions">
                 <button
                   type="button"
-                  className="inline-flex h-8 items-center rounded-[10px] px-3 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  className="control-date-action resume-period-range-action"
                   onClick={() => {
                     onChange('', '')
                     setOpen(false)
@@ -182,10 +179,7 @@ export function DateRangePickerField({
                 </button>
                 <button
                   type="button"
-                  className={cn(
-                    'inline-flex h-8 items-center rounded-[10px] px-3 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground',
-                    end === '至今' && 'bg-muted text-foreground',
-                  )}
+                  className={cn('control-date-action resume-period-range-action', end === '至今' && 'is-active')}
                   onClick={() => {
                     const fallbackMonth = formatMonthValue(currentYear, String(new Date().getMonth() + 1).padStart(2, '0'))
                     const nextStart = start && isYearMonthValue(start) ? start : fallbackMonth
@@ -215,21 +209,21 @@ interface MonthColumnProps {
 
 function MonthColumn({ title, year, value, minValue, onYearChange, onSelect }: MonthColumnProps) {
   return (
-    <section className="min-w-0 rounded-[14px] bg-muted/20 p-3">
+    <section className="control-date-column">
       <div className="mb-3 flex items-center justify-between gap-2">
-        <span className="text-xs font-medium text-muted-foreground">{title}</span>
-        <div className="flex items-center gap-1">
+        <span className="control-date-section-label">{title}</span>
+        <div className="control-date-year-controls">
           <button
             type="button"
-            className="inline-flex size-8 items-center justify-center rounded-[10px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            className="control-date-secondary-btn"
             onClick={() => onYearChange(prev => clampYear(prev - 1))}
           >
             <ChevronLeft size={16} strokeWidth={1.8} />
           </button>
-          <span className="min-w-16 text-center text-sm font-medium text-foreground">{year} 年</span>
+          <span className="control-date-year-label">{year} 年</span>
           <button
             type="button"
-            className="inline-flex size-8 items-center justify-center rounded-[10px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            className="control-date-secondary-btn"
             onClick={() => onYearChange(prev => clampYear(prev + 1))}
           >
             <ChevronRight size={16} strokeWidth={1.8} />
@@ -237,7 +231,7 @@ function MonthColumn({ title, year, value, minValue, onYearChange, onSelect }: M
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-2">
+      <div className="control-date-grid grid-cols-3">
         {MONTH_OPTIONS.map(month => {
           const nextValue = formatMonthValue(year, month)
           const active = value === nextValue
@@ -250,11 +244,7 @@ function MonthColumn({ title, year, value, minValue, onYearChange, onSelect }: M
               data-month-button="true"
               data-selected-month={active ? 'true' : undefined}
               disabled={disabled}
-              className={cn(
-                'inline-flex h-9 items-center justify-center rounded-[12px] px-2 text-sm text-foreground transition-colors',
-                'hover:bg-muted disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-transparent',
-                active && 'bg-primary text-primary-foreground hover:bg-primary',
-              )}
+              className={cn('control-date-grid-button', active && 'is-active')}
               onClick={() => onSelect(nextValue)}
             >
               {formatMonthLabel(month)}

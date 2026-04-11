@@ -12,8 +12,6 @@ const REACTIVE_TEMPLATE_IDS = new Set([
   'template-3',
   'template-4',
   'template-5',
-  'template-6',
-  'template-7',
 ])
 
 function createId() {
@@ -98,9 +96,11 @@ function defaultResumeData() {
         marginY: 12,
         format: 'a4',
         locale: 'zh-CN',
-        hideIcons: false,
+        smartOnePageEnabled: false,
       },
       design: {
+        headerVariant: 'auto',
+        sectionVariant: 'auto',
         colors: {
           primary: 'rgba(220, 38, 38, 1)',
           text: 'rgba(0, 0, 0, 1)',

@@ -74,6 +74,10 @@
   --control-active-surface: rgba(232, 213, 209, 0.34);
   --control-active-indicator: rgba(74, 66, 64, 0.9);
   --control-panel-shadow: 0 24px 56px rgba(74, 66, 64, 0.12);
+  --control-field-height: 36px;
+  --control-field-radius: 3px;
+  --control-field-padding-x: 12px;
+  --control-search-height: 32px;
   --header-bg: rgba(253, 246, 245, 0.86);
   --header-border: rgba(232, 213, 209, 0.68);
   --header-landing-scrolled-bg: rgba(253, 246, 245, 0.86);
@@ -217,6 +221,10 @@
   --control-active-surface: rgba(212, 188, 154, 0.16);
   --control-active-indicator: rgba(236, 224, 222, 0.94);
   --control-panel-shadow: 0 28px 64px rgba(0, 0, 0, 0.48);
+  --control-field-height: 36px;
+  --control-field-radius: 3px;
+  --control-field-padding-x: 12px;
+  --control-search-height: 32px;
   --header-bg: rgba(28, 24, 23, 0.88);
   --header-border: rgba(61, 52, 50, 0.72);
   --header-landing-scrolled-bg: rgba(28, 24, 23, 0.88);
@@ -376,28 +384,72 @@
 }
 
 .control-field {
-  border: 1px solid transparent;
-  border-radius: 2px;
-  background: var(--control-surface);
+  min-height: var(--control-field-height);
+  border: 1px solid var(--control-field-border-color, transparent);
+  border-radius: var(--control-field-radius);
+  background: var(--control-field-bg, var(--control-surface));
+  color: var(--control-field-text, var(--color-foreground));
   box-shadow: none;
-  transition: border-color 180ms ease, background 180ms ease;
+  transition:
+    border-color 180ms ease,
+    background 180ms ease,
+    box-shadow 180ms ease,
+    color 180ms ease;
 }
 
 .control-field:hover {
-  border-color: transparent;
-  background: var(--control-hover-surface);
+  border-color: var(--control-field-border-hover, transparent);
+  background: var(--control-field-bg-hover, var(--control-hover-surface));
 }
 
 .control-field:focus,
 .control-field:focus-visible,
 .control-field[data-open='true'] {
   outline: none;
-  border-color: var(--control-focus-border);
-  box-shadow: none;
+  border-color: var(--control-field-focus-color, var(--control-focus-border));
+  background: var(--control-field-bg, var(--control-surface));
+  box-shadow: 0 0 0 2px var(
+    --control-field-focus-ring,
+    color-mix(in srgb, var(--control-focus-border) 20%, transparent)
+  );
 }
 
 .control-field::placeholder {
-  color: var(--color-muted-foreground);
+  color: var(--control-field-placeholder, var(--color-muted-foreground));
+}
+
+.control-input-field,
+.control-textarea-field,
+.control-native-select-field {
+  width: 100%;
+  min-width: 0;
+  color: inherit;
+  background: transparent;
+}
+
+.control-input-field {
+  height: var(--control-field-height);
+  padding: 0 var(--control-field-padding-x);
+}
+
+.control-textarea-field {
+  min-height: 96px;
+  padding: 8px var(--control-field-padding-x);
+  line-height: 1.6;
+}
+
+.control-native-select-field {
+  padding: 6px var(--control-field-padding-x);
+  line-height: 1.45;
+}
+
+.control-native-select-field[multiple] {
+  min-height: 112px;
+  padding: 6px 0;
+}
+
+.control-native-select-field[multiple] option {
+  padding: 4px var(--control-field-padding-x);
 }
 
 .control-field:disabled {
@@ -407,7 +459,7 @@
 
 .control-field[data-invalid='true'] {
   border-color: rgba(239, 68, 68, 0.78);
-  box-shadow: none;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.12);
 }
 
 .control-field[type='date'] {
@@ -431,11 +483,11 @@
 }
 
 .control-panel {
-  border: 1px solid var(--control-panel-border);
-  border-radius: 2px;
-  background: var(--control-panel-surface);
-  box-shadow: var(--control-panel-shadow);
-  backdrop-filter: blur(14px);
+  border: 1px solid var(--control-panel-border-color, var(--control-panel-border));
+  border-radius: 4px;
+  background: var(--control-panel-bg, var(--control-panel-surface));
+  box-shadow: var(--control-panel-shadow-value, var(--control-panel-shadow));
+  backdrop-filter: none;
 }
 
 .control-floating-panel {
@@ -487,20 +539,28 @@
 }
 
 .control-search {
-  border: 1px solid transparent;
-  border-radius: 2px;
-  background: var(--control-surface);
-  transition: border-color 180ms ease, background 180ms ease;
+  min-height: var(--control-search-height);
+  border: 1px solid var(--control-field-border-color, transparent);
+  border-radius: var(--control-field-radius);
+  background: var(--control-field-bg, var(--control-surface));
+  transition:
+    border-color 180ms ease,
+    background 180ms ease,
+    box-shadow 180ms ease;
 }
 
 .control-search:hover {
-  border-color: transparent;
-  background: var(--control-hover-surface);
+  border-color: var(--control-field-border-hover, transparent);
+  background: var(--control-field-bg-hover, var(--control-hover-surface));
 }
 
 .control-search:focus-within {
-  border-color: var(--control-focus-border);
-  box-shadow: none;
+  border-color: var(--control-field-focus-color, var(--control-focus-border));
+  background: var(--control-field-bg, var(--control-surface));
+  box-shadow: 0 0 0 2px var(
+    --control-field-focus-ring,
+    color-mix(in srgb, var(--control-focus-border) 20%, transparent)
+  );
 }
 
 .control-search input:focus,
@@ -520,18 +580,518 @@
 }
 
 .control-option:hover,
-.control-option:focus-visible,
-.control-option[data-selected='true'] {
-  background: var(--control-active-surface);
+.control-option:focus-visible {
+  background: var(--control-option-hover-bg, var(--control-active-surface));
+  color: var(--control-option-hover-text, var(--color-foreground));
 }
 
 .control-option[data-selected='true'] {
-  box-shadow: inset 0 0 0 1px var(--control-panel-border);
+  background: var(--control-option-selected-bg, var(--control-active-surface));
+  color: var(--control-option-selected-text, var(--control-active-indicator));
+  box-shadow: none;
 }
 
 .control-check {
-  color: var(--control-active-indicator);
+  color: currentColor;
 }
+
+.resume-select-root {
+  position: relative;
+  width: 100%;
+}
+
+.resume-select-trigger.control-field {
+  position: relative;
+  height: var(--control-field-height);
+  padding: 0;
+  overflow: hidden;
+  border-color: transparent;
+  background: var(--resume-select-bg, var(--control-field-bg, var(--control-surface)));
+  color: var(--resume-select-text, var(--control-field-text, var(--color-foreground)));
+}
+
+.resume-select-trigger.control-field:hover {
+  border-color: transparent;
+  background: var(--resume-select-bg-hover, var(--control-field-bg-hover, var(--control-hover-surface)));
+}
+
+.resume-select-trigger.control-field:focus,
+.resume-select-trigger.control-field:focus-visible,
+.resume-select-trigger.control-field[data-open='true'] {
+  border-color: var(--resume-select-border-focus, var(--control-field-focus-color, var(--control-focus-border)));
+  background: var(--resume-select-bg, var(--control-field-bg, var(--control-surface)));
+  box-shadow: 0 0 0 2px var(
+    --resume-select-ring,
+    var(--control-field-focus-ring, color-mix(in srgb, var(--control-focus-border) 20%, transparent))
+  );
+}
+
+.resume-select-trigger-content {
+  flex: 1;
+  padding-left: var(--control-field-padding-x);
+  padding-right: 36px;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+.resume-select-trigger.has-clear .resume-select-trigger-content {
+  padding-right: 58px;
+}
+
+.resume-select-trigger-arrow {
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--resume-select-muted, var(--control-field-placeholder, var(--color-muted-foreground)));
+  opacity: 0.4;
+  transition:
+    transform 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.resume-select-trigger[data-open='true'] .resume-select-trigger-arrow {
+  transform: rotate(180deg);
+  opacity: 0.72;
+}
+
+.resume-select-clear {
+  right: 32px;
+  color: var(--resume-select-muted, var(--control-field-placeholder, var(--color-muted-foreground)));
+}
+
+.resume-select-clear:hover {
+  background: var(--resume-select-option-hover, var(--control-option-hover-bg, var(--control-active-surface)));
+  color: var(--resume-select-text, var(--control-field-text, var(--color-foreground)));
+}
+
+.resume-select-panel.control-panel {
+  border-color: var(--resume-select-panel-border, var(--control-panel-border-color, var(--control-panel-border)));
+  border-radius: 4px;
+  background: var(--resume-select-panel-bg, var(--control-panel-bg, var(--control-panel-surface)));
+  box-shadow: var(--resume-select-panel-shadow, var(--control-panel-shadow-value, var(--control-panel-shadow)));
+}
+
+.resume-select-panel.control-floating-panel {
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    visibility 0.2s ease;
+}
+
+.resume-select-panel.control-floating-panel[data-panel-placement='bottom'][data-panel-state='opening'],
+.resume-select-panel.control-floating-panel[data-panel-placement='bottom'][data-panel-state='closing'],
+.resume-select-panel.control-floating-panel[data-side='bottom'][data-starting-style],
+.resume-select-panel.control-floating-panel[data-side='bottom'][data-ending-style] {
+  transform: var(--control-panel-anchor-transform) translateY(-8px);
+}
+
+.resume-select-panel.control-floating-panel[data-panel-placement='top'][data-panel-state='opening'],
+.resume-select-panel.control-floating-panel[data-panel-placement='top'][data-panel-state='closing'],
+.resume-select-panel.control-floating-panel[data-side='top'][data-starting-style],
+.resume-select-panel.control-floating-panel[data-side='top'][data-ending-style] {
+  transform: var(--control-panel-anchor-transform) translateY(8px);
+}
+
+.resume-select-panel.control-floating-panel[data-panel-state='open'],
+.resume-select-panel.control-floating-panel[data-open]:not([data-starting-style]):not([data-ending-style]) {
+  transform: var(--control-panel-anchor-transform) translateY(0);
+}
+
+.resume-select-search-wrap {
+  padding: 6px 6px 0;
+}
+
+.resume-select-search {
+  min-height: var(--control-search-height);
+  padding: 0 8px;
+  border-color: transparent;
+  background: var(--resume-select-bg, var(--control-field-bg, var(--control-surface)));
+}
+
+.resume-select-search:hover {
+  border-color: transparent;
+  background: var(--resume-select-bg-hover, var(--control-field-bg-hover, var(--control-hover-surface)));
+}
+
+.resume-select-search:focus-within {
+  border-color: var(--resume-select-border-focus, var(--control-field-focus-color, var(--control-focus-border)));
+  background: var(--resume-select-bg, var(--control-field-bg, var(--control-surface)));
+  box-shadow: 0 0 0 2px var(
+    --resume-select-ring,
+    var(--control-field-focus-ring, color-mix(in srgb, var(--control-focus-border) 20%, transparent))
+  );
+}
+
+.resume-select-search input {
+  height: calc(var(--control-search-height) - 2px);
+  padding: 0;
+  font-size: inherit;
+  color: var(--resume-select-text, var(--control-field-text, var(--color-foreground)));
+}
+
+.resume-select-search input::placeholder {
+  color: var(--resume-select-muted, var(--control-field-placeholder, var(--color-muted-foreground)));
+}
+
+.resume-select-options {
+  padding: 6px;
+}
+
+.resume-select-option {
+  min-height: 28px;
+  padding: 6px 8px;
+  color: var(--resume-select-muted, var(--control-field-placeholder, var(--color-muted-foreground)));
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.resume-select-option:hover,
+.resume-select-option:focus-visible {
+  background: var(--resume-select-option-hover, var(--control-option-hover-bg, var(--control-active-surface)));
+  color: var(--resume-select-text, var(--control-field-text, var(--color-foreground)));
+}
+
+.resume-select-option[data-selected='true'] {
+  background: var(--resume-select-option-selected-bg, var(--control-option-selected-bg, var(--control-active-surface)));
+  color: var(--resume-select-option-selected-text, var(--control-option-selected-text, var(--control-active-indicator)));
+  box-shadow: none;
+}
+
+.resume-select-option-check {
+  color: currentColor;
+}
+
+.resume-select-empty {
+  color: var(--resume-select-muted, var(--control-field-placeholder, var(--color-muted-foreground)));
+  font-size: 11px;
+}
+
+.control-date-trigger,
+body.resume-builder-mono .resume-builder-scope .control-date-trigger {
+  position: relative;
+  display: inline-flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 var(--control-field-padding-x);
+  font-variant-numeric: tabular-nums;
+}
+
+.control-date-trigger.has-icon,
+body.resume-builder-mono .resume-builder-scope .control-date-trigger.has-icon {
+  padding-right: 36px;
+}
+
+.control-date-trigger-icon,
+body.resume-builder-mono .resume-builder-scope .control-date-trigger-icon {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--control-field-placeholder, var(--color-muted-foreground));
+  pointer-events: none;
+  transition: color 160ms ease, transform 210ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.resume-period-range-trigger.is-open .control-date-trigger-icon,
+.resume-month-picker-trigger.is-open .control-date-trigger-icon,
+body.resume-builder-mono .resume-builder-scope .resume-period-range-trigger.is-open .control-date-trigger-icon,
+body.resume-builder-mono .resume-builder-scope .resume-month-picker-trigger.is-open .control-date-trigger-icon {
+  color: var(--control-field-text, var(--color-foreground));
+  transform: translateY(-50%) rotate(180deg);
+}
+
+.control-date-panel,
+body.resume-builder-mono .resume-builder-scope .control-date-panel {
+  z-index: 140;
+  border-radius: 6px;
+  padding: 12px;
+  border-color: var(--control-panel-border-color, var(--control-panel-border));
+  background: var(--control-panel-bg, var(--control-panel-surface));
+  box-shadow: var(--control-panel-shadow-value, var(--control-panel-shadow));
+}
+
+.control-date-calendar,
+body.resume-builder-mono .resume-builder-scope .control-date-calendar {
+  --rdp-accent-color: var(--control-option-selected-text, var(--control-active-indicator));
+  --rdp-accent-background-color: var(--control-option-selected-bg, var(--control-active-surface));
+  --rdp-day_button-border-radius: 3px;
+  --rdp-day-height: 34px;
+  --rdp-day-width: 34px;
+  --rdp-day_button-height: 32px;
+  --rdp-day_button-width: 32px;
+  margin: 0;
+  color: var(--control-field-text, var(--color-foreground));
+}
+
+.control-date-calendar .rdp-day_button,
+body.resume-builder-mono .resume-builder-scope .control-date-calendar .rdp-day_button {
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--control-field-text, var(--color-foreground));
+  box-shadow: none;
+}
+
+.control-date-calendar .rdp-day_button:hover,
+body.resume-builder-mono .resume-builder-scope .control-date-calendar .rdp-day_button:hover {
+  background: var(--control-option-hover-bg, var(--control-active-surface));
+  color: var(--control-field-text, var(--color-foreground));
+}
+
+.control-date-calendar .rdp-day_button:focus-visible,
+body.resume-builder-mono .resume-builder-scope .control-date-calendar .rdp-day_button:focus-visible {
+  outline: none;
+  border-color: var(--control-field-focus-color, var(--control-focus-border));
+  box-shadow: 0 0 0 2px var(
+    --control-field-focus-ring,
+    color-mix(in srgb, var(--control-focus-border) 20%, transparent)
+  );
+}
+
+.control-date-calendar .rdp-day_button[data-selected-single='true'],
+.control-date-calendar .rdp-day_button[data-range-start='true'],
+.control-date-calendar .rdp-day_button[data-range-end='true'],
+body.resume-builder-mono .resume-builder-scope .control-date-calendar .rdp-day_button[data-selected-single='true'],
+body.resume-builder-mono .resume-builder-scope .control-date-calendar .rdp-day_button[data-range-start='true'],
+body.resume-builder-mono .resume-builder-scope .control-date-calendar .rdp-day_button[data-range-end='true'] {
+  border-color: transparent;
+  background: var(--control-option-selected-bg, var(--control-active-surface));
+  color: var(--control-option-selected-text, var(--control-active-indicator));
+  box-shadow: none;
+}
+
+.control-date-calendar .rdp-day_button[data-range-middle='true'],
+body.resume-builder-mono .resume-builder-scope .control-date-calendar .rdp-day_button[data-range-middle='true'] {
+  border-color: transparent;
+  background: var(--control-option-hover-bg, var(--control-active-surface));
+  color: var(--control-field-text, var(--color-foreground));
+  box-shadow: none;
+}
+
+.resume-date-picker-calendar .rdp-nav button,
+.resume-date-picker-calendar .rdp-button_previous,
+.resume-date-picker-calendar .rdp-button_next,
+.resume-period-range-calendar .rdp-nav button,
+.resume-period-range-calendar .rdp-button_previous,
+.resume-period-range-calendar .rdp-button_next,
+body.resume-builder-mono .resume-builder-scope .resume-date-picker-calendar .rdp-nav button,
+body.resume-builder-mono .resume-builder-scope .resume-date-picker-calendar .rdp-button_previous,
+body.resume-builder-mono .resume-builder-scope .resume-date-picker-calendar .rdp-button_next,
+body.resume-builder-mono .resume-builder-scope .resume-period-range-calendar .rdp-nav button,
+body.resume-builder-mono .resume-builder-scope .resume-period-range-calendar .rdp-button_previous,
+body.resume-builder-mono .resume-builder-scope .resume-period-range-calendar .rdp-button_next {
+  border-radius: 3px;
+}
+
+.resume-date-picker-calendar .rdp-day_button,
+.resume-period-range-calendar .rdp-day_button,
+body.resume-builder-mono .resume-builder-scope .resume-date-picker-calendar .rdp-day_button,
+body.resume-builder-mono .resume-builder-scope .resume-period-range-calendar .rdp-day_button {
+  font-size: 12px;
+  line-height: 1;
+}
+
+.resume-date-picker-calendar .rdp-caption_label,
+.resume-period-range-calendar .rdp-caption_label,
+body.resume-builder-mono .resume-builder-scope .resume-date-picker-calendar .rdp-caption_label,
+body.resume-builder-mono .resume-builder-scope .resume-period-range-calendar .rdp-caption_label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--control-field-text, var(--color-foreground));
+}
+
+.resume-date-picker-calendar .rdp-weekday,
+.resume-period-range-calendar .rdp-weekday,
+body.resume-builder-mono .resume-builder-scope .resume-date-picker-calendar .rdp-weekday,
+body.resume-builder-mono .resume-builder-scope .resume-period-range-calendar .rdp-weekday {
+  font-size: 11px;
+  color: var(--control-field-placeholder, var(--color-muted-foreground));
+}
+
+.resume-period-range-calendar .rdp-months,
+body.resume-builder-mono .resume-builder-scope .resume-period-range-calendar .rdp-months {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, max-content));
+  gap: 12px;
+  justify-content: flex-start;
+  align-items: flex-start;
+}
+
+.resume-period-range-calendar .rdp-month,
+body.resume-builder-mono .resume-builder-scope .resume-period-range-calendar .rdp-month {
+  margin: 0;
+  align-self: flex-start;
+}
+
+.cn-calendar-dropdown-root {
+  position: relative;
+}
+
+.cn-calendar-dropdown-root:hover .cn-calendar-caption-label {
+  border-color: transparent;
+  background: var(--control-field-bg-hover, var(--control-hover-surface));
+}
+
+.cn-calendar-dropdown-root:focus-within .cn-calendar-caption-label {
+  border-color: var(--control-field-focus-color, var(--control-focus-border));
+  background: var(--control-field-bg, var(--control-surface));
+  box-shadow: 0 0 0 2px var(
+    --control-field-focus-ring,
+    color-mix(in srgb, var(--control-focus-border) 20%, transparent)
+  );
+}
+
+.cn-calendar-caption-label {
+  min-height: 28px;
+  padding: 0 24px 0 8px;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background: var(--control-field-bg, var(--control-surface));
+  color: var(--control-field-text, var(--color-foreground));
+}
+
+.cn-calendar-dropdown-root .rdp-dropdown {
+  cursor: pointer;
+  outline: none;
+}
+
+.control-date-actions,
+body.resume-builder-mono .resume-builder-scope .control-date-actions {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  border-top: 1px solid var(--control-panel-border-color, var(--control-panel-border));
+  padding-top: 10px;
+}
+
+.control-date-action,
+.control-date-secondary-btn,
+body.resume-builder-mono .resume-builder-scope .control-date-action,
+body.resume-builder-mono .resume-builder-scope .control-date-secondary-btn {
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--control-field-placeholder, var(--color-muted-foreground));
+  font-size: 12px;
+  line-height: 1.2;
+  padding: 6px 10px;
+  cursor: pointer;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+
+.control-date-action:hover,
+.control-date-action.is-active,
+.control-date-secondary-btn:hover,
+body.resume-builder-mono .resume-builder-scope .control-date-action:hover,
+body.resume-builder-mono .resume-builder-scope .control-date-action.is-active,
+body.resume-builder-mono .resume-builder-scope .control-date-secondary-btn:hover {
+  background: var(--control-option-hover-bg, var(--control-active-surface));
+  color: var(--control-field-text, var(--color-foreground));
+}
+
+.control-date-column,
+body.resume-builder-mono .resume-builder-scope .control-date-column {
+  min-width: 0;
+  border: 1px solid color-mix(in srgb, var(--control-panel-border-color, var(--control-panel-border)) 86%, transparent);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--control-panel-bg, var(--control-panel-surface)) 76%, transparent);
+  padding: 10px;
+}
+
+.control-date-section-label,
+body.resume-builder-mono .resume-builder-scope .control-date-section-label {
+  font-size: 11px;
+  color: var(--control-field-placeholder, var(--color-muted-foreground));
+}
+
+.control-date-year-controls,
+body.resume-builder-mono .resume-builder-scope .control-date-year-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.control-date-year-label,
+body.resume-builder-mono .resume-builder-scope .control-date-year-label {
+  min-width: 4.5rem;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--control-field-text, var(--color-foreground));
+}
+
+.control-date-grid,
+body.resume-builder-mono .resume-builder-scope .control-date-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.control-date-grid.grid-cols-3,
+body.resume-builder-mono .resume-builder-scope .control-date-grid.grid-cols-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.control-date-grid-button,
+body.resume-builder-mono .resume-builder-scope .control-date-grid-button {
+  min-height: 34px;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--control-field-text, var(--color-foreground));
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 120ms ease, color 120ms ease, box-shadow 120ms ease;
+}
+
+.control-date-grid-button:hover,
+body.resume-builder-mono .resume-builder-scope .control-date-grid-button:hover {
+  background: var(--control-option-hover-bg, var(--control-active-surface));
+}
+
+.control-date-grid-button:disabled,
+body.resume-builder-mono .resume-builder-scope .control-date-grid-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.38;
+}
+
+.control-date-grid-button:disabled:hover,
+body.resume-builder-mono .resume-builder-scope .control-date-grid-button:disabled:hover {
+  background: transparent;
+}
+
+.control-date-grid-button.is-active,
+.control-date-grid-button[data-selected-month='true'],
+body.resume-builder-mono .resume-builder-scope .control-date-grid-button.is-active,
+body.resume-builder-mono .resume-builder-scope .control-date-grid-button[data-selected-month='true'] {
+  background: var(--control-option-selected-bg, var(--control-active-surface));
+  color: var(--control-option-selected-text, var(--control-active-indicator));
+  box-shadow: none;
+}
+
+@media (max-width: 1200px) {
+  .resume-period-range-calendar .rdp-months {
+    grid-template-columns: 1fr;
+  }
+}
+
 
 .control-checkbox {
   display: inline-flex;

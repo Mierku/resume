@@ -1,4 +1,5 @@
 import { resumeContentV2Schema } from './schema'
+import { normalizeResumeFontFamily } from './fonts'
 import {
   createDefaultResumeContentV2,
   createDefaultResumeData,
@@ -137,6 +138,24 @@ interface LegacyContent {
 }
 
 const DEFAULT_TEMPLATE: ReactiveTemplateId = 'template-1'
+const REMOVED_NUMERIC_TEMPLATE_IDS = new Set([
+  'template-6',
+  'template-7',
+  'template-8',
+])
+const LEGACY_REACTIVE_TEMPLATE_ALIAS_MAP: Record<string, ReactiveTemplateId> = {
+  'template-9': 'template-1',
+  'template-10': 'template-2',
+  'template-11': 'template-3',
+  'template-12': 'template-4',
+}
+const LEGACY_REACTIVE_HEADER_ALIAS_MAP = {
+  'header-9': 'header-1',
+  'header-10': 'header-2',
+  'header-11': 'header-3',
+  'header-12': 'header-4',
+  'header-13': 'header-5',
+} as const
 
 const LEGACY_TEMPLATE_IDS = new Set([
   'azurill',
@@ -159,6 +178,14 @@ const LEGACY_TEMPLATE_IDS = new Set([
 ])
 
 export type FillStrategy = 'overwrite' | 'preserve'
+
+function applyUnifiedFontFamily(data: ResumeData) {
+  const unifiedFontFamily = normalizeResumeFontFamily(
+    data.metadata.typography.body.fontFamily || data.metadata.typography.heading.fontFamily,
+  )
+  data.metadata.typography.body.fontFamily = unifiedFontFamily
+  data.metadata.typography.heading.fontFamily = unifiedFontFamily
+}
 
 function createId() {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -236,8 +263,16 @@ export function normalizeTemplateId(value: string | undefined | null): ReactiveT
     return DEFAULT_TEMPLATE
   }
 
+  if (value in LEGACY_REACTIVE_TEMPLATE_ALIAS_MAP) {
+    return LEGACY_REACTIVE_TEMPLATE_ALIAS_MAP[value]
+  }
+
   if (isReactiveTemplateId(value)) {
     return value
+  }
+
+  if (REMOVED_NUMERIC_TEMPLATE_IDS.has(value)) {
+    return DEFAULT_TEMPLATE
   }
 
   if (LEGACY_TEMPLATE_IDS.has(value)) {
@@ -245,6 +280,37 @@ export function normalizeTemplateId(value: string | undefined | null): ReactiveT
   }
 
   return DEFAULT_TEMPLATE
+}
+
+function normalizeTemplateAndHeaderAliases(content: unknown) {
+  if (!content || typeof content !== 'object') return content
+  const root = content as Record<string, unknown>
+  const data = root.data
+  if (!data || typeof data !== 'object') return content
+  const metadata = (data as Record<string, unknown>).metadata
+  if (!metadata || typeof metadata !== 'object') return content
+  const meta = metadata as Record<string, unknown>
+
+  const rawTemplate = meta.template
+  if (typeof rawTemplate === 'string') {
+    const normalizedTemplate = normalizeTemplateId(rawTemplate)
+    if (normalizedTemplate !== rawTemplate) {
+      meta.template = normalizedTemplate
+    }
+  }
+
+  const design = meta.design
+  if (!design || typeof design !== 'object') return content
+  const designRecord = design as Record<string, unknown>
+  const rawHeaderVariant = designRecord.headerVariant
+  if (typeof rawHeaderVariant === 'string' && rawHeaderVariant in LEGACY_REACTIVE_HEADER_ALIAS_MAP) {
+    designRecord.headerVariant = LEGACY_REACTIVE_HEADER_ALIAS_MAP[rawHeaderVariant as keyof typeof LEGACY_REACTIVE_HEADER_ALIAS_MAP]
+  }
+  if (typeof designRecord.skillsVariant !== 'string') {
+    designRecord.skillsVariant = 'auto'
+  }
+
+  return content
 }
 
 function parseLegacyContent(content: unknown): LegacyContent {
@@ -638,7 +704,7 @@ export function mapLegacyContentToV2(
   }
 
   if (legacy.styles?.fontSize) {
-    data.metadata.typography.body.fontSize = Math.max(6, Math.min(24, legacy.styles.fontSize))
+    data.metadata.typography.body.fontSize = Math.max(10, Math.min(18, legacy.styles.fontSize))
   }
 
   if (legacy.styles?.lineHeight) {
@@ -646,8 +712,9 @@ export function mapLegacyContentToV2(
   }
 
   if (legacy.styles?.fontFamily) {
-    data.metadata.typography.body.fontFamily = legacy.styles.fontFamily
-    data.metadata.typography.heading.fontFamily = legacy.styles.fontFamily
+    const legacyFontFamily = normalizeResumeFontFamily(legacy.styles.fontFamily)
+    data.metadata.typography.body.fontFamily = legacyFontFamily
+    data.metadata.typography.heading.fontFamily = legacyFontFamily
   }
 
   if (legacy.styles?.photoUrl) {
@@ -655,6 +722,7 @@ export function mapLegacyContentToV2(
   }
 
   data.customSections = mapLegacyCustomModules(legacy.customModules, formData)
+  applyUnifiedFontFamily(data)
 
   return {
     version: 2,
@@ -673,8 +741,10 @@ export function normalizeResumeContent(
     withBackup?: boolean
   },
 ): ResumeContentV2 {
-  const parsed = resumeContentV2Schema.safeParse(content)
+  const normalizedContent = normalizeTemplateAndHeaderAliases(content)
+  const parsed = resumeContentV2Schema.safeParse(normalizedContent)
   if (parsed.success) {
+    applyUnifiedFontFamily(parsed.data.data)
     return parsed.data
   }
 
@@ -684,6 +754,8 @@ export function normalizeResumeContent(
   if (!options?.withBackup) {
     delete migrated.legacyBackup
   }
+
+  applyUnifiedFontFamily(migrated.data)
 
   return migrated
 }

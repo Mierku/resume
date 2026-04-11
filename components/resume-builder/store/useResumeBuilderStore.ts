@@ -48,12 +48,14 @@ interface BuilderActions {
   removePage: (pageIndex: number) => void
   setPageSections: (pageIndex: number, column: 'main' | 'sidebar', sectionIds: string[]) => void
   addStandardSectionItem: (sectionId: StandardSectionType) => void
+  reorderStandardSectionItem: (sectionId: StandardSectionType, fromIndex: number, toIndex: number) => void
   updateStandardSectionItem: (sectionId: StandardSectionType, index: number, patch: Record<string, unknown>) => void
   removeStandardSectionItem: (sectionId: StandardSectionType, index: number) => void
   addCustomSection: (type?: CustomSectionType) => void
   updateCustomSection: (sectionId: string, patch: Partial<CustomSection>) => void
   removeCustomSection: (sectionId: string) => void
   addCustomSectionItem: (sectionId: string) => void
+  reorderCustomSectionItem: (sectionId: string, fromIndex: number, toIndex: number) => void
   updateCustomSectionItem: (sectionId: string, index: number, patch: Record<string, unknown>) => void
   removeCustomSectionItem: (sectionId: string, index: number) => void
   saveNow: () => Promise<void>
@@ -88,6 +90,16 @@ function cloneData(data: ResumeData): ResumeData {
 
 function dedupeSectionIds(sectionIds: string[]) {
   return Array.from(new Set(sectionIds.filter(Boolean)))
+}
+
+function moveArrayItem<T>(items: T[], fromIndex: number, toIndex: number) {
+  if (fromIndex === toIndex) return
+  if (fromIndex < 0 || toIndex < 0) return
+  if (fromIndex >= items.length || toIndex >= items.length) return
+
+  const [moved] = items.splice(fromIndex, 1)
+  if (typeof moved === 'undefined') return
+  items.splice(toIndex, 0, moved)
 }
 
 function collectAvailableSectionIds(data: ResumeData) {
@@ -446,6 +458,15 @@ const actions: BuilderActions = {
     })
   },
 
+  reorderStandardSectionItem: (sectionId, fromIndex, toIndex) => {
+    setState(draft => {
+      const section = draft.data.sections[sectionId]
+      if (!section) return
+      moveArrayItem(section.items as unknown[], fromIndex, toIndex)
+      draft.dirty = true
+    })
+  },
+
   updateStandardSectionItem: (sectionId, index, patch) => {
     setState(draft => {
       const section = draft.data.sections[sectionId]
@@ -545,6 +566,15 @@ const actions: BuilderActions = {
             }
 
       section.items.push(nextItem as never)
+      draft.dirty = true
+    })
+  },
+
+  reorderCustomSectionItem: (sectionId, fromIndex, toIndex) => {
+    setState(draft => {
+      const section = draft.data.customSections.find(item => item.id === sectionId)
+      if (!section) return
+      moveArrayItem(section.items as unknown[], fromIndex, toIndex)
       draft.dirty = true
     })
   },

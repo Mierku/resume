@@ -15,7 +15,7 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           ref={ref}
           data-invalid={error ? 'true' : undefined}
           className={cn(
-            'control-field min-h-24 w-full resize-y px-3 py-2 text-sm leading-6 text-foreground outline-none transition-[border-color,background-color] duration-200',
+            'control-field control-textarea-field w-full resize-y text-sm leading-6 text-foreground outline-none transition-[border-color,background-color,box-shadow] duration-200',
             className,
           )}
           {...props}

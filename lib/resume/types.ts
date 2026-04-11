@@ -1,4 +1,8 @@
 import { getTemplateDefaultPrimaryColor } from '@/lib/constants'
+import { RECOMMENDED_RESUME_FONT_FAMILY } from './fonts'
+import { SYSTEM_PAGE_GAP_X_PT, SYSTEM_PAGE_GAP_Y_PT } from './page-layout'
+
+export { RECOMMENDED_RESUME_FONT_FAMILY }
 
 export const REACTIVE_TEMPLATE_IDS = [
   'template-1',
@@ -6,12 +10,15 @@ export const REACTIVE_TEMPLATE_IDS = [
   'template-3',
   'template-4',
   'template-5',
-  'template-6',
-  'template-7',
-  'template-8',
 ] as const
 
 export type ReactiveTemplateId = (typeof REACTIVE_TEMPLATE_IDS)[number]
+export const REACTIVE_HEADER_VARIANTS = ['header-1', 'header-2', 'header-3', 'header-4', 'header-5'] as const
+export type ReactiveHeaderVariant = (typeof REACTIVE_HEADER_VARIANTS)[number]
+export const REACTIVE_SECTION_VARIANTS = ['section-1', 'section-2', 'section-3', 'section-4'] as const
+export type ReactiveSectionVariant = (typeof REACTIVE_SECTION_VARIANTS)[number]
+export const REACTIVE_SKILLS_VARIANTS = ['skills-1', 'skills-2', 'skills-3', 'skills-4'] as const
+export type ReactiveSkillsVariant = (typeof REACTIVE_SKILLS_VARIANTS)[number] | 'auto'
 
 export type FontWeight = '100' | '200' | '300' | '400' | '500' | '600' | '700' | '800' | '900'
 
@@ -261,7 +268,7 @@ export interface PageData {
   marginY: number
   format: 'a4' | 'letter' | 'free-form'
   locale: string
-  hideIcons: boolean
+  smartOnePageEnabled: boolean
 }
 
 export interface LevelDesign {
@@ -292,6 +299,9 @@ export interface MetadataData {
   layout: LayoutData
   page: PageData
   design: {
+    headerVariant: ReactiveHeaderVariant | 'auto'
+    sectionVariant: ReactiveSectionVariant | 'auto'
+    skillsVariant: ReactiveSkillsVariant
     level: LevelDesign
     colors: ColorDesign
   }
@@ -420,15 +430,18 @@ export function createDefaultResumeData(template: ReactiveTemplateId = 'template
         ],
       },
       page: {
-        gapX: 4,
-        gapY: 6,
+        gapX: SYSTEM_PAGE_GAP_X_PT,
+        gapY: SYSTEM_PAGE_GAP_Y_PT,
         marginX: 14,
         marginY: 12,
         format: 'a4',
         locale: 'zh-CN',
-        hideIcons: false,
+        smartOnePageEnabled: false,
       },
       design: {
+        headerVariant: 'auto',
+        sectionVariant: 'auto',
+        skillsVariant: 'auto',
         colors: {
           primary: getTemplateDefaultPrimaryColor(template),
           text: 'rgba(31, 41, 55, 1)',
@@ -441,13 +454,13 @@ export function createDefaultResumeData(template: ReactiveTemplateId = 'template
       },
       typography: {
         body: {
-          fontFamily: 'Noto Sans SC',
+          fontFamily: RECOMMENDED_RESUME_FONT_FAMILY,
           fontWeights: ['400', '500'],
           fontSize: 10,
           lineHeight: 1.5,
         },
         heading: {
-          fontFamily: 'Noto Sans SC',
+          fontFamily: RECOMMENDED_RESUME_FONT_FAMILY,
           fontWeights: ['600'],
           fontSize: 14,
           lineHeight: 1.5,

@@ -1,11 +1,9 @@
-import { randomBytes } from 'crypto'
 import { NextRequest, NextResponse } from 'next/server'
 import type { LangMode } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { sanitizeNextPath } from '@/lib/auth-redirect'
+import { createAuthSession, setAuthSessionCookie } from '@/lib/auth-session'
 import devTestDataSourceFixture from '@/lib/dev-test-data-source.json'
-
-const SESSION_MAX_AGE_SECONDS = 30 * 24 * 60 * 60
 const DEFAULT_TEST_EMAIL = process.env.DEV_TEST_USER_EMAIL || 'dev@immersive.local'
 const DEFAULT_TEST_NAME = process.env.DEV_TEST_USER_NAME || '开发测试账号'
 
@@ -33,11 +31,9 @@ export async function POST(request: NextRequest) {
   const nextPath = sanitizeNextPath(
     typeof body?.next === 'string' ? body.next : request.nextUrl.searchParams.get('next')
   )
-  const expires = new Date(Date.now() + SESSION_MAX_AGE_SECONDS * 1000)
-  const sessionToken = randomBytes(32).toString('hex')
 
   try {
-    await prisma.$transaction(async tx => {
+    const userId = await prisma.$transaction(async tx => {
       const testDataSource = buildDevTestDataSource(DEFAULT_TEST_EMAIL)
       const user = await tx.user.upsert({
         where: { email: DEFAULT_TEST_EMAIL },
@@ -101,20 +97,13 @@ export async function POST(request: NextRequest) {
         },
       })
 
-      await tx.session.deleteMany({
-        where: { userId: user.id },
-      })
-
-      await tx.session.create({
-        data: {
-          userId: user.id,
-          sessionToken,
-          expires,
-        },
-      })
+      return user.id
     })
 
-    const useSecureCookies = request.nextUrl.protocol === 'https:'
+    const session = await createAuthSession(userId, {
+      deleteExistingSessions: true,
+    })
+
     const response = NextResponse.json({
       redirectTo: nextPath,
       user: {
@@ -123,13 +112,7 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    response.cookies.set(`${useSecureCookies ? '__Secure-' : ''}authjs.session-token`, sessionToken, {
-      httpOnly: true,
-      secure: useSecureCookies,
-      sameSite: 'lax',
-      path: '/',
-      expires,
-    })
+    setAuthSessionCookie(response, request, session)
 
     return response
   } catch (error) {

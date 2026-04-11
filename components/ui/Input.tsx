@@ -15,7 +15,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           ref={ref}
           data-invalid={error ? 'true' : undefined}
           className={cn(
-            'control-field h-9 w-full px-3 py-2 text-sm leading-5 text-foreground outline-none transition-[border-color,background-color] duration-200',
+            'control-field control-input-field w-full text-sm leading-5 text-foreground outline-none transition-[border-color,background-color,box-shadow] duration-200',
             className,
           )}
           {...props}

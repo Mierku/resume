@@ -1,0 +1,20 @@
+.photo {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  z-index: 4;
+  height: 124px;
+  width: calc(124px * 295 / 413);
+  border-radius: 4px;
+  overflow: hidden;
+  background: #f3f4f6;
+}
+
+.photoImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+}

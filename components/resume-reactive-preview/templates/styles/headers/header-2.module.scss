@@ -1,0 +1,44 @@
+.h2Root {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.h2Interactive {
+  transition: background-color 120ms ease;
+}
+
+.h2Interactive:hover,
+.h2Interactive:focus-visible {
+  background: color-mix(in srgb, var(--resume-theme-primary) 4%, transparent);
+}
+
+.h2Content {
+  position: relative;
+  min-height: 124px;
+  min-width: 0;
+}
+
+.h2Name {
+  margin: 0;
+  font-family: var(--page-heading-font-family, 'Noto Serif SC', serif);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.h2Headline {
+  margin: 0;
+  font-weight: 500;
+}
+
+.h2Meta {
+  margin-bottom: 0;
+}
+
+.h2MetaItem {
+  display: inline;
+}
+
+.h2MetaSep {
+  opacity: 0.52;
+}

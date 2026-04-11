@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
 
 export default function RecordsPage() {
-  redirect('/tracking')
+  redirect('/dashboard?section=tracking')
 }

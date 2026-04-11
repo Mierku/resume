@@ -12,7 +12,6 @@ import { toast } from '@/lib/toast'
 import { Checkbox as UICheckbox } from '@/components/ui/checkbox'
 import { Input as UIInput } from '@/components/ui/Input'
 import { CustomSelect, getSelectLabelText, type CustomSelectOption } from '@/components/ui/select-core'
-import { Switch as UISwitch } from '@/components/ui/switch'
 import { Textarea as UITextarea } from '@/components/ui/Textarea'
 import {
   ArrowDown,
@@ -112,10 +111,7 @@ interface InputBaseProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'va
 }
 
 function inputClass(className = '') {
-  return [
-    'control-field w-full px-3 py-2 text-sm text-foreground outline-none transition-colors',
-    className,
-  ].join(' ')
+  return ['text-sm', className].filter(Boolean).join(' ')
 }
 
 function InputBase({ value, onChange, placeholder, className, style, type = 'text', ...props }: InputBaseProps) {
@@ -196,7 +192,7 @@ export function Select({ value, onChange, children, mode, placeholder, allowClea
           const values = Array.from(event.currentTarget.selectedOptions).map(option => option.value)
           onChange(values)
         }}
-        className={`${inputClass()} min-h-28`}
+        className={`control-field control-native-select-field ${inputClass()} min-h-28`}
         style={style}
       >
         {children}
@@ -242,18 +238,6 @@ function collectSelectOptions(node: ReactNode): CustomSelectOption[] {
   }
 
   return []
-}
-
-interface SwitchProps {
-  checked: boolean
-  onChange: (value: boolean) => void
-  size?: 'small'
-}
-
-export function Switch({ checked, onChange, size }: SwitchProps) {
-  return (
-    <UISwitch checked={checked} onCheckedChange={onChange} size={size === 'small' ? 'small' : 'default'} />
-  )
 }
 
 interface CheckboxProps {

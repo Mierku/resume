@@ -1,5 +1,6 @@
 import { z } from 'zod'
-import { REACTIVE_TEMPLATE_IDS } from './types'
+import { SYSTEM_PAGE_GAP_X_PT, SYSTEM_PAGE_GAP_Y_PT } from './page-layout'
+import { REACTIVE_HEADER_VARIANTS, REACTIVE_SECTION_VARIANTS, REACTIVE_SKILLS_VARIANTS, REACTIVE_TEMPLATE_IDS } from './types'
 
 export const urlLinkSchema = z.object({
   url: z.string(),
@@ -223,6 +224,10 @@ export const pageLayoutSchema = z.object({
   sidebar: z.array(z.string()),
 })
 
+const HEADER_VARIANT_VALUES = ['auto', ...REACTIVE_HEADER_VARIANTS] as const
+const SECTION_VARIANT_VALUES = ['auto', ...REACTIVE_SECTION_VARIANTS] as const
+const SKILLS_VARIANT_VALUES = ['auto', ...REACTIVE_SKILLS_VARIANTS] as const
+
 export const metadataSchema = z.object({
   template: z.enum(REACTIVE_TEMPLATE_IDS),
   layout: z.object({
@@ -230,15 +235,18 @@ export const metadataSchema = z.object({
     pages: z.array(pageLayoutSchema),
   }),
   page: z.object({
-    gapX: z.number().min(0),
-    gapY: z.number().min(0),
+    gapX: z.number().min(0).default(SYSTEM_PAGE_GAP_X_PT),
+    gapY: z.number().min(0).default(SYSTEM_PAGE_GAP_Y_PT),
     marginX: z.number().min(0),
     marginY: z.number().min(0),
     format: z.enum(['a4', 'letter', 'free-form']),
     locale: z.string(),
-    hideIcons: z.boolean(),
+    smartOnePageEnabled: z.boolean().default(false),
   }),
   design: z.object({
+    headerVariant: z.enum(HEADER_VARIANT_VALUES).default('auto'),
+    sectionVariant: z.enum(SECTION_VARIANT_VALUES).default('auto'),
+    skillsVariant: z.enum(SKILLS_VARIANT_VALUES).default('auto'),
     level: z.object({
       icon: z.string(),
       type: z.enum(['hidden', 'circle', 'square', 'rectangle', 'rectangle-full', 'progress-bar', 'icon']),
@@ -253,13 +261,13 @@ export const metadataSchema = z.object({
     body: z.object({
       fontFamily: z.string(),
       fontWeights: z.array(z.enum(['100', '200', '300', '400', '500', '600', '700', '800', '900'])),
-      fontSize: z.number().min(6).max(24),
+      fontSize: z.number().min(10).max(18),
       lineHeight: z.number().min(0.5).max(4),
     }),
     heading: z.object({
       fontFamily: z.string(),
       fontWeights: z.array(z.enum(['100', '200', '300', '400', '500', '600', '700', '800', '900'])),
-      fontSize: z.number().min(6).max(24),
+      fontSize: z.number().min(10).max(20),
       lineHeight: z.number().min(0.5).max(4),
     }),
   }),

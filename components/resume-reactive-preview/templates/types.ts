@@ -1,5 +1,6 @@
 import type { HTMLAttributes, ReactNode } from 'react'
-import type { ResumeData, StandardSectionType } from '@/lib/resume/types'
+import type { ComposedBlockStyle } from './composed-block-engine'
+import type { ResumeData, SkillItem, StandardSectionType } from '@/lib/resume/types'
 
 export interface PreviewNavigationTarget {
   sectionId: string
@@ -74,6 +75,41 @@ export interface TemplateHelpers {
   hasRenderableStandardItem: (sectionId: StandardSectionType, item: Record<string, unknown>) => boolean
   stripHtml: (text: string) => string
   Avatar: (props: { data: ResumeData; className?: string; square?: boolean; sizePt?: number }) => ReactNode
+}
+
+export interface SkillVariantRenderProps {
+  items: SkillItem[]
+  sectionId: string
+  onNavigate?: (target: PreviewNavigationTarget) => void
+  helpers: TemplateHelpers
+}
+
+export interface SkillVariantTextMeasureInput {
+  text: string
+  widthPx: number
+  lineHeightPx: number
+  fontFamily: string
+  fontSizePx: number
+  fontWeight: number
+  locale?: string
+}
+
+export interface SkillVariantLineMeasureInput {
+  text: string
+  fontFamily: string
+  fontSizePx: number
+  fontWeight: number
+  locale?: string
+}
+
+export interface SkillVariantEstimateProps {
+  items: SkillItem[]
+  contentWidthPx: number
+  style: ComposedBlockStyle
+  fontFamily: string
+  locale?: string
+  measureTextHeight: (input: SkillVariantTextMeasureInput) => number
+  measureSingleLineWidth: (input: SkillVariantLineMeasureInput) => number
 }
 
 export type TemplateModuleRenderer = (context: TemplateRenderContext, helpers: TemplateHelpers) => ReactNode

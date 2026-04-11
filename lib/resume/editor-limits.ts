@@ -1,3 +1,8 @@
+import {
+  SMART_ONE_PAGE_GAP_X_LIMIT,
+  SMART_ONE_PAGE_GAP_Y_LIMIT,
+} from './page-layout'
+
 export interface NumericLimitConfig {
   min: number
   max: number
@@ -9,18 +14,18 @@ export interface NumericLimitConfig {
 export const RESUME_EDITOR_LIMITS = {
   typography: {
     bodyFontSize: {
-      min: 7,
-      max: 24,
+      min: 10,
+      max: 18,
       step: 0.1,
       defaultValue: 10,
-      presets: [7, 8, 9, 10, 11, 12, 14, 16] as const,
+      presets: [10, 11, 12, 13, 14, 15, 16, 18] as const,
     },
     headingFontSize: {
-      min: 9,
-      max: 34,
+      min: 10,
+      max: 20,
       step: 0.1,
       defaultValue: 14,
-      presets: [9, 10, 12, 14, 16, 18, 20, 24] as const,
+      presets: [10, 12, 14, 16, 18, 20] as const,
     },
     bodyLineHeight: {
       min: 1.1,
@@ -53,18 +58,10 @@ export const RESUME_EDITOR_LIMITS = {
       presets: [8, 10, 12, 14, 16, 18, 20] as const,
     },
     gapX: {
-      min: 1,
-      max: 18,
-      step: 0.5,
-      defaultValue: 4,
-      presets: [1, 2, 3, 4, 5, 6, 8, 10] as const,
+      ...SMART_ONE_PAGE_GAP_X_LIMIT,
     },
     gapY: {
-      min: 1,
-      max: 22,
-      step: 0.5,
-      defaultValue: 6,
-      presets: [2, 3, 4, 6, 8, 10, 12] as const,
+      ...SMART_ONE_PAGE_GAP_Y_LIMIT,
     },
   },
 } as const

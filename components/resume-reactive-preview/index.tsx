@@ -1,8 +1,9 @@
 'use client'
 
-import { Fragment, type CSSProperties, type HTMLAttributes, type ReactElement, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, type CSSProperties, type HTMLAttributes, type ReactElement, useEffect, useMemo, useRef, useState } from 'react'
 import { sanitizeHtml } from '@/lib/resume/sanitize'
 import { RESUME_EDITOR_LIMITS, clampToRange } from '@/lib/resume/editor-limits'
+import { resolveResumeFontFamilyStack } from '@/lib/resume/fonts'
 import {
   type CustomSectionType,
   type ResumeData,
@@ -24,8 +25,22 @@ import {
   Users,
   Wrench,
 } from 'lucide-react'
-import { loadTemplateRenderer } from './templates/loader'
-import type { TemplateHelpers as RuntimeTemplateHelpers } from './templates/types'
+import renderComposedTemplate from './templates/composed-template-renderer'
+import {
+  collectVisibleSectionIds,
+  estimateCurrentTemplateHeight,
+  estimateCurrentTemplatePages,
+  hasRenderableCustomItem,
+  hasRenderableStandardItem,
+  resolveTemplateContentMetrics,
+  stripHtml,
+  supportsMeasuredTemplatePagination,
+} from './templates/estimate-current-template-height'
+import type {
+  TemplateHelpers as RuntimeTemplateHelpers,
+  TemplateRenderContext as RuntimeTemplateRenderContext,
+} from './templates/types'
+import { ComposedDebugFloatingPanel } from './ComposedDebugFloatingPanel'
 import styles from './preview.module.scss'
 
 interface ResumeReactivePreviewProps {
@@ -41,14 +56,7 @@ export interface PreviewNavigationTarget {
   fieldKey?: string
 }
 
-interface TemplateRenderContext {
-  data: ResumeData
-  pageIndex: number
-  sectionIds: string[]
-  onNavigate?: (target: PreviewNavigationTarget) => void
-}
-
-type TemplateRenderer = (context: TemplateRenderContext, helpers: RuntimeTemplateHelpers) => ReactElement | null
+type TemplateRenderer = (context: RuntimeTemplateRenderContext, helpers: RuntimeTemplateHelpers) => ReactElement | null
 
 type HeadingVariant = 'icon-line' | 'pill' | 'text-line' | 'striped' | 'sidebar' | 'gray-tab'
 type ItemVariant = 'compact' | 'default' | 'timeline'
@@ -164,78 +172,6 @@ function isStandardSection(sectionId: string): sectionId is StandardSectionType 
   return sectionId in SECTION_TITLE_MAP
 }
 
-function stripHtml(text: string) {
-  return text.replace(/<[^>]*>/g, '').trim()
-}
-
-function hasTextValue(value: unknown) {
-  return String(value || '').trim().length > 0
-}
-
-function hasRenderableStandardItem(sectionId: StandardSectionType, item: Record<string, unknown>) {
-  if (item.hidden) return false
-
-  switch (sectionId) {
-    case 'profiles':
-      return (
-        hasTextValue(item.network) ||
-        hasTextValue(item.username) ||
-        hasTextValue((item.website as { url?: string; label?: string } | undefined)?.url) ||
-        hasTextValue((item.website as { url?: string; label?: string } | undefined)?.label)
-      )
-    case 'experience':
-      return (
-        hasTextValue(item.company) ||
-        hasTextValue(item.position) ||
-        hasTextValue(item.location) ||
-        hasTextValue(item.period) ||
-        hasTextValue(stripHtml(String(item.description || '')))
-      )
-    case 'education':
-      return (
-        hasTextValue(item.school) ||
-        hasTextValue(item.degree) ||
-        hasTextValue(item.area) ||
-        hasTextValue(item.grade) ||
-        hasTextValue(item.location) ||
-        hasTextValue(item.period) ||
-        hasTextValue(stripHtml(String(item.description || '')))
-      )
-    case 'projects':
-      return (
-        hasTextValue(item.name) ||
-        hasTextValue(item.period) ||
-        hasTextValue((item.website as { url?: string; label?: string } | undefined)?.url) ||
-        hasTextValue((item.website as { url?: string; label?: string } | undefined)?.label) ||
-        hasTextValue(stripHtml(String(item.description || '')))
-      )
-    case 'skills':
-      return false
-    case 'languages':
-      return hasTextValue(item.language) || hasTextValue(item.fluency) || Number(item.level || 0) > 0
-    case 'interests':
-      return hasTextValue(item.name) || (Array.isArray(item.keywords) && item.keywords.length > 0)
-    case 'awards':
-    case 'certifications':
-    case 'publications':
-      return hasTextValue(item.title) || hasTextValue(item.date) || hasTextValue(stripHtml(String(item.description || '')))
-    case 'volunteer':
-      return hasTextValue(item.organization) || hasTextValue(item.location) || hasTextValue(item.period) || hasTextValue(stripHtml(String(item.description || '')))
-    case 'references':
-      return hasTextValue(item.name) || hasTextValue(item.position) || hasTextValue(item.phone) || hasTextValue(stripHtml(String(item.description || '')))
-    default:
-      return false
-  }
-}
-
-function hasRenderableCustomItem(type: CustomSectionType, item: Record<string, unknown>) {
-  if (item.hidden) return false
-  if (type === 'summary' || type === 'cover-letter') {
-    return hasTextValue(stripHtml(String(item.content || ''))) || hasTextValue(item.recipient)
-  }
-  return hasRenderableStandardItem(type as StandardSectionType, item)
-}
-
 function renderRichText(
   content: string,
   className?: string,
@@ -262,37 +198,6 @@ function renderInlineTargetList(
       <span {...getPreviewActionProps(onNavigate, item.target, styles.previewInlineValue)}>{item.value}</span>
     </Fragment>
   ))
-}
-
-function getVisibleSections(data: ResumeData, sectionIds: string[]) {
-  return sectionIds.filter(sectionId => {
-    if (sectionId === 'summary') {
-      return !data.summary.hidden && stripHtml(data.summary.content).length > 0
-    }
-
-    if (isStandardSection(sectionId)) {
-      const section = data.sections[sectionId]
-      return (
-        !section.hidden &&
-        (
-          section.items.some(item => hasRenderableStandardItem(sectionId, item as unknown as Record<string, unknown>)) ||
-          stripHtml(section.intro || '').length > 0
-        )
-      )
-    }
-
-    const custom = data.customSections.find(item => item.id === sectionId)
-    if (!custom || custom.hidden) return false
-    return custom.items.some(item => hasRenderableCustomItem(custom.type, item as unknown as Record<string, unknown>))
-  })
-}
-
-function getOrderedSectionIds(data: ResumeData, sectionIds: string[]) {
-  const canonical = ['summary', ...Object.keys(data.sections), ...data.customSections.map(section => section.id)]
-  const known = new Set(canonical)
-  const base = Array.from(new Set(sectionIds.filter(sectionId => known.has(sectionId))))
-  const missing = canonical.filter(sectionId => !base.includes(sectionId))
-  return [...base, ...missing]
 }
 
 function shouldRenderAvatar(data: ResumeData) {
@@ -477,15 +382,8 @@ function resolveTemplate8SkillLabel(proficiency: string, percent: number) {
   return ''
 }
 
-const fallbackTemplateRenderer: TemplateRenderer = ({ data, sectionIds, onNavigate }, helpers) => (
-  <div className={helpers.styles.templateMain}>
-    <h1 {...helpers.getPreviewActionProps(onNavigate, { sectionId: 'basics', fieldKey: 'name' })}>{data.basics.name || '沉浸式网申'}</h1>
-    {helpers.renderSectionList(data, sectionIds, {
-      headingVariant: 'icon-line',
-      itemVariant: 'compact',
-      onNavigate,
-    })}
-  </div>
+const COMPOSED_TEMPLATE_RENDERER: TemplateRenderer = (context, helpers) => (
+  renderComposedTemplate(context, helpers) as ReactElement | null
 )
 
 function renderStandardItem(
@@ -920,14 +818,20 @@ function buildCssVariables(data: ResumeData): CSSProperties {
   const headingWeights = data.metadata.typography.heading.fontWeights.map(Number)
   const bodyWeights = data.metadata.typography.body.fontWeights.map(Number)
   const spaceScale = 1
+  const primaryColor = data.metadata.design.colors.primary.trim() || '#305d90'
+  const textColor = data.metadata.design.colors.text.trim() || '#1f2937'
+  const bodyFontFamily = resolveResumeFontFamilyStack(data.metadata.typography.body.fontFamily)
+  const headingFontFamily = resolveResumeFontFamilyStack(
+    data.metadata.typography.heading.fontFamily || data.metadata.typography.body.fontFamily,
+  )
 
   return {
     ['--page-width' as string]: dimensions.width,
     ['--page-height' as string]: data.metadata.page.format === 'free-form' ? 'auto' : dimensions.height,
-    ['--page-text-color' as string]: data.metadata.design.colors.text,
-    ['--page-primary-color' as string]: data.metadata.design.colors.primary,
+    ['--page-text-color' as string]: textColor,
+    ['--page-primary-color' as string]: primaryColor,
     ['--page-background-color' as string]: '#ffffff',
-    ['--page-body-font-family' as string]: `'${data.metadata.typography.body.fontFamily}', system-ui, -apple-system, sans-serif`,
+    ['--page-body-font-family' as string]: bodyFontFamily,
     ['--page-body-font-weight' as string]: Math.min(...bodyWeights),
     ['--page-body-font-weight-bold' as string]: Math.max(...bodyWeights),
     ['--page-body-font-size' as string]: clampToRange(
@@ -940,7 +844,7 @@ function buildCssVariables(data: ResumeData): CSSProperties {
       RESUME_EDITOR_LIMITS.typography.bodyLineHeight.min,
       RESUME_EDITOR_LIMITS.typography.bodyLineHeight.max,
     ),
-    ['--page-heading-font-family' as string]: `'${data.metadata.typography.heading.fontFamily}', system-ui, -apple-system, sans-serif`,
+    ['--page-heading-font-family' as string]: headingFontFamily,
     ['--page-heading-font-weight' as string]: Math.min(...headingWeights),
     ['--page-heading-font-weight-bold' as string]: Math.max(...headingWeights),
     ['--page-heading-font-size' as string]: clampToRange(
@@ -963,189 +867,94 @@ function buildCssVariables(data: ResumeData): CSSProperties {
 
 function collectRuntimeSectionIds(data: ResumeData) {
   const layoutSectionIds = data.metadata.layout.pages.flatMap(page => [...(page.main || []), ...(page.sidebar || [])].filter(Boolean))
-  const dedupedLayoutSectionIds = Array.from(new Set(layoutSectionIds))
-  const sectionOrder = dedupedLayoutSectionIds.length > 0 ? dedupedLayoutSectionIds : getOrderedSectionIds(data, [])
-  return getVisibleSections(data, sectionOrder)
+  return collectVisibleSectionIds(data, layoutSectionIds)
 }
 
-interface TextLineBox {
-  top: number
-  bottom: number
+interface ComposedMetricBreakdown {
+  textHeightPx: number
+  paddingPx: number
+  borderPx: number
+  marginPx: number
+  totalHeightPx: number
 }
 
-interface PageViewportMetrics {
-  top: number
-  bottom: number
-  usableHeight: number
-  firstBoundary: number
+interface ElementScale {
+  scaleX: number
+  scaleY: number
 }
 
-function parseCssLengthToPx(value: string, referenceElement: HTMLElement | null) {
-  const normalized = value.trim()
-  if (!normalized) return 0
-
-  const numeric = Number.parseFloat(normalized)
-  if (!Number.isFinite(numeric)) return 0
-
-  if (normalized.endsWith('px')) return numeric
-  if (normalized.endsWith('pt')) return numeric * (96 / 72)
-
-  if (normalized.endsWith('rem')) {
-    const rootFontSize = Number.parseFloat(window.getComputedStyle(document.documentElement).fontSize || '16')
-    return numeric * (Number.isFinite(rootFontSize) ? rootFontSize : 16)
-  }
-
-  if (normalized.endsWith('em')) {
-    const baseFontSize = Number.parseFloat((referenceElement ? window.getComputedStyle(referenceElement).fontSize : '16') || '16')
-    return numeric * (Number.isFinite(baseFontSize) ? baseFontSize : 16)
-  }
-
-  return numeric
+function parseCssPx(value: string) {
+  const parsed = Number.parseFloat(value || '0')
+  return Number.isFinite(parsed) ? parsed : 0
 }
 
-function clampBetween(value: number, minValue: number, maxValue: number) {
-  const lower = Math.min(minValue, maxValue)
-  const upper = Math.max(minValue, maxValue)
-  return clampToRange(value, lower, upper)
-}
+function resolveElementScale(element: HTMLElement): ElementScale {
+  const rect = element.getBoundingClientRect()
+  const layoutWidth = element.offsetWidth || element.scrollWidth || 0
+  const layoutHeight = element.offsetHeight || element.scrollHeight || 0
 
-function resolvePageViewportMetrics(pageElement: HTMLElement, templateRoot: HTMLElement | null, pageHeight: number): PageViewportMetrics {
-  if (!pageHeight || !Number.isFinite(pageHeight)) {
-    return {
-      top: 0,
-      bottom: 0,
-      usableHeight: 0,
-      firstBoundary: 0,
-    }
-  }
+  const rawScaleX = layoutWidth > 0 ? rect.width / layoutWidth : 1
+  const rawScaleY = layoutHeight > 0 ? rect.height / layoutHeight : 1
 
-  const templateStyles = templateRoot ? window.getComputedStyle(templateRoot) : null
-  const pageStyles = window.getComputedStyle(pageElement)
-  const fallbackInset = parseCssLengthToPx(pageStyles.getPropertyValue('--page-margin-y'), pageElement)
-  const paddingTop = templateStyles ? Number.parseFloat(templateStyles.paddingTop || '0') : 0
-  const paddingBottom = templateStyles ? Number.parseFloat(templateStyles.paddingBottom || '0') : 0
-  const resolvedPaddingTop = Number.isFinite(paddingTop) && paddingTop > 0.5 ? paddingTop : fallbackInset
-  const resolvedPaddingBottom = Number.isFinite(paddingBottom) && paddingBottom > 0.5 ? paddingBottom : fallbackInset
-  const top = clampToRange(resolvedPaddingTop, 0, Math.max(0, pageHeight * 0.28))
-  const bottom = clampToRange(resolvedPaddingBottom, 0, Math.max(0, pageHeight * 0.28))
-  const usableHeight = Math.max(40, pageHeight - top - bottom)
   return {
-    top,
-    bottom,
-    usableHeight,
-    firstBoundary: top + usableHeight,
+    scaleX: Number.isFinite(rawScaleX) && rawScaleX > 0.0001 ? rawScaleX : 1,
+    scaleY: Number.isFinite(rawScaleY) && rawScaleY > 0.0001 ? rawScaleY : 1,
   }
 }
 
-function collectTextLineBoxes(root: HTMLElement | null) {
-  if (!root) return [] as TextLineBox[]
+function collectComposedActualBlockMetrics(pageElement: HTMLElement, scaleY = 1) {
+  const blockMetricsById: Record<string, ComposedMetricBreakdown> = {}
+  const blockElements = pageElement.querySelectorAll<HTMLElement>('[data-composed-block-id]')
 
-  const rootRect = root.getBoundingClientRect()
-  const rootLayoutHeight = root.offsetHeight || root.scrollHeight || 0
-  const rawScaleY = rootLayoutHeight > 0 ? rootRect.height / rootLayoutHeight : 1
-  const scaleY = Number.isFinite(rawScaleY) && rawScaleY > 0.0001 ? rawScaleY : 1
-  const normalizeY = (value: number) => value / scaleY
-  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT)
-  const lineBoxes: TextLineBox[] = []
-  const range = document.createRange()
+  blockElements.forEach(block => {
+    const blockId = block.dataset.composedBlockId
+    if (!blockId) return
 
-  while (walker.nextNode()) {
-    const node = walker.currentNode
-    if (!(node instanceof Text) || !node.nodeValue?.trim()) continue
-    if (!node.parentElement) continue
-    range.selectNodeContents(node)
-    const rects = range.getClientRects()
-    for (const rect of rects) {
-      const top = normalizeY(rect.top - rootRect.top)
-      const bottom = normalizeY(rect.bottom - rootRect.top)
-      if (bottom - top < 1) continue
-      lineBoxes.push({ top, bottom })
+    const rect = block.getBoundingClientRect()
+    const blockStyles = window.getComputedStyle(block)
+    const paddingPx = parseCssPx(blockStyles.paddingTop) + parseCssPx(blockStyles.paddingBottom)
+    const borderPx = parseCssPx(blockStyles.borderTopWidth) + parseCssPx(blockStyles.borderBottomWidth)
+    const marginPx = parseCssPx(blockStyles.marginTop) + parseCssPx(blockStyles.marginBottom)
+    const layoutHeight = rect.height / (Number.isFinite(scaleY) && scaleY > 0.0001 ? scaleY : 1)
+    const textHeightPx = Math.max(0, layoutHeight - paddingPx - borderPx)
+
+    blockMetricsById[blockId] = {
+      textHeightPx,
+      paddingPx,
+      borderPx,
+      marginPx,
+      totalHeightPx: layoutHeight + marginPx,
     }
-  }
+  })
 
-  if (lineBoxes.length === 0) return lineBoxes
-
-  lineBoxes.sort((a, b) => a.top - b.top)
-  const merged: TextLineBox[] = []
-  for (const box of lineBoxes) {
-    const last = merged[merged.length - 1]
-    if (!last || Math.abs(last.top - box.top) > 0.5 || Math.abs(last.bottom - box.bottom) > 0.5) {
-      merged.push(box)
-    }
-  }
-  return merged
+  return blockMetricsById
 }
 
-function adjustBoundaryForLineCut(
-  ideal: number,
-  previousOffset: number,
-  maxOffset: number,
-  lineBoxes: TextLineBox[],
-  usableHeight: number,
+function areBlockMetricMapsClose(
+  prev: Record<string, ComposedMetricBreakdown>,
+  next: Record<string, ComposedMetricBreakdown>,
+  tolerancePx = 0.5,
 ) {
-  const boundaryY = ideal
-  const crossing = lineBoxes.find(line => boundaryY > line.top + 0.5 && boundaryY < line.bottom - 0.5)
-  if (!crossing) {
-    return clampBetween(ideal, previousOffset + 20, maxOffset)
-  }
+  const prevKeys = Object.keys(prev)
+  const nextKeys = Object.keys(next)
+  if (prevKeys.length !== nextKeys.length) return false
 
-  const minStep = Math.max(20, usableHeight * 0.35)
-  const maxBacktrack = Math.max(20, Math.min(44, usableHeight * 0.06))
-  const maxForward = Math.max(10, Math.min(28, usableHeight * 0.04))
-
-  const backwardSnap = clampBetween(crossing.top, previousOffset + 20, maxOffset)
-  const forwardSnap = clampBetween(crossing.bottom, previousOffset + 20, maxOffset)
-  const backwardDistance = Math.max(0, ideal - backwardSnap)
-  const forwardDistance = Math.max(0, forwardSnap - ideal)
-
-  if (forwardSnap - previousOffset >= minStep && forwardDistance <= maxForward) {
-    return forwardSnap
-  }
-
-  if (backwardSnap - previousOffset >= minStep && backwardDistance <= maxBacktrack) {
-    return backwardSnap
-  }
-
-  const fallback = clampBetween(ideal, previousOffset + 20, maxOffset)
-  if (fallback - previousOffset < minStep) {
-    return clampBetween(ideal, previousOffset + 20, maxOffset)
-  }
-  return fallback
+  return prevKeys.every(key => {
+    if (!(key in next)) return false
+    const previous = prev[key]
+    const current = next[key]
+    return (
+      Math.abs(previous.textHeightPx - current.textHeightPx) < tolerancePx &&
+      Math.abs(previous.paddingPx - current.paddingPx) < tolerancePx &&
+      Math.abs(previous.borderPx - current.borderPx) < tolerancePx &&
+      Math.abs(previous.marginPx - current.marginPx) < tolerancePx &&
+      Math.abs(previous.totalHeightPx - current.totalHeightPx) < tolerancePx
+    )
+  })
 }
 
-function buildRuntimePageOffsets(
-  contentHeight: number,
-  usableHeight: number,
-  firstPageTopInset: number,
-  lineBoxes: TextLineBox[],
-  initialOffset = 0,
-) {
-  const startOffset = Math.max(0, initialOffset)
-  const offsets = [startOffset]
-  if (!contentHeight || !usableHeight) return offsets
-
-  const overflowTolerancePx = 2
-  const maxOffset = Math.max(startOffset, contentHeight - 1)
-  let currentOffset = startOffset
-  let pageWindowHeight = Math.max(1, usableHeight + Math.max(0, firstPageTopInset))
-  let guard = 0
-
-  while (currentOffset + pageWindowHeight < contentHeight - overflowTolerancePx && guard < 400) {
-    const ideal = currentOffset + pageWindowHeight
-    const nextOffset = adjustBoundaryForLineCut(ideal, currentOffset, maxOffset, lineBoxes, usableHeight)
-    if (nextOffset <= currentOffset + 4) {
-      const forced = clampBetween(ideal, currentOffset + 20, maxOffset)
-      offsets.push(forced)
-      currentOffset = forced
-    } else {
-      offsets.push(nextOffset)
-      currentOffset = nextOffset
-    }
-    pageWindowHeight = Math.max(1, usableHeight)
-    guard += 1
-  }
-
-  return offsets
+function areScalesClose(prev: ElementScale, next: ElementScale, tolerance = 0.001) {
+  return Math.abs(prev.scaleX - next.scaleX) < tolerance && Math.abs(prev.scaleY - next.scaleY) < tolerance
 }
 
 export function ResumeReactivePreview({
@@ -1156,16 +965,21 @@ export function ResumeReactivePreview({
 }: ResumeReactivePreviewProps) {
   const cssVars = useMemo(() => buildCssVariables(data), [data])
   const runtimeSectionIds = useMemo(() => collectRuntimeSectionIds(data), [data])
-  const isFixedFormat = data.metadata.page.format !== 'free-form'
-  const useRuntimePagination = isFixedFormat
   const interactiveNavigate = onNavigate
-  const measurePageRef = useRef<HTMLDivElement | null>(null)
-  const measureViewportRef = useRef<HTMLDivElement | null>(null)
-  const [runtimePageHeightPx, setRuntimePageHeightPx] = useState(0)
-  const [runtimePageViewportTopPx, setRuntimePageViewportTopPx] = useState(0)
-  const [runtimePageViewportHeightPx, setRuntimePageViewportHeightPx] = useState(0)
-  const [runtimePageOffsets, setRuntimePageOffsets] = useState<number[]>([0])
-  const [renderer, setRenderer] = useState<TemplateRenderer>(() => fallbackTemplateRenderer)
+  const isFixedFormat = data.metadata.page.format !== 'free-form'
+  const supportsMeasuredFlow = supportsMeasuredTemplatePagination(data.metadata.template)
+  const composedContentMetrics = useMemo(
+    () => (supportsMeasuredFlow ? resolveTemplateContentMetrics(data) : null),
+    [data, supportsMeasuredFlow],
+  )
+  const composedPredictedContentWidthPx = composedContentMetrics?.contentWidthPx || 0
+  const composedPredictedContentMaxHeightPx = composedContentMetrics?.contentMaxHeightPx ?? null
+  const pageRef = useRef<HTMLDivElement | null>(null)
+  const [composedActualContentHeightPx, setComposedActualContentHeightPx] = useState(0)
+  const [composedPageViewportHeightPx, setComposedPageViewportHeightPx] = useState(0)
+  const [composedFlowScale, setComposedFlowScale] = useState<ElementScale>({ scaleX: 1, scaleY: 1 })
+  const [composedActualBlockMetricsById, setComposedActualBlockMetricsById] = useState<Record<string, ComposedMetricBreakdown>>({})
+  const renderer = COMPOSED_TEMPLATE_RENDERER
 
   const templateHelpers = useMemo<RuntimeTemplateHelpers>(
     () => ({
@@ -1190,118 +1004,206 @@ export function ResumeReactivePreview({
     [],
   )
 
-  const runtimePages = useRuntimePagination ? Math.max(1, runtimePageOffsets.length) : 1
-
   useEffect(() => {
-    let cancelled = false
-
-    const loadRenderer = async () => {
-      try {
-        const loaded = await loadTemplateRenderer(data.metadata.template)
-        if (cancelled) return
-        const normalized: TemplateRenderer = (context, helpers) => loaded(context, helpers) as ReactElement | null
-        setRenderer(() => normalized)
-      } catch {
-        if (!cancelled) {
-          setRenderer(() => fallbackTemplateRenderer)
-        }
-      }
+    if (!supportsMeasuredFlow) {
+      setComposedActualContentHeightPx(0)
+      setComposedPageViewportHeightPx(0)
+      setComposedFlowScale({ scaleX: 1, scaleY: 1 })
+      setComposedActualBlockMetricsById({})
+      return
     }
 
-    loadRenderer()
-    return () => {
-      cancelled = true
-    }
-  }, [data.metadata.template])
+    const pageElement = pageRef.current
+    if (!pageElement || typeof MutationObserver === 'undefined') return
 
-  useLayoutEffect(() => {
-    let frameId = 0
-    const resetRuntimePagination = () => {
-      setRuntimePageHeightPx(prev => (prev === 0 ? prev : 0))
-      setRuntimePageViewportTopPx(prev => (prev === 0 ? prev : 0))
-      setRuntimePageViewportHeightPx(prev => (prev === 0 ? prev : 0))
-      setRuntimePageOffsets(prev => (prev.length === 1 && prev[0] === 0 ? prev : [0]))
-    }
-    const scheduleRuntimeReset = () => {
-      cancelAnimationFrame(frameId)
-      frameId = requestAnimationFrame(resetRuntimePagination)
-    }
+    let frame = 0
+    let observedFlow: HTMLElement | null = null
+    const resizeObserver = typeof ResizeObserver === 'undefined'
+      ? null
+      : new ResizeObserver(() => scheduleUpdate())
 
-    if (!useRuntimePagination) {
-      scheduleRuntimeReset()
-      return () => {
-        cancelAnimationFrame(frameId)
-      }
-    }
+    const update = () => {
+      const flow = pageElement.querySelector<HTMLElement>('[data-composed-flow="true"]')
+      if (!flow) return
 
-    const measurePage = measurePageRef.current
-    const measureViewport = measureViewportRef.current
-    if (!measurePage || !measureViewport) return
-
-    const updateRuntimePagination = () => {
-      // Always measure from dedicated full-page probe to avoid recursive
-      // shrinking when rendered slice viewport has dynamic clipped height.
-      const pageHeight = measureViewport.clientHeight || measureViewport.offsetHeight || 0
-      const contentNode = measurePage.firstElementChild as HTMLElement | null
-      const templateRoot = contentNode?.firstElementChild as HTMLElement | null
-      const contentHeight = Math.max(
-        templateRoot?.scrollHeight || 0,
-        templateRoot?.offsetHeight || 0,
-        contentNode?.scrollHeight || 0,
-        contentNode?.offsetHeight || 0,
-      )
-
-      const viewportMetrics = resolvePageViewportMetrics(measurePage, templateRoot, pageHeight)
-      const viewportTop = viewportMetrics.top
-      const usableHeight = viewportMetrics.usableHeight
-      const lineBoxes = collectTextLineBoxes(templateRoot)
-      const pageOffsets = buildRuntimePageOffsets(contentHeight, usableHeight, viewportTop, lineBoxes, 0)
-
-      if (!pageHeight || !Number.isFinite(pageHeight)) {
-        resetRuntimePagination()
-        return
+      if (resizeObserver && observedFlow !== flow) {
+        if (observedFlow) resizeObserver.unobserve(observedFlow)
+        resizeObserver.observe(flow)
+        observedFlow = flow
       }
 
-      setRuntimePageHeightPx(prev => (Math.abs(prev - pageHeight) < 0.5 ? prev : pageHeight))
-      setRuntimePageViewportTopPx(prev => (Math.abs(prev - viewportTop) < 0.5 ? prev : viewportTop))
-      setRuntimePageViewportHeightPx(prev => (Math.abs(prev - usableHeight) < 0.5 ? prev : usableHeight))
-      setRuntimePageOffsets(prev => {
-        if (prev.length === pageOffsets.length && prev.every((value, index) => Math.abs(value - pageOffsets[index]) < 0.5)) {
-          return prev
-        }
-        return pageOffsets
-      })
+      const rect = flow.getBoundingClientRect()
+      const scale = resolveElementScale(flow)
+      const unscaledHeight = rect.height / scale.scaleY
+      const pageScale = resolveElementScale(pageElement)
+      const pageRect = pageElement.getBoundingClientRect()
+      const pageViewportHeight = pageRect.height / pageScale.scaleY
+
+      setComposedFlowScale(prev => (areScalesClose(prev, scale) ? prev : scale))
+      setComposedActualContentHeightPx(prev => (Math.abs(prev - unscaledHeight) < 0.5 ? prev : unscaledHeight))
+      setComposedPageViewportHeightPx(prev => (Math.abs(prev - pageViewportHeight) < 0.5 ? prev : pageViewportHeight))
+
+      const nextBlockMetricsById = collectComposedActualBlockMetrics(pageElement, scale.scaleY)
+      setComposedActualBlockMetricsById(prev => (
+        areBlockMetricMapsClose(prev, nextBlockMetricsById) ? prev : nextBlockMetricsById
+      ))
     }
 
     const scheduleUpdate = () => {
-      cancelAnimationFrame(frameId)
-      frameId = requestAnimationFrame(updateRuntimePagination)
+      cancelAnimationFrame(frame)
+      frame = requestAnimationFrame(update)
     }
+
+    resizeObserver?.observe(pageElement)
+
+    const mutationObserver = new MutationObserver(() => scheduleUpdate())
+    mutationObserver.observe(pageElement, {
+      subtree: true,
+      childList: true,
+      attributes: true,
+    })
 
     scheduleUpdate()
 
-    const resizeObserver = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(scheduleUpdate)
-    resizeObserver?.observe(measurePage)
-    resizeObserver?.observe(measureViewport)
-    if (measurePage.firstElementChild) {
-      resizeObserver?.observe(measurePage.firstElementChild)
-    }
-    window.addEventListener('resize', scheduleUpdate)
-
     return () => {
-      cancelAnimationFrame(frameId)
+      cancelAnimationFrame(frame)
+      mutationObserver.disconnect()
       resizeObserver?.disconnect()
-      window.removeEventListener('resize', scheduleUpdate)
     }
-  }, [data, useRuntimePagination, renderer, runtimeSectionIds, templateHelpers])
+  }, [data, supportsMeasuredFlow, runtimeSectionIds, renderer])
 
-  const renderRuntimeTemplate = () =>
-    renderer({
+  const composedHeightEstimate = useMemo(() => {
+    if (!supportsMeasuredFlow || composedPredictedContentWidthPx <= 1) return null
+    return estimateCurrentTemplateHeight({
       data,
-      pageIndex: 0,
       sectionIds: runtimeSectionIds,
-      onNavigate: interactiveNavigate,
-    }, templateHelpers)
+      contentWidthPx: composedPredictedContentWidthPx,
+      locale: data.metadata.page.locale,
+    })
+  }, [data, supportsMeasuredFlow, runtimeSectionIds, composedPredictedContentWidthPx])
+  const estimatedPages = useMemo(() => {
+    if (!supportsMeasuredFlow || !isFixedFormat || composedPredictedContentWidthPx <= 1) {
+      return [
+        {
+          pageIndex: 0,
+          sectionIds: runtimeSectionIds,
+          includesHeader: true,
+        },
+      ]
+    }
+
+    const pagination = estimateCurrentTemplatePages({
+      data,
+      sectionIds: runtimeSectionIds,
+      contentWidthPx: composedPredictedContentWidthPx,
+      locale: data.metadata.page.locale,
+    })
+
+    return pagination.pages.length > 0
+      ? pagination.pages
+      : [
+          {
+            pageIndex: 0,
+            sectionIds: runtimeSectionIds,
+            includesHeader: true,
+          },
+        ]
+  }, [data, supportsMeasuredFlow, isFixedFormat, runtimeSectionIds, composedPredictedContentWidthPx])
+
+  const composedBlockDebugRows = useMemo(() => {
+    if (!composedHeightEstimate) return []
+    return composedHeightEstimate.blockHeights.map(block => {
+      const actual = composedActualBlockMetricsById[block.id] || null
+      return {
+        id: block.id,
+        sectionId: block.sectionId,
+        predicted: {
+          textHeightPx: block.textHeightPx ?? block.contentHeightPx,
+          paddingPx: block.paddingPx ?? 0,
+          borderPx: block.borderPx ?? 0,
+          marginPx: block.marginPx ?? block.marginBottomPx ?? 0,
+          totalHeightPx: block.totalHeightPx,
+        },
+        actual,
+      }
+    })
+  }, [composedHeightEstimate, composedActualBlockMetricsById])
+
+  const composedComponentSummary = useMemo(() => {
+    return composedBlockDebugRows.reduce(
+      (acc, row) => {
+        if (row.actual) {
+          acc.predicted.textHeightPx += row.predicted.textHeightPx
+          acc.predicted.paddingPx += row.predicted.paddingPx
+          acc.predicted.borderPx += row.predicted.borderPx
+          acc.predicted.marginPx += row.predicted.marginPx
+          acc.predicted.totalHeightPx += row.predicted.totalHeightPx
+
+          acc.actual.textHeightPx += row.actual.textHeightPx
+          acc.actual.paddingPx += row.actual.paddingPx
+          acc.actual.borderPx += row.actual.borderPx
+          acc.actual.marginPx += row.actual.marginPx
+          acc.actual.totalHeightPx += row.actual.totalHeightPx
+          acc.measuredBlocks += 1
+        }
+
+        return acc
+      },
+      {
+        measuredBlocks: 0,
+        predicted: {
+          textHeightPx: 0,
+          paddingPx: 0,
+          borderPx: 0,
+          marginPx: 0,
+          totalHeightPx: 0,
+        },
+        actual: {
+          textHeightPx: 0,
+          paddingPx: 0,
+          borderPx: 0,
+          marginPx: 0,
+          totalHeightPx: 0,
+        },
+      },
+    )
+  }, [composedBlockDebugRows])
+
+  const composedHeightDeltaPx =
+    composedHeightEstimate && composedActualContentHeightPx > 0
+      ? composedHeightEstimate.predictedHeightPx - composedActualContentHeightPx
+      : 0
+  const composedOverflowPx =
+    composedActualContentHeightPx > 0 && composedPageViewportHeightPx > 0
+      ? composedActualContentHeightPx - composedPageViewportHeightPx
+      : 0
+  const composedContentMaxOverflowPx =
+    composedActualContentHeightPx > 0 && Number.isFinite(composedPredictedContentMaxHeightPx)
+      ? composedActualContentHeightPx - (composedPredictedContentMaxHeightPx as number)
+      : null
+
+  const pageCount = estimatedPages.length
+  const pageNodes = estimatedPages.map(page => (
+    <div
+      key={`page-${page.pageIndex}-${page.sectionIds.join('|') || 'empty'}`}
+      ref={page.pageIndex === 0 ? pageRef : null}
+      className={cx(styles.page, isFixedFormat && styles.pageFixed)}
+      data-template={data.metadata.template}
+    >
+      {renderer({
+        data,
+        pageIndex: page.pageIndex,
+        sectionIds: page.sectionIds,
+        onNavigate: interactiveNavigate,
+      }, templateHelpers)}
+
+      {showPageNumbers ? (
+        <div className={styles.pageNumber}>
+          {page.pageIndex + 1}/{pageCount}
+        </div>
+      ) : null}
+    </div>
+  ))
 
   return (
     <div
@@ -1313,95 +1215,27 @@ export function ResumeReactivePreview({
       )}
       style={cssVars}
     >
-      {useRuntimePagination ? (
-        <div className={styles.measureLayer} aria-hidden>
-          <div ref={measureViewportRef} className={cx(styles.page, styles.pageFixed, styles.measureViewport)} />
-          <div ref={measurePageRef} className={cx(styles.page, styles.pageFixed, styles.measurePage)}>
-            <div className={styles.measureContent}>{renderRuntimeTemplate()}</div>
-          </div>
-        </div>
-      ) : null}
+      {pageNodes}
 
-      {useRuntimePagination ? (
-        Array.from({ length: runtimePages }, (_item, pageIndex) => {
-          const isFirstExportPage = pageIndex === 0
-          const pageViewportTop = isFirstExportPage ? 0 : runtimePageViewportTopPx
-          const pageOffset =
-            runtimePageOffsets[pageIndex] !== undefined
-              ? runtimePageOffsets[pageIndex]
-              : runtimePageViewportHeightPx > 0
-                ? pageIndex === 0
-                  ? 0
-                  : runtimePageViewportHeightPx + runtimePageViewportTopPx + (pageIndex - 1) * runtimePageViewportHeightPx
-                : 0
-          // Keep page slices strictly non-overlapping. The viewport top inset
-          // is visual padding only and must not shift content offset backward.
-          const pageSliceOffset = Math.max(0, pageOffset)
-          const nextPageOffset = runtimePageOffsets[pageIndex + 1]
-          const pageViewportHeight = (() => {
-            if (typeof nextPageOffset === 'number' && Number.isFinite(nextPageOffset)) {
-              // Match current page bottom to next page start to avoid overlap/repeat.
-              return Math.max(1, nextPageOffset - pageOffset)
-            }
-            return isFirstExportPage
-              ? runtimePageViewportHeightPx + runtimePageViewportTopPx
-              : runtimePageViewportHeightPx
-          })()
-          const clampedPageViewportHeight =
-            runtimePageHeightPx > 0
-              ? clampToRange(pageViewportHeight, 1, runtimePageHeightPx)
-              : Math.max(1, pageViewportHeight)
-          return (
-            <div key={`${data.metadata.template}-runtime-${pageIndex}`} className={cx(styles.page, styles.pageFixed)} data-template={data.metadata.template}>
-              <div
-                className={styles.pageSliceViewport}
-                style={
-                  clampedPageViewportHeight > 0
-                    ? {
-                        top: `${pageViewportTop}px`,
-                        height: `${clampedPageViewportHeight}px`,
-                        minHeight: `${clampedPageViewportHeight}px`,
-                      }
-                    : undefined
-                }
-              >
-                <div
-                  className={styles.pageSlice}
-                  style={{
-                    ...(runtimePageHeightPx > 0 ? { height: `${runtimePageHeightPx}px`, minHeight: `${runtimePageHeightPx}px` } : null),
-                    ...(pageSliceOffset ? { transform: `translateY(-${pageSliceOffset}px)` } : null),
-                  }}
-                >
-                  {renderRuntimeTemplate()}
-                </div>
-              </div>
-
-              {showPageNumbers ? <div className={styles.pageNumber}>{`${pageIndex + 1}/${runtimePages}`}</div> : null}
-            </div>
-          )
-        })
-      ) : (
-        data.metadata.layout.pages.map((page, pageIndex) => {
-          const explicitIds = Array.from(new Set([...(page.main || []), ...(page.sidebar || [])].filter(Boolean)))
-          const combinedIds = explicitIds.length === 0 && pageIndex === 0 ? getOrderedSectionIds(data, explicitIds) : explicitIds
-          const visibleIds = getVisibleSections(data, combinedIds)
-
-          return (
-            <div key={`${data.metadata.template}-${pageIndex}`} className={styles.page} data-template={data.metadata.template}>
-              {renderer({
-                data,
-                pageIndex,
-                sectionIds: visibleIds,
-                onNavigate: interactiveNavigate,
-              }, templateHelpers)}
-
-              {showPageNumbers ? (
-                <div className={styles.pageNumber}>{`${pageIndex + 1}/${data.metadata.layout.pages.length}`}</div>
-              ) : null}
-            </div>
-          )
-        })
-      )}
+      <ComposedDebugFloatingPanel
+        visible={supportsMeasuredFlow && pageCount === 1}
+        predictedHeightPx={composedHeightEstimate?.predictedHeightPx ?? null}
+        actualContentHeightPx={composedActualContentHeightPx}
+        heightDeltaPx={composedHeightEstimate ? composedHeightDeltaPx : null}
+        pageViewportHeightPx={composedPageViewportHeightPx}
+        contentMaxHeightPx={composedPredictedContentMaxHeightPx}
+        overflowPx={composedPageViewportHeightPx > 0 ? composedOverflowPx : null}
+        contentMaxOverflowPx={composedContentMaxOverflowPx}
+        scaleX={composedFlowScale.scaleX}
+        scaleY={composedFlowScale.scaleY}
+        blockCount={composedHeightEstimate ? composedHeightEstimate.blockHeights.length : 0}
+        measuredBlocks={composedComponentSummary.measuredBlocks}
+        textDeltaPx={composedComponentSummary.predicted.textHeightPx - composedComponentSummary.actual.textHeightPx}
+        paddingDeltaPx={composedComponentSummary.predicted.paddingPx - composedComponentSummary.actual.paddingPx}
+        borderDeltaPx={composedComponentSummary.predicted.borderPx - composedComponentSummary.actual.borderPx}
+        marginDeltaPx={composedComponentSummary.predicted.marginPx - composedComponentSummary.actual.marginPx}
+        rows={composedBlockDebugRows}
+      />
     </div>
   )
 }

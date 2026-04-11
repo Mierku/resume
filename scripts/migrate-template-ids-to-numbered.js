@@ -6,14 +6,12 @@ const { PrismaClient } = require('@prisma/client')
 const prisma = new PrismaClient()
 const isDryRun = process.argv.includes('--dry')
 
-const NUMBERED_TEMPLATE_IDS = new Set([
+const ACTIVE_TEMPLATE_IDS = new Set([
   'template-1',
   'template-2',
   'template-3',
   'template-4',
   'template-5',
-  'template-6',
-  'template-7',
 ])
 
 const LEGACY_TO_NUMBERED_TEMPLATE_MAP = new Map([
@@ -41,7 +39,7 @@ function normalizeTemplateId(input) {
     return 'template-1'
   }
 
-  if (NUMBERED_TEMPLATE_IDS.has(input)) {
+  if (ACTIVE_TEMPLATE_IDS.has(input)) {
     return input
   }
 

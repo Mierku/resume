@@ -1,18 +1,15 @@
-<svg id="flower-mono-45" width="220" height="220" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <path id="fat-petal-path" d="M100,105 Q145,60 100,20 Q55,60 100,105 Z" />
-    <filter id="bloom-mono">
-      <feGaussianBlur stdDeviation="4" result="blur" />
-      <feComposite in="SourceGraphic" in2="blur" operator="over" />
-    </filter>
-  </defs>
-
-  <g filter="url(#bloom-mono)">
-    <use href="#fat-petal-path" transform="rotate(45, 100, 100)" fill="#f59e0b" />
-    <use href="#fat-petal-path" transform="rotate(135, 100, 100)" fill="#f59e0b" />
-    <use href="#fat-petal-path" transform="rotate(225, 100, 100)" fill="#f59e0b" />
-    <use href="#fat-petal-path" transform="rotate(315, 100, 100)" fill="#f59e0b" />
-    <circle cx="100" cy="100" r="8" fill="#000000" />
-    <circle cx="100" cy="100" r="2.5" fill="#f59e0b" opacity="0.9" />
-  </g>
-</svg>
+<svg id="svg-pure" viewBox="30 30 140 140" xmlns="http://www.w3.org/2000/svg" class="w-full h-full p-2">
+                    <defs>
+                        <linearGradient id="pureGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#f97316"/>
+                            <stop offset="50%" style="stop-color:#f43f5e"/>
+                            <stop offset="100%" style="stop-color:#fbbf24"/>
+                        </linearGradient>
+                    </defs>
+                    <g transform="rotate(45 100 100)">
+                        <path d="M100,92 Q130,60 100,30 Q70,60 100,92 Z" fill="url(#pureGrad)" fill-opacity="0.9"/>
+                        <path d="M108,100 Q140,70 170,100 Q140,130 108,100 Z" fill="url(#pureGrad)" fill-opacity="0.7"/>
+                        <path d="M100,108 Q70,140 100,170 Q130,140 100,108 Z" fill="url(#pureGrad)" fill-opacity="0.5"/>
+                        <path d="M92,100 Q60,130 30,100 Q60,70 92,100 Z" fill="url(#pureGrad)" fill-opacity="0.3"/>
+                    </g>
+                </svg>

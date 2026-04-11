@@ -21,7 +21,7 @@
   border-radius: 0;
   background: var(--page-background-color, #fff);
   color: var(--page-text-color, #1f2937);
-  font-family: var(--page-body-font-family, 'Noto Sans SC', system-ui, sans-serif);
+  font-family: var(--page-body-font-family, 'Source Han Sans SC', 'Noto Sans SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', '微软雅黑', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
   font-size: calc(var(--page-body-font-size, 10) * 1pt);
   line-height: var(--page-body-line-height, 1.58);
   font-weight: var(--page-body-font-weight, 400);
@@ -31,6 +31,106 @@
   --page-space-x: var(--page-gap-x, 4pt);
   --page-space-y: var(--page-gap-y, 6pt);
   isolation: isolate;
+}
+
+.composedDebugPanel {
+  width: 312px;
+  max-width: min(340px, calc(100vw - 16px));
+  max-height: min(calc(var(--page-height, 297mm) - 2px), calc(100vh - 16px));
+  overflow: auto;
+  border: 1px solid rgba(15, 23, 42, 0.2);
+  background: #f8fafc;
+  color: #0f172a;
+  border-radius: 10px;
+  padding: 10px;
+  font-size: 11px;
+  line-height: 1.35;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
+}
+
+.composedDebugFloating {
+  position: fixed;
+  top: 72px;
+  right: 8px;
+  z-index: 30;
+  pointer-events: auto;
+}
+
+.composedDebugDragging {
+  cursor: grabbing;
+}
+
+.composedDebugDragHandle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: -10px -10px 8px;
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 10px 10px 0 0;
+  background: #eef2f7;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+}
+
+.composedDebugDragHandleDragging {
+  cursor: grabbing;
+}
+
+.composedDebugTitle {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.composedDebugDragHint {
+  font-size: 10px;
+  color: #64748b;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.composedDebugSummary {
+  margin-top: 8px;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: #ffffff;
+  display: grid;
+  gap: 3px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+}
+
+.composedDebugBlockList {
+  margin-top: 10px;
+  display: grid;
+  gap: 8px;
+}
+
+.composedDebugBlock {
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 7px;
+}
+
+.composedDebugBlockTitle {
+  font-size: 11px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.composedDebugMetric {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  font-size: 10px;
+}
+
+@media (max-width: 768px) {
+  .composedDebugPanel {
+    width: min(320px, calc(100vw - 16px));
+    max-height: calc(100vh - 16px);
+  }
 }
 
 .pageFixed {
@@ -98,12 +198,6 @@
 
 .page :where(h1, h2, h3, h4, h5, h6) {
   line-height: var(--page-heading-line-height, 1.3);
-}
-
-.templateMain {
-  display: flex;
-  flex-direction: column;
-  gap: calc(var(--page-space-y) * 1.42 * var(--smart-space-scale, 1));
 }
 
 .avatar {

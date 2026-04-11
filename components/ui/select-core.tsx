@@ -85,8 +85,8 @@ export const CustomSelect = forwardRef<HTMLButtonElement, CustomSelectProps>(fun
   const [innerValue, setInnerValue] = useState(defaultValue)
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
-  const panelRef = useRef<HTMLDivElement>(null)
   const searchRef = useRef<HTMLInputElement>(null)
+  const optionRefs = useRef(new Map<string, HTMLButtonElement>())
   const listboxId = useId()
   const canUsePortal = typeof document !== 'undefined'
 
@@ -111,6 +111,7 @@ export const CustomSelect = forwardRef<HTMLButtonElement, CustomSelectProps>(fun
     if (!keyword) return resolvedOptions
     return resolvedOptions.filter(option => option.searchText?.includes(keyword))
   }, [resolvedOptions, search])
+  const enabledFilteredOptions = useMemo(() => filteredOptions.filter(option => !option.disabled), [filteredOptions])
 
   const canClear = allowClear && currentValue !== '' && !disabled
   const displayLabel = selectedOption?.label || currentValue || placeholder || ''
@@ -126,25 +127,32 @@ export const CustomSelect = forwardRef<HTMLButtonElement, CustomSelectProps>(fun
     setSearch('')
   }
 
-  const focusSiblingOption = (current: HTMLElement, direction: 1 | -1) => {
-    const focusableOptions = Array.from(
-      panelRef.current?.querySelectorAll<HTMLButtonElement>('[data-option="true"]:not([data-disabled="true"])') || [],
-    )
+  const setOptionRef = (value: string, node: HTMLButtonElement | null) => {
+    if (node) {
+      optionRefs.current.set(value, node)
+      return
+    }
 
-    if (focusableOptions.length === 0) return
+    optionRefs.current.delete(value)
+  }
 
-    const currentIndex = focusableOptions.findIndex(option => option === current)
-    const nextIndex = currentIndex === -1 ? 0 : Math.min(Math.max(currentIndex + direction, 0), focusableOptions.length - 1)
-    focusableOptions[nextIndex]?.focus()
-    focusableOptions[nextIndex]?.scrollIntoView({ block: 'nearest' })
+  const focusOptionByValue = (targetValue: string | undefined) => {
+    if (!targetValue) return
+    const target = optionRefs.current.get(targetValue)
+    target?.focus()
+    target?.scrollIntoView({ block: 'nearest' })
+  }
+
+  const focusSiblingOption = (currentValue: string, direction: 1 | -1) => {
+    if (enabledFilteredOptions.length === 0) return
+
+    const currentIndex = enabledFilteredOptions.findIndex(option => option.value === currentValue)
+    const nextIndex = currentIndex === -1 ? 0 : Math.min(Math.max(currentIndex + direction, 0), enabledFilteredOptions.length - 1)
+    focusOptionByValue(enabledFilteredOptions[nextIndex]?.value)
   }
 
   const getInitialFocusTarget = () => {
-    return (
-      panelRef.current?.querySelector<HTMLElement>('[data-selected="true"]') ||
-      panelRef.current?.querySelector<HTMLElement>('[data-option="true"]:not([data-disabled="true"])') ||
-      true
-    )
+    return optionRefs.current.get(currentValue) || optionRefs.current.get(enabledFilteredOptions[0]?.value || '') || true
   }
 
   const handleTriggerKeyDown = (event: ReactKeyboardEvent<HTMLButtonElement>) => {
@@ -167,26 +175,25 @@ export const CustomSelect = forwardRef<HTMLButtonElement, CustomSelectProps>(fun
 
     if (event.key === 'ArrowDown') {
       event.preventDefault()
-      focusSiblingOption(event.currentTarget, 1)
+      focusSiblingOption(option.value, 1)
       return
     }
 
     if (event.key === 'ArrowUp') {
       event.preventDefault()
-      focusSiblingOption(event.currentTarget, -1)
+      focusSiblingOption(option.value, -1)
     }
   }
 
   const handleSearchKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'ArrowDown') {
       event.preventDefault()
-      const firstOption = panelRef.current?.querySelector<HTMLButtonElement>('[data-option="true"]:not([data-disabled="true"])')
-      firstOption?.focus()
+      focusOptionByValue(enabledFilteredOptions[0]?.value)
     }
   }
 
   const trigger = (
-    <div className="relative">
+    <div className="resume-select-root relative w-full">
       {name ? <input type="hidden" name={name} value={currentValue} /> : null}
 
       <Popover.Trigger
@@ -204,18 +211,27 @@ export const CustomSelect = forwardRef<HTMLButtonElement, CustomSelectProps>(fun
         aria-controls={listboxId}
         aria-haspopup="listbox"
         data-invalid={error ? 'true' : undefined}
+        data-open={open ? 'true' : undefined}
         disabled={disabled}
         onKeyDown={handleTriggerKeyDown}
         className={cx(
-          'control-field flex h-9 w-full items-center px-3 text-left text-sm text-foreground outline-none transition-all duration-200',
-          canClear ? 'pr-11' : 'pr-9',
+          'control-field resume-select-trigger flex w-full items-center text-left text-sm text-foreground outline-none transition-all duration-200',
+          canClear && 'has-clear',
           disabled && 'cursor-not-allowed opacity-60',
           className,
         )}
         style={style}
       >
-        <span className={cx('min-w-0 flex-1 truncate', isPlaceholder && 'text-muted-foreground')}>
+        <span
+          className={cx(
+            'resume-select-trigger-content min-w-0 flex-1 truncate',
+            isPlaceholder && 'text-muted-foreground',
+          )}
+        >
           {displayLabel || ' '}
+        </span>
+        <span className="resume-select-trigger-arrow" aria-hidden="true">
+          <ChevronDown className="h-4 w-4" />
         </span>
       </Popover.Trigger>
 
@@ -223,7 +239,7 @@ export const CustomSelect = forwardRef<HTMLButtonElement, CustomSelectProps>(fun
         <button
           type="button"
           aria-label="清空选择"
-          className="absolute right-8 top-1/2 inline-flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          className="resume-select-clear absolute top-1/2 inline-flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           onClick={event => {
             event.preventDefault()
             event.stopPropagation()
@@ -233,10 +249,6 @@ export const CustomSelect = forwardRef<HTMLButtonElement, CustomSelectProps>(fun
           <X className="h-3.5 w-3.5" />
         </button>
       ) : null}
-
-      <span className="pointer-events-none absolute right-3 top-1/2 inline-flex -translate-y-1/2 text-muted-foreground">
-        <ChevronDown className={cx('h-4 w-4 transition-transform duration-200', open && 'rotate-180')} />
-      </span>
 
       {error ? <p className="mt-1 text-xs text-red-500">{error}</p> : null}
     </div>
@@ -258,7 +270,7 @@ export const CustomSelect = forwardRef<HTMLButtonElement, CustomSelectProps>(fun
           <Popover.Positioner
             side="bottom"
             align="start"
-            sideOffset={8}
+            sideOffset={4}
             collisionPadding={12}
             positionMethod="fixed"
             className="z-[120]"
@@ -268,11 +280,10 @@ export const CustomSelect = forwardRef<HTMLButtonElement, CustomSelectProps>(fun
             }}
           >
             <Popover.Popup
-              ref={panelRef}
               id={listboxId}
               role="listbox"
               initialFocus={showSearch ? searchRef : () => getInitialFocusTarget()}
-              className="control-panel control-floating-panel flex flex-col overflow-hidden"
+              className="control-panel control-floating-panel resume-select-panel flex flex-col overflow-hidden"
               style={{
                 maxHeight: 'min(320px, var(--available-height))',
               }}
@@ -288,11 +299,11 @@ export const CustomSelect = forwardRef<HTMLButtonElement, CustomSelectProps>(fun
             >
               <div className="flex min-h-0 max-h-full flex-col">
                 {showSearch ? (
-                  <div className="border-b border-border px-2 py-2">
+                  <div className="resume-select-search-wrap">
                     <label className="sr-only" htmlFor={`${listboxId}-search`}>
                       搜索选项
                     </label>
-                    <div className="control-search flex items-center gap-2 px-2.5">
+                    <div className="control-search resume-select-search flex items-center gap-2">
                       <Search className="h-3.5 w-3.5 text-muted-foreground" />
                       <input
                         id={`${listboxId}-search`}
@@ -301,19 +312,20 @@ export const CustomSelect = forwardRef<HTMLButtonElement, CustomSelectProps>(fun
                         onChange={event => setSearch(event.target.value)}
                         onKeyDown={handleSearchKeyDown}
                         placeholder="搜索选项"
-                        className="h-9 w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
+                        className="resume-select-search-input w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
                       />
                     </div>
                   </div>
                 ) : null}
 
-                <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-1.5">
+                <div className="resume-select-options min-h-0 flex-1 overflow-y-auto overscroll-contain">
                   {filteredOptions.length > 0 ? (
                     filteredOptions.map(option => {
                       const selected = option.value === currentValue
 
                       return (
                         <button
+                          ref={node => setOptionRef(option.value, node)}
                           key={option.value}
                           type="button"
                           role="option"
@@ -329,19 +341,19 @@ export const CustomSelect = forwardRef<HTMLButtonElement, CustomSelectProps>(fun
                           }}
                           onKeyDown={event => handleOptionKeyDown(event, option)}
                           className={cx(
-                            'control-option flex w-full items-center gap-3 px-3 py-2 text-left text-sm text-foreground',
+                            'control-option resume-select-option flex w-full items-center gap-3 text-left text-sm text-foreground',
                             option.disabled && 'cursor-not-allowed opacity-45',
                           )}
                         >
                           <span className="min-w-0 flex-1 truncate">{option.label}</span>
-                          <span className="control-check flex h-4 w-4 items-center justify-center">
+                          <span className="control-check resume-select-option-check flex h-4 w-4 items-center justify-center">
                             {selected ? <Check className="h-4 w-4" /> : null}
                           </span>
                         </button>
                       )
                     })
                   ) : (
-                    <div className="px-3 py-4 text-center text-sm text-muted-foreground">{emptyText}</div>
+                    <div className="resume-select-empty px-3 py-4 text-center text-sm text-muted-foreground">{emptyText}</div>
                   )}
                 </div>
               </div>

@@ -32,12 +32,12 @@ interface NavLink {
 const navLinks: NavLink[] = [
   { href: "/", label: "首页" },
   { href: "/resume/templates", label: "模版" },
-  { href: "/tracking", label: "跟踪" },
+  { href: "/dashboard", label: "工作台" },
 ];
 
 export function Header() {
   const pathname = usePathname();
-  const hideHeader = pathname.startsWith("/resume/editor/");
+  const hideHeader = pathname.startsWith("/resume/editor/") || pathname.startsWith("/dashboard");
   const { auth, checked, refresh } = useAuthSnapshot<SessionUser>({ eager: !hideHeader });
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileUserMenuOpen, setMobileUserMenuOpen] = useState(false);
@@ -121,11 +121,12 @@ export function Header() {
   const isActive = (href: string) => {
     if (href === "/") return pathname === "/";
     if (href === "/resume/templates") return pathname === "/resume" || pathname.startsWith("/resume/templates");
+    if (href === "/dashboard") return pathname.startsWith("/dashboard");
     return pathname.startsWith(href);
   };
 
   const isLanding = pathname === "/";
-  const isTracking = pathname.startsWith("/tracking");
+  const isTracking = pathname.startsWith("/tracking") || pathname.startsWith("/dashboard");
   const isThemeDark = theme === "dark";
   const logoColor = isThemeDark ? "#f59e0b" : "#b45309";
   const auraBrand = "var(--aura-header-brand)";

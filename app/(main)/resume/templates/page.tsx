@@ -2,11 +2,11 @@
 
 import { useCallback, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Search } from 'lucide-react'
 import { toast } from '@/lib/toast'
 import { RESUME_TEMPLATES } from '@/lib/constants'
 import { Modal } from '@/components/ui/Modal'
 import { Input } from '@/components/ui/Input'
+import { SearchField } from '@/components/ui/SearchField'
 import { Select } from '@/components/ui/Select'
 import { Button } from '@/components/ui/Button'
 import { useAuthSnapshot } from '@/lib/hooks/useAuthSnapshot'
@@ -43,20 +43,16 @@ const TEMPLATE_CATEGORIES = [
   { id: 'blue', label: '蓝系商务', hint: '商务稳重' },
   { id: 'minimal', label: '极简留白', hint: '信息清爽' },
   { id: 'iconic', label: '图标结构', hint: '导览明确' },
-  { id: 'bilingual', label: '双语', hint: '中英版本' },
 ] as const
 
 type TemplateCategory = (typeof TEMPLATE_CATEGORIES)[number]['id']
 
 const TEMPLATE_CATEGORY_MAP: Record<string, TemplateCategory[]> = {
-  'template-1': ['featured', 'blue'],
-  'template-2': ['featured', 'blue', 'bilingual'],
-  'template-3': ['featured', 'blue', 'iconic'],
+  'template-1': ['featured', 'minimal'],
+  'template-2': ['featured', 'blue'],
+  'template-3': ['featured', 'iconic'],
   'template-4': ['featured', 'minimal'],
-  'template-5': ['blue'],
-  'template-6': ['iconic'],
-  'template-7': ['blue'],
-  'template-8': ['featured'],
+  'template-5': ['featured', 'iconic'],
 }
 
 function getTemplateCategories(templateId: string): TemplateCategory[] {
@@ -276,16 +272,15 @@ export default function TemplatesPage() {
             <p className={s.bannerSubtitle}>先筛选风格，再进入编辑器一键套用，快速完成投递简历。</p>
 
             <div className={s.searchWrap}>
-              <div className={s.searchField}>
-                <Search className={s.searchIcon} aria-hidden />
-                <input
-                  value={templateQuery}
-                  onChange={event => setTemplateQuery(event.target.value)}
-                  placeholder="搜索模板关键词：蓝金、双语、极简、图标"
-                  aria-label="搜索模板"
-                  className={s.searchInput}
-                />
-              </div>
+              <SearchField
+                value={templateQuery}
+                onChange={event => setTemplateQuery(event.target.value)}
+                placeholder="搜索模板关键词：蓝金、双语、极简、图标"
+                aria-label="搜索模板"
+                wrapperClassName={s.searchField}
+                iconClassName={s.searchIcon}
+                className={s.searchInput}
+              />
             </div>
 
             <div className={s.categoryWrap}>
