@@ -42,7 +42,7 @@ type LegacyButtonSize = 'mini' | 'small' | 'default' | 'large'
 type ModernButtonSize = NonNullable<VariantProps<typeof buttonVariants>['size']>
 type ModernButtonVariant = NonNullable<VariantProps<typeof buttonVariants>['variant']>
 
-export interface ButtonProps extends Omit<ButtonPrimitive.Props, 'type'>, Omit<VariantProps<typeof buttonVariants>, 'size'> {
+interface ButtonProps extends Omit<ButtonPrimitive.Props, 'type'>, Omit<VariantProps<typeof buttonVariants>, 'size'> {
   type?: NativeButtonType | LegacyButtonType
   htmlType?: NativeButtonType
   loading?: boolean

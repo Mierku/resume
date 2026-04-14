@@ -4,7 +4,7 @@ export function isCompactSkillGrid(itemCount: number) {
   return itemCount > 0 && itemCount <= COMPACT_SKILL_GRID_MAX_ITEMS
 }
 
-export function resolveAutoFitColumnCount({
+function resolveAutoFitColumnCount({
   contentWidthPx,
   minColumnWidthPx,
   columnGapPx,

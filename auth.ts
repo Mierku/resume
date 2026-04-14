@@ -3,7 +3,7 @@ import { PrismaAdapter } from '@auth/prisma-adapter'
 import { prisma } from '@/lib/prisma'
 import { sanitizeNextPath } from '@/lib/auth-redirect'
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
+export const { handlers, auth,   } = NextAuth({
   adapter: PrismaAdapter(prisma),
   secret: process.env.AUTH_SECRET ?? process.env.SESSION_SECRET,
   trustHost: true,

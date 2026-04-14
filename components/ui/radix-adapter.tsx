@@ -377,7 +377,7 @@ interface ModalProps {
   children: ReactNode
 }
 
-export function Modal({
+function Modal({
   title,
   visible,
   onCancel,

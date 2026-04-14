@@ -81,7 +81,7 @@ export interface ComposedTripletRow {
 
 export type ComposedRow = ComposedTextRow | ComposedTripletRow
 
-export interface ComposedRowGroup {
+interface ComposedRowGroup {
   key: string
   itemId?: string
   rows: ComposedRow[]
@@ -107,7 +107,7 @@ export function resolveComposedRowGap(
   return paragraphGap
 }
 
-export function buildComposedRowGroups(rows: ComposedRow[]): ComposedRowGroup[] {
+function buildComposedRowGroups(rows: ComposedRow[]): ComposedRowGroup[] {
   const groups: ComposedRowGroup[] = []
 
   rows.forEach((row, rowIndex) => {
@@ -167,9 +167,9 @@ export interface ComposedSectionBlock {
   rows: ComposedRow[]
 }
 
-export type ComposedBlock = ComposedHeroBlock | ComposedSectionBlock
+type ComposedBlock = ComposedHeroBlock | ComposedSectionBlock
 
-export interface ComposedEstimateInput {
+interface ComposedEstimateInput {
   data: ResumeData
   sectionIds: string[]
   contentWidthPx: number

@@ -88,7 +88,7 @@ export const RESUME_MATCH_PROMPT = `
  * 第三阶段：下拉框语义匹配
  * 用于识别表单字段和结构
  */
-export const SELECT_MATCH_PROMPT = `
+const SELECT_MATCH_PROMPT = `
 你是下拉框选项匹配器。我会给你一个 JSON，包含字段语境、候选 option 列表和 source 值。
 任务：从 option 数组中选出一个与 source 在当前字段语境下最等价、最精确的选项。
 要求：

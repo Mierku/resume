@@ -4,7 +4,7 @@ import { Search } from 'lucide-react'
 import { forwardRef, type InputHTMLAttributes, type ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 
-export interface SearchFieldProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size'> {
+interface SearchFieldProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size'> {
   error?: string
   icon?: ReactNode
   wrapperClassName?: string

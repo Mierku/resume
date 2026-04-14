@@ -14,13 +14,13 @@ const WECHAT_BIND_ATTEMPT_PREFIX = 'account:bind:wechat-official:attempt:'
 const WECHAT_LOGIN_SCENE_PREFIX = 'login_oa_'
 const WECHAT_BIND_SCENE_PREFIX = 'bind_oa_'
 
-export const WECHAT_LOGIN_QR_EXPIRE_SECONDS = 300
+const WECHAT_LOGIN_QR_EXPIRE_SECONDS = 300
 const WECHAT_LOGIN_ATTEMPT_TTL_SECONDS = WECHAT_LOGIN_QR_EXPIRE_SECONDS + 120
 
-export type WechatOfficialAttemptStatus = 'pending' | 'authenticated' | 'failed'
-export type WechatOfficialBindingAttemptStatus = 'pending' | 'bound' | 'needs_confirmation' | 'failed'
+type WechatOfficialAttemptStatus = 'pending' | 'authenticated' | 'failed'
+type WechatOfficialBindingAttemptStatus = 'pending' | 'bound' | 'needs_confirmation' | 'failed'
 
-export interface WechatOfficialLoginAttempt {
+interface WechatOfficialLoginAttempt {
   attemptId: string
   pollToken: string
   scene: string
@@ -39,7 +39,7 @@ export interface WechatOfficialLoginAttempt {
   errorMessage?: string
 }
 
-export interface WechatOfficialBindingAttempt {
+interface WechatOfficialBindingAttempt {
   attemptId: string
   pollToken: string
   scene: string
@@ -77,21 +77,21 @@ interface WechatOfficialUserInfo {
   headimgurl?: string
 }
 
-export interface WechatOfficialStartResult {
+interface WechatOfficialStartResult {
   attemptId: string
   pollToken: string
   qrCodeUrl: string
   expiresAt: string
 }
 
-export interface WechatOfficialBindingStartResult {
+interface WechatOfficialBindingStartResult {
   attemptId: string
   pollToken: string
   qrCodeUrl: string
   expiresAt: string
 }
 
-export interface WechatOfficialPollStatus {
+interface WechatOfficialPollStatus {
   status: 'pending' | 'authenticated' | 'expired' | 'failed' | 'invalid'
   expiresAt?: string
   redirectTo?: string
@@ -99,7 +99,7 @@ export interface WechatOfficialPollStatus {
   session?: CreatedAuthSession
 }
 
-export interface WechatOfficialBindingPollStatus {
+interface WechatOfficialBindingPollStatus {
   status: 'pending' | 'bound' | 'needs_confirmation' | 'expired' | 'failed' | 'invalid'
   expiresAt?: string
   message?: string
@@ -107,7 +107,7 @@ export interface WechatOfficialBindingPollStatus {
   otherUser?: BindingConflictUserSummary
 }
 
-export interface ParsedWechatOfficialMessage {
+interface ParsedWechatOfficialMessage {
   payload: Record<string, string>
   encrypted: boolean
 }
@@ -323,7 +323,7 @@ async function saveBindingAttempt(attempt: WechatOfficialBindingAttempt) {
   )
 }
 
-export async function getWechatOfficialLoginAttempt(attemptId: string) {
+async function getWechatOfficialLoginAttempt(attemptId: string) {
   const raw = await redis.get(getAttemptRedisKey(attemptId))
   if (!raw) {
     return null
@@ -337,7 +337,7 @@ export async function getWechatOfficialLoginAttempt(attemptId: string) {
   }
 }
 
-export async function getWechatOfficialBindingAttempt(attemptId: string) {
+async function getWechatOfficialBindingAttempt(attemptId: string) {
   const raw = await redis.get(getBindingAttemptRedisKey(attemptId))
   if (!raw) {
     return null
@@ -421,7 +421,7 @@ export async function createWechatOfficialBindingAttempt(
   }
 }
 
-export function verifyWechatOfficialRequest(request: NextRequest) {
+function verifyWechatOfficialRequest(request: NextRequest) {
   const { token } = getWechatOfficialConfig()
   const signature = request.nextUrl.searchParams.get('signature')
   const timestamp = request.nextUrl.searchParams.get('timestamp')
@@ -719,7 +719,7 @@ async function handleWechatOfficialBindingEvent(payload: Record<string, string>,
   }
 }
 
-export async function markWechatOfficialAttemptFailed(attemptId: string, message: string) {
+async function markWechatOfficialAttemptFailed(attemptId: string, message: string) {
   const attempt = await getWechatOfficialLoginAttempt(attemptId)
   if (!attempt) {
     return
@@ -851,7 +851,7 @@ export async function getWechatOfficialBindingPollStatus(
   }
 }
 
-export async function markWechatOfficialBindingAttemptFailed(attemptId: string, message: string) {
+async function markWechatOfficialBindingAttemptFailed(attemptId: string, message: string) {
   const attempt = await getWechatOfficialBindingAttempt(attemptId)
   if (!attempt) {
     return

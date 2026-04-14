@@ -11,7 +11,7 @@ export function yearMonthToYear(value: string) {
   return Number(value.slice(0, 4))
 }
 
-export function yearMonthToDate(value: string) {
+function yearMonthToDate(value: string) {
   if (!isYearMonthValue(value)) return null
   const [yearPart, monthPart] = value.split('-')
   const year = Number(yearPart)

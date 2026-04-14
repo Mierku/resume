@@ -1,4 +1,4 @@
-export const DEV_TEST_AUTH_PROVIDER = 'dev_test'
+const DEV_TEST_AUTH_PROVIDER = 'dev_test'
 
 const AUTH_PROVIDER_LABELS: Record<string, string> = {
   wechat_official: '微信登录',
@@ -37,7 +37,7 @@ export function normalizeAuthProviderIds(
   return normalizedProviders
 }
 
-export function getVisibleAuthProviderLabels(rawProviders: string[] | null | undefined) {
+function getVisibleAuthProviderLabels(rawProviders: string[] | null | undefined) {
   return Array.from(
     new Set(
       (rawProviders || [])

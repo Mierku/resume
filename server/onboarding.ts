@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma'
 
-export interface OnboardingStatus {
+interface OnboardingStatus {
   completed: boolean
   hasDataSource: boolean
   steps: {
@@ -44,7 +44,7 @@ export async function completeOnboarding(userId: string): Promise<void> {
   })
 }
 
-export async function resetOnboarding(userId: string): Promise<void> {
+async function resetOnboarding(userId: string): Promise<void> {
   await prisma.user.update({
     where: { id: userId },
     data: { onboardingCompleted: false },

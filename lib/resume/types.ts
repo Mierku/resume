@@ -2,7 +2,7 @@ import { getTemplateDefaultPrimaryColor } from '@/lib/constants'
 import { RECOMMENDED_RESUME_FONT_FAMILY } from './fonts'
 import { SYSTEM_PAGE_GAP_X_PT, SYSTEM_PAGE_GAP_Y_PT } from './page-layout'
 
-export { RECOMMENDED_RESUME_FONT_FAMILY }
+
 
 export const REACTIVE_TEMPLATE_IDS = [
   'template-1',

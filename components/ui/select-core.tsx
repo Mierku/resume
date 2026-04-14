@@ -41,7 +41,7 @@ export interface CustomSelectOption {
   searchText?: string
 }
 
-export interface CustomSelectProps {
+interface CustomSelectProps {
   value?: string
   defaultValue?: string
   options: CustomSelectOption[]

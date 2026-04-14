@@ -342,7 +342,7 @@ export interface DOMSnapshot {
   timestamp: number
 }
 
-export interface ParsedField {
+interface ParsedField {
   section: string
   children: Array<{
     label: string
@@ -352,26 +352,26 @@ export interface ParsedField {
   }>
 }
 
-export interface ParseDOMResponse {
+interface ParseDOMResponse {
   success: boolean
   data?: ParsedField[]
   error?: string
 }
 
-export interface FillInstruction {
+interface FillInstruction {
   id: string
   resumeKey: string
   action: 'setValue' | 'selectOption' | 'check' | 'uncheck' | 'clickRadio'
   value: string
 }
 
-export interface ManualField {
+interface ManualField {
   id: string
   label: string
   reason: string
 }
 
-export interface FillPlan {
+interface FillPlan {
   section: string
   children: Array<{
     label: string
@@ -381,7 +381,7 @@ export interface FillPlan {
   }>
 }
 
-export interface GeneratePlanResponse {
+interface GeneratePlanResponse {
   success: boolean
   data?: FillPlan[]
   error?: string
@@ -518,19 +518,19 @@ export async function generateFillPlanStream(
 // Text Processing Types and Functions
 // ============================================
 
-export interface PolishRequest {
+interface PolishRequest {
   text: string
   style?: 'professional' | 'casual' | 'academic'
   language?: 'zh' | 'en'
 }
 
-export interface TranslateRequest {
+interface TranslateRequest {
   text: string
   from: 'zh' | 'en'
   to: 'zh' | 'en'
 }
 
-export interface AIResponse {
+interface AIResponse {
   success: boolean
   result?: string
   error?: string
@@ -560,7 +560,7 @@ export async function translateText(request: TranslateRequest): Promise<AIRespon
   }
 }
 
-export async function summarizeText(text: string, maxLength: number = 200): Promise<AIResponse> {
+async function summarizeText(text: string, maxLength: number = 200): Promise<AIResponse> {
   await new Promise(resolve => setTimeout(resolve, 300))
   return {
     success: true,
@@ -568,7 +568,7 @@ export async function summarizeText(text: string, maxLength: number = 200): Prom
   }
 }
 
-export async function generateSuggestions(section: string): Promise<AIResponse> {
+async function generateSuggestions(section: string): Promise<AIResponse> {
   await new Promise(resolve => setTimeout(resolve, 400))
   const suggestions: Record<string, string> = {
     summary: '建议突出您的核心竞争力和职业目标，控制在3-5句话。',

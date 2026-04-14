@@ -29,7 +29,7 @@ interface CardHeaderProps {
   action?: ReactNode
 }
 
-export function CardHeader({ title, description, action }: CardHeaderProps) {
+function CardHeader({ title, description, action }: CardHeaderProps) {
   return (
     <div className="flex items-start justify-between mb-4">
       <div>

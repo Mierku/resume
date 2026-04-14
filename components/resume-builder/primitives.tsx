@@ -342,7 +342,7 @@ type TabsComponent = typeof TabsRoot & {
   TabPane: typeof TabPane
 }
 
-export const Tabs = TabsRoot as TabsComponent
+const Tabs = TabsRoot as TabsComponent
 Tabs.TabPane = TabPane
 
 interface CollapseItemProps {
@@ -388,7 +388,7 @@ type CollapseComponent = typeof CollapseRoot & {
   Item: typeof CollapseItem
 }
 
-export const Collapse = CollapseRoot as CollapseComponent
+const Collapse = CollapseRoot as CollapseComponent
 Collapse.Item = CollapseItem
 
 export const Message = {
@@ -401,7 +401,7 @@ export function IconDelete() {
   return <Trash2 className="h-4 w-4" />
 }
 
-export function IconDownload() {
+function IconDownload() {
   return <Download className="h-4 w-4" />
 }
 
@@ -413,7 +413,7 @@ export function IconPlus() {
   return <Plus className="h-4 w-4" />
 }
 
-export function IconMinus() {
+function IconMinus() {
   return <Minus className="h-4 w-4" />
 }
 
@@ -433,7 +433,7 @@ export function IconSave() {
   return <Save className="h-4 w-4" />
 }
 
-export function IconMove() {
+function IconMove() {
   return <Move className="h-4 w-4" />
 }
 
@@ -441,15 +441,15 @@ export function IconGrip() {
   return <GripVertical className="h-4 w-4" />
 }
 
-export function IconArrowUp() {
+function IconArrowUp() {
   return <ArrowUp className="h-4 w-4" />
 }
 
-export function IconArrowDown() {
+function IconArrowDown() {
   return <ArrowDown className="h-4 w-4" />
 }
 
-export function IconChevronDown() {
+function IconChevronDown() {
   return <ChevronDown className="h-4 w-4" />
 }
 
@@ -465,7 +465,7 @@ export function IconEye() {
   return <Eye className="h-4 w-4" />
 }
 
-export function IconEyeOff() {
+function IconEyeOff() {
   return <EyeOff className="h-4 w-4" />
 }
 
@@ -473,19 +473,19 @@ export function IconMoreHorizontal() {
   return <Ellipsis className="h-4 w-4" />
 }
 
-export function IconSidebarOpen() {
+function IconSidebarOpen() {
   return <PanelLeftOpen className="h-4 w-4" />
 }
 
-export function IconSidebarClose() {
+function IconSidebarClose() {
   return <PanelLeftClose className="h-4 w-4" />
 }
 
-export function IconFilter() {
+function IconFilter() {
   return <Filter className="h-4 w-4" />
 }
 
-export function IconPin() {
+function IconPin() {
   return <Pin className="h-4 w-4" />
 }
 

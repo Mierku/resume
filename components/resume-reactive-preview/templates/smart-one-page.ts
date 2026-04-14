@@ -14,8 +14,8 @@ import {
   resolveTemplateContentMetrics,
 } from './estimate-current-template-height'
 
-export const SMART_ONE_PAGE_TOLERANCE_PX = 1
-export const SMART_ONE_PAGE_SUPPORTED_TEMPLATES = new Set<ReactiveTemplateId>([
+const SMART_ONE_PAGE_TOLERANCE_PX = 1
+const SMART_ONE_PAGE_SUPPORTED_TEMPLATES = new Set<ReactiveTemplateId>([
   'template-1',
   'template-2',
   'template-3',

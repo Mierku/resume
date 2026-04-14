@@ -27,7 +27,7 @@ function formatMonthLabel(month: string) {
   return `${Number(month)}月`
 }
 
-export interface DateRangePickerFieldProps {
+interface DateRangePickerFieldProps {
   label?: string
   start: string
   end: string

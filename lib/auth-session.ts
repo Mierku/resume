@@ -2,7 +2,7 @@ import { randomBytes } from 'crypto'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
-export const AUTH_SESSION_MAX_AGE_SECONDS = 30 * 24 * 60 * 60
+const AUTH_SESSION_MAX_AGE_SECONDS = 30 * 24 * 60 * 60
 
 export interface CreatedAuthSession {
   sessionToken: string
@@ -42,7 +42,7 @@ export async function createAuthSession(
   }
 }
 
-export function shouldUseSecureCookies(request: Pick<NextRequest, 'headers' | 'nextUrl'>) {
+function shouldUseSecureCookies(request: Pick<NextRequest, 'headers' | 'nextUrl'>) {
   const forwardedProto = request.headers.get('x-forwarded-proto')
   if (forwardedProto) {
     return forwardedProto.split(',')[0]?.trim() === 'https'

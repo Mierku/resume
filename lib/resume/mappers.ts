@@ -491,7 +491,7 @@ function mapLegacyFormData(formData: Record<string, unknown>, data: ResumeData) 
   }
 }
 
-export function mapDataSourceToResumeData(
+function mapDataSourceToResumeData(
   dataSource: ResumeDataSource,
   template: ReactiveTemplateId = DEFAULT_TEMPLATE,
 ): ResumeData {
@@ -687,7 +687,7 @@ export function applyDataSourceToResume(
   return next
 }
 
-export function mapLegacyContentToV2(
+function mapLegacyContentToV2(
   content: unknown,
   dataSource?: ResumeDataSource | null,
   templateId: ReactiveTemplateId = DEFAULT_TEMPLATE,

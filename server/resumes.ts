@@ -12,9 +12,9 @@ import {
 } from '@/lib/resume/mappers'
 import type { ResumeContentV2, ResumeData, StandardSectionType } from '@/lib/resume/types'
 
-export type ResumeContent = ResumeContentV2
+type ResumeContent = ResumeContentV2
 
-export interface CreateResumeInput {
+interface CreateResumeInput {
   title: string
   templateId: string
   dataSourceId?: string
@@ -23,7 +23,7 @@ export interface CreateResumeInput {
   content?: unknown
 }
 
-export interface UpdateResumeInput {
+interface UpdateResumeInput {
   title?: string
   templateId?: string
   dataSourceId?: string | null
@@ -38,11 +38,11 @@ export class ResumeCreationLimitError extends Error {
   }
 }
 
-export function getTemplates() {
+function getTemplates() {
   return RESUME_TEMPLATES
 }
 
-export function getTemplate(id: string) {
+function getTemplate(id: string) {
   return RESUME_TEMPLATES.find(t => t.id === id)
 }
 

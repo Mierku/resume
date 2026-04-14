@@ -1,14 +1,14 @@
 import type { MembershipPlan } from '@prisma/client'
 import { isAdminRole } from '@/lib/user'
 
-export interface ResumeLimitSummary {
+interface ResumeLimitSummary {
   planType: MembershipPlan
   max: number | null
   reached: boolean
   remaining: number | null
 }
 
-export function normalizeMembershipPlan(rawPlan: MembershipPlan | string | null | undefined): MembershipPlan {
+function normalizeMembershipPlan(rawPlan: MembershipPlan | string | null | undefined): MembershipPlan {
   const normalized = typeof rawPlan === 'string' ? rawPlan.toLowerCase() : 'basic'
   if (normalized === 'pro' || normalized === 'elite') {
     return normalized

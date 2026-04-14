@@ -19,13 +19,13 @@ export interface AIIntentSlots {
   hasJdText?: boolean
 }
 
-export interface AIIntentInput {
+interface AIIntentInput {
   message: string
   hasDraftId?: boolean
   hasJdText?: boolean
 }
 
-export interface AIIntentDecision {
+interface AIIntentDecision {
   intent: AIChatIntent
   confidence: number
   needsConfirmation: boolean

@@ -2,7 +2,7 @@ export const DASHBOARD_SECTION_IDS = ['tracking', 'resume', 'data-source', 'admi
 
 export type DashboardSection = (typeof DASHBOARD_SECTION_IDS)[number]
 
-export function isDashboardSection(value: string | null | undefined): value is DashboardSection {
+function isDashboardSection(value: string | null | undefined): value is DashboardSection {
   return DASHBOARD_SECTION_IDS.includes(value as DashboardSection)
 }
 

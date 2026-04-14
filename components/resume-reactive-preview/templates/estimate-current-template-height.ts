@@ -11,18 +11,18 @@ import {
 import { resolveComposedRuntimeContext, resolveTemplate5SidebarPercent } from './composed-runtime-context'
 import type { EstimatedPageBlock } from './types'
 
-export interface EstimateCurrentTemplateHeightInput {
+interface EstimateCurrentTemplateHeightInput {
   data: ResumeData
   sectionIds: string[]
   contentWidthPx: number
 }
 
-export interface TemplateContentMetrics {
+interface TemplateContentMetrics {
   contentWidthPx: number
   contentMaxHeightPx: number | null
 }
 
-export interface EstimatedTemplatePage {
+interface EstimatedTemplatePage {
   pageIndex: number
   sectionIds: string[]
   pageBlocks: EstimatedPageBlock[]
@@ -31,7 +31,7 @@ export interface EstimatedTemplatePage {
   includesHeader: boolean
 }
 
-export interface EstimatedTemplatePagination {
+interface EstimatedTemplatePagination {
   pageMaxHeightPx: number | null
   headerHeightPx: number
   pages: EstimatedTemplatePage[]

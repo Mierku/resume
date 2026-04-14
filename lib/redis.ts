@@ -31,4 +31,3 @@ export async function checkRateLimit(
   return { allowed, remaining }
 }
 
-export default redis

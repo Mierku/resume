@@ -22,7 +22,7 @@ interface StoredEmailCode {
   expiresAt: string
 }
 
-export class EmailAuthError extends Error {
+class EmailAuthError extends Error {
   status: number
   code: string
   cooldownSeconds?: number

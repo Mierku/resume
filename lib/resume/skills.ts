@@ -1,11 +1,11 @@
 import type { ReactiveSkillsVariant, SkillItem } from './types'
 
 export type ResolvedSkillsVariant = Exclude<ReactiveSkillsVariant, 'auto'>
-export type SkillProficiencyTier = '了解' | '熟悉' | '精通'
+type SkillProficiencyTier = '了解' | '熟悉' | '精通'
 
 const DEFAULT_SKILLS_VARIANT: ResolvedSkillsVariant = 'skills-2'
 export const DEFAULT_SKILL_PROFICIENCY = '了解'
-export const SKILL_PROFICIENCY_LEVELS: SkillProficiencyTier[] = ['了解', '熟悉', '精通']
+const SKILL_PROFICIENCY_LEVELS: SkillProficiencyTier[] = ['了解', '熟悉', '精通']
 
 const SKILL_PROFICIENCY_PERCENT: Record<SkillProficiencyTier, number> = {
   了解: 38,
@@ -13,7 +13,7 @@ const SKILL_PROFICIENCY_PERCENT: Record<SkillProficiencyTier, number> = {
   精通: 92,
 }
 
-export const SKILLS_VARIANT_OPTIONS: Array<{ value: ReactiveSkillsVariant; label: string }> = [
+const SKILLS_VARIANT_OPTIONS: Array<{ value: ReactiveSkillsVariant; label: string }> = [
   { value: 'auto', label: '跟随默认（进度条）' },
   { value: 'skills-1', label: '技能样式 1 标签形式' },
   { value: 'skills-2', label: '技能样式 2 进度条' },
@@ -28,7 +28,7 @@ export function resolveSkillsVariant(configuredVariant: ReactiveSkillsVariant | 
   return DEFAULT_SKILLS_VARIANT
 }
 
-export function hasMeaningfulSkillText(value: unknown) {
+function hasMeaningfulSkillText(value: unknown) {
   return String(value || '').trim().length > 0
 }
 
@@ -44,7 +44,7 @@ export function isRenderableSkillItem(item: Partial<SkillItem> & { hidden?: bool
   return Number(item.level || 0) > 0
 }
 
-export function collectSkillTokens(
+function collectSkillTokens(
   item: Pick<SkillItem, 'name' | 'keywords'>,
   options: { includeName?: boolean } = {},
 ) {

@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import { LangMode, type Prisma } from '@prisma/client'
 
-export interface DataSourceBasics {
+interface DataSourceBasics {
   nameZh?: string
   nameEn?: string
   email?: string
@@ -12,7 +12,7 @@ export interface DataSourceBasics {
   github?: string
 }
 
-export interface DataSourceIntention {
+interface DataSourceIntention {
   position?: string
   location?: string
   salaryMin?: number
@@ -20,7 +20,7 @@ export interface DataSourceIntention {
   availableDate?: string
 }
 
-export interface EducationEntry {
+interface EducationEntry {
   id: string
   school: string
   degree: string
@@ -30,7 +30,7 @@ export interface EducationEntry {
   description?: string
 }
 
-export interface WorkEntry {
+interface WorkEntry {
   id: string
   company: string
   position: string
@@ -39,7 +39,7 @@ export interface WorkEntry {
   description: string
 }
 
-export interface ProjectEntry {
+interface ProjectEntry {
   id: string
   name: string
   role?: string
@@ -50,7 +50,7 @@ export interface ProjectEntry {
   url?: string
 }
 
-export interface CreateDataSourceInput {
+interface CreateDataSourceInput {
   name: string
   langMode?: LangMode
   basics?: DataSourceBasics
@@ -63,7 +63,7 @@ export interface CreateDataSourceInput {
   summaryEn?: string
 }
 
-export type UpdateDataSourceInput = Partial<CreateDataSourceInput>
+type UpdateDataSourceInput = Partial<CreateDataSourceInput>
 
 function toInputJsonValue(value: unknown): Prisma.InputJsonValue {
   return value as Prisma.InputJsonValue
@@ -176,7 +176,7 @@ export async function setDefaultDataSource(id: string, userId: string) {
   })
 }
 
-export async function getDefaultDataSource(userId: string) {
+async function getDefaultDataSource(userId: string) {
   const user = await prisma.user.findUnique({
     where: { id: userId },
     include: { dataSources: true },

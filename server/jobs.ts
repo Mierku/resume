@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import { BUILT_IN_JOB_SITES } from '@/lib/constants'
 
-export interface CreateJobSiteInput {
+interface CreateJobSiteInput {
   name: string
   url: string
   description?: string
@@ -28,7 +28,7 @@ export async function getJobSites(userId: string) {
   return [...builtInWithFlag, ...customSites]
 }
 
-export async function getJobSite(id: string, userId: string) {
+async function getJobSite(id: string, userId: string) {
   if (id.startsWith('builtin-')) {
     const name = id.replace('builtin-', '')
     const site = BUILT_IN_JOB_SITES.find(s => s.name === name)
@@ -63,7 +63,7 @@ export async function createJobSite(userId: string, input: CreateJobSiteInput) {
   })
 }
 
-export async function updateJobSite(id: string, userId: string, input: Partial<CreateJobSiteInput>) {
+async function updateJobSite(id: string, userId: string, input: Partial<CreateJobSiteInput>) {
   // Can't update built-in sites
   if (id.startsWith('builtin-')) {
     throw new Error('Cannot update built-in job site')
@@ -105,7 +105,7 @@ export async function deleteJobSite(id: string, userId: string) {
   return prisma.jobSite.delete({ where: { id } })
 }
 
-export function getRegions() {
+function getRegions() {
   const regions = new Set<string>()
   BUILT_IN_JOB_SITES.forEach(site => {
     if (site.region) regions.add(site.region)

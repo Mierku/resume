@@ -287,13 +287,13 @@ export function getSectionDisplayTitle(data: ResumeData, sectionId: string) {
   return sectionId
 }
 
-export function getWorkbenchSectionTitle(data: ResumeData, sectionId: string) {
+function getWorkbenchSectionTitle(data: ResumeData, sectionId: string) {
   if (sectionId === 'basics') return '基本信息'
   if (sectionId === 'intention') return '求职意向'
   return getSectionDisplayTitle(data, sectionId)
 }
 
-export function getSectionItemCount(data: ResumeData, sectionId: string) {
+function getSectionItemCount(data: ResumeData, sectionId: string) {
   if (sectionId === 'basics' || sectionId === 'intention') {
     return null
   }
@@ -317,9 +317,9 @@ export function isSectionHidden(data: ResumeData, sectionId: string) {
   return custom?.hidden ?? false
 }
 
-export type SectionItemSortMode = 'date' | 'name' | 'proficiency'
+type SectionItemSortMode = 'date' | 'name' | 'proficiency'
 
-export const SECTION_ITEM_SORT_OPTIONS: Array<{ mode: SectionItemSortMode; label: string }> = [
+const SECTION_ITEM_SORT_OPTIONS: Array<{ mode: SectionItemSortMode; label: string }> = [
   { mode: 'date', label: '按日期' },
   { mode: 'name', label: '按名称' },
   { mode: 'proficiency', label: '按熟练度' },
@@ -419,20 +419,20 @@ function resolveProficiencySortValue(sectionType: StandardSectionType, record: R
   return Number.NEGATIVE_INFINITY
 }
 
-export function supportsSectionItemSortMode(sectionType: StandardSectionType, mode: SectionItemSortMode) {
+function supportsSectionItemSortMode(sectionType: StandardSectionType, mode: SectionItemSortMode) {
   if (mode === 'date') return DATE_SORT_SECTION_TYPES.has(sectionType)
   if (mode === 'name') return NAME_SORT_SECTION_TYPES.has(sectionType)
   return PROFICIENCY_SORT_SECTION_TYPES.has(sectionType)
 }
 
-export function resolveSectionSortType(data: ResumeData, sectionId: string): StandardSectionType | null {
+function resolveSectionSortType(data: ResumeData, sectionId: string): StandardSectionType | null {
   if (isStandardSectionId(sectionId)) return sectionId
   const custom = data.customSections.find(section => section.id === sectionId)
   if (!custom || custom.type === 'summary' || custom.type === 'cover-letter') return null
   return custom.type as StandardSectionType
 }
 
-export function sortSectionItemsInPlace(items: Record<string, unknown>[], sectionType: StandardSectionType, mode: SectionItemSortMode) {
+function sortSectionItemsInPlace(items: Record<string, unknown>[], sectionType: StandardSectionType, mode: SectionItemSortMode) {
   if (!supportsSectionItemSortMode(sectionType, mode)) return
 
   const getNumberValue = (record: Record<string, unknown>) => {

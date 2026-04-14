@@ -17,6 +17,6 @@ export function IconDelete(props: IconProps) {
   return <Trash2 {...props} />
 }
 
-export function IconUpload(props: IconProps) {
+function IconUpload(props: IconProps) {
   return <Upload {...props} />
 }

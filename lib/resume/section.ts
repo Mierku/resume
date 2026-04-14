@@ -8,7 +8,7 @@ const DEFAULT_SECTION_VARIANT_MAP: Record<ReactiveTemplateId, ReactiveSectionVar
   'template-5': 'section-1',
 }
 
-export const SECTION_VARIANT_OPTIONS: Array<{ value: ReactiveSectionVariant | 'auto'; label: string }> = [
+const SECTION_VARIANT_OPTIONS: Array<{ value: ReactiveSectionVariant | 'auto'; label: string }> = [
   { value: 'auto', label: '跟随模板默认' },
   { value: 'section-1', label: 'Section 1 铜版网格' },
   { value: 'section-2', label: 'Section 2 雪纹简章' },

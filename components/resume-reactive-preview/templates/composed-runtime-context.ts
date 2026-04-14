@@ -10,7 +10,7 @@ import {
 } from './composed-style-presets'
 import { resolveTemplateLayoutSpec, type TemplateLayoutSpec } from './template-layouts'
 
-export interface ComposedRuntimeContext {
+interface ComposedRuntimeContext {
   layoutSpec: TemplateLayoutSpec
   headerVariant: ReactiveHeaderVariant
   sectionVariant: ReactiveSectionVariant

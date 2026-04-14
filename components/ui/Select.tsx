@@ -3,12 +3,12 @@
 import { forwardRef, type ChangeEvent, type SelectHTMLAttributes } from 'react'
 import { CustomSelect } from '@/components/ui/select-core'
 
-export interface SelectOption {
+interface SelectOption {
   value: string
   label: string
 }
 
-export interface SelectProps extends Omit<SelectHTMLAttributes<HTMLSelectElement>, 'value' | 'defaultValue' | 'onChange'> {
+interface SelectProps extends Omit<SelectHTMLAttributes<HTMLSelectElement>, 'value' | 'defaultValue' | 'onChange'> {
   options: SelectOption[]
   value?: string
   defaultValue?: string

@@ -104,7 +104,7 @@ interface ConfirmModalProps {
   loading?: boolean
 }
 
-export function ConfirmModal({
+function ConfirmModal({
   open,
   onClose,
   onConfirm,

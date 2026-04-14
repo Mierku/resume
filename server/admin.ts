@@ -2,7 +2,7 @@ import { prisma } from '@/lib/prisma'
 import { normalizeAuthProviderIds } from '@/lib/auth-provider-labels'
 import type { Prisma } from '@prisma/client'
 
-export interface AdminUserSummary {
+interface AdminUserSummary {
   totalUsers: number
   adminUsers: number
   activeMembers: number
@@ -11,7 +11,7 @@ export interface AdminUserSummary {
   recentSignups: number
 }
 
-export interface AdminUserUsageRow {
+interface AdminUserUsageRow {
   id: string
   displayName: string | null
   email: string | null
@@ -34,7 +34,7 @@ export interface AdminUserUsageRow {
   }
 }
 
-export interface AdminUsersDashboardData {
+interface AdminUsersDashboardData {
   query: string
   summary: AdminUserSummary
   users: AdminUserUsageRow[]

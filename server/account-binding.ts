@@ -27,8 +27,8 @@ const DEV_TEST_EMAIL =
     ? process.env.DEV_TEST_USER_EMAIL || 'dev@immersive.local'
     : null
 
-export type BindingProvider = typeof EMAIL_BIND_PROVIDER | typeof WECHAT_BIND_PROVIDER
-export type BindingConflictResolution = 'merge' | 'clear'
+type BindingProvider = typeof EMAIL_BIND_PROVIDER | typeof WECHAT_BIND_PROVIDER
+type BindingConflictResolution = 'merge' | 'clear'
 
 export interface BindingConflictUserSummary {
   userId: string
@@ -57,17 +57,17 @@ interface BindingConflictPayload {
   createdAt: string
 }
 
-export interface PrepareBindingResultBound {
+interface PrepareBindingResultBound {
   status: 'bound' | 'already_bound'
 }
 
-export interface PrepareBindingResultNeedsConfirmation {
+interface PrepareBindingResultNeedsConfirmation {
   status: 'needs_confirmation'
   conflictToken: string
   otherUser: BindingConflictUserSummary
 }
 
-export type PrepareBindingResult =
+type PrepareBindingResult =
   | PrepareBindingResultBound
   | PrepareBindingResultNeedsConfirmation
 

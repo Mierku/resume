@@ -1,4 +1,4 @@
-export interface ResumeFontPreset {
+interface ResumeFontPreset {
   value: string
   label: string
   family: string

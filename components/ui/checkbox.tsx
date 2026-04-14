@@ -4,7 +4,7 @@ import { Checkbox as CheckboxPrimitive } from '@base-ui/react/checkbox'
 import { Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-export interface CheckboxProps extends Omit<CheckboxPrimitive.Root.Props, 'onCheckedChange'> {
+interface CheckboxProps extends Omit<CheckboxPrimitive.Root.Props, 'onCheckedChange'> {
   onCheckedChange?: (checked: boolean) => void
   indicatorClassName?: string
 }

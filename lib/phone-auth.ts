@@ -21,7 +21,7 @@ interface StoredPhoneCode {
   expiresAt: string
 }
 
-export class PhoneAuthError extends Error {
+class PhoneAuthError extends Error {
   status: number
   code: string
   cooldownSeconds?: number

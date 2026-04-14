@@ -8,7 +8,7 @@ const DEFAULT_HEADER_VARIANT_MAP: Record<ReactiveTemplateId, ReactiveHeaderVaria
   'template-5': 'header-5',
 }
 
-export const HEADER_VARIANT_OPTIONS: Array<{ value: ReactiveHeaderVariant | 'auto'; label: string }> = [
+const HEADER_VARIANT_OPTIONS: Array<{ value: ReactiveHeaderVariant | 'auto'; label: string }> = [
   { value: 'auto', label: '跟随模板默认' },
   { value: 'header-1', label: 'Header 1 铜版卡片' },
   { value: 'header-2', label: 'Header 2 雪纹线性' },

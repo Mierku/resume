@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import { Prisma, RecordStatus } from '@prisma/client'
 
-export interface UpsertTrackingRecordInput {
+interface UpsertTrackingRecordInput {
   url: string
   host: string
   title: string
@@ -13,7 +13,7 @@ export interface UpsertTrackingRecordInput {
   status?: RecordStatus
 }
 
-export interface UpdateTrackingRecordInput {
+interface UpdateTrackingRecordInput {
   url?: string
   status?: RecordStatus
   title?: string
@@ -25,7 +25,7 @@ export interface UpdateTrackingRecordInput {
   faviconUrl?: string
 }
 
-export interface RecordFilter {
+interface RecordFilter {
   status?: RecordStatus
   query?: string
   limit?: number

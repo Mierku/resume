@@ -34,4 +34,4 @@ const FieldError = forwardRef<HTMLDivElement, FieldPrimitive.Error.Props>(functi
   return <FieldPrimitive.Error ref={ref} className={cn('mt-1 text-[11px] text-red-500', className)} {...props} />
 })
 
-export { Field, FieldDescription, FieldError, FieldLabel }
+export { Field,   FieldLabel }

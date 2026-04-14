@@ -1,12 +1,12 @@
 import { toAssetUrl } from '@/lib/assets'
 
-export const SITE_ORIGIN = process.env.SITE_ORIGIN || 'http://localhost:3000'
+const SITE_ORIGIN = process.env.SITE_ORIGIN || 'http://localhost:3000'
 
 export const SITE_NAME = '沉浸式网申'
-export const SITE_NAME_EN = 'Immersive Apply'
+const SITE_NAME_EN = 'Immersive Apply'
 export const SITE_DESCRIPTION = '免费简历制作｜自动化网申'
 
-export const PROTECTED_ROUTES = [
+const PROTECTED_ROUTES = [
   '/dashboard',
   '/resume',
   '/job-sites',
@@ -17,7 +17,7 @@ export const PROTECTED_ROUTES = [
   '/onboarding',
 ]
 
-export function isProtectedRoute(path: string): boolean {
+function isProtectedRoute(path: string): boolean {
   return PROTECTED_ROUTES.some(route =>
     path === route || path.startsWith(`${route}/`)
   )
@@ -114,7 +114,7 @@ export const RECORD_STATUS_OPTIONS = [
   { value: 'abandoned', label: '已放弃', color: 'text-red-500' },
 ]
 
-export const PRICING_PLANS = [
+const PRICING_PLANS = [
   {
     id: 'free',
     name: '免费版',

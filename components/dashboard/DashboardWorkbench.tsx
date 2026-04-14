@@ -44,7 +44,7 @@ const SECTION_ITEMS: Array<{
 const PRIMARY_SECTION_ITEMS = SECTION_ITEMS.filter(item => item.id !== 'account')
 const ACCOUNT_SECTION_ITEM = SECTION_ITEMS.find(item => item.id === 'account')!
 
-export function DashboardWorkbenchLoading() {
+function DashboardWorkbenchLoading() {
   return (
     <div className={styles.app}>
       <div className={styles.loadingShell}>

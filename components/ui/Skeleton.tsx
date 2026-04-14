@@ -10,7 +10,7 @@ export function Skeleton({ className = '' }: SkeletonProps) {
   )
 }
 
-export function SkeletonText({ lines = 3, className = '' }: { lines?: number; className?: string }) {
+function SkeletonText({ lines = 3, className = '' }: { lines?: number; className?: string }) {
   return (
     <div className={`space-y-2 ${className}`}>
       {Array.from({ length: lines }).map((_, i) => (
@@ -23,7 +23,7 @@ export function SkeletonText({ lines = 3, className = '' }: { lines?: number; cl
   )
 }
 
-export function SkeletonCard({ className = '' }: { className?: string }) {
+function SkeletonCard({ className = '' }: { className?: string }) {
   return (
     <div className={`border border-border rounded-sm p-4 ${className}`}>
       <Skeleton className="h-6 w-1/3 mb-4" />
