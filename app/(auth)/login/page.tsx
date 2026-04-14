@@ -94,10 +94,12 @@ function LoginPageContent() {
   const searchParams = useSearchParams()
   const nextPath = sanitizeNextPath(searchParams.get('next'))
   const error = searchParams.get('error')
-  const isDevTestLoginAvailable = process.env.NODE_ENV !== 'production'
+  const isProduction = process.env.NODE_ENV === 'production'
+  const isDevTestLoginAvailable = !isProduction
+  const isEmailLoginAvailable = !isProduction
   const redirectPathWithLegalAck = withLegalAck(nextPath)
 
-  const [loginMode, setLoginMode] = useState<LoginMode>('email')
+  const [loginMode, setLoginMode] = useState<LoginMode>('wechat')
 
   const [emailAddress, setEmailAddress] = useState('')
   const [emailCode, setEmailCode] = useState('')
@@ -114,12 +116,6 @@ function LoginPageContent() {
   const expiredNoticeShownRef = useRef(false)
   const initialWechatRefreshDoneRef = useRef(false)
   const previousLoginModeRef = useRef<LoginMode>(loginMode)
-
-  useEffect(() => {
-    if (!isDevTestLoginAvailable && loginMode === 'dev') {
-      setLoginMode('email')
-    }
-  }, [isDevTestLoginAvailable, loginMode])
 
   useEffect(() => {
     if (error) {
@@ -420,14 +416,24 @@ function LoginPageContent() {
 
   const modeOptions = useMemo(
     () => [
-      { key: 'email' as const, label: '邮箱验证', icon: Mail },
       { key: 'wechat' as const, label: '微信扫码', icon: WechatLoginIcon },
       ...(isDevTestLoginAvailable
         ? [{ key: 'dev' as const, label: '测试账号', icon: FlaskConical }]
         : []),
+      ...(isEmailLoginAvailable
+        ? [{ key: 'email' as const, label: '邮箱登录', icon: Mail }]
+        : []),
     ],
-    [isDevTestLoginAvailable],
+    [isDevTestLoginAvailable, isEmailLoginAvailable],
   )
+  const modeKeys = useMemo(() => new Set(modeOptions.map(option => option.key)), [modeOptions])
+
+  useEffect(() => {
+    if (!modeKeys.has(loginMode)) {
+      setLoginMode(modeOptions[0]?.key || 'wechat')
+    }
+  }, [loginMode, modeKeys, modeOptions])
+
   const activeModeIndex = Math.max(
     0,
     modeOptions.findIndex(option => option.key === loginMode),
@@ -451,7 +457,7 @@ function LoginPageContent() {
           <div className={s.brandRow}>
             <Link href="/" className={s.brandLink} aria-label="回到首页">
               <span className={s.brandBadge}>
-                <BrandFlowerIcon className={s.brandLogo} color="currentColor" />
+                <BrandFlowerIcon className={s.brandLogo}  />
               </span>
               <span className={s.brandName}>沉浸式网申</span>
             </Link>
@@ -462,28 +468,30 @@ function LoginPageContent() {
             <p className={s.subtitle}>选择你习惯的登录方式，继续你的求职流程</p>
           </header>
 
-          <nav
-            className={s.modeTabs}
-            aria-label="选择登录方式"
-            style={modeTabsStyle}
-          >
-            <span className={`${s.modeSlider} ${modeSliderToneClass}`} aria-hidden="true" />
-            {modeOptions.map(option => {
-              const Icon = option.icon
+          {modeOptions.length > 1 ? (
+            <nav
+              className={s.modeTabs}
+              aria-label="选择登录方式"
+              style={modeTabsStyle}
+            >
+              <span className={`${s.modeSlider} ${modeSliderToneClass}`} aria-hidden="true" />
+              {modeOptions.map(option => {
+                const Icon = option.icon
 
-              return (
-                <button
-                  key={option.key}
-                  type="button"
-                  className={`${s.modeTab} ${loginMode === option.key ? s.modeTabActive : ''}`}
-                  onClick={() => setLoginMode(option.key)}
-                >
-                  <Icon className="size-4" aria-hidden="true" />
-                  <span>{option.label}</span>
-                </button>
-              )
-            })}
-          </nav>
+                return (
+                  <button
+                    key={option.key}
+                    type="button"
+                    className={`${s.modeTab} ${loginMode === option.key ? s.modeTabActive : ''}`}
+                    onClick={() => setLoginMode(option.key)}
+                  >
+                    <Icon className="size-4" aria-hidden="true" />
+                    <span>{option.label}</span>
+                  </button>
+                )
+              })}
+            </nav>
+          ) : null}
 
           <div className={s.methodBody}>
             {loginMode === 'email' && (

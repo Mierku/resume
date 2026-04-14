@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getCurrentUser } from '@/lib/session'
-import { getResumes, createResume } from '@/server/resumes'
+import { buildResumeLimitSummary } from '@/lib/membership'
+import { getResumes, createResume, ResumeCreationLimitError } from '@/server/resumes'
 
 const createSchema = z.object({
   title: z.string().min(1, '标题不能为空'),
@@ -24,7 +25,8 @@ export async function GET() {
     }
 
     const resumes = await getResumes(user.id)
-    return NextResponse.json({ resumes })
+    const limit = buildResumeLimitSummary(user.membershipPlan, resumes.length, user.role)
+    return NextResponse.json({ resumes, limit })
   } catch (error) {
     console.error('Get resumes error:', error)
     return NextResponse.json({ error: '获取失败' }, { status: 500 })
@@ -48,6 +50,9 @@ export async function POST(request: NextRequest) {
     })
     return NextResponse.json({ resume }, { status: 201 })
   } catch (error) {
+    if (error instanceof ResumeCreationLimitError) {
+      return NextResponse.json({ error: error.message }, { status: 403 })
+    }
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: error.errors[0].message }, { status: 400 })
     }

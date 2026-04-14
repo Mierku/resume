@@ -4,16 +4,21 @@ import { prisma } from '@/lib/prisma'
 import { redis } from '@/lib/redis'
 import { createAuthSession, type CreatedAuthSession } from '@/lib/auth-session'
 import { sanitizeNextPath } from '@/lib/auth-redirect'
+import type { BindingConflictUserSummary } from '@/server/account-binding'
+import { prepareWechatBinding } from '@/server/account-binding'
 
 const WECHAT_OFFICIAL_PROVIDER = 'wechat_official'
 const WECHAT_ACCESS_TOKEN_CACHE_KEY = 'auth:wechat-official:access-token'
 const WECHAT_LOGIN_ATTEMPT_PREFIX = 'auth:wechat-official:attempt:'
+const WECHAT_BIND_ATTEMPT_PREFIX = 'account:bind:wechat-official:attempt:'
 const WECHAT_LOGIN_SCENE_PREFIX = 'login_oa_'
+const WECHAT_BIND_SCENE_PREFIX = 'bind_oa_'
 
 export const WECHAT_LOGIN_QR_EXPIRE_SECONDS = 300
 const WECHAT_LOGIN_ATTEMPT_TTL_SECONDS = WECHAT_LOGIN_QR_EXPIRE_SECONDS + 120
 
 export type WechatOfficialAttemptStatus = 'pending' | 'authenticated' | 'failed'
+export type WechatOfficialBindingAttemptStatus = 'pending' | 'bound' | 'needs_confirmation' | 'failed'
 
 export interface WechatOfficialLoginAttempt {
   attemptId: string
@@ -31,6 +36,24 @@ export interface WechatOfficialLoginAttempt {
   avatarUrl?: string | null
   sessionToken?: string
   sessionExpiresAt?: string
+  errorMessage?: string
+}
+
+export interface WechatOfficialBindingAttempt {
+  attemptId: string
+  pollToken: string
+  scene: string
+  status: WechatOfficialBindingAttemptStatus
+  targetUserId: string
+  qrCodeUrl: string
+  expiresAt: string
+  createdAt: string
+  updatedAt: string
+  openId?: string
+  displayName?: string | null
+  avatarUrl?: string | null
+  conflictToken?: string
+  otherUser?: BindingConflictUserSummary
   errorMessage?: string
 }
 
@@ -61,12 +84,27 @@ export interface WechatOfficialStartResult {
   expiresAt: string
 }
 
+export interface WechatOfficialBindingStartResult {
+  attemptId: string
+  pollToken: string
+  qrCodeUrl: string
+  expiresAt: string
+}
+
 export interface WechatOfficialPollStatus {
   status: 'pending' | 'authenticated' | 'expired' | 'failed' | 'invalid'
   expiresAt?: string
   redirectTo?: string
   message?: string
   session?: CreatedAuthSession
+}
+
+export interface WechatOfficialBindingPollStatus {
+  status: 'pending' | 'bound' | 'needs_confirmation' | 'expired' | 'failed' | 'invalid'
+  expiresAt?: string
+  message?: string
+  conflictToken?: string
+  otherUser?: BindingConflictUserSummary
 }
 
 export interface ParsedWechatOfficialMessage {
@@ -104,8 +142,16 @@ function getAttemptRedisKey(attemptId: string) {
   return `${WECHAT_LOGIN_ATTEMPT_PREFIX}${attemptId}`
 }
 
+function getBindingAttemptRedisKey(attemptId: string) {
+  return `${WECHAT_BIND_ATTEMPT_PREFIX}${attemptId}`
+}
+
 function buildScene(attemptId: string) {
   return `${WECHAT_LOGIN_SCENE_PREFIX}${attemptId}`
+}
+
+function buildBindingScene(attemptId: string) {
+  return `${WECHAT_BIND_SCENE_PREFIX}${attemptId}`
 }
 
 function extractAttemptIdFromScene(scene: string) {
@@ -114,6 +160,15 @@ function extractAttemptIdFromScene(scene: string) {
   }
 
   const attemptId = scene.slice(WECHAT_LOGIN_SCENE_PREFIX.length)
+  return /^[a-f0-9]{32}$/i.test(attemptId) ? attemptId.toLowerCase() : null
+}
+
+function extractBindingAttemptIdFromScene(scene: string) {
+  if (!scene.startsWith(WECHAT_BIND_SCENE_PREFIX)) {
+    return null
+  }
+
+  const attemptId = scene.slice(WECHAT_BIND_SCENE_PREFIX.length)
   return /^[a-f0-9]{32}$/i.test(attemptId) ? attemptId.toLowerCase() : null
 }
 
@@ -259,6 +314,15 @@ async function saveAttempt(attempt: WechatOfficialLoginAttempt) {
   )
 }
 
+async function saveBindingAttempt(attempt: WechatOfficialBindingAttempt) {
+  await redis.set(
+    getBindingAttemptRedisKey(attempt.attemptId),
+    JSON.stringify(attempt),
+    'EX',
+    WECHAT_LOGIN_ATTEMPT_TTL_SECONDS,
+  )
+}
+
 export async function getWechatOfficialLoginAttempt(attemptId: string) {
   const raw = await redis.get(getAttemptRedisKey(attemptId))
   if (!raw) {
@@ -269,6 +333,20 @@ export async function getWechatOfficialLoginAttempt(attemptId: string) {
     return JSON.parse(raw) as WechatOfficialLoginAttempt
   } catch {
     await redis.del(getAttemptRedisKey(attemptId))
+    return null
+  }
+}
+
+export async function getWechatOfficialBindingAttempt(attemptId: string) {
+  const raw = await redis.get(getBindingAttemptRedisKey(attemptId))
+  if (!raw) {
+    return null
+  }
+
+  try {
+    return JSON.parse(raw) as WechatOfficialBindingAttempt
+  } catch {
+    await redis.del(getBindingAttemptRedisKey(attemptId))
     return null
   }
 }
@@ -300,6 +378,40 @@ export async function createWechatOfficialLoginAttempt(nextPath: string): Promis
   }
 
   await saveAttempt(attempt)
+
+  return {
+    attemptId,
+    pollToken,
+    qrCodeUrl: attempt.qrCodeUrl,
+    expiresAt: attempt.expiresAt,
+  }
+}
+
+export async function createWechatOfficialBindingAttempt(
+  targetUserId: string,
+): Promise<WechatOfficialBindingStartResult> {
+  getWechatOfficialConfig()
+
+  const attemptId = randomBytes(16).toString('hex')
+  const pollToken = randomBytes(24).toString('hex')
+  const scene = buildBindingScene(attemptId)
+  const createdAt = new Date()
+  const expiresAt = new Date(createdAt.getTime() + WECHAT_LOGIN_QR_EXPIRE_SECONDS * 1000)
+  const qrCode = await createTemporaryQrCode(scene)
+
+  const attempt: WechatOfficialBindingAttempt = {
+    attemptId,
+    pollToken,
+    scene,
+    status: 'pending',
+    targetUserId,
+    qrCodeUrl: qrCode.qrCodeUrl,
+    expiresAt: expiresAt.toISOString(),
+    createdAt: createdAt.toISOString(),
+    updatedAt: createdAt.toISOString(),
+  }
+
+  await saveBindingAttempt(attempt)
 
   return {
     attemptId,
@@ -370,16 +482,41 @@ export async function parseWechatOfficialCallback(request: NextRequest): Promise
   }
 }
 
-function extractAttemptIdFromEvent(payload: Record<string, string>) {
+function extractAttemptSceneFromEvent(payload: Record<string, string>) {
   const event = payload.Event?.toLowerCase()
   const eventKey = payload.EventKey || ''
 
   if (event === 'subscribe' && eventKey.startsWith('qrscene_')) {
-    return extractAttemptIdFromScene(eventKey.slice('qrscene_'.length))
+    return eventKey.slice('qrscene_'.length)
   }
 
   if (event === 'scan') {
-    return extractAttemptIdFromScene(eventKey)
+    return eventKey
+  }
+
+  return null
+}
+
+function extractAttemptTargetFromEvent(payload: Record<string, string>) {
+  const scene = extractAttemptSceneFromEvent(payload)
+  if (!scene) {
+    return null
+  }
+
+  const loginAttemptId = extractAttemptIdFromScene(scene)
+  if (loginAttemptId) {
+    return {
+      kind: 'login' as const,
+      attemptId: loginAttemptId,
+    }
+  }
+
+  const bindingAttemptId = extractBindingAttemptIdFromScene(scene)
+  if (bindingAttemptId) {
+    return {
+      kind: 'bind' as const,
+      attemptId: bindingAttemptId,
+    }
   }
 
   return null
@@ -479,10 +616,16 @@ export async function handleWechatOfficialLoginEvent(payload: Record<string, str
     return { handled: false as const }
   }
 
-  const attemptId = extractAttemptIdFromEvent(payload)
-  if (!attemptId) {
+  const attemptTarget = extractAttemptTargetFromEvent(payload)
+  if (!attemptTarget) {
     return { handled: false as const }
   }
+
+  if (attemptTarget.kind === 'bind') {
+    return handleWechatOfficialBindingEvent(payload, attemptTarget.attemptId)
+  }
+
+  const attemptId = attemptTarget.attemptId
 
   const attempt = await getWechatOfficialLoginAttempt(attemptId)
   if (!attempt || isAttemptExpired(attempt)) {
@@ -524,6 +667,54 @@ export async function handleWechatOfficialLoginEvent(payload: Record<string, str
     }
   } catch (error) {
     await markWechatOfficialAttemptFailed(attemptId, '微信登录处理失败，请重新获取二维码')
+    throw error
+  }
+}
+
+async function handleWechatOfficialBindingEvent(payload: Record<string, string>, attemptId: string) {
+  const attempt = await getWechatOfficialBindingAttempt(attemptId)
+  if (!attempt || isAttemptExpired(attempt)) {
+    return { handled: true as const, ignored: true as const }
+  }
+
+  if (attempt.status === 'bound' || attempt.status === 'needs_confirmation') {
+    return { handled: true as const, ignored: true as const }
+  }
+
+  const openId = payload.FromUserName
+  if (!openId) {
+    throw new Error('Missing WeChat sender openId')
+  }
+
+  const profile = await resolveWechatOfficialProfile(openId)
+
+  try {
+    const result = await prepareWechatBinding(attempt.targetUserId, openId, {
+      displayName: profile.displayName,
+      avatarUrl: profile.avatarUrl,
+    })
+
+    const updatedAttempt: WechatOfficialBindingAttempt = {
+      ...attempt,
+      status: result.status === 'needs_confirmation' ? 'needs_confirmation' : 'bound',
+      updatedAt: new Date().toISOString(),
+      openId,
+      displayName: profile.displayName,
+      avatarUrl: profile.avatarUrl,
+      conflictToken: result.status === 'needs_confirmation' ? result.conflictToken : undefined,
+      otherUser: result.status === 'needs_confirmation' ? result.otherUser : undefined,
+      errorMessage: undefined,
+    }
+
+    await saveBindingAttempt(updatedAttempt)
+
+    return {
+      handled: true as const,
+      ignored: false as const,
+      attempt: updatedAttempt,
+    }
+  } catch (error) {
+    await markWechatOfficialBindingAttemptFailed(attemptId, '微信绑定处理失败，请重新获取二维码')
     throw error
   }
 }
@@ -598,4 +789,79 @@ export async function getWechatOfficialPollStatus(
     status: 'pending',
     expiresAt: attempt.expiresAt,
   }
+}
+
+export async function getWechatOfficialBindingPollStatus(
+  targetUserId: string,
+  attemptId: string,
+  pollToken: string,
+): Promise<WechatOfficialBindingPollStatus> {
+  const attempt = await getWechatOfficialBindingAttempt(attemptId)
+  if (!attempt) {
+    return {
+      status: 'expired',
+      message: '微信绑定二维码已失效，请重新获取',
+    }
+  }
+
+  if (attempt.targetUserId !== targetUserId || attempt.pollToken !== pollToken) {
+    return {
+      status: 'invalid',
+      message: '微信绑定状态校验失败，请重新获取二维码',
+    }
+  }
+
+  if (isAttemptExpired(attempt)) {
+    return {
+      status: 'expired',
+      expiresAt: attempt.expiresAt,
+      message: '微信绑定二维码已过期，请刷新后重试',
+    }
+  }
+
+  if (attempt.status === 'failed') {
+    return {
+      status: 'failed',
+      expiresAt: attempt.expiresAt,
+      message: attempt.errorMessage || '微信绑定失败，请重试',
+    }
+  }
+
+  if (attempt.status === 'needs_confirmation' && attempt.conflictToken && attempt.otherUser) {
+    return {
+      status: 'needs_confirmation',
+      expiresAt: attempt.expiresAt,
+      message: '检测到该微信已绑定到另一个账号',
+      conflictToken: attempt.conflictToken,
+      otherUser: attempt.otherUser,
+    }
+  }
+
+  if (attempt.status === 'bound') {
+    return {
+      status: 'bound',
+      expiresAt: attempt.expiresAt,
+      message: '微信绑定成功',
+    }
+  }
+
+  return {
+    status: 'pending',
+    expiresAt: attempt.expiresAt,
+  }
+}
+
+export async function markWechatOfficialBindingAttemptFailed(attemptId: string, message: string) {
+  const attempt = await getWechatOfficialBindingAttempt(attemptId)
+  if (!attempt) {
+    return
+  }
+
+  const updatedAttempt: WechatOfficialBindingAttempt = {
+    ...attempt,
+    status: 'failed',
+    updatedAt: new Date().toISOString(),
+    errorMessage: message,
+  }
+  await saveBindingAttempt(updatedAttempt)
 }

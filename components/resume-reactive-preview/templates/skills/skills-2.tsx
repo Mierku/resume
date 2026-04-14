@@ -17,7 +17,6 @@ export function renderSkills2({ items, sectionId, onNavigate, helpers }: SkillVa
       {visibleItems.map(item => {
         const title = resolveSkillTitle(item)
         const percent = resolveSkillPercent(item.level, item.proficiency)
-        const displayValue = percent > 0 ? `${percent}%` : '--'
 
         return (
           <div key={item.id} className={styles.skillsProgressItem}>
@@ -26,11 +25,6 @@ export function renderSkills2({ items, sectionId, onNavigate, helpers }: SkillVa
                 {...helpers.getPreviewActionProps(onNavigate, { sectionId, itemId: item.id, fieldKey: 'name' }, styles.skillsProgressName)}
               >
                 {title || '技能项'}
-              </span>
-              <span
-                {...helpers.getPreviewActionProps(onNavigate, { sectionId, itemId: item.id, fieldKey: 'proficiency' }, styles.skillsProgressValue)}
-              >
-                {displayValue}
               </span>
             </div>
             <div className={styles.skillsProgressTrack}>
@@ -51,9 +45,7 @@ export function estimateSkills2Height({
   contentWidthPx,
   style,
   fontFamily,
-  locale,
   measureTextHeight,
-  measureSingleLineWidth,
 }: SkillVariantEstimateProps) {
   const visibleItems = items.filter(isRenderableSkillItem)
   if (visibleItems.length === 0) return 0
@@ -67,11 +59,9 @@ export function estimateSkills2Height({
     columnGapPx: columnGap,
     itemCount: visibleItems.length,
   })
-  const headGap = 10
   const trackGap = 8
   const trackHeight = 8
   const titleLineHeightPx = style.bodyFontSize * 1.22
-  const valueLineHeightPx = style.bodyFontSize * 1.2
 
   let totalHeight = 0
 
@@ -80,31 +70,15 @@ export function estimateSkills2Height({
     const rowHeight = Math.max(
       ...rowItems.map(item => {
         const title = resolveSkillTitle(item) || '技能项'
-        const percent = resolveSkillPercent(item.level, item.proficiency)
-        const displayValue = percent > 0 ? `${percent}%` : '--'
-        const valueWidth = Math.max(
-          20,
-          Math.ceil(
-            measureSingleLineWidth({
-              text: displayValue,
-              fontFamily,
-              fontSizePx: style.bodyFontSize,
-              fontWeight: 700,
-              locale,
-            }),
-          ),
-        )
         const titleHeight = measureTextHeight({
           text: title,
-          widthPx: Math.max(1, columnWidth - valueWidth - headGap),
+          widthPx: Math.max(1, columnWidth),
           lineHeightPx: titleLineHeightPx,
           fontFamily,
           fontSizePx: style.bodyFontSize,
           fontWeight: 700,
-          locale,
         })
-        const headHeight = Math.max(titleHeight, valueLineHeightPx)
-        return headHeight + trackGap + trackHeight
+        return titleHeight + trackGap + trackHeight
       }),
     )
 

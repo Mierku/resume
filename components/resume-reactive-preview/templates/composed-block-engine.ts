@@ -3,7 +3,6 @@ import {
   layoutNextLine,
   prepare,
   prepareWithSegments,
-  setLocale,
   type PreparedText,
   type PreparedTextWithSegments,
 } from '@chenglou/pretext'
@@ -82,6 +81,14 @@ export interface ComposedTripletRow {
 
 export type ComposedRow = ComposedTextRow | ComposedTripletRow
 
+export interface ComposedRowGroup {
+  key: string
+  itemId?: string
+  rows: ComposedRow[]
+  startRowIndex: number
+  endRowIndex: number
+}
+
 function resolveIntraItemRowGap(paragraphGap: number) {
   return Math.max(2, Math.round(paragraphGap * 0.55))
 }
@@ -98,6 +105,41 @@ export function resolveComposedRowGap(
     return resolveIntraItemRowGap(paragraphGap)
   }
   return paragraphGap
+}
+
+export function buildComposedRowGroups(rows: ComposedRow[]): ComposedRowGroup[] {
+  const groups: ComposedRowGroup[] = []
+
+  rows.forEach((row, rowIndex) => {
+    const itemId = String(row.itemId || '').trim()
+
+    if (itemId) {
+      const lastGroup = groups[groups.length - 1]
+      if (lastGroup?.itemId === itemId) {
+        lastGroup.rows.push(row)
+        lastGroup.endRowIndex = rowIndex + 1
+        return
+      }
+
+      groups.push({
+        key: `${itemId}-${rowIndex}`,
+        itemId,
+        rows: [row],
+        startRowIndex: rowIndex,
+        endRowIndex: rowIndex + 1,
+      })
+      return
+    }
+
+    groups.push({
+      key: `row-${rowIndex}`,
+      rows: [row],
+      startRowIndex: rowIndex,
+      endRowIndex: rowIndex + 1,
+    })
+  })
+
+  return groups
 }
 
 interface ComposedHeaderCell {
@@ -131,7 +173,6 @@ export interface ComposedEstimateInput {
   data: ResumeData
   sectionIds: string[]
   contentWidthPx: number
-  locale?: string
   preset?: ComposedPreset
 }
 
@@ -221,7 +262,6 @@ export const DEFAULT_COMPOSED_PRESET: ComposedPreset = {
 
 const preparedCache = new Map<string, PreparedText>()
 const preparedSegmentsCache = new Map<string, PreparedTextWithSegments>()
-let activeLocale = ''
 const HERO_CONTENT_MIN_HEIGHT_PX = 124
 
 function hasMeaningfulText(value: unknown) {
@@ -261,15 +301,6 @@ function toText(value: unknown) {
   return String(value || '').trim()
 }
 
-function ensureLocale(locale?: string) {
-  const nextLocale = String(locale || '').trim()
-  if (nextLocale === activeLocale) return
-  setLocale(nextLocale || undefined)
-  activeLocale = nextLocale
-  preparedCache.clear()
-  preparedSegmentsCache.clear()
-}
-
 function buildFontString(fontFamily: string, fontSize: number, fontWeight: number) {
   const safeFamily = fontFamily.includes(',') ? fontFamily : `"${fontFamily}"`
   return `${fontWeight} ${fontSize}px ${safeFamily}`
@@ -282,7 +313,6 @@ function measureTextHeight({
   fontFamily,
   fontSizePx,
   fontWeight,
-  locale,
 }: {
   text: string
   widthPx: number
@@ -290,12 +320,10 @@ function measureTextHeight({
   fontFamily: string
   fontSizePx: number
   fontWeight: number
-  locale?: string
 }) {
   if (!hasMeaningfulText(text)) return 0
   if (!Number.isFinite(widthPx) || widthPx <= 1) return lineHeightPx
 
-  ensureLocale(locale)
   const normalized = text.replace(/\s+/g, ' ').trim()
   const font = buildFontString(fontFamily, fontSizePx, fontWeight)
   const cacheKey = `${font}::${normalized}`
@@ -313,17 +341,14 @@ function measureSingleLineWidth({
   fontFamily,
   fontSizePx,
   fontWeight,
-  locale,
 }: {
   text: string
   fontFamily: string
   fontSizePx: number
   fontWeight: number
-  locale?: string
 }) {
   if (!hasMeaningfulText(text)) return 0
 
-  ensureLocale(locale)
   const normalized = text.replace(/\s+/g, ' ').trim()
   const font = buildFontString(fontFamily, fontSizePx, fontWeight)
   const cacheKey = `${font}::${normalized}`
@@ -790,7 +815,6 @@ function measureHeroBlockHeight(
   block: ComposedHeroBlock,
   widthPx: number,
   data: ResumeData,
-  locale?: string,
 ) {
   const style = block.style
   const contentWidth = Math.max(1, widthPx - style.paddingX * 2 - style.borderWidth * 2)
@@ -806,7 +830,6 @@ function measureHeroBlockHeight(
     fontFamily: headingFontFamily,
     fontSizePx: style.nameFontSize,
     fontWeight: 700,
-    locale,
   })
 
   const headlineHeight = hasMeaningfulText(block.headline)
@@ -817,7 +840,6 @@ function measureHeroBlockHeight(
         fontFamily: bodyFontFamily,
         fontSizePx: style.headlineFontSize,
         fontWeight: 500,
-        locale,
       })
     : 0
 
@@ -830,7 +852,6 @@ function measureHeroBlockHeight(
         fontFamily: bodyFontFamily,
         fontSizePx: style.metaFontSize,
         fontWeight: 400,
-        locale,
       })
     : 0
 
@@ -847,7 +868,6 @@ function measureRowsHeight(
   contentWidth: number,
   style: ComposedBlockStyle,
   bodyFontFamily: string,
-  locale?: string,
 ) {
   const bodyLineHeightPx = style.bodyFontSize * style.bodyLineHeight
   const rowHeights = rows.map(row => {
@@ -859,7 +879,6 @@ function measureRowsHeight(
         fontFamily: bodyFontFamily,
         fontSizePx: style.bodyFontSize,
         fontWeight: 400,
-        locale,
       })
     }
 
@@ -868,14 +887,12 @@ function measureRowsHeight(
       fontFamily: bodyFontFamily,
       fontSizePx: style.bodyFontSize,
       fontWeight: 400,
-      locale,
     })
     const centerWidth = measureSingleLineWidth({
       text: row.center || '',
       fontFamily: bodyFontFamily,
       fontSizePx: style.bodyFontSize,
       fontWeight: 400,
-      locale,
     })
     const hasRight = hasMeaningfulText(row.right)
     const rightWidthPx = resolveTripletRightWidth({
@@ -893,7 +910,6 @@ function measureRowsHeight(
           fontFamily: bodyFontFamily,
           fontSizePx: style.bodyFontSize,
           fontWeight: 400,
-          locale,
         })
       : 0
 
@@ -916,19 +932,17 @@ function measureSkillsSectionBodyHeight(
   block: ComposedSectionBlock,
   contentWidth: number,
   data: ResumeData,
-  locale?: string,
 ) {
   const skillsVariantIntroGap = 10
   const style = block.style
   const bodyFontFamily = resolveResumeFontFamilyStack(data.metadata.typography.body.fontFamily)
   const introRows = block.rows.filter(row => !toText(row.itemId))
-  const introHeight = measureRowsHeight(introRows, contentWidth, style, bodyFontFamily, locale)
+  const introHeight = measureRowsHeight(introRows, contentWidth, style, bodyFontFamily)
   const estimateInput = {
     items: data.sections.skills.items,
     contentWidthPx: contentWidth,
     style,
     fontFamily: bodyFontFamily,
-    locale,
     measureTextHeight,
     measureSingleLineWidth,
   }
@@ -952,13 +966,14 @@ function measureSkillsSectionBodyHeight(
   return introHeight + skillsHeight
 }
 
-function measureSectionBlockHeight(
+function measureSectionBlockContentHeight(
   block: ComposedSectionBlock,
   widthPx: number,
   data: ResumeData,
-  locale?: string,
+  options: { showHeader?: boolean } = {},
 ) {
   const style = block.style
+  const showHeader = options.showHeader !== false
   const contentWidth = Math.max(1, widthPx - style.paddingX * 2 - style.borderWidth * 2)
   const headerContentWidth = Math.max(1, contentWidth - style.sectionHeaderPaddingX * 2)
   const headingFontFamily = resolveResumeFontFamilyStack(
@@ -966,28 +981,30 @@ function measureSectionBlockHeight(
   )
   const bodyFontFamily = resolveResumeFontFamilyStack(data.metadata.typography.body.fontFamily)
 
-  const titleHeight = measureTextHeight({
-    text: block.title,
-    widthPx: headerContentWidth,
-    lineHeightPx: style.titleFontSize * style.titleLineHeight,
-    fontFamily: headingFontFamily,
-    fontSizePx: style.titleFontSize,
-    fontWeight: 700,
-    locale,
-  })
-  const sectionHeaderHeight = titleHeight + style.sectionHeaderPaddingY * 2
+  const titleHeight = showHeader
+    ? measureTextHeight({
+        text: block.title,
+        widthPx: headerContentWidth,
+        lineHeightPx: style.titleFontSize * style.titleLineHeight,
+        fontFamily: headingFontFamily,
+        fontSizePx: style.titleFontSize,
+        fontWeight: 700,
+      })
+    : 0
+  const sectionHeaderHeight = showHeader ? titleHeight + style.sectionHeaderPaddingY * 2 : 0
   const bodyHeight =
     block.sectionId === 'skills'
-      ? measureSkillsSectionBodyHeight(block, contentWidth, data, locale)
-      : measureRowsHeight(block.rows, contentWidth, style, bodyFontFamily, locale)
+      ? measureSkillsSectionBodyHeight(block, contentWidth, data)
+      : measureRowsHeight(block.rows, contentWidth, style, bodyFontFamily)
   const hasRenderableSkillsVariant =
     block.sectionId === 'skills' && data.sections.skills.items.some(item => isRenderableSkillItem(item))
   const hasSkillIntroRows =
     block.sectionId === 'skills' && block.rows.some(row => String(row.itemId || '').trim().length === 0)
   const bodyTopGapPx =
     hasRenderableSkillsVariant && !hasSkillIntroRows ? 0 : style.paragraphGap
+  const headerGapPx = showHeader && bodyHeight > 0 ? style.sectionHeaderGap : 0
 
-  return sectionHeaderHeight + (bodyHeight > 0 ? style.sectionHeaderGap + bodyTopGapPx + bodyHeight : 0)
+  return sectionHeaderHeight + (bodyHeight > 0 ? headerGapPx + bodyTopGapPx + bodyHeight : 0)
 }
 
 function resolveVerticalPadding(style: ComposedBlockStyle) {
@@ -997,11 +1014,29 @@ function resolveVerticalPadding(style: ComposedBlockStyle) {
   }
 }
 
+export function estimateSectionBlockShellHeight(
+  block: ComposedSectionBlock,
+  widthPx: number,
+  data: ResumeData,
+  options: { showHeader?: boolean } = {},
+) {
+  const textHeightPx = measureSectionBlockContentHeight(block, widthPx, data, options)
+  const verticalPadding = resolveVerticalPadding(block.style)
+  const paddingPx = verticalPadding.top + verticalPadding.bottom
+  const borderPx = block.style.borderWidth * 2
+
+  return {
+    textHeightPx,
+    paddingPx,
+    borderPx,
+    shellHeightPx: textHeightPx + paddingPx + borderPx,
+  }
+}
+
 export function estimateComposedHeight({
   data,
   sectionIds,
   contentWidthPx,
-  locale,
   preset,
 }: ComposedEstimateInput): ComposedHeightEstimate {
   const activePreset = preset || DEFAULT_COMPOSED_PRESET
@@ -1018,8 +1053,8 @@ export function estimateComposedHeight({
     const marginBottomPx = isLast ? 0 : block.style.marginBottom
     const textHeightPx =
       block.kind === 'hero'
-        ? measureHeroBlockHeight(block, contentWidthPx, data, locale)
-        : measureSectionBlockHeight(block, contentWidthPx, data, locale)
+        ? measureHeroBlockHeight(block, contentWidthPx, data)
+        : measureSectionBlockContentHeight(block, contentWidthPx, data)
     const verticalPadding = resolveVerticalPadding(block.style)
     const paddingPx = verticalPadding.top + verticalPadding.bottom
     const borderPx = block.style.borderWidth * 2

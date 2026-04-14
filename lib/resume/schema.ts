@@ -1,6 +1,12 @@
 import { z } from 'zod'
 import { SYSTEM_PAGE_GAP_X_PT, SYSTEM_PAGE_GAP_Y_PT } from './page-layout'
-import { REACTIVE_HEADER_VARIANTS, REACTIVE_SECTION_VARIANTS, REACTIVE_SKILLS_VARIANTS, REACTIVE_TEMPLATE_IDS } from './types'
+import {
+  normalizeResumePageFormat,
+  REACTIVE_HEADER_VARIANTS,
+  REACTIVE_SECTION_VARIANTS,
+  REACTIVE_SKILLS_VARIANTS,
+  REACTIVE_TEMPLATE_IDS,
+} from './types'
 
 export const urlLinkSchema = z.object({
   url: z.string(),
@@ -227,6 +233,7 @@ export const pageLayoutSchema = z.object({
 const HEADER_VARIANT_VALUES = ['auto', ...REACTIVE_HEADER_VARIANTS] as const
 const SECTION_VARIANT_VALUES = ['auto', ...REACTIVE_SECTION_VARIANTS] as const
 const SKILLS_VARIANT_VALUES = ['auto', ...REACTIVE_SKILLS_VARIANTS] as const
+const PAGE_FORMAT_VALUES = ['a4', 'free-form'] as const
 
 export const metadataSchema = z.object({
   template: z.enum(REACTIVE_TEMPLATE_IDS),
@@ -239,8 +246,7 @@ export const metadataSchema = z.object({
     gapY: z.number().min(0).default(SYSTEM_PAGE_GAP_Y_PT),
     marginX: z.number().min(0),
     marginY: z.number().min(0),
-    format: z.enum(['a4', 'letter', 'free-form']),
-    locale: z.string(),
+    format: z.preprocess(normalizeResumePageFormat, z.enum(PAGE_FORMAT_VALUES)),
     smartOnePageEnabled: z.boolean().default(false),
   }),
   design: z.object({

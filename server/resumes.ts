@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import { ResumeMode, type Prisma } from '@prisma/client'
 import { RESUME_TEMPLATES } from '@/lib/constants'
+import { getResumeStorageLimit } from '@/lib/membership'
 import {
   createMockResumeDataSource,
   createFreshResumeContent,
@@ -30,6 +31,13 @@ export interface UpdateResumeInput {
   content?: unknown
 }
 
+export class ResumeCreationLimitError extends Error {
+  constructor(limit: number) {
+    super(`基础版最多可创建 ${limit} 份简历，请升级 Pro 后继续新建。`)
+    this.name = 'ResumeCreationLimitError'
+  }
+}
+
 export function getTemplates() {
   return RESUME_TEMPLATES
 }
@@ -42,6 +50,8 @@ function toInputJsonValue(value: unknown): Prisma.InputJsonValue {
   return value as Prisma.InputJsonValue
 }
 
+type ResumeLimitClient = Pick<typeof prisma, 'user' | 'resume'>
+
 function toResumeDataSource(dataSource: unknown): ResumeDataSource | undefined {
   if (!dataSource || typeof dataSource !== 'object') return undefined
   return dataSource as ResumeDataSource
@@ -53,6 +63,21 @@ function stripHtml(text: string): string {
 
 function isHexColor(value: string | undefined): value is string {
   return Boolean(value && /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/.test(value))
+}
+
+async function assertCanCreateResume(client: ResumeLimitClient, userId: string) {
+  const [user, resumeCount] = await Promise.all([
+    client.user.findUnique({
+      where: { id: userId },
+      select: { membershipPlan: true, role: true },
+    }),
+    client.resume.count({ where: { userId } }),
+  ])
+
+  const limit = getResumeStorageLimit(user?.membershipPlan, user?.role)
+  if (limit !== null && resumeCount >= limit) {
+    throw new ResumeCreationLimitError(limit)
+  }
 }
 
 function itemMarkdown(item: Record<string, unknown>, keys: string[]): string {
@@ -353,47 +378,51 @@ export async function createResume(userId: string, input: CreateResumeInput) {
     throw new Error('Template not found')
   }
 
-  const dataSource = input.dataSourceId
-    ? await prisma.dataSource.findFirst({ where: { id: input.dataSourceId, userId } })
-    : null
+  return prisma.$transaction(async tx => {
+    await assertCanCreateResume(tx, userId)
 
-  let fallbackDataSource: ResumeDataSource | undefined
-  if (!dataSource && input.content === undefined) {
-    const [dataSourceCount, resumeCount] = await Promise.all([
-      prisma.dataSource.count({ where: { userId } }),
-      prisma.resume.count({ where: { userId } }),
-    ])
+    const dataSource = input.dataSourceId
+      ? await tx.dataSource.findFirst({ where: { id: input.dataSourceId, userId } })
+      : null
 
-    if (dataSourceCount === 0 && resumeCount === 0) {
-      fallbackDataSource = createMockResumeDataSource()
+    let fallbackDataSource: ResumeDataSource | undefined
+    if (!dataSource && input.content === undefined) {
+      const [dataSourceCount, resumeCount] = await Promise.all([
+        tx.dataSource.count({ where: { userId } }),
+        tx.resume.count({ where: { userId } }),
+      ])
+
+      if (dataSourceCount === 0 && resumeCount === 0) {
+        fallbackDataSource = createMockResumeDataSource()
+      }
     }
-  }
 
-  const effectiveDataSource = toResumeDataSource(dataSource) || fallbackDataSource
+    const effectiveDataSource = toResumeDataSource(dataSource) || fallbackDataSource
 
-  const content = input.content
-    ? normalizeResumeContent(input.content, {
-        dataSource: effectiveDataSource,
-        templateId: input.templateId,
-        withBackup: true,
-      })
-    : createFreshResumeContent(input.templateId, effectiveDataSource)
+    const content = input.content
+      ? normalizeResumeContent(input.content, {
+          dataSource: effectiveDataSource,
+          templateId: input.templateId,
+          withBackup: true,
+        })
+      : createFreshResumeContent(input.templateId, effectiveDataSource)
 
-  const templateId = normalizedInputTemplate
-  content.data.metadata.template = templateId
-  if (isHexColor(input.themeColor)) {
-    content.data.metadata.design.colors.primary = input.themeColor
-  }
+    const templateId = normalizedInputTemplate
+    content.data.metadata.template = templateId
+    if (isHexColor(input.themeColor)) {
+      content.data.metadata.design.colors.primary = input.themeColor
+    }
 
-  return prisma.resume.create({
-    data: {
-      userId,
-      title: input.title,
-      templateId,
-      dataSourceId: input.dataSourceId,
-      mode: 'form',
-      content: toInputJsonValue(content),
-    },
+    return tx.resume.create({
+      data: {
+        userId,
+        title: input.title,
+        templateId,
+        dataSourceId: input.dataSourceId,
+        mode: 'form',
+        content: toInputJsonValue(content),
+      },
+    })
   })
 }
 
@@ -453,30 +482,34 @@ export async function updateResume(id: string, userId: string, input: UpdateResu
 }
 
 export async function duplicateResume(id: string, userId: string) {
-  const existing = await prisma.resume.findFirst({
-    where: { id, userId },
-    include: { dataSource: true },
-  })
+  return prisma.$transaction(async tx => {
+    const existing = await tx.resume.findFirst({
+      where: { id, userId },
+      include: { dataSource: true },
+    })
 
-  if (!existing) {
-    throw new Error('Resume not found')
-  }
+    if (!existing) {
+      throw new Error('Resume not found')
+    }
 
-  const normalized = normalizeResumeContent(existing.content, {
-    dataSource: toResumeDataSource(existing.dataSource),
-    templateId: existing.templateId,
-    withBackup: true,
-  })
+    await assertCanCreateResume(tx, userId)
 
-  return prisma.resume.create({
-    data: {
-      userId,
-      title: `${existing.title} - 副本`,
-      templateId: normalizeTemplateId(existing.templateId),
-      dataSourceId: existing.dataSourceId,
-      mode: 'form',
-      content: toInputJsonValue(normalized),
-    },
+    const normalized = normalizeResumeContent(existing.content, {
+      dataSource: toResumeDataSource(existing.dataSource),
+      templateId: existing.templateId,
+      withBackup: true,
+    })
+
+    return tx.resume.create({
+      data: {
+        userId,
+        title: `${existing.title} - 副本`,
+        templateId: normalizeTemplateId(existing.templateId),
+        dataSourceId: existing.dataSourceId,
+        mode: 'form',
+        content: toInputJsonValue(normalized),
+      },
+    })
   })
 }
 

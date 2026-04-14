@@ -44,7 +44,6 @@ export function estimateSkills4Height({
   contentWidthPx,
   style,
   fontFamily,
-  locale,
   measureTextHeight,
   measureSingleLineWidth,
 }: SkillVariantEstimateProps) {
@@ -81,7 +80,6 @@ export function estimateSkills4Height({
               fontFamily,
               fontSizePx: style.bodyFontSize,
               fontWeight: 500,
-              locale,
             }),
           ),
         )
@@ -92,7 +90,6 @@ export function estimateSkills4Height({
           fontFamily,
           fontSizePx: style.bodyFontSize,
           fontWeight: 600,
-          locale,
         })
         const valueHeight = measureTextHeight({
           text: label,
@@ -101,7 +98,6 @@ export function estimateSkills4Height({
           fontFamily,
           fontSizePx: style.bodyFontSize,
           fontWeight: 500,
-          locale,
         })
         return Math.max(lineHeightPx, titleHeight, valueHeight)
       }),

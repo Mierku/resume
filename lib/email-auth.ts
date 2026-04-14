@@ -378,7 +378,7 @@ async function upsertEmailAccount(normalizedEmail: string) {
   })
 }
 
-export async function verifyEmailLoginCode(rawEmail: string, rawCode: string) {
+export async function verifyEmailCode(rawEmail: string, rawCode: string) {
   const normalizedEmail = normalizeEmail(rawEmail)
   if (!normalizedEmail) {
     throw new EmailAuthError('请输入有效邮箱地址', {
@@ -388,6 +388,15 @@ export async function verifyEmailLoginCode(rawEmail: string, rawCode: string) {
   }
 
   await consumeEmailCode(normalizedEmail, rawCode)
+
+  return {
+    email: normalizedEmail,
+  }
+}
+
+export async function verifyEmailLoginCode(rawEmail: string, rawCode: string) {
+  const verified = await verifyEmailCode(rawEmail, rawCode)
+  const normalizedEmail = verified.email
   const account = await upsertEmailAccount(normalizedEmail)
 
   return {

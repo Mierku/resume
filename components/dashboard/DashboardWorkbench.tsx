@@ -8,6 +8,7 @@ import {
   Database,
   FileText,
   Menu,
+  ShieldCheck,
   UserRound,
   X,
 } from 'lucide-react'
@@ -24,6 +25,7 @@ import { TrackingSection } from '@/components/dashboard/TrackingSection'
 import { ResumesSection } from '@/components/dashboard/ResumesSection'
 import { DataSourcesSection } from '@/components/dashboard/DataSourcesSection'
 import { AccountSection } from '@/components/dashboard/AccountSection'
+import { AdminUsersSection } from '@/components/dashboard/AdminUsersSection'
 import { cn } from '@/lib/utils'
 import styles from './dashboard-workbench.module.css'
 
@@ -35,6 +37,7 @@ const SECTION_ITEMS: Array<{
   { id: 'tracking', label: '跟踪', icon: BriefcaseBusiness },
   { id: 'resume', label: '简历', icon: FileText },
   { id: 'data-source', label: '数据源', icon: Database },
+  { id: 'admin-users', label: '管理后台', icon: ShieldCheck },
   { id: 'account', label: '用户信息', icon: UserRound },
 ]
 
@@ -71,6 +74,7 @@ function DashboardWorkbenchInner() {
     tracking: activeSection === 'tracking',
     resume: activeSection === 'resume',
     'data-source': activeSection === 'data-source',
+    'admin-users': activeSection === 'admin-users',
     account: activeSection === 'account',
   })
   const [defaultDataSourceIdOverride, setDefaultDataSourceIdOverride] = useState<string | null | undefined>(undefined)
@@ -88,27 +92,43 @@ function DashboardWorkbenchInner() {
     router.replace(`/login?next=${encodeURIComponent(nextPath)}`)
   }, [auth.authenticated, checked, nextPath, router])
 
-  const activeItem = SECTION_ITEMS.find(item => item.id === activeSection) || SECTION_ITEMS[0]
-  const ActiveSectionIcon = activeItem.icon
   const user = auth.user
+  const canAccessAdminSection = Boolean(user?.isAdmin)
+  const resolvedActiveSection = activeSection === 'admin-users' && !canAccessAdminSection ? 'tracking' : activeSection
+  const visiblePrimarySectionItems = canAccessAdminSection
+    ? PRIMARY_SECTION_ITEMS
+    : PRIMARY_SECTION_ITEMS.filter(item => item.id !== 'admin-users')
+  const visibleMobileSectionItems = canAccessAdminSection
+    ? SECTION_ITEMS
+    : SECTION_ITEMS.filter(item => item.id !== 'admin-users')
+  const activeItem = visibleMobileSectionItems.find(item => item.id === resolvedActiveSection) || visibleMobileSectionItems[0]
+  const ActiveSectionIcon = activeItem.icon
   const defaultDataSourceId =
     defaultDataSourceIdOverride === undefined ? auth.user?.defaultDataSourceId || null : defaultDataSourceIdOverride
   const mountedSections: Record<DashboardSection, boolean> = {
-    tracking: visitedSections.tracking || activeSection === 'tracking',
-    resume: visitedSections.resume || activeSection === 'resume',
-    'data-source': visitedSections['data-source'] || activeSection === 'data-source',
-    account: visitedSections.account || activeSection === 'account',
+    tracking: visitedSections.tracking || resolvedActiveSection === 'tracking',
+    resume: visitedSections.resume || resolvedActiveSection === 'resume',
+    'data-source': visitedSections['data-source'] || resolvedActiveSection === 'data-source',
+    'admin-users': canAccessAdminSection && (visitedSections['admin-users'] || resolvedActiveSection === 'admin-users'),
+    account: visitedSections.account || resolvedActiveSection === 'account',
   }
+
+  useEffect(() => {
+    if (!checked || !auth.authenticated || !user) return
+    if (activeSection !== 'admin-users') return
+    if (canAccessAdminSection) return
+    router.replace(getDashboardSectionHref('tracking'))
+  }, [activeSection, auth.authenticated, canAccessAdminSection, checked, router, user])
 
   const handleSectionVisit = (section: DashboardSection) => {
     setVisitedSections(current => {
-      if (current[section] && current[activeSection]) {
+      if (current[section] && current[resolvedActiveSection]) {
         return current
       }
 
       return {
         ...current,
-        [activeSection]: true,
+        [resolvedActiveSection]: true,
         [section]: true,
       }
     })
@@ -137,13 +157,13 @@ function DashboardWorkbenchInner() {
           </div>
 
           <nav className={styles.nav} aria-label="个人工作台导航">
-            {PRIMARY_SECTION_ITEMS.map(item => {
+            {visiblePrimarySectionItems.map(item => {
               const Icon = item.icon
               return (
                 <Link
                   key={item.id}
                   href={getDashboardSectionHref(item.id)}
-                  className={cn(styles.navLink, activeSection === item.id && styles.navLinkActive)}
+                  className={cn(styles.navLink, resolvedActiveSection === item.id && styles.navLinkActive)}
                   scroll={false}
                   onClick={() => handleSectionVisit(item.id)}
                 >
@@ -157,7 +177,7 @@ function DashboardWorkbenchInner() {
           <div className={styles.sidebarFooter}>
             <Link
               href={getDashboardSectionHref(ACCOUNT_SECTION_ITEM.id)}
-              className={cn(styles.navLink, styles.footerNavLink, activeSection === ACCOUNT_SECTION_ITEM.id && styles.navLinkActive)}
+              className={cn(styles.navLink, styles.footerNavLink, resolvedActiveSection === ACCOUNT_SECTION_ITEM.id && styles.navLinkActive)}
               scroll={false}
               onClick={() => handleSectionVisit(ACCOUNT_SECTION_ITEM.id)}
               aria-label={ACCOUNT_SECTION_ITEM.label}
@@ -186,15 +206,15 @@ function DashboardWorkbenchInner() {
           </div>
 
           <main className={styles.sections}>
-            <div className={cn(styles.sectionFrame, activeSection !== 'tracking' && styles.sectionFrameHidden)}>
+            <div className={cn(styles.sectionFrame, resolvedActiveSection !== 'tracking' && styles.sectionFrameHidden)}>
               {mountedSections.tracking ? (
                 <TrackingSection onRecordsMutated={() => setRecordsVersion(current => current + 1)} />
               ) : null}
             </div>
-            <div className={cn(styles.sectionFrame, activeSection !== 'resume' && styles.sectionFrameHidden)}>
+            <div className={cn(styles.sectionFrame, resolvedActiveSection !== 'resume' && styles.sectionFrameHidden)}>
               {mountedSections.resume ? <ResumesSection /> : null}
             </div>
-            <div className={cn(styles.sectionFrame, activeSection !== 'data-source' && styles.sectionFrameHidden)}>
+            <div className={cn(styles.sectionFrame, resolvedActiveSection !== 'data-source' && styles.sectionFrameHidden)}>
               {mountedSections['data-source'] ? (
                 <DataSourcesSection
                   initialDefaultDataSourceId={defaultDataSourceId}
@@ -205,7 +225,10 @@ function DashboardWorkbenchInner() {
                 />
               ) : null}
             </div>
-            <div className={cn(styles.sectionFrame, activeSection !== 'account' && styles.sectionFrameHidden)}>
+            <div className={cn(styles.sectionFrame, resolvedActiveSection !== 'admin-users' && styles.sectionFrameHidden)}>
+              {mountedSections['admin-users'] ? <AdminUsersSection /> : null}
+            </div>
+            <div className={cn(styles.sectionFrame, resolvedActiveSection !== 'account' && styles.sectionFrameHidden)}>
               {mountedSections.account ? (
                 <AccountSection
                   user={user}
@@ -238,13 +261,13 @@ function DashboardWorkbenchInner() {
           </div>
 
           <nav className={styles.nav} aria-label="移动端个人工作台导航">
-            {SECTION_ITEMS.map(item => {
+            {visibleMobileSectionItems.map(item => {
               const Icon = item.icon
               return (
                 <Link
                   key={item.id}
                   href={getDashboardSectionHref(item.id)}
-                  className={cn(styles.navLink, activeSection === item.id && styles.navLinkActive)}
+                  className={cn(styles.navLink, resolvedActiveSection === item.id && styles.navLinkActive)}
                   scroll={false}
                   onClick={() => handleSectionVisit(item.id)}
                 >

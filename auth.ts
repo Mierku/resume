@@ -23,6 +23,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.onboardingCompleted = Boolean(user.onboardingCompleted)
         session.user.defaultDataSourceId =
           typeof user.defaultDataSourceId === 'string' ? user.defaultDataSourceId : null
+        session.user.role =
+          user.role === 'admin' || user.role === 'super_admin' ? user.role : 'user'
+        session.user.planType =
+          user.membershipPlan === 'pro' || user.membershipPlan === 'elite' ? user.membershipPlan : 'basic'
+        session.user.planExpiresAt =
+          user.membershipExpiresAt instanceof Date
+            ? user.membershipExpiresAt.toISOString()
+            : typeof user.membershipExpiresAt === 'string'
+              ? user.membershipExpiresAt
+              : null
       }
 
       return session

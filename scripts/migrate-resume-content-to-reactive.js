@@ -95,7 +95,6 @@ function defaultResumeData() {
         marginX: 14,
         marginY: 12,
         format: 'a4',
-        locale: 'zh-CN',
         smartOnePageEnabled: false,
       },
       design: {

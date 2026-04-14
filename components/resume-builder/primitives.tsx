@@ -255,24 +255,27 @@ interface SliderProps {
   value: number
   min: number
   max: number
+  step?: number
   onChange: (value: number) => void
+  className?: string
 }
 
-export function Slider({ value, min, max, onChange }: SliderProps) {
+export function Slider({ value, min, max, step = 1, onChange, className }: SliderProps) {
   return (
     <input
       type="range"
       value={value}
       min={min}
       max={max}
+      step={step}
       onChange={event => onChange(Number(event.target.value))}
-      className="w-full accent-primary"
+      className={['w-full accent-primary', className].filter(Boolean).join(' ')}
     />
   )
 }
 
-export function Space({ children }: { children: ReactNode }) {
-  return <div className="inline-flex items-center gap-1.5">{children}</div>
+export function Space({ children, className }: { children: ReactNode; className?: string }) {
+  return <div className={['inline-flex items-center gap-1.5', className].filter(Boolean).join(' ')}>{children}</div>
 }
 
 export function Tooltip({ content, children }: { content: ReactNode; children: ReactNode }) {

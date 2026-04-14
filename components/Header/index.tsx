@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useEffectEvent } from "react";
 import { signOut } from "next-auth/react";
 import {
   BadgeDollarSign,
@@ -50,14 +50,22 @@ export function Header() {
   const userMenuRef = useRef<HTMLDivElement>(null);
   const user = auth.user;
   const loading = !checked;
+  const applyTheme = useEffectEvent((nextTheme: "light" | "dark") => {
+    setTheme(current => (current === nextTheme ? current : nextTheme));
+    document.documentElement.setAttribute("data-theme", nextTheme);
+  });
+  const closeMenusOnRouteChange = useEffectEvent(() => {
+    setMenuOpen(false);
+    setUserMenuOpen(false);
+    setMobileUserMenuOpen(false);
+  });
 
   useEffect(() => {
     if (hideHeader) return;
     // Init theme from localStorage or system preference
     const saved = localStorage.getItem("theme") as "light" | "dark" | null;
     const initial = saved || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
-    setTheme(initial);
-    document.documentElement.setAttribute("data-theme", initial);
+    applyTheme(initial);
   }, [hideHeader]);
 
   useEffect(() => {
@@ -74,9 +82,7 @@ export function Header() {
   }, [hideHeader, pathname]);
 
   useEffect(() => {
-    setMenuOpen(false);
-    setUserMenuOpen(false);
-    setMobileUserMenuOpen(false);
+    closeMenusOnRouteChange();
   }, [pathname]);
 
   useEffect(() => {
@@ -128,7 +134,6 @@ export function Header() {
   const isLanding = pathname === "/";
   const isTracking = pathname.startsWith("/tracking") || pathname.startsWith("/dashboard");
   const isThemeDark = theme === "dark";
-  const logoColor = isThemeDark ? "#f59e0b" : "#b45309";
   const auraBrand = "var(--aura-header-brand)";
   const auraTextPrimary = "var(--aura-header-text)";
   const auraTextMuted = "var(--aura-header-text-muted)";
@@ -179,7 +184,7 @@ export function Header() {
           <div className="flex items-center justify-between h-[64px]">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2.5" style={{ color: auraBrand }}>
-            <BrandFlowerIcon className="h-7 w-7 shrink-0" color={logoColor} />
+            <BrandFlowerIcon className="h-7 w-7 shrink-0" />
             <span
               className="text-lg font-serif font-extralight tracking-widest"
               style={{ fontFamily: "Noto Serif SC", color: auraBrand }}
@@ -289,6 +294,17 @@ export function Header() {
                       <LayoutDashboard className="size-4" />
                       个人工作台
                     </Link>
+                    {user.isAdmin ? (
+                      <Link
+                        href="/dashboard?section=admin-users"
+                        className="flex items-center gap-2 rounded-[8px] px-3 py-2 text-sm transition-colors"
+                        style={{ color: auraTextMuted }}
+                        onClick={() => setUserMenuOpen(false)}
+                      >
+                        <ShieldCheck className="size-4" />
+                        管理后台
+                      </Link>
+                    ) : null}
                     <Link
                       href="/pricing"
                       className="flex items-center gap-2 rounded-[8px] px-3 py-2 text-sm transition-colors"
@@ -423,6 +439,11 @@ export function Header() {
                         <Link href="/dashboard" onClick={() => setMenuOpen(false)} className="px-2 py-1.5 text-sm rounded-[8px]" style={{ color: auraTextMuted }}>
                           个人工作台
                         </Link>
+                        {user.isAdmin ? (
+                          <Link href="/dashboard?section=admin-users" onClick={() => setMenuOpen(false)} className="px-2 py-1.5 text-sm rounded-[8px]" style={{ color: auraTextMuted }}>
+                            管理后台
+                          </Link>
+                        ) : null}
                         <Link href="/pricing" onClick={() => setMenuOpen(false)} className="px-2 py-1.5 text-sm rounded-[8px]" style={{ color: auraTextMuted }}>
                           定价
                         </Link>

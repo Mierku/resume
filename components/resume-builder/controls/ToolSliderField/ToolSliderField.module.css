@@ -1,0 +1,44 @@
+.field {
+  display: grid;
+  gap: 4px;
+}
+
+.field :global(.resume-tool-slider-title-row) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.field :global(.resume-tool-slider-label) {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.44);
+}
+
+.field :global(.resume-tool-slider-row) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 84px;
+  align-items: center;
+  gap: 14px;
+}
+
+.field :global(.resume-tool-slider-control) {
+  width: 100%;
+  margin: 0;
+}
+
+.field :global(.resume-tool-slider-input) {
+  min-height: 34px !important;
+  padding-inline: 10px !important;
+  text-align: center;
+  font-size: 13px;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.94);
+  font-variant-numeric: tabular-nums;
+  background: rgba(255, 255, 255, 0.05) !important;
+}
+
+.field :global(.resume-typography-slider-input),
+.field :global(.resume-typesetting-slider-input) {
+  border-radius: 4px !important;
+}

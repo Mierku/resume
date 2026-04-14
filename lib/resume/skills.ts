@@ -1,8 +1,17 @@
 import type { ReactiveSkillsVariant, SkillItem } from './types'
 
 export type ResolvedSkillsVariant = Exclude<ReactiveSkillsVariant, 'auto'>
+export type SkillProficiencyTier = '了解' | '熟悉' | '精通'
 
 const DEFAULT_SKILLS_VARIANT: ResolvedSkillsVariant = 'skills-2'
+export const DEFAULT_SKILL_PROFICIENCY = '了解'
+export const SKILL_PROFICIENCY_LEVELS: SkillProficiencyTier[] = ['了解', '熟悉', '精通']
+
+const SKILL_PROFICIENCY_PERCENT: Record<SkillProficiencyTier, number> = {
+  了解: 38,
+  熟悉: 68,
+  精通: 92,
+}
 
 export const SKILLS_VARIANT_OPTIONS: Array<{ value: ReactiveSkillsVariant; label: string }> = [
   { value: 'auto', label: '跟随默认（进度条）' },
@@ -76,26 +85,37 @@ export function resolveSkillTitle(item: Pick<SkillItem, 'name' | 'keywords'>) {
   return keywords.join(' / ')
 }
 
-export function resolveSkillPercent(level: unknown, proficiency: string) {
-  const normalizedLevel = Number(level || 0)
-  if (Number.isFinite(normalizedLevel) && normalizedLevel > 0) {
-    return Math.max(0, Math.min(100, Math.round((normalizedLevel / 5) * 100)))
+export function resolveSkillProficiencyTier(proficiency: string, level?: unknown): SkillProficiencyTier | '' {
+  const normalized = normalizeSkillToken(String(proficiency || ''))
+  if (normalized) {
+    if (/(精通|专家|母语|native|expert|advanced)/.test(normalized)) return '精通'
+    if (/(熟练|良好|流利|熟悉|proficient|intermediate)/.test(normalized)) return '熟悉'
+    if (/(一般|基础|了解|入门|basic|elementary)/.test(normalized)) return '了解'
   }
 
-  const normalized = normalizeSkillToken(String(proficiency || ''))
-  if (!normalized) return 0
+  const normalizedLevel = Number(level || 0)
+  if (Number.isFinite(normalizedLevel) && normalizedLevel > 0) {
+    if (normalizedLevel >= 4.5) return '精通'
+    if (normalizedLevel >= 2.5) return '熟悉'
+    return '了解'
+  }
 
-  if (/(精通|专家|母语|native|expert|advanced)/.test(normalized)) return 92
-  if (/(熟练|良好|流利|熟悉|proficient|intermediate)/.test(normalized)) return 78
-  if (/(一般|基础|了解|入门|basic|elementary)/.test(normalized)) return 62
+  return ''
+}
+
+export function resolveSkillPercent(level: unknown, proficiency: string) {
+  const tier = resolveSkillProficiencyTier(proficiency, level)
+  if (tier) {
+    return SKILL_PROFICIENCY_PERCENT[tier]
+  }
   return 0
 }
 
 export function resolveSkillProficiencyLabel(proficiency: string, percent: number) {
-  if (hasMeaningfulSkillText(proficiency)) return String(proficiency).trim()
-  if (percent >= 90) return '精通'
-  if (percent >= 75) return '熟练'
-  if (percent >= 60) return '熟悉'
+  const tier = resolveSkillProficiencyTier(proficiency)
+  if (tier) return tier
+  if (percent >= 85) return '精通'
+  if (percent >= 55) return '熟悉'
   if (percent > 0) return '了解'
   return ''
 }

@@ -1,14 +1,20 @@
 import { RESUME_EDITOR_LIMITS, clampToRange } from '@/lib/resume/editor-limits'
 import { isRenderableSkillItem } from '@/lib/resume/skills'
-import type { CustomSectionType, ReactiveTemplateId, ResumeData, StandardSectionType } from '@/lib/resume/types'
-import { estimateComposedHeight, type ComposedHeightEstimate } from './composed-block-engine'
+import type { CustomSectionType, ReactiveTemplateId, ResumeData, ResumePageFormat, StandardSectionType } from '@/lib/resume/types'
+import {
+  buildComposedBlocks,
+  estimateComposedHeight,
+  estimateSectionBlockShellHeight,
+  type ComposedHeightEstimate,
+  type ComposedSectionBlock,
+} from './composed-block-engine'
 import { resolveComposedRuntimeContext, resolveTemplate5SidebarPercent } from './composed-runtime-context'
+import type { EstimatedPageBlock } from './types'
 
 export interface EstimateCurrentTemplateHeightInput {
   data: ResumeData
   sectionIds: string[]
   contentWidthPx: number
-  locale?: string
 }
 
 export interface TemplateContentMetrics {
@@ -19,6 +25,7 @@ export interface TemplateContentMetrics {
 export interface EstimatedTemplatePage {
   pageIndex: number
   sectionIds: string[]
+  pageBlocks: EstimatedPageBlock[]
   predictedHeightPx: number
   remainingHeightPx: number | null
   includesHeader: boolean
@@ -151,9 +158,8 @@ export { stripHtml }
 const PT_TO_PX = 96 / 72
 const MM_TO_PX = 96 / 25.4
 const ASIDE_COLUMN_GAP_MULTIPLIER = 2.4
-const TEMPLATE_PAGE_DIMENSIONS: Record<'a4' | 'letter' | 'free-form', { width: string; height: string }> = {
+const TEMPLATE_PAGE_DIMENSIONS: Record<ResumePageFormat, { width: string; height: string }> = {
   a4: { width: '210mm', height: '297mm' },
-  letter: { width: '216mm', height: '279mm' },
   'free-form': { width: '210mm', height: '297mm' },
 }
 
@@ -239,11 +245,31 @@ export function estimateCurrentTemplateHeight(input: EstimateCurrentTemplateHeig
   return estimateComposedTemplateHeightByCurrentTemplate(input)
 }
 
+function resolveEstimatedSectionContentWidthPx(input: EstimateCurrentTemplateHeightInput) {
+  const { layoutSpec } = resolveComposedRuntimeContext(input.data)
+  if (layoutSpec.layout !== 'left-aside') {
+    return input.contentWidthPx
+  }
+
+  const sidebarWidthPercent = resolveTemplate5SidebarPercent(
+    Number(input.data.metadata.layout.sidebarWidth || layoutSpec.sidebarPercent || 26),
+  )
+  const rightColumnRatio = 1 - sidebarWidthPercent / 100
+  const gapXPt = clampToRange(
+    input.data.metadata.page.gapX,
+    RESUME_EDITOR_LIMITS.page.gapX.min,
+    RESUME_EDITOR_LIMITS.page.gapX.max,
+  )
+  const columnGapPx = gapXPt * PT_TO_PX * ASIDE_COLUMN_GAP_MULTIPLIER
+  return Math.max(1, input.contentWidthPx * rightColumnRatio - columnGapPx)
+}
+
 function createEstimatedPage(pageIndex: number, pageMaxHeightPx: number | null, headerHeightPx = 0): EstimatedTemplatePage {
   const normalizedHeaderHeight = Math.max(0, headerHeightPx)
   return {
     pageIndex,
     sectionIds: [],
+    pageBlocks: [],
     predictedHeightPx: normalizedHeaderHeight,
     remainingHeightPx:
       Number.isFinite(pageMaxHeightPx) && pageMaxHeightPx !== null
@@ -256,8 +282,12 @@ function createEstimatedPage(pageIndex: number, pageMaxHeightPx: number | null, 
 export function estimateCurrentTemplatePages(input: EstimateCurrentTemplateHeightInput): EstimatedTemplatePagination {
   const contentMetrics = resolveTemplateContentMetrics(input.data)
   const pageMaxHeightPx = contentMetrics.contentMaxHeightPx
-  const { layoutSpec } = resolveComposedRuntimeContext(input.data)
+  const { layoutSpec, preset } = resolveComposedRuntimeContext(input.data)
   const composedEstimate = estimateCurrentTemplateHeight(input)
+  const sectionContentWidthPx = resolveEstimatedSectionContentWidthPx(input)
+  const blocks = buildComposedBlocks(input.data, input.sectionIds, preset)
+  const sectionBlocks = blocks.filter((block): block is ComposedSectionBlock => block.kind === 'section')
+  const sectionBlockById = new Map(sectionBlocks.map(block => [block.id, block]))
 
   if (!Number.isFinite(pageMaxHeightPx) || pageMaxHeightPx == null || pageMaxHeightPx <= 1) {
     return {
@@ -267,6 +297,7 @@ export function estimateCurrentTemplatePages(input: EstimateCurrentTemplateHeigh
         {
           pageIndex: 0,
           sectionIds: [...input.sectionIds],
+          pageBlocks: [],
           predictedHeightPx: composedEstimate.predictedHeightPx,
           remainingHeightPx: null,
           includesHeader: false,
@@ -276,37 +307,113 @@ export function estimateCurrentTemplatePages(input: EstimateCurrentTemplateHeigh
   }
 
   let headerHeightPx = 0
-  let blockHeights = composedEstimate.blockHeights
 
   if (layoutSpec.layout !== 'left-aside') {
     const heroBlock = composedEstimate.blockHeights.find(block => block.id === 'hero')
     headerHeightPx = heroBlock?.totalHeightPx ?? 0
-    blockHeights = composedEstimate.blockHeights.filter(block => block.id !== 'hero')
   }
 
   const pages: EstimatedTemplatePage[] = []
   let currentPage = createEstimatedPage(0, pageMaxHeightPx, headerHeightPx)
 
-  blockHeights.forEach(block => {
-    const remainingHeightPx = currentPage.remainingHeightPx
-    const shouldMoveToNextPage =
-      remainingHeightPx !== null &&
-      block.totalHeightPx > remainingHeightPx + 0.5 &&
-      (currentPage.sectionIds.length > 0 || currentPage.includesHeader)
+  const getPreviousBlockMarginPx = (page: EstimatedTemplatePage) => {
+    const previousBlock = page.pageBlocks[page.pageBlocks.length - 1]
+    if (!previousBlock) return 0
+    return sectionBlockById.get(previousBlock.blockId)?.style.marginBottom ?? 0
+  }
 
-    if (shouldMoveToNextPage) {
-      pages.push(currentPage)
-      currentPage = createEstimatedPage(pages.length, pageMaxHeightPx, 0)
+  const placePageBlock = (page: EstimatedTemplatePage, pageBlock: EstimatedPageBlock, shellHeightPx: number) => {
+    const leadingMarginPx = page.pageBlocks.length > 0 ? getPreviousBlockMarginPx(page) : 0
+    page.pageBlocks.push(pageBlock)
+    page.sectionIds.push(pageBlock.sectionId)
+    page.predictedHeightPx += leadingMarginPx + shellHeightPx
+    if (page.remainingHeightPx !== null) {
+      page.remainingHeightPx -= leadingMarginPx + shellHeightPx
     }
+  }
 
-    currentPage.sectionIds.push(block.sectionId)
-    currentPage.predictedHeightPx += block.totalHeightPx
-    if (currentPage.remainingHeightPx !== null) {
-      currentPage.remainingHeightPx -= block.totalHeightPx
+  sectionBlocks.forEach(block => {
+    const isSplittable = block.sectionId !== 'skills'
+    if (block.rows.length === 0) return
+
+    let rowStart = 0
+    let continuedFromPreviousPage = false
+
+    while (rowStart < block.rows.length) {
+      const leadingMarginPx = currentPage.pageBlocks.length > 0 ? getPreviousBlockMarginPx(currentPage) : 0
+      let bestRowEnd = -1
+      let bestShellHeightPx = 0
+
+      const candidateRowEnds = isSplittable
+        ? Array.from({ length: block.rows.length - rowStart }, (_value, index) => rowStart + index + 1)
+        : [block.rows.length]
+
+      for (const rowEnd of candidateRowEnds) {
+        const fragmentRows = block.rows.slice(rowStart, rowEnd)
+        const fragmentBlock = fragmentRows.length === block.rows.length ? block : { ...block, rows: fragmentRows }
+        const shellHeightPx = estimateSectionBlockShellHeight(
+          fragmentBlock,
+          sectionContentWidthPx,
+          input.data,
+          { showHeader: !continuedFromPreviousPage },
+        ).shellHeightPx
+        const requiredHeightPx = leadingMarginPx + shellHeightPx
+        const fitsCurrentPage =
+          currentPage.remainingHeightPx === null || requiredHeightPx <= currentPage.remainingHeightPx + 0.5
+
+        if (fitsCurrentPage) {
+          bestRowEnd = rowEnd
+          bestShellHeightPx = shellHeightPx
+          continue
+        }
+
+        break
+      }
+
+      if (bestRowEnd < 0) {
+        if (currentPage.pageBlocks.length > 0) {
+          pages.push(currentPage)
+          currentPage = createEstimatedPage(pages.length, pageMaxHeightPx, 0)
+          continue
+        }
+
+        const forcedRows = block.rows.slice(rowStart, isSplittable ? rowStart + 1 : block.rows.length)
+        const forcedBlock = forcedRows.length === block.rows.length ? block : { ...block, rows: forcedRows }
+        bestRowEnd = rowStart + forcedRows.length
+        bestShellHeightPx = estimateSectionBlockShellHeight(
+          forcedBlock,
+          sectionContentWidthPx,
+          input.data,
+          { showHeader: !continuedFromPreviousPage },
+        ).shellHeightPx
+      }
+
+      const continuesToNextPage = bestRowEnd < block.rows.length
+
+      placePageBlock(
+        currentPage,
+        {
+          blockId: block.id,
+          sectionId: block.sectionId,
+          rowStart,
+          rowEnd: bestRowEnd,
+          continuedFromPreviousPage,
+          continuesToNextPage,
+        },
+        bestShellHeightPx,
+      )
+
+      rowStart = bestRowEnd
+      continuedFromPreviousPage = continuesToNextPage
+
+      if (continuesToNextPage) {
+        pages.push(currentPage)
+        currentPage = createEstimatedPage(pages.length, pageMaxHeightPx, 0)
+      }
     }
   })
 
-  if (currentPage.sectionIds.length > 0 || currentPage.includesHeader || pages.length === 0) {
+  if (currentPage.pageBlocks.length > 0 || currentPage.includesHeader || pages.length === 0) {
     pages.push(currentPage)
   }
 

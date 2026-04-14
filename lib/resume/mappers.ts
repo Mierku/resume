@@ -11,6 +11,7 @@ import {
   type SkillItem,
 } from './types'
 import { sanitizeHtml } from './sanitize'
+import { DEFAULT_SKILL_PROFICIENCY } from './skills'
 
 export interface ResumeDataSource {
   id: string
@@ -468,7 +469,7 @@ function mapLegacyFormData(formData: Record<string, unknown>, data: ResumeData) 
     hidden: false,
     icon: 'code',
     name: skill,
-    proficiency: '',
+    proficiency: DEFAULT_SKILL_PROFICIENCY,
     level: 0,
     keywords: [],
   }))
@@ -602,7 +603,7 @@ export function mapDataSourceToResumeData(
     hidden: false,
     icon: 'code',
     name: skill,
-    proficiency: '',
+    proficiency: DEFAULT_SKILL_PROFICIENCY,
     level: 0,
     keywords: [],
   }))

@@ -63,7 +63,6 @@ function estimateTemplateHeightForData(data: ResumeData) {
     data,
     sectionIds,
     contentWidthPx: contentMetrics.contentWidthPx,
-    locale: data.metadata.page.locale,
   })
 
   return {
@@ -78,6 +77,36 @@ function createManagedPageData(data: ResumeData) {
   next.metadata.page.gapX = SYSTEM_PAGE_GAP_X_PT
   next.metadata.page.gapY = SYSTEM_PAGE_GAP_Y_PT
   return next
+}
+
+function isNonOverflowEstimate(estimate: SmartOnePageEstimateResult) {
+  return estimate.overflowPx <= 0
+}
+
+function compareSmartOnePageEstimates(
+  left: SmartOnePageEstimateResult,
+  right: SmartOnePageEstimateResult,
+) {
+  const leftFits = isNonOverflowEstimate(left)
+  const rightFits = isNonOverflowEstimate(right)
+
+  if (leftFits !== rightFits) {
+    return leftFits ? 1 : -1
+  }
+
+  if (leftFits && rightFits) {
+    if (left.overflowPx > right.overflowPx) return 1
+    if (left.overflowPx < right.overflowPx) return -1
+    if (left.predictedHeightPx > right.predictedHeightPx) return 1
+    if (left.predictedHeightPx < right.predictedHeightPx) return -1
+    return 0
+  }
+
+  if (left.overflowPx < right.overflowPx) return 1
+  if (left.overflowPx > right.overflowPx) return -1
+  if (left.predictedHeightPx < right.predictedHeightPx) return 1
+  if (left.predictedHeightPx > right.predictedHeightPx) return -1
+  return 0
 }
 
 function normalizeSmartOnePageBaseData(data: ResumeData) {
@@ -152,7 +181,7 @@ function findSmartOnePageResult(data: ResumeData): SmartOnePageRunResult | null 
   if (!constrainedBaseEstimate) return null
   const baseDiffFromOriginal = hasSmartOnePageDiff(data, constrainedBase)
 
-  if (Math.abs(before.overflowPx) <= SMART_ONE_PAGE_TOLERANCE_PX && !baseDiffFromOriginal) {
+  if (isNonOverflowEstimate(before) && !baseDiffFromOriginal) {
     return {
       status: 'already-fit',
       before,
@@ -168,18 +197,15 @@ function findSmartOnePageResult(data: ResumeData): SmartOnePageRunResult | null 
 
   let bestData = constrainedBase
   let bestEstimate = constrainedBaseEstimate
-  let bestAbsOverflow = Math.abs(constrainedBaseEstimate.overflowPx)
   let currentData = constrainedBase
   let currentEstimate = constrainedBaseEstimate
 
   const evaluateCandidate = (candidate: ResumeData) => {
     const estimate = estimateTemplateHeightForData(candidate)
     if (!estimate) return null
-    const absOverflow = Math.abs(estimate.overflowPx)
-    if (absOverflow < bestAbsOverflow - 0.2) {
+    if (compareSmartOnePageEstimates(estimate, bestEstimate) > 0) {
       bestData = candidate
       bestEstimate = estimate
-      bestAbsOverflow = absOverflow
     }
     return estimate
   }
@@ -187,33 +213,18 @@ function findSmartOnePageResult(data: ResumeData): SmartOnePageRunResult | null 
   const runPass = (candidates: ResumeData[]) => {
     let passBestData = currentData
     let passBestEstimate = currentEstimate
-    let passBestAbsOverflow = Math.abs(currentEstimate.overflowPx)
 
     for (const candidate of candidates) {
       const estimate = evaluateCandidate(candidate)
       if (!estimate) continue
-      const absOverflow = Math.abs(estimate.overflowPx)
-      if (absOverflow <= SMART_ONE_PAGE_TOLERANCE_PX) {
-        return {
-          done: true as const,
-          result: {
-            status: 'fitted' as const,
-            before,
-            after: estimate,
-            nextData: candidate,
-          },
-        }
-      }
-      if (absOverflow < passBestAbsOverflow - 0.2) {
+      if (compareSmartOnePageEstimates(estimate, passBestEstimate) > 0) {
         passBestData = candidate
         passBestEstimate = estimate
-        passBestAbsOverflow = absOverflow
       }
     }
 
     currentData = passBestData
     currentEstimate = passBestEstimate
-    return { done: false as const, result: null }
   }
 
   const passFactories: Array<() => ResumeData[]> = [
@@ -261,13 +272,12 @@ function findSmartOnePageResult(data: ResumeData): SmartOnePageRunResult | null 
   ]
 
   for (const buildCandidates of passFactories) {
-    const pass = runPass(buildCandidates())
-    if (pass.done) return pass.result
+    runPass(buildCandidates())
   }
 
   const changedFromOriginal = hasSmartOnePageDiff(data, bestData)
 
-  if (Math.abs(bestEstimate.overflowPx) <= SMART_ONE_PAGE_TOLERANCE_PX && changedFromOriginal) {
+  if (isNonOverflowEstimate(bestEstimate) && changedFromOriginal) {
     return {
       status: 'fitted',
       before,

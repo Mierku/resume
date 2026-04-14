@@ -57,7 +57,6 @@ export function estimateSkills3Height({
   contentWidthPx,
   style,
   fontFamily,
-  locale,
   measureTextHeight,
 }: SkillVariantEstimateProps) {
   const tokens = collectUniqueSkillTokens(items.filter(isRenderableSkillItem))
@@ -70,6 +69,5 @@ export function estimateSkills3Height({
     fontFamily,
     fontSizePx: style.bodyFontSize,
     fontWeight: 400,
-    locale,
   })
 }

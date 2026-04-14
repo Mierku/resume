@@ -1,0 +1,170 @@
+.panel {
+  padding-top: 12px;
+}
+
+.hero {
+  padding: 16px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.heroTitle {
+  display: block;
+  font-size: 18px;
+  line-height: 1.1;
+  font-weight: 650;
+  color: var(--builder-panel-text);
+}
+
+.heroText {
+  margin: 8px 0 0;
+  color: var(--builder-panel-text-muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.metricGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.metricCard,
+.summaryCard,
+.emptyCard,
+.blockCard {
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.metricCard {
+  display: grid;
+  gap: 6px;
+  padding: 14px 12px;
+}
+
+.metricLabel,
+.metricMeta,
+.emptyText,
+.blockTitle span,
+.detailLabel {
+  color: var(--builder-panel-text-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.metricValue,
+.emptyTitle {
+  color: var(--builder-panel-text);
+  font-size: 18px;
+  line-height: 1.1;
+  font-weight: 700;
+  font-family: 'IBM Plex Mono', 'SFMono-Regular', 'Consolas', monospace;
+}
+
+.metricMeta,
+.summaryRow,
+.blockMetric,
+.detailColumn {
+  font-family: 'IBM Plex Mono', 'SFMono-Regular', 'Consolas', monospace;
+}
+
+.summaryCard,
+.emptyCard {
+  padding: 14px 16px;
+}
+
+.summaryCard {
+  display: grid;
+  gap: 8px;
+}
+
+.summaryRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--builder-panel-text-soft);
+  font-size: 12px;
+}
+
+.summaryRow strong,
+.blockMetric strong,
+.detailColumn span:not(.detailLabel) {
+  color: var(--builder-panel-text);
+  font-weight: 600;
+}
+
+.emptyTitle {
+  font-size: 15px;
+}
+
+.emptyText {
+  margin: 8px 0 0;
+}
+
+.blockList {
+  display: grid;
+  gap: 10px;
+}
+
+.blockCard {
+  padding: 14px 16px;
+  display: grid;
+  gap: 12px;
+}
+
+.blockTitle {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.blockTitle strong {
+  color: var(--builder-panel-text);
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.blockMetrics {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.blockMetric {
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  display: grid;
+  gap: 5px;
+  font-size: 11px;
+}
+
+.blockMetric span {
+  color: var(--builder-panel-text-muted);
+}
+
+.blockDetailGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.detailColumn {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  font-size: 11px;
+}
+
+@media (max-width: 720px) {
+  .metricGrid,
+  .blockMetrics,
+  .blockDetailGrid {
+    grid-template-columns: 1fr;
+  }
+}

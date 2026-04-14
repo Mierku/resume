@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Copy, X } from 'lucide-react'
 import { Message } from '@/components/ui/radix-adapter'
 import { ChromeWindow } from '@/components/ChromeWindow'
 import Image from 'next/image'
+import { toast } from '@/lib/toast'
 import { DiagonalCircuitPulseCanvas } from './DiagonalCircuitPulseCanvas'
 import s from '../landing.module.scss'
 
@@ -31,6 +33,9 @@ const logoShapeClassMap: Record<LogoShape, string> = {
 }
 
 type BrowserGuide = 'chrome' | 'edge'
+
+const DEFAULT_RESUME_TEMPLATE_ID = 'template-1'
+const DEFAULT_RESUME_TITLE = '未命名简历'
 
 const installGuides: Record<
   BrowserGuide,
@@ -59,9 +64,11 @@ const installGuides: Record<
 }
 
 export function HomePageClient() {
+  const router = useRouter()
   const logoMarqueeItems = [...platformLogos, ...platformLogos]
   const [installGuideOpen, setInstallGuideOpen] = useState(false)
   const [activeBrowser, setActiveBrowser] = useState<BrowserGuide>('chrome')
+  const [creatingResume, setCreatingResume] = useState(false)
 
   useEffect(() => {
     if (!installGuideOpen) {
@@ -92,6 +99,64 @@ export function HomePageClient() {
       Message.success(successMessage)
     } catch {
       Message.error('复制失败，请手动复制')
+    }
+  }
+
+  const enterDefaultEditor = () => {
+    const loadingToastId = toast.loading('正在进入编辑页...')
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.setItem('resume:editor-loading-toast-id', String(loadingToastId))
+      window.sessionStorage.setItem('resume:guest-editor-entry', '1')
+    }
+
+    router.push('/resume/editor/new')
+  }
+
+  const handleQuickCreateResume = async () => {
+    if (creatingResume) return
+
+    setCreatingResume(true)
+    try {
+      const response = await fetch('/api/resumes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: DEFAULT_RESUME_TITLE,
+          templateId: DEFAULT_RESUME_TEMPLATE_ID,
+          dataSourceId: null,
+          mode: 'form',
+        }),
+      })
+
+      if (response.status === 401) {
+        enterDefaultEditor()
+        return
+      }
+
+      const payload = (await response.json().catch(() => null)) as
+        | { error?: string; resume?: { id?: string } }
+        | null
+
+      if (!response.ok) {
+        throw new Error(payload?.error || '创建失败，请稍后重试')
+      }
+
+      const resumeId = typeof payload?.resume?.id === 'string' ? payload.resume.id : ''
+      if (!resumeId) {
+        throw new Error('创建失败，请稍后重试')
+      }
+
+      const loadingToastId = toast.loading('正在进入编辑页...')
+      if (typeof window !== 'undefined') {
+        window.sessionStorage.setItem('resume:just-created-id', resumeId)
+        window.sessionStorage.setItem('resume:editor-loading-toast-id', String(loadingToastId))
+      }
+
+      router.push(`/resume/editor/${resumeId}`)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : '创建失败，请稍后重试')
+    } finally {
+      setCreatingResume(false)
     }
   }
 
@@ -287,16 +352,22 @@ export function HomePageClient() {
               </p>
             </div>
             <div className={s.actions}>
-              <button type="button" className={s.ctaPrimary} onClick={() => setInstallGuideOpen(true)}>
-                安装插件
+              <button
+                type="button"
+                className={s.ctaPrimary}
+                onClick={handleQuickCreateResume}
+                disabled={creatingResume}
+                aria-busy={creatingResume}
+              >
+                {creatingResume ? '正在创建...' : '立即创建我的简历'}
               </button>
-              <Link href="/resume/templates" className={s.ctaGhost}>
-                <span>制作简历</span>
+              <button type="button" className={s.ctaGhost} onClick={() => setInstallGuideOpen(true)}>
+                <span>自动投递</span>
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                   <path d="M5 12h14" />
                   <path d="m12 5 7 7-7 7" />
                 </svg>
-              </Link>
+              </button>
             </div>
           </div>
 

@@ -1,0 +1,71 @@
+.panel :global(.resume-workbench-hero) {
+  margin-top: 12px;
+  padding: 16px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.panel :global(.resume-workbench-hero-title) {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.1;
+  font-weight: 650;
+  color: var(--builder-panel-text);
+}
+
+.panel :global(.resume-workbench-metrics) {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.panel :global(.resume-workbench-metric) {
+  padding: 14px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.panel :global(.resume-workbench-metric strong) {
+  display: block;
+  font-size: 22px;
+  line-height: 1;
+  color: var(--builder-panel-text);
+}
+
+.panel :global(.resume-workbench-metric span),
+.panel :global(.resume-workbench-section-pill-meta) {
+  color: var(--builder-panel-text-muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.panel :global(.resume-workbench-section-list) {
+  display: grid;
+  gap: 10px;
+}
+
+.panel :global(.resume-workbench-section-pill) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--builder-panel-text);
+  text-align: left;
+}
+
+.panel :global(.resume-workbench-section-pill:hover) {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.panel :global(.resume-workbench-section-pill.is-muted) {
+  color: var(--builder-panel-text-muted);
+}
+
+.panel :global(.resume-workbench-section-pill-title) {
+  font-size: 13px;
+  font-weight: 600;
+}

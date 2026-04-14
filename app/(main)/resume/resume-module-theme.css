@@ -65,8 +65,7 @@
   border: 1px solid var(--resume-button-border) !important;
 }
 
-.resume-module-scope a[class*='bg-primary/']:hover,
-.resume-module-scope a[class*='hover:bg-primary/']:hover {
+.resume-module-scope a[class*='bg-primary/']:hover {
   background: var(--resume-button-bg-hover) !important;
   border-color: var(--resume-button-border-hover) !important;
 }

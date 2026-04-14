@@ -6,6 +6,8 @@ export interface SessionUser {
   onboardingCompleted: boolean
   defaultDataSourceId?: string | null
   providers?: string[]
+  role?: 'user' | 'admin' | 'super_admin'
+  isAdmin?: boolean
   planType?: string | null
   planExpiresAt?: string | null
 }
@@ -20,4 +22,8 @@ export function getUserDisplayName(user: Pick<SessionUser, 'displayName' | 'emai
   }
 
   return '已登录用户'
+}
+
+export function isAdminRole(role: string | null | undefined): boolean {
+  return role === 'admin' || role === 'super_admin'
 }

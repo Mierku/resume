@@ -4,8 +4,10 @@ import { Fragment, type CSSProperties, type HTMLAttributes, type ReactElement, u
 import { sanitizeHtml } from '@/lib/resume/sanitize'
 import { RESUME_EDITOR_LIMITS, clampToRange } from '@/lib/resume/editor-limits'
 import { resolveResumeFontFamilyStack } from '@/lib/resume/fonts'
+import { resolveSkillPercent as resolveCanonicalSkillPercent, resolveSkillProficiencyLabel as resolveCanonicalSkillProficiencyLabel } from '@/lib/resume/skills'
 import {
   type CustomSectionType,
+  type ResumePageFormat,
   type ResumeData,
   type StandardSectionType,
 } from '@/lib/resume/types'
@@ -40,7 +42,7 @@ import type {
   TemplateHelpers as RuntimeTemplateHelpers,
   TemplateRenderContext as RuntimeTemplateRenderContext,
 } from './templates/types'
-import { ComposedDebugFloatingPanel } from './ComposedDebugFloatingPanel'
+import type { HeightDebugSnapshot } from './height-debug'
 import styles from './preview.module.scss'
 
 interface ResumeReactivePreviewProps {
@@ -48,6 +50,7 @@ interface ResumeReactivePreviewProps {
   className?: string
   showPageNumbers?: boolean
   onNavigate?: (target: PreviewNavigationTarget) => void
+  onHeightDebugSnapshot?: (snapshot: HeightDebugSnapshot | null) => void
 }
 
 export interface PreviewNavigationTarget {
@@ -61,9 +64,8 @@ type TemplateRenderer = (context: RuntimeTemplateRenderContext, helpers: Runtime
 type HeadingVariant = 'icon-line' | 'pill' | 'text-line' | 'striped' | 'sidebar' | 'gray-tab'
 type ItemVariant = 'compact' | 'default' | 'timeline'
 
-const PAGE_DIMENSIONS: Record<'a4' | 'letter' | 'free-form', { width: string; height: string }> = {
+const PAGE_DIMENSIONS: Record<ResumePageFormat, { width: string; height: string }> = {
   a4: { width: '210mm', height: '297mm' },
-  letter: { width: '216mm', height: '279mm' },
   'free-form': { width: '210mm', height: '297mm' },
 }
 
@@ -361,25 +363,11 @@ function resolveStandardSectionTitle(data: ResumeData, sectionId: StandardSectio
 }
 
 function resolveTemplate8SkillPercent(level: unknown, proficiency: string) {
-  const explicitPercent = toPercentLevel(level)
-  if (explicitPercent > 0) return explicitPercent
-
-  const normalized = normalizeToken(proficiency)
-  if (!normalized) return 0
-
-  if (/(精通|专家|母语|native|expert|advanced)/.test(normalized)) return 92
-  if (/(熟练|良好|流利|熟悉|proficient|intermediate)/.test(normalized)) return 78
-  if (/(一般|基础|了解|入门|basic|elementary)/.test(normalized)) return 62
-  return 0
+  return resolveCanonicalSkillPercent(level, proficiency)
 }
 
 function resolveTemplate8SkillLabel(proficiency: string, percent: number) {
-  if (hasMeaningfulText(proficiency)) return proficiency
-  if (percent >= 90) return '精通'
-  if (percent >= 75) return '良好'
-  if (percent >= 60) return '熟悉'
-  if (percent > 0) return '了解'
-  return ''
+  return resolveCanonicalSkillProficiencyLabel(proficiency, percent)
 }
 
 const COMPOSED_TEMPLATE_RENDERER: TemplateRenderer = (context, helpers) => (
@@ -962,6 +950,7 @@ export function ResumeReactivePreview({
   className,
   showPageNumbers = false,
   onNavigate,
+  onHeightDebugSnapshot,
 }: ResumeReactivePreviewProps) {
   const cssVars = useMemo(() => buildCssVariables(data), [data])
   const runtimeSectionIds = useMemo(() => collectRuntimeSectionIds(data), [data])
@@ -1078,7 +1067,6 @@ export function ResumeReactivePreview({
       data,
       sectionIds: runtimeSectionIds,
       contentWidthPx: composedPredictedContentWidthPx,
-      locale: data.metadata.page.locale,
     })
   }, [data, supportsMeasuredFlow, runtimeSectionIds, composedPredictedContentWidthPx])
   const estimatedPages = useMemo(() => {
@@ -1087,6 +1075,7 @@ export function ResumeReactivePreview({
         {
           pageIndex: 0,
           sectionIds: runtimeSectionIds,
+          pageBlocks: [],
           includesHeader: true,
         },
       ]
@@ -1096,7 +1085,6 @@ export function ResumeReactivePreview({
       data,
       sectionIds: runtimeSectionIds,
       contentWidthPx: composedPredictedContentWidthPx,
-      locale: data.metadata.page.locale,
     })
 
     return pagination.pages.length > 0
@@ -1105,6 +1093,7 @@ export function ResumeReactivePreview({
           {
             pageIndex: 0,
             sectionIds: runtimeSectionIds,
+            pageBlocks: [],
             includesHeader: true,
           },
         ]
@@ -1183,9 +1172,57 @@ export function ResumeReactivePreview({
       : null
 
   const pageCount = estimatedPages.length
+  const heightDebugSnapshot = useMemo<HeightDebugSnapshot>(() => ({
+    available: supportsMeasuredFlow && pageCount === 1,
+    pageCount,
+    reason: !supportsMeasuredFlow ? 'unsupported-template' : pageCount === 1 ? undefined : 'multi-page',
+    predictedHeightPx: composedHeightEstimate?.predictedHeightPx ?? null,
+    actualContentHeightPx: composedActualContentHeightPx,
+    heightDeltaPx: composedHeightEstimate ? composedHeightDeltaPx : null,
+    pageViewportHeightPx: composedPageViewportHeightPx,
+    contentMaxHeightPx: composedPredictedContentMaxHeightPx,
+    overflowPx: composedPageViewportHeightPx > 0 ? composedOverflowPx : null,
+    contentMaxOverflowPx: composedContentMaxOverflowPx,
+    scaleX: composedFlowScale.scaleX,
+    scaleY: composedFlowScale.scaleY,
+    blockCount: composedHeightEstimate ? composedHeightEstimate.blockHeights.length : 0,
+    measuredBlocks: composedComponentSummary.measuredBlocks,
+    textDeltaPx: composedComponentSummary.predicted.textHeightPx - composedComponentSummary.actual.textHeightPx,
+    paddingDeltaPx: composedComponentSummary.predicted.paddingPx - composedComponentSummary.actual.paddingPx,
+    borderDeltaPx: composedComponentSummary.predicted.borderPx - composedComponentSummary.actual.borderPx,
+    marginDeltaPx: composedComponentSummary.predicted.marginPx - composedComponentSummary.actual.marginPx,
+    rows: composedBlockDebugRows,
+  }), [
+    composedActualContentHeightPx,
+    composedBlockDebugRows,
+    composedComponentSummary.actual.borderPx,
+    composedComponentSummary.actual.marginPx,
+    composedComponentSummary.actual.paddingPx,
+    composedComponentSummary.actual.textHeightPx,
+    composedComponentSummary.measuredBlocks,
+    composedComponentSummary.predicted.borderPx,
+    composedComponentSummary.predicted.marginPx,
+    composedComponentSummary.predicted.paddingPx,
+    composedComponentSummary.predicted.textHeightPx,
+    composedContentMaxOverflowPx,
+    composedFlowScale.scaleX,
+    composedFlowScale.scaleY,
+    composedHeightDeltaPx,
+    composedHeightEstimate,
+    composedOverflowPx,
+    composedPageViewportHeightPx,
+    composedPredictedContentMaxHeightPx,
+    pageCount,
+    supportsMeasuredFlow,
+  ])
+
+  useEffect(() => {
+    onHeightDebugSnapshot?.(heightDebugSnapshot)
+  }, [heightDebugSnapshot, onHeightDebugSnapshot])
+
   const pageNodes = estimatedPages.map(page => (
     <div
-      key={`page-${page.pageIndex}-${page.sectionIds.join('|') || 'empty'}`}
+      key={`page-${page.pageIndex}-${page.pageBlocks.map(block => `${block.blockId}:${block.rowStart}-${block.rowEnd}`).join('|') || page.sectionIds.join('|') || 'empty'}`}
       ref={page.pageIndex === 0 ? pageRef : null}
       className={cx(styles.page, isFixedFormat && styles.pageFixed)}
       data-template={data.metadata.template}
@@ -1194,6 +1231,7 @@ export function ResumeReactivePreview({
         data,
         pageIndex: page.pageIndex,
         sectionIds: page.sectionIds,
+        pageBlocks: page.pageBlocks,
         onNavigate: interactiveNavigate,
       }, templateHelpers)}
 
@@ -1216,26 +1254,6 @@ export function ResumeReactivePreview({
       style={cssVars}
     >
       {pageNodes}
-
-      <ComposedDebugFloatingPanel
-        visible={supportsMeasuredFlow && pageCount === 1}
-        predictedHeightPx={composedHeightEstimate?.predictedHeightPx ?? null}
-        actualContentHeightPx={composedActualContentHeightPx}
-        heightDeltaPx={composedHeightEstimate ? composedHeightDeltaPx : null}
-        pageViewportHeightPx={composedPageViewportHeightPx}
-        contentMaxHeightPx={composedPredictedContentMaxHeightPx}
-        overflowPx={composedPageViewportHeightPx > 0 ? composedOverflowPx : null}
-        contentMaxOverflowPx={composedContentMaxOverflowPx}
-        scaleX={composedFlowScale.scaleX}
-        scaleY={composedFlowScale.scaleY}
-        blockCount={composedHeightEstimate ? composedHeightEstimate.blockHeights.length : 0}
-        measuredBlocks={composedComponentSummary.measuredBlocks}
-        textDeltaPx={composedComponentSummary.predicted.textHeightPx - composedComponentSummary.actual.textHeightPx}
-        paddingDeltaPx={composedComponentSummary.predicted.paddingPx - composedComponentSummary.actual.paddingPx}
-        borderDeltaPx={composedComponentSummary.predicted.borderPx - composedComponentSummary.actual.borderPx}
-        marginDeltaPx={composedComponentSummary.predicted.marginPx - composedComponentSummary.actual.marginPx}
-        rows={composedBlockDebugRows}
-      />
     </div>
   )
 }

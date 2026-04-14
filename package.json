@@ -14,10 +14,13 @@
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
     "db:reset:user": "prisma db execute --schema prisma/schema.prisma --file scripts/reset-dev-user-data.sql",
+    "admin:promote": "node scripts/promote-admin.mjs",
     "resume:migrate:dry": "node scripts/migrate-resume-content-to-reactive.js --dry",
     "resume:migrate": "node scripts/migrate-resume-content-to-reactive.js",
     "resume:template:migrate:dry": "node scripts/migrate-template-ids-to-numbered.js --dry",
-    "resume:template:migrate": "node scripts/migrate-template-ids-to-numbered.js"
+    "resume:template:migrate": "node scripts/migrate-template-ids-to-numbered.js",
+    "css:purge:dry": "node scripts/purge-unused-css.mjs --dry-run",
+    "css:purge": "node scripts/purge-unused-css.mjs"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",
@@ -48,6 +51,7 @@
     "nodemailer": "^7.0.13",
     "openai": "^6.17.0",
     "react": "19.2.3",
+    "react-colorful": "^5.6.1",
     "react-day-picker": "^9.14.0",
     "react-dom": "19.2.3",
     "react-image-crop": "^11.0.10",
@@ -71,6 +75,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.1",
     "prisma": "^6.2.1",
+    "purgecss": "^8.0.0",
     "sass": "^1.97.3",
     "tailwindcss": "^4.2.2",
     "typescript": "^5"

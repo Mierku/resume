@@ -1,0 +1,61 @@
+.workspace :global(.resume-ai-preview-actions) {
+  position: absolute;
+  top: 14px;
+  right: 10px;
+  z-index: 9;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--builder-preview-dock-bg) 84%, transparent);
+  box-shadow: var(--builder-preview-dock-shadow);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.workspace :global(.resume-preview-dock-wrap) {
+  pointer-events: none;
+  position: absolute;
+  inset-inline: 0;
+  bottom: 12px;
+  display: flex;
+  justify-content: center;
+  z-index: 9;
+}
+
+.workspace :global(.resume-preview-dock) {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 6px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--builder-panel-border) 95%, transparent);
+  background: rgba(18, 20, 26, 0.84);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.workspace :global(.resume-preview-dock-divider) {
+  display: none;
+}
+
+.workspace :global(.resume-preview-dock .resume-dock-btn) {
+  min-width: 30px;
+  height: 30px;
+  padding: 0 6px;
+  border-radius: 999px;
+  color: var(--builder-panel-text);
+  background: transparent;
+}
+
+.workspace :global(.resume-preview-dock .resume-dock-btn svg) {
+  width: 13px;
+  height: 13px;
+}
+
+.workspace :global(.resume-preview-dock .resume-dock-btn:hover) {
+  background: rgba(255, 255, 255, 0.08);
+}

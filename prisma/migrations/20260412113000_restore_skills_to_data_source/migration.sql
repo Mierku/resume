@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "DataSource"
+ADD COLUMN IF NOT EXISTS "skills" JSONB NOT NULL DEFAULT '[]';

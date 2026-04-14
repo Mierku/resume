@@ -9,6 +9,10 @@ interface HeaderPhotoProps {
 }
 
 export function HeaderPhoto({ data, onNavigate, helpers }: HeaderPhotoProps) {
+  if (data.picture.hidden) {
+    return null
+  }
+
   const avatarSrc = String(data.picture.url || '').trim() || '/templates/shared/avatar-default.png'
   const avatarAlt = data.basics.name || '头像'
 
@@ -25,4 +29,3 @@ export function HeaderPhoto({ data, onNavigate, helpers }: HeaderPhotoProps) {
     </span>
   )
 }
-

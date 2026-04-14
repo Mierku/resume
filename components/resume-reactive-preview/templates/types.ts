@@ -8,10 +8,20 @@ export interface PreviewNavigationTarget {
   fieldKey?: string
 }
 
+export interface EstimatedPageBlock {
+  blockId: string
+  sectionId: string
+  rowStart: number
+  rowEnd: number
+  continuedFromPreviousPage: boolean
+  continuesToNextPage: boolean
+}
+
 export interface TemplateRenderContext {
   data: ResumeData
   pageIndex: number
   sectionIds: string[]
+  pageBlocks?: EstimatedPageBlock[]
   onNavigate?: (target: PreviewNavigationTarget) => void
 }
 
@@ -91,7 +101,6 @@ export interface SkillVariantTextMeasureInput {
   fontFamily: string
   fontSizePx: number
   fontWeight: number
-  locale?: string
 }
 
 export interface SkillVariantLineMeasureInput {
@@ -99,7 +108,6 @@ export interface SkillVariantLineMeasureInput {
   fontFamily: string
   fontSizePx: number
   fontWeight: number
-  locale?: string
 }
 
 export interface SkillVariantEstimateProps {
@@ -107,7 +115,6 @@ export interface SkillVariantEstimateProps {
   contentWidthPx: number
   style: ComposedBlockStyle
   fontFamily: string
-  locale?: string
   measureTextHeight: (input: SkillVariantTextMeasureInput) => number
   measureSingleLineWidth: (input: SkillVariantLineMeasureInput) => number
 }

@@ -7,6 +7,18 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum UserRole {
+  user
+  admin
+  super_admin
+}
+
+enum MembershipPlan {
+  basic
+  pro
+  elite
+}
+
 model User {
   id                  String    @id @default(uuid())
   name                String?
@@ -15,6 +27,9 @@ model User {
   image               String?
   defaultDataSourceId String?
   onboardingCompleted Boolean   @default(false)
+  role                UserRole  @default(user)
+  membershipPlan      MembershipPlan @default(basic)
+  membershipExpiresAt DateTime?
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
 
@@ -28,6 +43,8 @@ model User {
   legalConsents LegalConsent[]
 
   @@index([email])
+  @@index([role])
+  @@index([membershipPlan, membershipExpiresAt])
 }
 
 model LegalConsent {

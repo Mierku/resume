@@ -4,9 +4,11 @@ import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import { ArrowRight, CreditCard, FileText, FolderKanban } from 'lucide-react'
 import { Skeleton } from '@/components/ui/Skeleton'
-import { getUserDisplayName, type SessionUser } from '@/lib/user'
+import { formatAuthProviderLabels } from '@/lib/auth-provider-labels'
+import { getUserDisplayName, isAdminRole, type SessionUser } from '@/lib/user'
 import { cn } from '@/lib/utils'
 import { getDashboardSectionHref } from '@/components/dashboard/types'
+import { AccountBindingPanel } from '@/components/dashboard/AccountBindingPanel'
 import styles from './dashboard-workbench.module.css'
 
 interface DataSourceSummary {
@@ -41,11 +43,22 @@ function formatDate(value: string | null | undefined) {
   return dateFormatter.format(parsed)
 }
 
-function getMembershipLabel(rawPlan: string | null | undefined) {
+function getMembershipLabel(rawPlan: string | null | undefined, role: SessionUser['role']) {
+  if (role === 'super_admin') return '超级管理员账号'
+  if (role === 'admin') return '管理员账号'
+
   const normalized = String(rawPlan || 'basic').toLowerCase()
   if (normalized === 'pro') return 'PRO 用户'
   if (normalized === 'elite') return '畅享用户'
   return '基础用户'
+}
+
+function getMembershipAccessLabel(value: string | null | undefined, role: SessionUser['role']) {
+  if (isAdminRole(role)) {
+    return '不受限制'
+  }
+
+  return formatDate(value)
 }
 
 export function AccountSection({
@@ -162,10 +175,10 @@ export function AccountSection({
           <span className={styles.sectionEyebrow}>Account Profile</span>
           <div className={styles.sectionHeadingRow}>
             <h1 className={styles.sectionTitle}>用户信息</h1>
-            <span className={styles.sectionPill}>{getMembershipLabel(user.planType)}</span>
+            <span className={styles.sectionPill}>{getMembershipLabel(user.planType, user.role)}</span>
           </div>
           <p className={styles.sectionDescription}>
-            账户中心汇总你的会员状态、登录方式、默认数据源和核心资产规模。本次保持为完整只读视图，账号资料编辑仍不在工作台内联处理。
+            账户中心汇总你的会员状态、登录方式、默认数据源和核心资产规模。现在也支持在这里补绑邮箱或微信，并在冲突时处理旧账号资产。
           </p>
         </div>
       </header>
@@ -193,30 +206,33 @@ export function AccountSection({
               <p className={styles.resumeText}>{loadError}</p>
             </div>
           ) : (
-            <div className={styles.profileMetaList}>
-              <div className={styles.profileMetaItem}>
-                <span className={styles.profileMetaLabel}>会员等级</span>
-                <span className={styles.profileMetaValue}>{getMembershipLabel(user.planType)}</span>
+            <>
+              <div className={styles.profileMetaList}>
+                <div className={styles.profileMetaItem}>
+                  <span className={styles.profileMetaLabel}>会员等级</span>
+                  <span className={styles.profileMetaValue}>{getMembershipLabel(user.planType, user.role)}</span>
+                </div>
+                <div className={styles.profileMetaItem}>
+                  <span className={styles.profileMetaLabel}>会员有效期</span>
+                  <span className={styles.profileMetaValue}>{getMembershipAccessLabel(user.planExpiresAt, user.role)}</span>
+                </div>
+                <div className={styles.profileMetaItem}>
+                  <span className={styles.profileMetaLabel}>默认数据源</span>
+                  <span className={styles.profileMetaValue}>{payload.defaultDataSource?.name || '未设置'}</span>
+                </div>
+                <div className={styles.profileMetaItem}>
+                  <span className={styles.profileMetaLabel}>账号状态</span>
+                  <span className={styles.profileMetaValue}>{user.onboardingCompleted ? '资料完整' : '待完善'}</span>
+                </div>
+                <div className={styles.profileMetaItem}>
+                  <span className={styles.profileMetaLabel}>登录方式</span>
+                  <span className={styles.profileMetaValue}>
+                    {formatAuthProviderLabels(user.providers)}
+                  </span>
+                </div>
               </div>
-              <div className={styles.profileMetaItem}>
-                <span className={styles.profileMetaLabel}>会员有效期</span>
-                <span className={styles.profileMetaValue}>{formatDate(user.planExpiresAt)}</span>
-              </div>
-              <div className={styles.profileMetaItem}>
-                <span className={styles.profileMetaLabel}>默认数据源</span>
-                <span className={styles.profileMetaValue}>{payload.defaultDataSource?.name || '未设置'}</span>
-              </div>
-              <div className={styles.profileMetaItem}>
-                <span className={styles.profileMetaLabel}>账号状态</span>
-                <span className={styles.profileMetaValue}>{user.onboardingCompleted ? '资料完整' : '待完善'}</span>
-              </div>
-              <div className={styles.profileMetaItem}>
-                <span className={styles.profileMetaLabel}>登录方式</span>
-                <span className={styles.profileMetaValue}>
-                  {user.providers && user.providers.length > 0 ? user.providers.map(provider => provider.toUpperCase()).join(' / ') : '未识别'}
-                </span>
-              </div>
-            </div>
+              <AccountBindingPanel user={user} />
+            </>
           )}
         </article>
 

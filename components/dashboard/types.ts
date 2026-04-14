@@ -1,4 +1,4 @@
-export const DASHBOARD_SECTION_IDS = ['tracking', 'resume', 'data-source', 'account'] as const
+export const DASHBOARD_SECTION_IDS = ['tracking', 'resume', 'data-source', 'admin-users', 'account'] as const
 
 export type DashboardSection = (typeof DASHBOARD_SECTION_IDS)[number]
 

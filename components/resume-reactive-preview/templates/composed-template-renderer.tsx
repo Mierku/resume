@@ -81,12 +81,13 @@ function renderSectionBlock(
     data: ResumeData
     sectionVariant: ReactiveSectionVariant
     skillsVariant: ResolvedSkillsVariant
+    showHeader?: boolean
     isLast: boolean
     onNavigate: Parameters<TemplateModuleRenderer>[0]['onNavigate']
     helpers: Parameters<TemplateModuleRenderer>[1]
   },
 ) {
-  const { data, sectionVariant, skillsVariant, isLast, onNavigate, helpers } = options
+  const { data, sectionVariant, skillsVariant, showHeader = true, isLast, onNavigate, helpers } = options
   const marginBottom = isLast ? 0 : block.style.marginBottom
   const shellStyle: CSSProperties = {
     padding: `${block.style.paddingY}px ${block.style.paddingX}px`,
@@ -230,7 +231,7 @@ function renderSectionBlock(
       data-composed-block-id={block.id}
       {...helpers.getPreviewActionProps(onNavigate, { sectionId: block.sectionId }, helpers.cx(styles.section, styles.interactive))}
     >
-      {sectionVariant === 'section-3' ? (
+      {showHeader ? sectionVariant === 'section-3' ? (
         <div className={styles.sectionHeaderCrimson} style={{ marginBottom: `${block.style.sectionHeaderGap}px` }}>
           <div
             className={styles.sectionBadge}
@@ -291,7 +292,7 @@ function renderSectionBlock(
             {block.title}
           </h2>
         </div>
-      )}
+      ) : null}
       <div className={styles.rows}>
         {skillVariantContent ? (
           <>
@@ -301,7 +302,12 @@ function renderSectionBlock(
               </Fragment>
             ))}
             <div
-              className={introGroups.length > 0 ? styles.skillsVariantShell : undefined}
+              className={[
+                styles.skillsVariantShell,
+                introGroups.length > 0 ? styles.skillsVariantShellWithIntro : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
               style={skillsVariantBodyStyle}
             >
               {skillVariantContent}
@@ -313,12 +319,34 @@ function renderSectionBlock(
   )
 }
 
-const renderComposedTemplate: TemplateModuleRenderer = ({ data, pageIndex, sectionIds, onNavigate }, helpers) => {
+const renderComposedTemplate: TemplateModuleRenderer = ({ data, pageIndex, sectionIds, pageBlocks, onNavigate }, helpers) => {
   const { layoutSpec, headerVariant, sectionVariant, preset } = resolveComposedRuntimeContext(data)
   const skillsVariant = resolveSkillsVariant(data.metadata.design.skillsVariant)
-  const blocks = buildComposedBlocks(data, sectionIds, preset)
-  const sectionBlocks = blocks.filter((block): block is ComposedSectionBlock => block.kind === 'section')
-  const sectionIndexById = new Map(sectionBlocks.map((block, index) => [block.id, index]))
+  const allBlocks = buildComposedBlocks(data, sectionIds, preset)
+  const heroBlock = allBlocks.find(block => block.kind === 'hero') || null
+  const blockById = new Map(allBlocks.map(block => [block.id, block]))
+  const renderedSectionBlocks =
+    pageBlocks && pageBlocks.length > 0
+      ? pageBlocks
+          .map(pageBlock => {
+            const resolvedBlock = blockById.get(pageBlock.blockId)
+            if (!resolvedBlock || resolvedBlock.kind !== 'section') return null
+            return {
+              block: {
+                ...resolvedBlock,
+                rows: resolvedBlock.rows.slice(pageBlock.rowStart, pageBlock.rowEnd),
+              },
+              continuedFromPreviousPage: pageBlock.continuedFromPreviousPage,
+            }
+          })
+          .filter((entry): entry is { block: ComposedSectionBlock; continuedFromPreviousPage: boolean } => Boolean(entry))
+      : allBlocks
+          .filter((block): block is ComposedSectionBlock => block.kind === 'section')
+          .map(block => ({
+            block,
+            continuedFromPreviousPage: false,
+          }))
+  const sectionBlocks = renderedSectionBlocks
 
   if (layoutSpec.layout === 'left-aside') {
     const blockCount = sectionBlocks.length
@@ -419,52 +447,51 @@ const renderComposedTemplate: TemplateModuleRenderer = ({ data, pageIndex, secti
         </aside>
 
         <main className={styles.asideMain} data-composed-flow="true">
-          {sectionBlocks.map((block, index) => renderSectionBlock(block, {
-            data,
-            sectionVariant,
-            skillsVariant,
-            isLast: index === blockCount - 1,
-            onNavigate,
-            helpers,
-          }))}
+          {sectionBlocks.map(({ block, continuedFromPreviousPage }, index) =>
+            renderSectionBlock(block, {
+              data,
+              sectionVariant,
+              skillsVariant,
+              showHeader: !continuedFromPreviousPage,
+              isLast: index === blockCount - 1,
+              onNavigate,
+              helpers,
+            }),
+          )}
         </main>
       </div>
     )
   }
 
   return (
-      <div
-        className={styles.singleRoot}
-        style={{
-          padding: 'var(--page-margin-y) var(--page-margin-x)',
-        }}
-      >
-        <div className={styles.singleFlow} data-composed-flow="true">
-          {blocks.map((block, index) => {
-            if (block.kind === 'hero') {
-              if (pageIndex > 0) {
-                return null
-              }
-              return renderTemplateHeaderBlock({
-                variant: headerVariant,
-                block,
-                data,
-                marginBottom: index === blocks.length - 1 ? 0 : block.style.marginBottom,
-                onNavigate,
-                helpers,
-              })
-            }
-
-          const sectionIndex = sectionIndexById.get(block.id) ?? -1
-          return renderSectionBlock(block, {
+    <div
+      className={styles.singleRoot}
+      style={{
+        padding: 'var(--page-margin-y) var(--page-margin-x)',
+      }}
+    >
+      <div className={styles.singleFlow} data-composed-flow="true">
+        {heroBlock && pageIndex === 0
+          ? renderTemplateHeaderBlock({
+              variant: headerVariant,
+              block: heroBlock,
+              data,
+              marginBottom: sectionBlocks.length === 0 ? 0 : heroBlock.style.marginBottom,
+              onNavigate,
+              helpers,
+            })
+          : null}
+        {sectionBlocks.map(({ block, continuedFromPreviousPage }, index) =>
+          renderSectionBlock(block, {
             data,
             sectionVariant,
             skillsVariant,
-            isLast: sectionIndex === sectionBlocks.length - 1,
+            showHeader: !continuedFromPreviousPage,
+            isLast: index === sectionBlocks.length - 1,
             onNavigate,
             helpers,
-          })
-        })}
+          }),
+        )}
       </div>
     </div>
   )

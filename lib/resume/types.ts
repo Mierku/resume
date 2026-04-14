@@ -261,13 +261,18 @@ export interface LayoutData {
   pages: PageLayout[]
 }
 
+export type ResumePageFormat = 'a4' | 'free-form'
+
+export function normalizeResumePageFormat(value: unknown): ResumePageFormat {
+  return value === 'free-form' ? 'free-form' : 'a4'
+}
+
 export interface PageData {
   gapX: number
   gapY: number
   marginX: number
   marginY: number
-  format: 'a4' | 'letter' | 'free-form'
-  locale: string
+  format: ResumePageFormat
   smartOnePageEnabled: boolean
 }
 
@@ -411,19 +416,11 @@ export function createDefaultResumeData(template: ReactiveTemplateId = 'template
           {
             fullWidth: true,
             main: [
-              'education',
-              'skills',
               'experience',
               'projects',
-              'languages',
-              'interests',
-              'profiles',
-              'awards',
-              'certifications',
-              'publications',
-              'volunteer',
-              'references',
+              'education',
               'summary',
+              'skills',
             ],
             sidebar: [],
           },
@@ -435,7 +432,6 @@ export function createDefaultResumeData(template: ReactiveTemplateId = 'template
         marginX: 14,
         marginY: 12,
         format: 'a4',
-        locale: 'zh-CN',
         smartOnePageEnabled: false,
       },
       design: {

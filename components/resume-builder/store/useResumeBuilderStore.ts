@@ -14,6 +14,7 @@ import {
   type StandardSectionType,
 } from '@/lib/resume/types'
 import { getTemplateDefaultPrimaryColor } from '@/lib/constants'
+import { DEFAULT_SKILL_PROFICIENCY, resolveSkillProficiencyTier } from '@/lib/resume/skills'
 
 interface SaveState {
   status: 'idle' | 'saving' | 'saved' | 'error'
@@ -117,6 +118,11 @@ function normalizeDataForSingleColumnLayout(input: ResumeData): ResumeData {
   const available = collectAvailableSectionIds(data)
   const canonicalOrder = buildSectionOrder(data)
 
+  data.sections.skills.items = (data.sections.skills.items || []).map(item => ({
+    ...item,
+    proficiency: resolveSkillProficiencyTier(String(item.proficiency || ''), item.level) || DEFAULT_SKILL_PROFICIENCY,
+  }))
+
   if (!Array.isArray(data.metadata.layout.pages) || data.metadata.layout.pages.length === 0) {
     data.metadata.layout.pages = [
       {
@@ -182,7 +188,7 @@ function createSectionItem(sectionId: StandardSectionType): Record<string, unkno
         description: '',
       }
     case 'skills':
-      return { ...base, icon: 'code', name: '', proficiency: '', level: 0, keywords: [] }
+      return { ...base, icon: 'code', name: '', proficiency: DEFAULT_SKILL_PROFICIENCY, level: 0, keywords: [] }
     case 'languages':
       return { ...base, language: '', fluency: '', level: 0 }
     case 'interests':
@@ -383,6 +389,8 @@ const actions: BuilderActions = {
     setState(draft => {
       draft.data.metadata.template = templateId
       draft.data.metadata.design.colors.primary = getTemplateDefaultPrimaryColor(templateId)
+      draft.data.metadata.design.headerVariant = 'auto'
+      draft.data.metadata.design.sectionVariant = 'auto'
       draft.dirty = true
     })
   },

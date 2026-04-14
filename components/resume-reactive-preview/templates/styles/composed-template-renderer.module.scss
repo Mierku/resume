@@ -72,6 +72,17 @@
 }
 
 .skillsVariantShell {
+  --skills-neutral-strong: #1f2937;
+  --skills-neutral-base: #374151;
+  --skills-neutral-muted: #6b7280;
+  --skills-neutral-soft: #9ca3af;
+  --skills-neutral-surface: #f3f4f6;
+  --skills-neutral-surface-line: #e5e7eb;
+  --skills-neutral-track: #d9dbe2;
+  --skills-neutral-divider: #d1d5db;
+}
+
+.skillsVariantShellWithIntro {
   margin-top: 10px;
 }
 
@@ -87,9 +98,9 @@
   min-height: 28px;
   padding: 0 14px;
   border-radius: 6px;
-  background: color-mix(in srgb, var(--resume-theme-primary) 7%, #f3f4f6);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--resume-theme-primary) 12%, #e5e7eb);
-  color: color-mix(in srgb, var(--resume-theme-text) 78%, #374151);
+  background: var(--skills-neutral-surface);
+  box-shadow: inset 0 0 0 1px var(--skills-neutral-surface-line);
+  color: var(--skills-neutral-base);
   font-size: inherit;
   font-weight: 500;
   line-height: 1.1;
@@ -113,16 +124,13 @@
 }
 
 .skillsProgressHead {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: baseline;
-  gap: 10px;
+  display: block;
 }
 
 .skillsProgressName {
   min-width: 0;
   overflow-wrap: anywhere;
-  color: color-mix(in srgb, var(--resume-theme-text) 92%, #111827);
+  color: var(--skills-neutral-strong);
   font-size: inherit;
   font-weight: 700;
   line-height: 1.22;
@@ -130,7 +138,7 @@
 }
 
 .skillsProgressValue {
-  color: color-mix(in srgb, var(--resume-theme-text) 92%, #111827);
+  color: var(--skills-neutral-strong);
   font-size: inherit;
   font-weight: 700;
   line-height: 1.2;
@@ -142,19 +150,19 @@
   height: 8px;
   border-radius: 999px;
   overflow: hidden;
-  background: color-mix(in srgb, var(--resume-theme-primary) 9%, #d9dbe2);
+  background: var(--skills-neutral-track);
 }
 
 .skillsProgressFill {
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: color-mix(in srgb, var(--resume-theme-primary) 80%, #1f2937);
+  background: color-mix(in srgb, var(--skills-neutral-strong) 52%, #8f97a5);
 }
 
 .skillsInlineList {
   margin: 0;
-  color: color-mix(in srgb, var(--resume-theme-text) 82%, #4b5563);
+  color: var(--skills-neutral-base);
   font-size: inherit;
   line-height: 1.48;
   white-space: pre-wrap;
@@ -186,7 +194,7 @@
 .skillsLeaderName {
   min-width: 0;
   overflow-wrap: anywhere;
-  color: color-mix(in srgb, var(--resume-theme-text) 92%, #111827);
+  color: var(--skills-neutral-strong);
   font-size: inherit;
   font-weight: 600;
   line-height: 1.28;
@@ -195,12 +203,12 @@
 .skillsLeaderLine {
   display: block;
   min-width: 18px;
-  border-bottom: 1px dotted color-mix(in srgb, var(--resume-theme-primary) 16%, #d1d5db);
+  border-bottom: 1px dotted var(--skills-neutral-divider);
   transform: translateY(1px);
 }
 
 .skillsLeaderValue {
-  color: color-mix(in srgb, var(--resume-theme-text) 52%, #9ca3af);
+  color: var(--skills-neutral-soft);
   font-size: inherit;
   font-style: italic;
   font-weight: 500;

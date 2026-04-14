@@ -3,18 +3,21 @@
 import {
   closestCenter,
   DndContext,
-  DragOverlay,
   PointerSensor,
   useSensor,
   useSensors,
   type DragEndEvent,
-  type DragStartEvent,
 } from '@dnd-kit/core'
-import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import {
+  arrayMove,
+  horizontalListSortingStrategy,
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import {
   type CSSProperties,
-  type MouseEvent as ReactMouseEvent,
   type ReactNode,
   type RefObject,
   useCallback,
@@ -28,34 +31,35 @@ import {
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import {
-  FilePenLine,
-  LayoutTemplate,
-  Moon,
-  Search,
-  Sun,
+  Award,
+  BadgeCheck,
+  BookOpen,
+  Briefcase,
   FileText,
-  PenLine,
-  ZoomIn,
-  ZoomOut,
+  FolderOpen,
+  GraduationCap,
+  Handshake,
+  Heart,
+  Languages,
+  Link2,
+  Pencil,
+  Sparkles,
+  Target,
+  type LucideIcon,
+  User,
+  Wrench,
 } from 'lucide-react'
 import {
   Button,
   Checkbox,
   Input,
-  IconChevronDown,
   IconChevronRight,
   IconDelete,
   IconEye,
-  IconEyeOff,
   IconGrip,
-  IconMaximize,
   IconMoreHorizontal,
   IconPlus,
   IconRefresh,
-  IconRedo,
-  IconSidebarClose,
-  IconSidebarOpen,
-  IconUndo,
   Message,
   Option,
   Select,
@@ -76,23 +80,20 @@ import {
   type ResumeData,
   type StandardSectionType,
 } from '@/lib/resume/types'
-import { normalizeResumeFontFamily, RESUME_FONT_PRESETS } from '@/lib/resume/fonts'
 import { dateToYearMonth, joinPeriodValue, splitPeriodValue } from '@/lib/date-fields'
-import { getTemplateDefaultPrimaryColor, RESUME_TEMPLATES } from '@/lib/constants'
-import { resolveHeaderVariantForTemplate } from '@/lib/resume/header'
-import { resolveSkillPercent, resolveSkillsVariant } from '@/lib/resume/skills'
-import { resolveSectionVariantForTemplate } from '@/lib/resume/section'
 import { AuthRequiredModal, Modal } from '@/components/ui/Modal'
 import { DateRangePickerField } from '@/components/ui/date-range-picker'
 import { MonthPickerField } from '@/components/ui/month-picker'
 import { toast } from '@/lib/toast'
 import type { PreviewNavigationTarget } from '@/components/resume-reactive-preview'
 import { useResumeBuilderStore } from './store/useResumeBuilderStore'
-import { FillToolPanel } from './panels/FillToolPanel'
-import { AIChatPanel } from './panels/AIChatPanel'
-import { ResumeBuilderToolbar } from './layout/ResumeBuilderToolbar'
+import { FillToolPanel } from './panels/FillToolPanel/FillToolPanel'
+import { AIChatPanel } from './panels/AIChatPanel/AIChatPanel'
+import { HeightDebugPanel } from './panels/HeightDebugPanel/HeightDebugPanel'
+import { LayoutAndStylePanel } from './panels/LayoutAndStylePanel/LayoutAndStylePanel'
+import { ResumeBuilderToolbar } from './layout/ResumeBuilderToolbar/ResumeBuilderToolbar'
 import { useAuthSnapshot } from '@/lib/hooks/useAuthSnapshot'
-import { BrandFlowerIcon } from '@/components/BrandFlowerIcon'
+import type { HeightDebugSnapshot } from '@/components/resume-reactive-preview/height-debug'
 import {
   collectVisibleSectionIds,
   estimateCurrentTemplatePages,
@@ -101,9 +102,33 @@ import {
 } from '@/components/resume-reactive-preview/templates/estimate-current-template-height'
 import {
   resolveSmartOnePageComputation,
-  type SmartOnePageComputation,
 } from '@/components/resume-reactive-preview/templates/smart-one-page'
+import { ResumeOverlayWorkbench } from './workbench/ResumeOverlayWorkbench/ResumeOverlayWorkbench'
+import { computeResumeCompleteness, type ResumeCompletenessResult } from './workbench/resume-completeness'
+import { type ActiveBuilderTool, type BuilderTool } from './workbench/types'
+import {
+  BASICS_HEIGHT_LIMIT,
+  BASICS_WEIGHT_LIMIT,
+  createNestedPatch,
+  DEFAULT_SKILL_PROFICIENCY,
+  dedupeSectionIds,
+  GENDER_OPTIONS,
+  getNestedValue,
+  getSectionDisplayTitle,
+  isSectionHidden,
+  isStandardSectionId,
+  MARITAL_STATUS_OPTIONS,
+  POLITICAL_STATUS_OPTIONS,
+  resolveStandardSectionItemSummary,
+  SECTION_FIELD_CONFIG,
+  SKILL_PROFICIENCY_OPTIONS,
+  STANDARD_SECTION_LABELS,
+  supportsStandardSectionItemSummary,
+  toSingleSelectValue,
+  WORK_YEAR_OPTIONS,
+} from './editor/section-editor-shared'
 import './builder-theme.css'
+import './workbench/workbench-layout.css'
 
 const ResumeReactivePreview = dynamic(
   () => import('@/components/resume-reactive-preview').then(module => module.ResumeReactivePreview),
@@ -111,317 +136,108 @@ const ResumeReactivePreview = dynamic(
 )
 
 const RichTextEditor = dynamic(
-  () => import('./RichTextEditor').then(module => module.RichTextEditor),
+  () => import('./controls/RichTextEditor/RichTextEditor').then(module => module.RichTextEditor),
   { ssr: false },
 )
 
-const GENDER_OPTIONS = [
-  { value: '', label: '不填' },
-  { value: '男', label: '男' },
-  { value: '女', label: '女' },
-]
-
-const WORK_YEAR_OPTIONS = [
-  { value: '', label: '不填' },
-  { value: '应届生', label: '应届生' },
-  { value: '1年经验', label: '1年经验' },
-  { value: '2年经验', label: '2年经验' },
-  { value: '3年经验', label: '3年经验' },
-  { value: '4年经验', label: '4年经验' },
-  { value: '5年经验', label: '5年经验' },
-  { value: '6年经验', label: '6年经验' },
-  { value: '7年经验', label: '7年经验' },
-  { value: '8年经验', label: '8年经验' },
-  { value: '9年经验', label: '9年经验' },
-  { value: '10年以上', label: '10年以上' },
-]
-
-type StyleBrowserTab = 'layout' | 'elements'
-type StyleBrowserCategory = 'all' | 'header' | 'section' | 'skills'
-type StylePreviewKind =
-  | 'layout-grid'
-  | 'layout-split'
-  | 'layout-column'
-  | 'header-centered'
-  | 'header-avatar'
-  | 'title-band'
-  | 'timeline-vertical'
-  | 'skills-pill'
-  | 'skills-bars'
-  | 'skills-inline'
-  | 'skills-rating'
-
-interface StyleBrowserCard {
-  id: string
-  label: string
-  preview: StylePreviewKind
-  previewImage: string
-  category: Exclude<StyleBrowserCategory, 'all'>
-  groupId: string
-  groupTitle: string
-  keywords: string[]
-  selected: boolean
-  wide?: boolean
-  onSelect: () => void
-}
-
-function StyleBrowserPreview({ kind, image }: { kind: StylePreviewKind; image: string }) {
-  if (kind === 'layout-grid') {
-    return (
-      <div
-        className="resume-style-browser-preview"
-        data-preview-kind={kind}
-        style={{ ['--resume-style-preview-image' as string]: `url(${image})` }}
-      >
-        <div className="resume-style-browser-preview-sheet">
-          <span className="resume-style-browser-preview-line is-lg" />
-          <span className="resume-style-browser-preview-line" />
-          <span className="resume-style-browser-preview-line is-sm" />
-        </div>
-      </div>
-    )
-  }
-
-  if (kind === 'layout-split') {
-    return (
-      <div
-        className="resume-style-browser-preview"
-        data-preview-kind={kind}
-        style={{ ['--resume-style-preview-image' as string]: `url(${image})` }}
-      >
-        <div className="resume-style-browser-preview-sheet">
-          <span className="resume-style-browser-preview-column is-narrow" />
-          <div className="resume-style-browser-preview-stack">
-            <span className="resume-style-browser-preview-line is-md" />
-            <span className="resume-style-browser-preview-line is-sm" />
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (kind === 'layout-column') {
-    return (
-      <div
-        className="resume-style-browser-preview"
-        data-preview-kind={kind}
-        style={{ ['--resume-style-preview-image' as string]: `url(${image})` }}
-      >
-        <div className="resume-style-browser-preview-sheet">
-          <div className="resume-style-browser-preview-stack">
-            <span className="resume-style-browser-preview-line is-md" />
-            <span className="resume-style-browser-preview-line" />
-            <span className="resume-style-browser-preview-line is-sm" />
-          </div>
-          <div className="resume-style-browser-preview-stack">
-            <span className="resume-style-browser-preview-line is-md" />
-            <span className="resume-style-browser-preview-line is-sm" />
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (kind === 'header-centered') {
-    return (
-      <div
-        className="resume-style-browser-preview"
-        data-preview-kind={kind}
-        style={{ ['--resume-style-preview-image' as string]: `url(${image})` }}
-      >
-        <div className="resume-style-browser-preview-sheet">
-          <span className="resume-style-browser-preview-line is-avatar-line" />
-          <span className="resume-style-browser-preview-line" />
-          <div className="resume-style-browser-preview-dots">
-            <span />
-            <span />
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (kind === 'header-avatar') {
-    return (
-      <div
-        className="resume-style-browser-preview"
-        data-preview-kind={kind}
-        style={{ ['--resume-style-preview-image' as string]: `url(${image})` }}
-      >
-        <div className="resume-style-browser-preview-sheet is-side-avatar">
-          <span className="resume-style-browser-preview-avatar" />
-          <div className="resume-style-browser-preview-stack">
-            <span className="resume-style-browser-preview-line is-md" />
-            <span className="resume-style-browser-preview-line is-sm" />
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (kind === 'title-band') {
-    return (
-      <div
-        className="resume-style-browser-preview"
-        data-preview-kind={kind}
-        style={{ ['--resume-style-preview-image' as string]: `url(${image})` }}
-      >
-        <div className="resume-style-browser-preview-sheet is-title-band">
-          <span className="resume-style-browser-preview-band" />
-          <div className="resume-style-browser-preview-stack">
-            <span className="resume-style-browser-preview-line is-md" />
-            <span className="resume-style-browser-preview-line is-sm" />
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (kind === 'timeline-vertical') {
-    return (
-      <div
-        className="resume-style-browser-preview"
-        data-preview-kind={kind}
-        style={{ ['--resume-style-preview-image' as string]: `url(${image})` }}
-      >
-        <div className="resume-style-browser-preview-sheet is-timeline">
-          <div className="resume-style-browser-preview-rail">
-            <span className="resume-style-browser-preview-node" />
-            <span className="resume-style-browser-preview-node" />
-          </div>
-          <div className="resume-style-browser-preview-stack">
-            <span className="resume-style-browser-preview-line is-md" />
-            <span className="resume-style-browser-preview-line is-sm" />
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (kind === 'skills-pill') {
-    return (
-      <div
-        className="resume-style-browser-preview"
-        data-preview-kind={kind}
-        style={{ ['--resume-style-preview-image' as string]: `url(${image})` }}
-      >
-        <div className="resume-style-browser-preview-sheet">
-          <div className="resume-style-browser-preview-tag-grid">
-            <span />
-            <span />
-            <span />
-            <span />
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (kind === 'skills-inline') {
-    return (
-      <div
-        className="resume-style-browser-preview"
-        data-preview-kind={kind}
-        style={{ ['--resume-style-preview-image' as string]: `url(${image})` }}
-      >
-        <div className="resume-style-browser-preview-sheet">
-          <div className="resume-style-browser-preview-inline">
-            <span />
-            <span />
-            <span />
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (kind === 'skills-rating') {
-    return (
-      <div
-        className="resume-style-browser-preview"
-        data-preview-kind={kind}
-        style={{ ['--resume-style-preview-image' as string]: `url(${image})` }}
-      >
-        <div className="resume-style-browser-preview-sheet">
-          <div className="resume-style-browser-preview-leaders">
-            <div className="resume-style-browser-preview-leader-row">
-              <span className="resume-style-browser-preview-line is-md" />
-              <i className="resume-style-browser-preview-leader-line" />
-              <b className="resume-style-browser-preview-leader-value" />
-            </div>
-            <div className="resume-style-browser-preview-leader-row">
-              <span className="resume-style-browser-preview-line is-sm" />
-              <i className="resume-style-browser-preview-leader-line" />
-              <b className="resume-style-browser-preview-leader-value is-short" />
-            </div>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <div
-      className="resume-style-browser-preview"
-      data-preview-kind={kind}
-      style={{ ['--resume-style-preview-image' as string]: `url(${image})` }}
-    >
-      <div className="resume-style-browser-preview-sheet">
-        <div className="resume-style-browser-preview-bars">
-          <span className="resume-style-browser-preview-bar is-strong" />
-          <span className="resume-style-browser-preview-bar is-soft" />
-          <span className="resume-style-browser-preview-bar is-mid" />
-          <span className="resume-style-browser-preview-bar is-soft" />
-        </div>
-      </div>
-    </div>
-  )
-}
-
-const MARITAL_STATUS_OPTIONS = [
-  { value: '', label: '不填' },
-  { value: '未婚', label: '未婚' },
-  { value: '已婚', label: '已婚' },
-]
-
-const SKILL_PROFICIENCY_OPTIONS = [
-  { value: '', label: '不填' },
-  { value: '了解', label: '了解' },
-  { value: '熟悉', label: '熟悉' },
-  { value: '熟练', label: '熟练' },
-  { value: '精通', label: '精通' },
-]
-
-const POLITICAL_STATUS_OPTIONS = [
-  { value: '', label: '不填' },
-  { value: '中共党员', label: '中共党员' },
-  { value: '共青团员', label: '共青团员' },
-  { value: '群众', label: '群众' },
-  { value: '民主党派', label: '民主党派' },
-]
-
-const BASICS_HEIGHT_LIMIT: NumericLimitConfig = {
-  min: 120,
-  max: 230,
-  step: 1,
-  defaultValue: 170,
-  presets: [150, 160, 170, 175, 180, 185, 190, 200],
-}
-
-const BASICS_WEIGHT_LIMIT: NumericLimitConfig = {
-  min: 35,
-  max: 180,
-  step: 1,
-  defaultValue: 60,
-  presets: [45, 50, 55, 60, 65, 70, 75, 80],
-}
-
 const THEME_STORAGE_KEY = 'theme'
-const SIDE_TOOLS_EXPANDED_STORAGE_KEY = 'resume:side-tools-expanded'
+const EDITOR_PANEL_WIDTH_STORAGE_KEY = 'resume:editor-panel-width'
 const AUTH_REDIRECT_DRAFT_CACHE_KEY = 'resume:auth-redirect-draft'
 const AUTH_REDIRECT_DRAFT_MAX_AGE_MS = 30 * 60 * 1000
 const AUTH_REDIRECT_RUNTIME_DRAFT_MAX_AGE_MS = 15 * 1000
 const DEFAULT_TEXT_COLOR = '#111111'
+const EDITOR_PANEL_WIDTH_DEFAULT = 412
+const EDITOR_PANEL_WIDTH_MIN = 340
+const EDITOR_PANEL_WIDTH_MAX = 720
+const DEFAULT_EDITOR_SECTION_ORDER: string[] = ['experience', 'projects', 'education', 'summary', 'skills']
+const DEFAULT_EDITOR_SECTION_SET = new Set(DEFAULT_EDITOR_SECTION_ORDER)
+const ADDABLE_EDITOR_SECTION_ORDER: string[] = [
+  ...DEFAULT_EDITOR_SECTION_ORDER,
+  'profiles',
+  'languages',
+  'interests',
+  'awards',
+  'certifications',
+  'publications',
+  'volunteer',
+  'references',
+]
+const RESUME_EDITOR_TAB_CHROME_PATH =
+  'M 0,36 C 10,36 13.5,34 14,24 L 14,10 C 14.5,2 18,0 30,0 L 130,0 C 142,0 145.5,2 146,10 L 146,24 C 146.5,34 150,36 160,36 Z'
+const RESUME_EDITOR_TAB_CHROME_STYLE: CSSProperties = {
+  position: 'absolute',
+  top: 0,
+  left: 0,
+  width: '100%',
+  height: '100%',
+  pointerEvents: 'none',
+  zIndex: 0,
+}
+const TAB_ICON_MAP: Record<string, LucideIcon> = {
+  basics: User,
+  intention: Target,
+  summary: FileText,
+  experience: Briefcase,
+  projects: FolderOpen,
+  education: GraduationCap,
+  skills: Wrench,
+  profiles: Link2,
+  languages: Languages,
+  interests: Heart,
+  awards: Award,
+  certifications: BadgeCheck,
+  publications: BookOpen,
+  volunteer: Handshake,
+  references: User,
+}
+
+function createBuilderId() {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID()
+  }
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+}
+
+function renderEditorTabIcon(sectionId: string) {
+  const Icon = TAB_ICON_MAP[sectionId] || FileText
+  return <Icon className="resume-editor-tab-icon" size={13} strokeWidth={2} aria-hidden="true" />
+}
+
+function hasMeaningfulSectionValue(value: unknown, key?: string): boolean {
+  if (key === 'id' || key === 'hidden' || key === 'options' || key === 'icon') return false
+  if (typeof value === 'string') return value.trim().length > 0
+  if (typeof value === 'number') return Number.isFinite(value) && value > 0
+  if (typeof value === 'boolean') return value
+  if (Array.isArray(value)) return value.some(item => hasMeaningfulSectionValue(item))
+  if (value && typeof value === 'object') {
+    return Object.entries(value as Record<string, unknown>).some(([nestedKey, nestedValue]) =>
+      hasMeaningfulSectionValue(nestedValue, nestedKey),
+    )
+  }
+  return false
+}
+
+function hasMeaningfulStandardSectionContent(data: ResumeData, sectionId: StandardSectionType) {
+  const section = data.sections[sectionId]
+  if (!section) return false
+  if (section.title.trim() || section.intro.trim()) return true
+  return section.items.some(item => hasMeaningfulSectionValue(item))
+}
+
+function EditorSectionTabChromeBg() {
+  return (
+    <svg
+      className="resume-editor-tab-bg"
+      viewBox="0 0 160 36"
+      preserveAspectRatio="none"
+      aria-hidden="true"
+      style={RESUME_EDITOR_TAB_CHROME_STYLE}
+      focusable="false"
+    >
+      <path d={RESUME_EDITOR_TAB_CHROME_PATH} />
+    </svg>
+  )
+}
 
 interface AuthRedirectDraftCachePayload {
   version: number
@@ -439,10 +255,6 @@ let authRedirectRuntimeDraft:
       cachedAt: number
     }
   | null = null
-
-function toSingleSelectValue(value: string | string[]) {
-  return Array.isArray(value) ? value[0] || '' : value
-}
 
 function normalizeHexColor(value: string): string | null {
   const normalized = value.trim().toLowerCase()
@@ -515,7 +327,6 @@ function estimateTemplatePageCountForData(data: ResumeData) {
       data,
       sectionIds,
       contentWidthPx: contentMetrics.contentWidthPx,
-      locale: data.metadata.page.locale,
     }).pages.length,
     1,
   )
@@ -534,144 +345,6 @@ function buildPreviewFitFingerprint(data: ResumeData) {
     data.metadata.typography.heading.fontSize.toFixed(2),
     data.metadata.typography.heading.lineHeight.toFixed(2),
   ].join(':')
-}
-
-function resolveThemePreference(): 'light' | 'dark' {
-  if (typeof document !== 'undefined') {
-    const themeFromDom = document.documentElement.getAttribute('data-theme')
-    if (themeFromDom === 'dark' || themeFromDom === 'light') {
-      return themeFromDom
-    }
-  }
-
-  if (typeof window !== 'undefined') {
-    const themeFromStorage = window.localStorage.getItem(THEME_STORAGE_KEY)
-    if (themeFromStorage === 'dark' || themeFromStorage === 'light') {
-      return themeFromStorage
-    }
-
-    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      return 'dark'
-    }
-  }
-
-  return 'light'
-}
-
-interface NumberComboFieldProps {
-  label: string
-  value: number
-  config: NumericLimitConfig
-  suffix?: string
-  onChange: (value: number) => void
-}
-
-function NumberComboField({ label, value, config, suffix, onChange }: NumberComboFieldProps) {
-  const normalizedValue = clampToRange(value, config.min, config.max)
-  const [draft, setDraft] = useState(formatNumericValue(normalizedValue, config.step))
-  const [focused, setFocused] = useState(false)
-  const [open, setOpen] = useState(false)
-  const fieldRef = useRef<HTMLDivElement | null>(null)
-  const presetValues = config.presets
-  const displayValue = focused ? draft : formatNumericValue(normalizedValue, config.step)
-
-  useEffect(() => {
-    if (!open) return
-
-    const onPointerDown = (event: PointerEvent) => {
-      const target = event.target
-      if (!fieldRef.current || !(target instanceof Node)) return
-      if (!fieldRef.current.contains(target)) {
-        setOpen(false)
-      }
-    }
-
-    const onEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setOpen(false)
-      }
-    }
-
-    window.addEventListener('pointerdown', onPointerDown)
-    window.addEventListener('keydown', onEscape)
-    return () => {
-      window.removeEventListener('pointerdown', onPointerDown)
-      window.removeEventListener('keydown', onEscape)
-    }
-  }, [open])
-
-  const applyDraft = () => {
-    const parsed = parseNumericInput(draft, config, normalizedValue)
-    onChange(parsed)
-    setDraft(formatNumericValue(parsed, config.step))
-    setFocused(false)
-  }
-
-  return (
-    <div ref={fieldRef} className="resume-number-combo-field">
-      <label className="text-xs text-muted-foreground block mb-1">{label}</label>
-      <div className={`resume-number-combo-single ${open ? 'is-open' : ''}`}>
-        <Input
-          className="resume-number-combo-input"
-          value={displayValue}
-          onChange={setDraft}
-          onFocus={() => {
-            setFocused(true)
-            setDraft(formatNumericValue(normalizedValue, config.step))
-          }}
-          onBlur={applyDraft}
-          onKeyDown={event => {
-            if (event.key === 'Enter') {
-              event.currentTarget.blur()
-            }
-            if (event.key === 'ArrowDown') {
-              setOpen(true)
-            }
-          }}
-          inputMode="decimal"
-        />
-        <button
-          type="button"
-          className="resume-number-combo-toggle"
-          onMouseDown={event => event.preventDefault()}
-          onClick={() => setOpen(prev => !prev)}
-          aria-label={`${label} 预设值`}
-        >
-          <IconChevronDown />
-        </button>
-      </div>
-      {open ? (
-        <div
-          className="resume-number-combo-menu"
-          onPointerDown={event => event.stopPropagation()}
-          onWheelCapture={event => event.stopPropagation()}
-          onWheel={event => event.stopPropagation()}
-        >
-          {presetValues.map(item => {
-            const formatted = formatNumericValue(item, config.step)
-            const active = formatted === formatNumericValue(normalizedValue, config.step)
-            return (
-              <button
-                key={`${label}-${formatted}`}
-                type="button"
-                className={`resume-number-combo-option ${active ? 'is-active' : ''}`}
-                onMouseDown={event => event.preventDefault()}
-                onClick={() => {
-                  setDraft(formatted)
-                  const parsed = parseNumericInput(formatted, config, normalizedValue)
-                  onChange(parsed)
-                  setOpen(false)
-                }}
-              >
-                {formatted}
-                {suffix ? ` ${suffix}` : ''}
-              </button>
-            )
-          })}
-        </div>
-      ) : null}
-    </div>
-  )
 }
 
 interface ScrubbableNumberInputProps {
@@ -832,103 +505,6 @@ function ScrubbableNumberInput({ value, placeholder, suffix, config, onChange }:
   )
 }
 
-const STANDARD_SECTION_LABELS: Record<StandardSectionType, string> = {
-  profiles: '社交资料',
-  experience: '工作经历',
-  education: '教育经历',
-  projects: '项目经历',
-  skills: '技能',
-  languages: '语言能力',
-  interests: '兴趣爱好',
-  awards: '奖项',
-  certifications: '证书',
-  publications: '出版物',
-  volunteer: '志愿经历',
-  references: '推荐人',
-}
-
-const SECTION_FIELD_CONFIG: Record<
-  StandardSectionType,
-  Array<
-    | { key: string; label: string; type?: 'text' | 'number' }
-    | { key: string; label: string; type: 'rich' }
-    | { key: string; label: string; type: 'keywords' }
-  >
-> = {
-  profiles: [
-    { key: 'network', label: '平台' },
-    { key: 'username', label: '用户名' },
-    { key: 'website.url', label: '链接' },
-    { key: 'website.label', label: '显示文本' },
-  ],
-  experience: [
-    { key: 'company', label: '公司' },
-    { key: 'position', label: '职位' },
-    { key: 'location', label: '地点' },
-    { key: 'period', label: '时间段' },
-    { key: 'description', label: '描述', type: 'rich' },
-  ],
-  education: [
-    { key: 'school', label: '学校' },
-    { key: 'degree', label: '学历' },
-    { key: 'area', label: '专业方向' },
-    { key: 'grade', label: '成绩' },
-    { key: 'period', label: '时间段' },
-    { key: 'description', label: '描述', type: 'rich' },
-  ],
-  projects: [
-    { key: 'name', label: '项目名称' },
-    { key: 'period', label: '时间段' },
-    { key: 'website.label', label: '职责' },
-    { key: 'description', label: '描述', type: 'rich' },
-  ],
-  skills: [
-    { key: 'name', label: '技能名称' },
-    { key: 'proficiency', label: '熟练度' },
-    { key: 'level', label: '等级', type: 'number' },
-    { key: 'keywords', label: '关键字', type: 'keywords' },
-  ],
-  languages: [
-    { key: 'language', label: '语言' },
-    { key: 'fluency', label: '熟练度' },
-    { key: 'level', label: '等级', type: 'number' },
-  ],
-  interests: [
-    { key: 'name', label: '兴趣' },
-    { key: 'keywords', label: '关键字', type: 'keywords' },
-  ],
-  awards: [
-    { key: 'title', label: '奖项名称' },
-    { key: 'awarder', label: '颁发机构' },
-    { key: 'date', label: '日期' },
-    { key: 'description', label: '描述', type: 'rich' },
-  ],
-  certifications: [
-    { key: 'title', label: '证书名称' },
-    { key: 'issuer', label: '签发机构' },
-    { key: 'date', label: '日期' },
-    { key: 'description', label: '描述', type: 'rich' },
-  ],
-  publications: [
-    { key: 'title', label: '标题' },
-    { key: 'publisher', label: '发布方' },
-    { key: 'date', label: '日期' },
-    { key: 'description', label: '描述', type: 'rich' },
-  ],
-  volunteer: [
-    { key: 'organization', label: '组织' },
-    { key: 'location', label: '地点' },
-    { key: 'period', label: '时间段' },
-    { key: 'description', label: '描述', type: 'rich' },
-  ],
-  references: [
-    { key: 'name', label: '姓名' },
-    { key: 'position', label: '职位' },
-    { key: 'phone', label: '电话' },
-    { key: 'description', label: '描述', type: 'rich' },
-  ],
-}
-
 interface ResumeBuilderClientProps {
   initialResume: {
     id: string
@@ -951,279 +527,8 @@ interface AIPreviewState {
   previewUrl?: string
 }
 
-function getNestedValue(target: Record<string, unknown>, key: string) {
-  const keys = key.split('.')
-  let current: unknown = target
-  for (const item of keys) {
-    if (!current || typeof current !== 'object') return ''
-    current = (current as Record<string, unknown>)[item]
-  }
-  return current
-}
-
-function setNestedValue(target: Record<string, unknown>, key: string, value: unknown) {
-  const keys = key.split('.')
-  const lastKey = keys[keys.length - 1]
-  let current = target
-
-  keys.slice(0, -1).forEach(item => {
-    if (!current[item] || typeof current[item] !== 'object') {
-      current[item] = {}
-    }
-    current = current[item] as Record<string, unknown>
-  })
-
-  current[lastKey] = value
-}
-
-function createNestedPatch(target: Record<string, unknown>, key: string, value: unknown): Record<string, unknown> {
-  const keys = key.split('.')
-  if (keys.length === 1) {
-    return { [key]: value }
-  }
-
-  const root = keys[0]
-  const nested = { ...((target[root] as Record<string, unknown> | undefined) || {}) }
-  setNestedValue(nested, keys.slice(1).join('.'), value)
-  return { [root]: nested }
-}
-
-interface StandardSectionItemSummaryConfig {
-  primaryKey: string
-  secondaryKey: string
-  primaryFallback: string
-  secondaryFallback: string
-}
-
-const STANDARD_SECTION_ITEM_SUMMARY_CONFIG: Partial<Record<StandardSectionType, StandardSectionItemSummaryConfig>> = {
-  experience: {
-    primaryKey: 'company',
-    secondaryKey: 'period',
-    primaryFallback: '公司',
-    secondaryFallback: '时间',
-  },
-  education: {
-    primaryKey: 'school',
-    secondaryKey: 'period',
-    primaryFallback: '学校',
-    secondaryFallback: '时间',
-  },
-  projects: {
-    primaryKey: 'name',
-    secondaryKey: 'period',
-    primaryFallback: '项目',
-    secondaryFallback: '时间',
-  },
-  awards: {
-    primaryKey: 'title',
-    secondaryKey: 'date',
-    primaryFallback: '奖项',
-    secondaryFallback: '时间',
-  },
-  volunteer: {
-    primaryKey: 'organization',
-    secondaryKey: 'period',
-    primaryFallback: '组织',
-    secondaryFallback: '时间',
-  },
-}
-
-function toSummaryText(value: unknown) {
-  if (typeof value === 'string') return value.trim()
-  if (typeof value === 'number') return String(value)
-  return ''
-}
-
-function resolveStandardSectionItemSummary(sectionId: StandardSectionType, record: Record<string, unknown>) {
-  const config = STANDARD_SECTION_ITEM_SUMMARY_CONFIG[sectionId]
-  if (!config) return null
-
-  const primary = toSummaryText(getNestedValue(record, config.primaryKey)) || `未填写${config.primaryFallback}`
-  const secondary = toSummaryText(getNestedValue(record, config.secondaryKey)) || `未填写${config.secondaryFallback}`
-
-  return { primary, secondary }
-}
-
-function isStandardSectionId(sectionId: string): sectionId is StandardSectionType {
-  return STANDARD_SECTION_IDS.includes(sectionId as StandardSectionType)
-}
-
-function getSectionDisplayTitle(data: ResumeData, sectionId: string) {
-  if (sectionId === 'summary') {
-    return data.summary.title || '个人简介'
-  }
-
-  if (isStandardSectionId(sectionId)) {
-    return data.sections[sectionId].title || STANDARD_SECTION_LABELS[sectionId]
-  }
-
-  const custom = data.customSections.find(section => section.id === sectionId)
-  if (custom) {
-    return custom.title || '自定义板块'
-  }
-
-  return sectionId
-}
-
-function isSectionHidden(data: ResumeData, sectionId: string) {
-  if (sectionId === 'summary') return data.summary.hidden
-  if (isStandardSectionId(sectionId)) return data.sections[sectionId].hidden
-  const custom = data.customSections.find(section => section.id === sectionId)
-  return custom?.hidden ?? false
-}
-
-type SectionItemSortMode = 'date' | 'name' | 'proficiency'
-
-const SECTION_ITEM_SORT_OPTIONS: Array<{ mode: SectionItemSortMode; label: string }> = [
-  { mode: 'date', label: '按日期' },
-  { mode: 'name', label: '按名称' },
-  { mode: 'proficiency', label: '按熟练度' },
-]
-
-const DATE_SORT_SECTION_TYPES = new Set<StandardSectionType>([
-  'experience',
-  'education',
-  'projects',
-  'awards',
-  'certifications',
-  'publications',
-  'volunteer',
-])
-
-const NAME_SORT_SECTION_TYPES = new Set<StandardSectionType>(STANDARD_SECTION_IDS)
-const PROFICIENCY_SORT_SECTION_TYPES = new Set<StandardSectionType>(['skills', 'languages'])
-
-function parseDateSortScore(rawValue: unknown) {
-  const value = String(rawValue || '').trim()
-  if (!value) return Number.NEGATIVE_INFINITY
-  if (/(至今|现在|present|current)/i.test(value)) return 999912
-
-  const normalized = value
-    .replace(/[./年]/g, '-')
-    .replace(/月/g, '')
-    .replace(/日/g, '')
-    .replace(/\s+/g, '')
-  const match = normalized.match(/(\d{4})(?:-(\d{1,2}))?/)
-  if (!match) return Number.NEGATIVE_INFINITY
-
-  const year = Number(match[1] || 0)
-  const month = Number(match[2] || 12)
-  if (!Number.isFinite(year) || year <= 0) return Number.NEGATIVE_INFINITY
-  return year * 100 + Math.max(1, Math.min(12, month || 12))
-}
-
-function resolvePeriodSortScore(period: unknown) {
-  const { start, end } = splitPeriodValue(String(period || ''))
-  return Math.max(parseDateSortScore(end), parseDateSortScore(start))
-}
-
-function resolveNameSortValue(sectionType: StandardSectionType, record: Record<string, unknown>) {
-  switch (sectionType) {
-    case 'profiles':
-      return toSummaryText(record.network) || toSummaryText(record.username)
-    case 'experience':
-      return toSummaryText(record.company) || toSummaryText(record.position)
-    case 'education':
-      return toSummaryText(record.school) || toSummaryText(record.degree)
-    case 'projects':
-      return toSummaryText(record.name)
-    case 'skills':
-      return toSummaryText(record.name)
-    case 'languages':
-      return toSummaryText(record.language)
-    case 'interests':
-      return toSummaryText(record.name)
-    case 'awards':
-    case 'certifications':
-    case 'publications':
-      return toSummaryText(record.title)
-    case 'volunteer':
-      return toSummaryText(record.organization)
-    case 'references':
-      return toSummaryText(record.name)
-    default:
-      return ''
-  }
-}
-
-function resolveDateSortValue(sectionType: StandardSectionType, record: Record<string, unknown>) {
-  switch (sectionType) {
-    case 'experience':
-    case 'education':
-    case 'projects':
-    case 'volunteer':
-      return resolvePeriodSortScore(record.period)
-    case 'awards':
-    case 'certifications':
-    case 'publications':
-      return parseDateSortScore(record.date)
-    default:
-      return Number.NEGATIVE_INFINITY
-  }
-}
-
-function resolveProficiencySortValue(sectionType: StandardSectionType, record: Record<string, unknown>) {
-  if (sectionType === 'skills') {
-    return resolveSkillPercent(record.level, String(record.proficiency || ''))
-  }
-
-  if (sectionType === 'languages') {
-    return resolveSkillPercent(record.level, String(record.fluency || ''))
-  }
-
-  return Number.NEGATIVE_INFINITY
-}
-
-function supportsSectionItemSortMode(sectionType: StandardSectionType, mode: SectionItemSortMode) {
-  if (mode === 'date') return DATE_SORT_SECTION_TYPES.has(sectionType)
-  if (mode === 'name') return NAME_SORT_SECTION_TYPES.has(sectionType)
-  return PROFICIENCY_SORT_SECTION_TYPES.has(sectionType)
-}
-
-function resolveSectionSortType(data: ResumeData, sectionId: string): StandardSectionType | null {
-  if (isStandardSectionId(sectionId)) return sectionId
-  const custom = data.customSections.find(section => section.id === sectionId)
-  if (!custom || custom.type === 'summary' || custom.type === 'cover-letter') return null
-  return custom.type as StandardSectionType
-}
-
-function sortSectionItemsInPlace(items: Record<string, unknown>[], sectionType: StandardSectionType, mode: SectionItemSortMode) {
-  if (!supportsSectionItemSortMode(sectionType, mode)) return
-
-  const getNumberValue = (record: Record<string, unknown>) => {
-    if (mode === 'date') return resolveDateSortValue(sectionType, record)
-    return resolveProficiencySortValue(sectionType, record)
-  }
-
-  const getTextValue = (record: Record<string, unknown>) => resolveNameSortValue(sectionType, record)
-
-  const decorated = items.map((item, index) => ({ item, index }))
-  decorated.sort((left, right) => {
-    if (mode === 'name') {
-      const leftValue = getTextValue(left.item)
-      const rightValue = getTextValue(right.item)
-      const leftEmpty = !leftValue
-      const rightEmpty = !rightValue
-      if (leftEmpty !== rightEmpty) return leftEmpty ? 1 : -1
-      const compare = leftValue.localeCompare(rightValue, 'zh-Hans-CN')
-      return compare !== 0 ? compare : left.index - right.index
-    }
-
-    const leftValue = getNumberValue(left.item)
-    const rightValue = getNumberValue(right.item)
-    if (leftValue !== rightValue) return rightValue - leftValue
-    return left.index - right.index
-  })
-
-  items.splice(0, items.length, ...decorated.map(entry => entry.item))
-}
-
 function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value))
-}
-
-function dedupeSectionIds(sectionIds: string[]) {
-  return Array.from(new Set(sectionIds.filter(Boolean)))
 }
 
 type SnapdomOptions = {
@@ -1294,22 +599,23 @@ const JSPDF_SCRIPT_SOURCES = [
 
 let snapdomLoadingPromise: Promise<SnapdomRenderer> | null = null
 let jsPdfLoadingPromise: Promise<JsPdfConstructor> | null = null
-const SIDEBAR_WIDTH_MIN = 360
-const SIDEBAR_WIDTH_MAX = 680
-const SIDEBAR_DEFAULT_WIDTH = 620
-const SIDE_TOOLS_COLLAPSED_WIDTH = 58
-const SIDE_TOOLS_EXPANDED_WIDTH = 104
-const SIDE_TOOLS_WIDTH_DELTA = SIDE_TOOLS_EXPANDED_WIDTH - SIDE_TOOLS_COLLAPSED_WIDTH
 const PREVIEW_INITIAL_SCALE = 0.6
 const PREVIEW_MIN_SCALE = 0.3
 const PREVIEW_MAX_SCALE = 6
 const PREVIEW_FIT_HORIZONTAL_PADDING = 24
 const PREVIEW_FIT_HEIGHT_PADDING = 16
-const PREVIEW_SCROLL_VERTICAL_PADDING = 24
+const PREVIEW_SCROLL_VERTICAL_PADDING = 80
 const PREVIEW_ZOOM_STEP_BUTTON = 0.06
 const PREVIEW_ZOOM_STEP_WHEEL = 0.01  
-type BuilderTool = 'sections' | 'fill' | 'ai' | 'template' | 'typesetting'
-type StyleTool = Exclude<BuilderTool, 'sections' | 'fill' | 'ai'>
+const IMAGE_EXPORT_RENDER_SCALE = 2
+const PDF_EXPORT_RENDER_SCALE = 1.5
+const PDF_EXPORT_IMAGE_MIME = 'image/jpeg'
+const PDF_EXPORT_IMAGE_FORMAT: ResumePdfWorkerPagePayload['format'] = 'JPEG'
+const PDF_EXPORT_IMAGE_QUALITY = 0.84
+const PDF_A4_WIDTH_MM = 210
+const PDF_A4_HEIGHT_MM = 297
+const PDF_MIN_FREE_FORM_HEIGHT_MM = 20
+const PDF_WORKER_SCRIPT_VERSION = '2026-04-14-free-form-1'
 type EditorFocusRequest = PreviewNavigationTarget & { requestId: number }
 const EDITOR_FOCUSABLE_SELECTOR = 'input, textarea, select, button, [role="combobox"], [contenteditable="true"]'
 
@@ -1335,25 +641,6 @@ function escapeAttributeValue(value: string) {
   }
 
   return value.replace(/["\\]/g, '\\$&')
-}
-
-function SideToolHint({ label, children, active = false }: { label: string; children: ReactNode; active?: boolean }) {
-  const handleClick = (event: ReactMouseEvent<HTMLSpanElement>) => {
-    const target = event.target
-    if (!(target instanceof HTMLElement)) return
-    if (target.closest('button')) return
-    const button = event.currentTarget.querySelector<HTMLButtonElement>('.resume-side-tool-btn')
-    button?.click()
-  }
-
-  return (
-    <span className={joinClassNames('resume-side-tool-hint', active && 'is-active')} data-tooltip={label} onClick={handleClick}>
-      {children}
-      <span className="resume-side-tool-label" aria-hidden="true">
-        {label}
-      </span>
-    </span>
-  )
 }
 
 function findEditorFocusElement(root: ParentNode, target: PreviewNavigationTarget) {
@@ -1418,6 +705,31 @@ function downloadBlob(blob: Blob, filename: string) {
   document.body.removeChild(anchor)
   URL.revokeObjectURL(url)
 }
+
+function canvasToBlob(canvas: HTMLCanvasElement, mimeType: string, quality?: number) {
+  return new Promise<Blob | null>(resolve => {
+    canvas.toBlob(resolve, mimeType, quality)
+  })
+}
+
+function resolvePdfPageSizeMm(
+  canvas: HTMLCanvasElement,
+  pageFormat: ResumeData['metadata']['page']['format'],
+) {
+  const isLandscape = canvas.width >= canvas.height
+  const widthMm = isLandscape ? PDF_A4_HEIGHT_MM : PDF_A4_WIDTH_MM
+  const fixedHeightMm = isLandscape ? PDF_A4_WIDTH_MM : PDF_A4_HEIGHT_MM
+
+  if (pageFormat !== 'free-form') {
+    return { widthMm, heightMm: fixedHeightMm }
+  }
+
+  const ratio = canvas.width > 0 ? canvas.height / canvas.width : fixedHeightMm / widthMm
+  const dynamicHeightMm = Math.max(PDF_MIN_FREE_FORM_HEIGHT_MM, widthMm * ratio)
+  return { widthMm, heightMm: Number(dynamicHeightMm.toFixed(2)) }
+}
+
+type ResumeImageExportFormat = 'png' | 'jpg'
 
 function removeExternalScript(script: HTMLScriptElement | null) {
   if (!script) return
@@ -1553,6 +865,156 @@ function nextAnimationFrame() {
   })
 }
 
+function buildPdfInWorker(payload: {
+  filename: string
+  pages: ResumePdfWorkerPagePayload[]
+}): Promise<ResumePdfWorkerSuccessPayload> {
+  return new Promise((resolve, reject) => {
+    if (typeof window === 'undefined' || typeof Worker === 'undefined') {
+      reject(new Error('当前环境不支持后台导出'))
+      return
+    }
+
+    const worker = new Worker(`/resume-pdf.worker.js?v=${PDF_WORKER_SCRIPT_VERSION}`)
+
+    const cleanup = () => {
+      worker.removeEventListener('message', handleMessage)
+      worker.removeEventListener('error', handleError)
+      worker.terminate()
+    }
+
+    const handleMessage = (event: MessageEvent<unknown>) => {
+      const data = event.data
+      if (!data || typeof data !== 'object') return
+
+      const workerPayload = data as {
+        type?: string
+        error?: string
+        blob?: Blob
+        filename?: string
+        size?: number
+        timings?: ExportTimingEntry[]
+      }
+
+      if (workerPayload.type === 'BUILD_PDF_SUCCESS' && workerPayload.blob instanceof Blob) {
+        cleanup()
+        resolve({
+          blob: workerPayload.blob,
+          filename: workerPayload.filename || payload.filename,
+          size: typeof workerPayload.size === 'number' ? workerPayload.size : workerPayload.blob.size,
+          timings: Array.isArray(workerPayload.timings) ? workerPayload.timings : [],
+        })
+        return
+      }
+
+      if (workerPayload.type === 'BUILD_PDF_ERROR') {
+        cleanup()
+        reject(new Error(workerPayload.error || 'PDF 组装失败'))
+      }
+    }
+
+    const handleError = () => {
+      cleanup()
+      reject(new Error('PDF Worker 执行失败'))
+    }
+
+    worker.addEventListener('message', handleMessage)
+    worker.addEventListener('error', handleError)
+    worker.postMessage(
+      {
+        type: 'BUILD_PDF',
+        filename: payload.filename,
+        pages: payload.pages,
+      },
+      payload.pages.map(page => page.buffer),
+    )
+  })
+}
+
+interface ExportTimingEntry {
+  step: string
+  durationMs: number
+}
+
+interface PdfExportPageStat {
+  page: number
+  canvasWidth: number
+  canvasHeight: number
+  pixelCount: number
+  blobBytes: number
+  pageWidthMm: number
+  pageHeightMm: number
+}
+
+interface ResumePdfWorkerPagePayload {
+  width: number
+  height: number
+  widthMm: number
+  heightMm: number
+  format: 'PNG' | 'JPEG'
+  buffer: ArrayBuffer
+}
+
+interface ResumePdfWorkerSuccessPayload {
+  blob: Blob
+  filename: string
+  size: number
+  timings: ExportTimingEntry[]
+}
+
+function formatDurationMs(durationMs: number) {
+  if (!Number.isFinite(durationMs)) return '0ms'
+  if (durationMs < 1000) {
+    return `${Math.round(durationMs)}ms`
+  }
+  return `${(durationMs / 1000).toFixed(2)}s`
+}
+
+function createExportProfiler(label: string) {
+  const startedAt = performance.now()
+  const entries: ExportTimingEntry[] = []
+
+  const record = (step: string, durationMs: number) => {
+    entries.push({ step, durationMs })
+  }
+
+  return {
+    async measure<T>(step: string, fn: () => Promise<T> | T): Promise<T> {
+      const stepStartedAt = performance.now()
+      try {
+        return await fn()
+      } finally {
+        record(step, performance.now() - stepStartedAt)
+      }
+    },
+    record,
+    flush(meta?: Record<string, unknown>) {
+      const totalDurationMs = performance.now() - startedAt
+      const tableRows = [
+        ...entries.map(entry => ({
+          step: entry.step,
+          durationMs: Number(entry.durationMs.toFixed(2)),
+          duration: formatDurationMs(entry.durationMs),
+        })),
+        {
+          step: 'total',
+          durationMs: Number(totalDurationMs.toFixed(2)),
+          duration: formatDurationMs(totalDurationMs),
+        },
+      ]
+
+      console.groupCollapsed(`[Resume Export] ${label}`)
+      console.table(tableRows)
+      if (meta) {
+        console.log('meta', meta)
+      }
+      console.groupEnd()
+
+      return totalDurationMs
+    },
+  }
+}
+
 function createOffscreenExportCaptureRoot(sourceRoot: HTMLElement) {
   const captureHost = document.createElement('div')
   captureHost.setAttribute('aria-hidden', 'true')
@@ -1632,8 +1094,16 @@ const ITEM_SORT_ACTIVATION_CONSTRAINT = {
   tolerance: 6,
 } as const
 
+const TAB_SORT_ACTIVATION_CONSTRAINT = {
+  distance: 4,
+} as const
+
 function useEditorItemSortSensors() {
   return useSensors(useSensor(PointerSensor, { activationConstraint: ITEM_SORT_ACTIVATION_CONSTRAINT }))
+}
+
+function useEditorTabSortSensors() {
+  return useSensors(useSensor(PointerSensor, { activationConstraint: TAB_SORT_ACTIVATION_CONSTRAINT }))
 }
 
 function resolveEditorItemId(rawId: unknown, fallback: string) {
@@ -1755,6 +1225,19 @@ function BasicsEditor() {
     }
   }
 
+  const handlePreviewPhoto = () => {
+    const url = String(picture.url || '').trim()
+    if (!url || typeof window === 'undefined') return
+    window.open(url, '_blank', 'noopener,noreferrer')
+  }
+
+  const handleDeletePhoto = () => {
+    updateResumeData(draft => {
+      draft.picture.url = ''
+    })
+    Message.success('已删除证件照')
+  }
+
   return (
     <div className="space-y-4">
       <div className="resume-basics-grid grid grid-cols-2 gap-2">
@@ -1771,7 +1254,7 @@ function BasicsEditor() {
                 checked={!picture.hidden}
                 onChange={checked =>
                   updateResumeData(draft => {
-                    draft.picture.hidden = !checked
+                    draft.picture.hidden = !Boolean(checked)
                   })
                 }
               />
@@ -1793,31 +1276,62 @@ function BasicsEditor() {
             }}
           />
 
-          <button
-            type="button"
-            className={joinClassNames('resume-basics-photo-preview', !picture.url && 'is-empty')}
-            onClick={() => photoInputRef.current?.click()}
-            disabled={photoUploading}
-            aria-label={picture.url ? '更换证件照' : '上传证件照'}
-          >
-            {photoUploading ? (
-              <div className="resume-basics-photo-placeholder">
-                <span>上传中...</span>
+          <div className={joinClassNames('resume-basics-photo-preview-shell', picture.url && 'has-image')}>
+            <button
+              type="button"
+              className={joinClassNames('resume-basics-photo-preview', !picture.url && 'is-empty')}
+              onClick={() => photoInputRef.current?.click()}
+              disabled={photoUploading}
+              aria-label={picture.url ? '更换证件照' : '上传证件照'}
+            >
+              {photoUploading ? (
+                <div className="resume-basics-photo-placeholder">
+                  <span>上传中...</span>
+                </div>
+              ) : picture.url ? (
+                <div
+                  role="img"
+                  aria-label="证件照预览"
+                  className="resume-basics-photo-image"
+                  style={{ backgroundImage: `url(${picture.url})` }}
+                />
+              ) : (
+                <div className="resume-basics-photo-placeholder">
+                  <span>点击上传证件照</span>
+                  <span>一寸比例（5:7）</span>
+                </div>
+              )}
+            </button>
+
+            {picture.url ? (
+              <div className="resume-basics-photo-hover-actions">
+                <button
+                  type="button"
+                  className="resume-basics-photo-hover-btn"
+                  onClick={event => {
+                    event.preventDefault()
+                    event.stopPropagation()
+                    handlePreviewPhoto()
+                  }}
+                >
+                  <IconEye />
+                  预览
+                </button>
+                <button
+                  type="button"
+                  className="resume-basics-photo-hover-btn is-danger"
+                  onClick={event => {
+                    event.preventDefault()
+                    event.stopPropagation()
+                    handleDeletePhoto()
+                  }}
+                >
+                  <IconDelete />
+                  删除
+                </button>
               </div>
-            ) : picture.url ? (
-              <div
-                role="img"
-                aria-label="证件照预览"
-                className="resume-basics-photo-image"
-                style={{ backgroundImage: `url(${picture.url})` }}
-              />
-            ) : (
-              <div className="resume-basics-photo-placeholder">
-                <span>点击上传证件照</span>
-                <span>一寸比例（5:7）</span>
-              </div>
-            )}
-          </button>
+            ) : null}
+          </div>
 
         </EditorAnchor>
 
@@ -2120,10 +1634,13 @@ function SkillsSectionEditor() {
                             className="resume-skill-inline-field is-proficiency"
                           >
                             <Select
-                              value={item.proficiency}
-                              onChange={value => updateItem('skills', index, { proficiency: toSingleSelectValue(value) })}
+                              value={item.proficiency || DEFAULT_SKILL_PROFICIENCY}
+                              onChange={value =>
+                                updateItem('skills', index, {
+                                  proficiency: toSingleSelectValue(value) || DEFAULT_SKILL_PROFICIENCY,
+                                })
+                              }
                               placeholder="选择熟练度"
-                              allowClear
                               style={{ width: '100%' }}
                             >
                               {SKILL_PROFICIENCY_OPTIONS.map(option => (
@@ -2165,7 +1682,7 @@ function StandardSectionEditor({ sectionId }: { sectionId: StandardSectionType }
   const updateItem = useResumeBuilderStore(state => state.updateStandardSectionItem)
   const removeItem = useResumeBuilderStore(state => state.removeStandardSectionItem)
   const [collapsedItemIds, setCollapsedItemIds] = useState<string[]>([])
-  const collapseEnabled = Boolean(STANDARD_SECTION_ITEM_SUMMARY_CONFIG[sectionId])
+  const collapseEnabled = supportsStandardSectionItemSummary(sectionId)
   const sortSensors = useEditorItemSortSensors()
   const sortableItemIds = useMemo(
     () => section.items.map((item, index) => resolveEditorItemId(item.id, `${sectionId}-${index}`)),
@@ -2590,264 +2107,179 @@ function CollapseMotion({ open, className, children }: CollapseMotionProps) {
   )
 }
 
-interface SortableSectionEditorItemProps {
+interface SortableEditorSectionTabProps {
   sectionId: string
-  expanded: boolean
-  onToggleExpanded: (sectionId: string) => void
-  onRenameSection: (sectionId: string) => void
-  onDeleteSection: (sectionId: string) => void
-  onAddSectionItem: (sectionId: string) => void
-  sortableEnabled?: boolean
+  title: string
+  active: boolean
+  hidden: boolean
+  locked?: boolean
+  onSelect: () => void
 }
 
-function SortableSectionEditorItem({
+function SortableEditorSectionTab({
   sectionId,
-  expanded,
-  onToggleExpanded,
-  onRenameSection,
-  onDeleteSection,
-  onAddSectionItem,
-  sortableEnabled = true,
-}: SortableSectionEditorItemProps) {
-  const data = useResumeBuilderStore(state => state.data)
-  const updateResumeData = useResumeBuilderStore(state => state.updateResumeData)
-  const title = getSectionDisplayTitle(data, sectionId)
-  const hidden = isSectionHidden(data, sectionId)
-  const customSection = !isStandardSectionId(sectionId) && sectionId !== 'summary'
-    ? data.customSections.find(section => section.id === sectionId) || null
-    : null
-  const isCustomSection = Boolean(customSection)
-  const sectionSortType = resolveSectionSortType(data, sectionId)
-  const sortableItemCount =
-    sectionId === 'summary'
-      ? 0
-      : isStandardSectionId(sectionId)
-        ? data.sections[sectionId].items.length
-        : customSection?.items.length || 0
-  const canSortItems = Boolean(sectionSortType) && sortableItemCount > 1
-  const [menuOpen, setMenuOpen] = useState(false)
-  const menuRef = useRef<HTMLDivElement>(null)
-
+  title,
+  active,
+  hidden,
+  locked = false,
+  onSelect,
+}: SortableEditorSectionTabProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: sectionId,
-    disabled: !sortableEnabled,
+    transition: {
+      duration: 250,
+      easing: 'cubic-bezier(0.2, 0, 0, 1)',
+    },
   })
-  const style: CSSProperties | undefined = sortableEnabled
-    ? {
-        transform: CSS.Transform.toString(transform),
-        transition,
-      }
-    : undefined
-
-  const onToggleHidden = (nextHidden: boolean) => {
-    updateResumeData(draft => {
-      if (sectionId === 'summary') {
-        draft.summary.hidden = nextHidden
-        return
-      }
-
-      if (isStandardSectionId(sectionId)) {
-        draft.sections[sectionId].hidden = nextHidden
-        return
-      }
-
-      const custom = draft.customSections.find(section => section.id === sectionId)
-      if (custom) {
-        custom.hidden = nextHidden
-      }
-    })
+  const horizontalTransform = transform ? { ...transform, y: 0 } : null
+  const resolvedTransition = isDragging
+    ? 'none'
+    : transition
+      ? `${transition}, background-color 200ms ease, border-color 200ms ease, color 200ms ease, opacity 200ms ease`
+      : undefined
+  const style: CSSProperties = {
+    transform: CSS.Transform.toString(horizontalTransform),
+    transition: resolvedTransition,
   }
-
-  const canAddItem = sectionId !== 'summary'
-
-  const onSortItems = (mode: SectionItemSortMode) => {
-    if (!sectionSortType || !supportsSectionItemSortMode(sectionSortType, mode) || sortableItemCount < 2) {
-      return
-    }
-
-    updateResumeData(draft => {
-      if (isStandardSectionId(sectionId)) {
-        sortSectionItemsInPlace(draft.sections[sectionId].items as unknown as Record<string, unknown>[], sectionSortType, mode)
-        return
-      }
-
-      const custom = draft.customSections.find(section => section.id === sectionId)
-      if (!custom) return
-      sortSectionItemsInPlace(custom.items as unknown as Record<string, unknown>[], sectionSortType, mode)
-    })
-
-    setMenuOpen(false)
-  }
-
-  useEffect(() => {
-    if (!menuOpen) return
-    const onPointerDown = (event: PointerEvent) => {
-      if (!menuRef.current?.contains(event.target as Node)) {
-        setMenuOpen(false)
-      }
-    }
-    document.addEventListener('pointerdown', onPointerDown)
-    return () => document.removeEventListener('pointerdown', onPointerDown)
-  }, [menuOpen])
 
   return (
     <div
-      ref={sortableEnabled ? setNodeRef : undefined}
+      ref={setNodeRef}
       style={style}
-      data-editor-section-id={sectionId}
-      data-dragging={sortableEnabled && isDragging ? 'true' : undefined}
-      className={joinClassNames('resume-section-item', 'resume-focus-target', expanded && 'is-expanded')}
+      className={joinClassNames(
+        'resume-editor-tab',
+        active && 'is-active',
+        hidden && 'is-hidden',
+        locked && 'is-locked',
+        isDragging && 'is-dragging',
+      )}
+      role="presentation"
+      data-dragging={isDragging ? 'true' : undefined}
     >
-      <div
-        className={`resume-section-item-row ${hidden ? 'is-hidden' : ''}`}
-        {...(sortableEnabled ? attributes : {})}
-        {...(sortableEnabled ? listeners : {})}
-        onClick={() => onToggleExpanded(sectionId)}
+      <EditorSectionTabChromeBg />
+      <span className="resume-editor-tab-hover-bg" aria-hidden="true" />
+      <button
+        type="button"
+        className="resume-editor-tab-select"
+        aria-selected={active}
+        onClick={onSelect}
         onKeyDown={event => {
           if (event.key === 'Enter' || event.key === ' ') {
             event.preventDefault()
-            onToggleExpanded(sectionId)
+            onSelect()
           }
         }}
+        {...attributes}
+        {...listeners}
       >
-        <span className={joinClassNames('resume-section-item-chevron text-muted-foreground', expanded && 'is-expanded')}>
-          <IconChevronRight />
+        <span className="resume-editor-tab-label-row">
+          {renderEditorTabIcon(sectionId)}
+          <span className="resume-editor-tab-title">{title}</span>
+          {hidden ? <span className="resume-editor-tab-meta">已隐藏</span> : null}
         </span>
-        <span className="resume-section-item-title">{title}</span>
-        <div className="resume-section-item-actions" onClick={event => event.stopPropagation()}>
-          <Tooltip content={hidden ? '显示板块' : '隐藏板块'}>
-            <Button
-              type="text"
-              size="mini"
-              className="resume-inline-icon-btn"
-              icon={hidden ? <IconEyeOff /> : <IconEye />}
-              onClick={() => onToggleHidden(!hidden)}
-              aria-label={hidden ? '显示板块' : '隐藏板块'}
-            />
-          </Tooltip>
-          <div ref={menuRef} className={`resume-item-menu ${menuOpen ? 'is-open' : ''}`}>
-            <Tooltip content="更多操作">
-              <Button
-                type="text"
-                size="mini"
-                className="resume-inline-icon-btn"
-                icon={<IconMoreHorizontal />}
-                onClick={() => setMenuOpen(prev => !prev)}
-                aria-label="更多操作"
-              />
-            </Tooltip>
-            {menuOpen ? (
-              <div className="resume-item-menu-popover">
-                <div className={joinClassNames('resume-item-menu-submenu', !canSortItems && 'is-disabled')}>
-                  <button
-                    type="button"
-                    className={joinClassNames('resume-item-menu-action', 'resume-item-menu-submenu-trigger', !canSortItems && 'is-disabled')}
-                    disabled={!canSortItems}
-                    onClick={event => {
-                      event.preventDefault()
-                      event.stopPropagation()
-                    }}
-                  >
-                    <span>排序方式</span>
-                    <IconChevronRight />
-                  </button>
-                  {canSortItems ? (
-                    <div className="resume-item-menu-submenu-panel">
-                      {SECTION_ITEM_SORT_OPTIONS.map(option => {
-                        const enabled = sectionSortType ? supportsSectionItemSortMode(sectionSortType, option.mode) : false
-                        return (
-                          <button
-                            key={option.mode}
-                            type="button"
-                            className={joinClassNames('resume-item-menu-action', !enabled && 'is-disabled')}
-                            disabled={!enabled}
-                            onClick={event => {
-                              event.stopPropagation()
-                              onSortItems(option.mode)
-                            }}
-                          >
-                            {option.label}
-                          </button>
-                        )
-                      })}
-                    </div>
-                  ) : null}
-                </div>
-                <button
-                  type="button"
-                  className="resume-item-menu-action"
-                  onClick={() => {
-                    onRenameSection(sectionId)
-                    setMenuOpen(false)
-                  }}
-                >
-                  重命名
-                </button>
-                <button
-                  type="button"
-                  className={`resume-item-menu-action is-danger ${isCustomSection ? '' : 'is-disabled'}`}
-                  onClick={() => {
-                    if (!isCustomSection) {
-                      Message.warning('系统板块不支持删除')
-                      return
-                    }
-                    onDeleteSection(sectionId)
-                    setMenuOpen(false)
-                  }}
-                >
-                  删除
-                </button>
-              </div>
-            ) : null}
-          </div>
-          <span className="resume-section-item-grip text-muted-foreground">
-            <IconGrip />
-          </span>
-        </div>
-      </div>
-
-      <CollapseMotion open={expanded} className="resume-section-item-collapse">
-        <div className="resume-section-item-body">
-          <SectionEditorBody sectionId={sectionId} />
-          {canAddItem ? (
-            <div className="resume-section-item-add-row">
-              <AddRowButton label="新增条目" onClick={() => onAddSectionItem(sectionId)} />
-            </div>
-          ) : null}
-        </div>
-      </CollapseMotion>
+      </button>
     </div>
   )
 }
 
-function DragOverlaySectionCard({ sectionId }: { sectionId: string }) {
-  const data = useResumeBuilderStore(state => state.data)
+interface SortableExistingModuleRowProps {
+  sectionId: string
+  title: string
+  canRename: boolean
+  canDelete: boolean
+  onRename: () => void
+  onDelete: () => void
+}
+
+function SortableExistingModuleRow({
+  sectionId,
+  title,
+  canRename,
+  canDelete,
+  onRename,
+  onDelete,
+}: SortableExistingModuleRowProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: sectionId,
+    transition: {
+      duration: 180,
+      easing: 'cubic-bezier(0.2, 0, 0, 1)',
+    },
+  })
+
+  const style: CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition: isDragging ? 'none' : transition,
+  }
+
   return (
-    <div className="resume-section-overlay">
-      <span className="text-muted-foreground">
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={joinClassNames('resume-editor-existing-module-row', isDragging && 'is-dragging')}
+      data-dragging={isDragging ? 'true' : undefined}
+    >
+      <button
+        type="button"
+        className="resume-editor-existing-module-grip"
+        aria-label={`拖拽排序${title}`}
+        {...attributes}
+        {...listeners}
+      >
         <IconGrip />
-      </span>
-      <span>{getSectionDisplayTitle(data, sectionId)}</span>
+      </button>
+      <span className="resume-editor-existing-module-label">{title}</span>
+      <div className="resume-editor-existing-module-actions">
+        <button
+          type="button"
+          className={joinClassNames('resume-editor-existing-module-action', !canRename && 'is-disabled')}
+          disabled={!canRename}
+          onClick={event => {
+            event.stopPropagation()
+            if (!canRename) return
+            onRename()
+          }}
+          aria-label={`重命名${title}`}
+        >
+          <Pencil size={14} />
+        </button>
+        <button
+          type="button"
+          className={joinClassNames('resume-editor-existing-module-action', !canDelete && 'is-disabled')}
+          disabled={!canDelete}
+          onClick={event => {
+            event.stopPropagation()
+            if (!canDelete) return
+            onDelete()
+          }}
+          aria-label={`删除${title}`}
+        >
+          <IconDelete />
+        </button>
+      </div>
     </div>
   )
 }
 
 function IntegratedSectionsEditor({
   focusRequest,
+  completeness,
   scrollContainerRef,
+  onOpenAIDiagnosis,
 }: {
   focusRequest: EditorFocusRequest | null
+  completeness: ResumeCompletenessResult
   scrollContainerRef: RefObject<HTMLDivElement | null>
+  onOpenAIDiagnosis: () => void
 }) {
   const data = useResumeBuilderStore(state => state.data)
-  const addCustomSection = useResumeBuilderStore(state => state.addCustomSection)
   const addStandardSectionItem = useResumeBuilderStore(state => state.addStandardSectionItem)
   const addCustomSectionItem = useResumeBuilderStore(state => state.addCustomSectionItem)
   const removeCustomSection = useResumeBuilderStore(state => state.removeCustomSection)
   const updateResumeData = useResumeBuilderStore(state => state.updateResumeData)
-  const [expandedSectionIds, setExpandedSectionIds] = useState<string[]>(['basics', 'intention', 'summary'])
-  const [activeSectionId, setActiveSectionId] = useState<string | null>(null)
-  const [basicsMenuOpen, setBasicsMenuOpen] = useState(false)
+  const [activeSectionId, setActiveSectionId] = useState<string>('basics')
+  const [openTabMenuId, setOpenTabMenuId] = useState<string | null>(null)
+  const [addMenuOpen, setAddMenuOpen] = useState(false)
   const [renameModal, setRenameModal] = useState<{ open: boolean; sectionId: string | null; value: string }>({
     open: false,
     sectionId: null,
@@ -2858,91 +2290,170 @@ function IntegratedSectionsEditor({
     sectionId: null,
     title: '',
   })
-  const [dndReady, setDndReady] = useState(false)
-  const basicsMenuRef = useRef<HTMLDivElement>(null)
   const highlightedTargetRef = useRef<HTMLElement | null>(null)
   const highlightTimerRef = useRef<number | null>(null)
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }))
+  const tabTrackShellRef = useRef<HTMLDivElement | null>(null)
+  const [showTabsLeftMask, setShowTabsLeftMask] = useState(false)
+  const [showTabsRightMask, setShowTabsRightMask] = useState(false)
+  const tabSortSensors = useEditorTabSortSensors()
 
-  const orderedSectionIds = useMemo(() => {
-    const firstPage = data.metadata.layout.pages[0]
-    const customIds = data.customSections.map(section => section.id)
-    const canonical = ['summary', ...STANDARD_SECTION_IDS, ...customIds]
-
-    if (!firstPage) {
-      return canonical
-    }
-
-    const base = dedupeSectionIds([...(firstPage.main || []), ...(firstPage.sidebar || [])])
-    const known = new Set(canonical)
-    const filtered = base.filter(sectionId => known.has(sectionId))
-    const missing = canonical.filter(sectionId => !filtered.includes(sectionId))
-
-    return [...filtered, ...missing]
-  }, [data.customSections, data.metadata.layout.pages])
-
-  const toggleExpanded = (sectionId: string) => {
-    setExpandedSectionIds(prev =>
-      prev.includes(sectionId) ? prev.filter(item => item !== sectionId) : [...prev, sectionId],
-    )
-  }
-
-  const renameSection = (sectionId: string) => {
-    const currentTitle = getSectionDisplayTitle(data, sectionId)
-    setRenameModal({
-      open: true,
-      sectionId,
-      value: currentTitle,
-    })
-  }
-
-  const deleteSection = (sectionId: string) => {
-    const custom = data.customSections.find(section => section.id === sectionId)
-    if (!custom) return
-    setDeleteModal({
-      open: true,
-      sectionId,
-      title: custom.title || '自定义板块',
-    })
-  }
-
-  const addSectionItem = (sectionId: string) => {
-    if (isStandardSectionId(sectionId)) {
-      addStandardSectionItem(sectionId)
+  const updateTabsOverflowMask = useCallback(() => {
+    const shell = tabTrackShellRef.current
+    if (!shell) {
+      setShowTabsLeftMask(false)
+      setShowTabsRightMask(false)
       return
     }
 
-    if (sectionId === 'summary') return
-    addCustomSectionItem(sectionId)
-  }
+    const maxScrollLeft = shell.scrollWidth - shell.clientWidth
+    if (maxScrollLeft <= 1) {
+      setShowTabsLeftMask(false)
+      setShowTabsRightMask(false)
+      return
+    }
+
+    const leftVisible = shell.scrollLeft > 5
+    const rightVisible = shell.scrollLeft + shell.clientWidth < shell.scrollWidth - 5
+    setShowTabsLeftMask(leftVisible)
+    setShowTabsRightMask(rightVisible)
+  }, [])
+
+  const layoutSectionIds = useMemo(() => {
+    const firstPage = data.metadata.layout.pages[0]
+    const customIds = data.customSections.map(section => section.id)
+    const known = new Set(['summary', ...STANDARD_SECTION_IDS, ...customIds])
+    const shouldDisplayByContent = (sectionId: string) => {
+      if (DEFAULT_EDITOR_SECTION_SET.has(sectionId)) return true
+      if (sectionId === 'summary') {
+        return Boolean(data.summary.content?.trim())
+      }
+
+      if (isStandardSectionId(sectionId)) {
+        return hasMeaningfulStandardSectionContent(data, sectionId)
+      }
+
+      return customIds.includes(sectionId)
+    }
+
+    if (!firstPage) {
+      return [...DEFAULT_EDITOR_SECTION_ORDER, ...customIds]
+    }
+
+    return dedupeSectionIds([...(firstPage.main || []), ...(firstPage.sidebar || [])]).filter(
+      sectionId => known.has(sectionId) && shouldDisplayByContent(sectionId),
+    )
+  }, [data])
+
+  const tabs = useMemo(() => {
+    const dynamicTabs = layoutSectionIds
+      .filter(sectionId => sectionId !== 'basics' && sectionId !== 'intention')
+      .map(sectionId => ({
+        id: sectionId,
+        title: getSectionDisplayTitle(data, sectionId),
+        hidden: isSectionHidden(data, sectionId),
+        locked: false,
+        removable: true,
+        sortable: true,
+      }))
+
+    return [
+      {
+        id: 'basics',
+        title: '基本信息',
+        hidden: false,
+        locked: true,
+        removable: false,
+        sortable: false,
+      },
+      {
+        id: 'intention',
+        title: '求职意向',
+        hidden: false,
+        locked: true,
+        removable: false,
+        sortable: false,
+      },
+      ...dynamicTabs,
+    ]
+  }, [data, layoutSectionIds])
+
+  const sortableTabIds = useMemo(() => tabs.filter(tab => tab.sortable).map(tab => tab.id), [tabs])
 
   useEffect(() => {
-    if (!basicsMenuOpen) return
-    const onPointerDown = (event: PointerEvent) => {
-      if (!basicsMenuRef.current?.contains(event.target as Node)) {
-        setBasicsMenuOpen(false)
+    if (tabs.some(tab => tab.id === activeSectionId)) return
+    setActiveSectionId(tabs[0]?.id || 'basics')
+  }, [activeSectionId, tabs])
+
+  useEffect(() => {
+    if (!openTabMenuId) return
+    if (tabs.some(tab => tab.id === openTabMenuId)) return
+    setOpenTabMenuId(null)
+  }, [openTabMenuId, tabs])
+
+  useEffect(() => {
+    updateTabsOverflowMask()
+  }, [tabs, updateTabsOverflowMask])
+
+  useEffect(() => {
+    const shell = tabTrackShellRef.current
+    if (!shell) return
+
+    const onScroll = () => {
+      updateTabsOverflowMask()
+    }
+
+    shell.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', updateTabsOverflowMask)
+
+    let resizeObserver: ResizeObserver | null = null
+    if (typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(() => {
+        updateTabsOverflowMask()
+      })
+      resizeObserver.observe(shell)
+      const track = shell.querySelector('.resume-editor-tabs-track')
+      if (track instanceof HTMLElement) {
+        resizeObserver.observe(track)
       }
     }
-    document.addEventListener('pointerdown', onPointerDown)
-    return () => document.removeEventListener('pointerdown', onPointerDown)
-  }, [basicsMenuOpen])
-
-  useEffect(() => {
-    const frameId = requestAnimationFrame(() => {
-      setDndReady(true)
-    })
 
     return () => {
-      cancelAnimationFrame(frameId)
+      shell.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', updateTabsOverflowMask)
+      resizeObserver?.disconnect()
     }
-  }, [])
+  }, [updateTabsOverflowMask, tabs.length])
+
+  useEffect(() => {
+    if (!openTabMenuId && !addMenuOpen) return
+
+    const onPointerDown = (event: PointerEvent) => {
+      if (!(event.target instanceof Element)) return
+      if (event.target.closest('.resume-editor-menu-shell') || event.target.closest('.resume-editor-add-shell')) return
+      setOpenTabMenuId(null)
+      setAddMenuOpen(false)
+    }
+
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setOpenTabMenuId(null)
+        setAddMenuOpen(false)
+      }
+    }
+
+    document.addEventListener('pointerdown', onPointerDown)
+    document.addEventListener('keydown', onEscape)
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown)
+      document.removeEventListener('keydown', onEscape)
+    }
+  }, [addMenuOpen, openTabMenuId])
 
   useEffect(() => {
     if (!focusRequest) return
 
     let cancelled = false
     let retryTimer: number | null = null
-    let expandFrame = 0
     let frameA = 0
     let frameB = 0
 
@@ -2997,9 +2508,9 @@ function IntegratedSectionsEditor({
       }, 700)
     }
 
-    expandFrame = requestAnimationFrame(() => {
-      setExpandedSectionIds(prev => (prev.includes(focusRequest.sectionId) ? prev : [...prev, focusRequest.sectionId]))
-    })
+    if (tabs.some(tab => tab.id === focusRequest.sectionId)) {
+      setActiveSectionId(focusRequest.sectionId)
+    }
 
     frameA = requestAnimationFrame(() => {
       frameB = requestAnimationFrame(() => {
@@ -3009,14 +2520,13 @@ function IntegratedSectionsEditor({
 
     return () => {
       cancelled = true
-      cancelAnimationFrame(expandFrame)
       cancelAnimationFrame(frameA)
       cancelAnimationFrame(frameB)
       if (retryTimer) {
         window.clearTimeout(retryTimer)
       }
     }
-  }, [focusRequest, scrollContainerRef])
+  }, [focusRequest, scrollContainerRef, tabs])
 
   useEffect(() => {
     return () => {
@@ -3026,6 +2536,78 @@ function IntegratedSectionsEditor({
       highlightedTargetRef.current?.classList.remove('is-preview-focused')
     }
   }, [])
+
+  const toggleSectionHidden = (sectionId: string, nextHidden: boolean) => {
+    if (sectionId === 'basics' || sectionId === 'intention') {
+      Message.warning('基础板块不支持隐藏')
+      return
+    }
+
+    updateResumeData(draft => {
+      if (sectionId === 'summary') {
+        draft.summary.hidden = nextHidden
+        return
+      }
+
+      if (isStandardSectionId(sectionId)) {
+        draft.sections[sectionId].hidden = nextHidden
+        return
+      }
+
+      const custom = draft.customSections.find(section => section.id === sectionId)
+      if (custom) {
+        custom.hidden = nextHidden
+      }
+    })
+  }
+
+  const openRenameDialog = (sectionId: string) => {
+    if (sectionId === 'basics' || sectionId === 'intention') {
+      Message.warning('基础板块不支持重命名')
+      return
+    }
+
+    const currentTitle = getSectionDisplayTitle(data, sectionId)
+    setRenameModal({
+      open: true,
+      sectionId,
+      value: currentTitle,
+    })
+    setOpenTabMenuId(null)
+  }
+
+  const openDeleteDialog = (sectionId: string) => {
+    if (sectionId === 'basics' || sectionId === 'intention') {
+      Message.warning('基础板块不支持删除')
+      return
+    }
+
+    setDeleteModal({
+      open: true,
+      sectionId,
+      title: getSectionDisplayTitle(data, sectionId),
+    })
+    setOpenTabMenuId(null)
+  }
+
+  const addSectionItem = (sectionId: string) => {
+    if (sectionId === 'summary' || sectionId === 'basics' || sectionId === 'intention') {
+      return
+    }
+
+    if (isStandardSectionId(sectionId)) {
+      addStandardSectionItem(sectionId)
+      return
+    }
+
+    addCustomSectionItem(sectionId)
+  }
+
+  const resolveNextActiveTab = (removedSectionId: string) => {
+    const currentIndex = tabs.findIndex(tab => tab.id === removedSectionId)
+    if (currentIndex < 0) return tabs[0]?.id || 'basics'
+    return tabs[currentIndex + 1]?.id || tabs[currentIndex - 1]?.id || 'basics'
+  }
 
   const handleRenameConfirm = () => {
     if (!renameModal.sectionId) return
@@ -3058,29 +2640,39 @@ function IntegratedSectionsEditor({
 
   const handleDeleteConfirm = () => {
     if (!deleteModal.sectionId) return
-    removeCustomSection(deleteModal.sectionId)
-    setExpandedSectionIds(prev => prev.filter(id => id !== deleteModal.sectionId))
+
+    const sectionId = deleteModal.sectionId
+    const nextActiveTab = resolveNextActiveTab(sectionId)
+    const isCustomSection = !isStandardSectionId(sectionId) && sectionId !== 'summary'
+
+    if (isCustomSection) {
+      removeCustomSection(sectionId)
+    } else {
+      updateResumeData(draft => {
+        if (sectionId === 'summary') {
+          draft.summary.hidden = true
+        } else if (isStandardSectionId(sectionId)) {
+          draft.sections[sectionId].hidden = true
+        }
+
+        draft.metadata.layout.pages = draft.metadata.layout.pages.map(page => ({
+          ...page,
+          main: page.main.filter(item => item !== sectionId),
+          sidebar: page.sidebar.filter(item => item !== sectionId),
+        }))
+      })
+    }
+
+    setActiveSectionId(nextActiveTab)
+    setOpenTabMenuId(null)
     setDeleteModal({ open: false, sectionId: null, title: '' })
   }
 
-  const handleDragStart = (event: DragStartEvent) => {
-    setActiveSectionId(String(event.active.id))
-  }
+  const handleTabDragEnd = (event: DragEndEvent) => {
+    const indexes = resolveItemReorderIndexes(sortableTabIds, event)
+    if (!indexes) return
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    setActiveSectionId(null)
-    const { active, over } = event
-    if (!over) return
-
-    const activeId = String(active.id)
-    const overId = String(over.id)
-    if (activeId === overId) return
-
-    const oldIndex = orderedSectionIds.indexOf(activeId)
-    const newIndex = orderedSectionIds.indexOf(overId)
-    if (oldIndex === -1 || newIndex === -1) return
-
-    const moved = arrayMove(orderedSectionIds, oldIndex, newIndex)
+    const moved = arrayMove(sortableTabIds, indexes.fromIndex, indexes.toIndex)
     updateResumeData(draft => {
       const firstPage = draft.metadata.layout.pages[0]
       if (!firstPage) return
@@ -3090,147 +2682,399 @@ function IntegratedSectionsEditor({
     })
   }
 
-  const renderSectionList = (sortableEnabled: boolean) => (
-    <div className="resume-sections-column">
-      {orderedSectionIds.map(sectionId => (
-        <SortableSectionEditorItem
-          key={sectionId}
-          sectionId={sectionId}
-          expanded={expandedSectionIds.includes(sectionId)}
-          onToggleExpanded={toggleExpanded}
-          onRenameSection={renameSection}
-          onDeleteSection={deleteSection}
-          onAddSectionItem={addSectionItem}
-          sortableEnabled={sortableEnabled}
-        />
-      ))}
-    </div>
+  const presentLayoutSectionIds = useMemo(
+    () => new Set(layoutSectionIds),
+    [layoutSectionIds],
   )
+  const addableSectionIds = useMemo(
+    () => ADDABLE_EDITOR_SECTION_ORDER.filter(sectionId => !presentLayoutSectionIds.has(sectionId)),
+    [presentLayoutSectionIds],
+  )
+  const addSectionToEditor = (sectionId: string) => {
+    updateResumeData(draft => {
+      const firstPage = draft.metadata.layout.pages[0] || {
+        fullWidth: true,
+        main: [],
+        sidebar: [],
+      }
+      if (!draft.metadata.layout.pages[0]) {
+        draft.metadata.layout.pages = [firstPage]
+      }
+
+      const merged = dedupeSectionIds([...(firstPage.main || []), ...(firstPage.sidebar || [])])
+      if (!merged.includes(sectionId)) {
+        merged.push(sectionId)
+      }
+      firstPage.main = merged
+      firstPage.sidebar = []
+      firstPage.fullWidth = true
+
+      if (sectionId === 'summary') {
+        draft.summary.hidden = false
+      } else if (isStandardSectionId(sectionId)) {
+        if (!draft.sections[sectionId].title.trim()) {
+          draft.sections[sectionId].title = STANDARD_SECTION_LABELS[sectionId]
+        }
+        draft.sections[sectionId].hidden = false
+      }
+    })
+
+    setActiveSectionId(sectionId)
+    setAddMenuOpen(false)
+  }
+
+  const addCustomSectionFromHeader = () => {
+    const sectionId = createBuilderId()
+    updateResumeData(draft => {
+      draft.customSections.push({
+        id: sectionId,
+        type: 'summary',
+        title: '自定义板块',
+        columns: 1,
+        hidden: false,
+        items: [
+          {
+            id: createBuilderId(),
+            hidden: false,
+            content: '',
+          },
+        ],
+      })
+
+      const firstPage = draft.metadata.layout.pages[0] || {
+        fullWidth: true,
+        main: [],
+        sidebar: [],
+      }
+      if (!draft.metadata.layout.pages[0]) {
+        draft.metadata.layout.pages = [firstPage]
+      }
+
+      firstPage.main = dedupeSectionIds([...(firstPage.main || []), ...(firstPage.sidebar || []), sectionId])
+      firstPage.sidebar = []
+      firstPage.fullWidth = true
+    })
+
+    setActiveSectionId(sectionId)
+    setAddMenuOpen(false)
+  }
+
+  const activeSectionTab = tabs.find(tab => tab.id === activeSectionId) || tabs[0]
+  const existingModuleTabs = useMemo(
+    () => tabs.filter(tab => tab.id !== 'basics' && tab.id !== 'intention'),
+    [tabs],
+  )
+  const existingModuleSortableIds = useMemo(
+    () => existingModuleTabs.map(tab => tab.id),
+    [existingModuleTabs],
+  )
+  const existingModuleSortSensors = useEditorTabSortSensors()
+  const resolvedActiveSectionId = activeSectionTab?.id || 'basics'
+  const showAddItemRow =
+    resolvedActiveSectionId !== 'summary' &&
+    resolvedActiveSectionId !== 'basics' &&
+    resolvedActiveSectionId !== 'intention'
+  const sectionMenuOpen = Boolean(activeSectionTab && openTabMenuId === activeSectionTab.id)
+  const activeHiddenLabel = activeSectionTab?.hidden ? '显示板块' : '隐藏板块'
+  const activeCanRename = Boolean(activeSectionTab && !activeSectionTab.locked)
+  const activeCanDelete = Boolean(activeSectionTab?.removable)
+  const activeCanToggleHidden = Boolean(activeSectionTab && !activeSectionTab.locked)
+  const showAddSectionMenu = addMenuOpen
+  const handleExistingModuleSortEnd = (event: DragEndEvent) => {
+    const indexes = resolveItemReorderIndexes(existingModuleSortableIds, event)
+    if (!indexes) return
+
+    const moved = arrayMove(existingModuleSortableIds, indexes.fromIndex, indexes.toIndex)
+    updateResumeData(draft => {
+      const firstPage = draft.metadata.layout.pages[0]
+      if (!firstPage) return
+
+      const merged = dedupeSectionIds([...(firstPage.main || []), ...(firstPage.sidebar || [])])
+      const rest = merged.filter(sectionId => !existingModuleSortableIds.includes(sectionId))
+      firstPage.main = [...moved, ...rest]
+      firstPage.sidebar = []
+      firstPage.fullWidth = true
+    })
+  }
+  const activeSectionMenuContent = activeSectionTab ? (
+    <>
+      <button
+        type="button"
+        className={joinClassNames('resume-item-menu-action', !activeCanToggleHidden && 'is-disabled')}
+        disabled={!activeCanToggleHidden}
+        onClick={event => {
+          event.stopPropagation()
+          if (!activeCanToggleHidden) return
+          toggleSectionHidden(activeSectionTab.id, !activeSectionTab.hidden)
+          setOpenTabMenuId(null)
+        }}
+      >
+        {activeHiddenLabel}
+      </button>
+      <button
+        type="button"
+        className={joinClassNames('resume-item-menu-action', !activeCanRename && 'is-disabled')}
+        disabled={!activeCanRename}
+        onClick={event => {
+          event.stopPropagation()
+          openRenameDialog(activeSectionTab.id)
+        }}
+      >
+        重命名
+      </button>
+      <button
+        type="button"
+        className={joinClassNames('resume-item-menu-action', 'is-danger', !activeCanDelete && 'is-disabled')}
+        disabled={!activeCanDelete}
+        onClick={event => {
+          event.stopPropagation()
+          if (!activeCanDelete) return
+          openDeleteDialog(activeSectionTab.id)
+        }}
+      >
+        删除
+      </button>
+    </>
+  ) : null
 
   return (
-    <div className="resume-sections-stack">
-      <div
-        data-editor-section-id="basics"
-        className={joinClassNames('resume-section-item', 'resume-focus-target', expandedSectionIds.includes('basics') && 'is-expanded')}
-      >
-        <div
-          role="button"
-          tabIndex={0}
-          className="resume-section-item-row is-static"
-          onClick={() => toggleExpanded('basics')}
-          onKeyDown={event => {
-            if (event.key === 'Enter' || event.key === ' ') {
-              event.preventDefault()
-              toggleExpanded('basics')
-            }
-          }}
+    <div className="resume-editor-tabs-layout">
+      <div className="resume-editor-tabs-head">
+        <button
+          type="button"
+          className={`resume-editor-ai-diagnosis-card is-${completeness.tone}`}
+          aria-label={`内容完善度 ${completeness.score} 分，点击使用 AI 诊断`}
+          onClick={onOpenAIDiagnosis}
         >
-          <span
-            className={joinClassNames(
-              'resume-section-item-chevron text-muted-foreground',
-              expandedSectionIds.includes('basics') && 'is-expanded',
-            )}
-          >
+          <div className="resume-editor-ai-diagnosis-copy">
+            <strong>内容完善度 {completeness.score}%</strong>
+            <span>点击使用 AI 诊断，获得结构与措辞优化建议</span>
+          </div>
+          <div className="resume-editor-ai-diagnosis-cta">
+            <Sparkles size={14} aria-hidden="true" />
+            <span>AI 诊断</span>
             <IconChevronRight />
-          </span>
-          <span className="resume-section-item-title">基本信息</span>
-          <div className="resume-section-item-actions" onClick={event => event.stopPropagation()}>
-            <Tooltip content="基本信息不支持隐藏">
-              <Button type="text" size="mini" className="resume-inline-icon-btn" icon={<IconEye />} disabled aria-label="隐藏板块" />
-            </Tooltip>
-            <div ref={basicsMenuRef} className={`resume-item-menu ${basicsMenuOpen ? 'is-open' : ''}`}>
-              <Tooltip content="更多操作">
+          </div>
+        </button>
+
+        <div className="resume-editor-tabs-head-main">
+          <div
+            className="resume-editor-tabs-track-wrap"
+            data-left-mask={showTabsLeftMask ? 'true' : 'false'}
+            data-right-mask={showTabsRightMask ? 'true' : 'false'}
+          >
+            <span className="resume-editor-tabs-scroll-mask is-left" aria-hidden="true" />
+            <span className="resume-editor-tabs-scroll-mask is-right" aria-hidden="true" />
+            <div ref={tabTrackShellRef} className="resume-editor-tabs-track-shell">
+              <DndContext
+                sensors={tabSortSensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleTabDragEnd}
+              >
+                <SortableContext items={sortableTabIds} strategy={horizontalListSortingStrategy}>
+                  <div className="resume-editor-tabs-track" role="tablist" aria-label="属性编辑器板块标签">
+                    {tabs.map(tab => {
+                      if (!tab.sortable) {
+                        return (
+                          <div
+                            key={tab.id}
+                            className={joinClassNames(
+                              'resume-editor-tab',
+                              activeSectionId === tab.id && 'is-active',
+                              tab.hidden && 'is-hidden',
+                              tab.locked && 'is-locked',
+                            )}
+                            role="presentation"
+                          >
+                            <EditorSectionTabChromeBg />
+                            <span className="resume-editor-tab-hover-bg" aria-hidden="true" />
+                            <button
+                              type="button"
+                              className="resume-editor-tab-select"
+                              role="tab"
+                              aria-selected={activeSectionId === tab.id}
+                              tabIndex={activeSectionId === tab.id ? 0 : -1}
+                              onClick={() => {
+                                setActiveSectionId(tab.id)
+                                setOpenTabMenuId(null)
+                                setAddMenuOpen(false)
+                              }}
+                              onKeyDown={event => {
+                                if (event.key === 'Enter' || event.key === ' ') {
+                                  event.preventDefault()
+                                  setActiveSectionId(tab.id)
+                                  setOpenTabMenuId(null)
+                                  setAddMenuOpen(false)
+                                }
+                              }}
+                            >
+                              <span className="resume-editor-tab-label-row">
+                                {renderEditorTabIcon(tab.id)}
+                                <span className="resume-editor-tab-title">{tab.title}</span>
+                                {tab.hidden ? <span className="resume-editor-tab-meta">已隐藏</span> : null}
+                              </span>
+                            </button>
+                          </div>
+                        )
+                      }
+
+                      return (
+                        <SortableEditorSectionTab
+                          key={tab.id}
+                          sectionId={tab.id}
+                          title={tab.title}
+                          active={activeSectionId === tab.id}
+                          hidden={tab.hidden}
+                          locked={tab.locked}
+                          onSelect={() => {
+                            setActiveSectionId(tab.id)
+                            setOpenTabMenuId(null)
+                            setAddMenuOpen(false)
+                          }}
+                        />
+                      )
+                    })}
+                  </div>
+                </SortableContext>
+              </DndContext>
+            </div>
+          </div>
+
+          <div className="resume-editor-tabs-head-actions">
+            <div className="resume-editor-add-shell" onClick={event => event.stopPropagation()}>
+              <div className={joinClassNames('resume-item-menu', 'resume-editor-add-menu', showAddSectionMenu && 'is-open')}>
                 <Button
                   type="text"
                   size="mini"
                   className="resume-inline-icon-btn"
-                  icon={<IconMoreHorizontal />}
-                  onClick={() => setBasicsMenuOpen(prev => !prev)}
-                  aria-label="更多操作"
+                  icon={<IconPlus />}
+                  onClick={() => {
+                    setOpenTabMenuId(null)
+                    setAddMenuOpen(open => !open)
+                  }}
+                  aria-label="添加板块"
                 />
-              </Tooltip>
-              {basicsMenuOpen ? (
-                <div className="resume-item-menu-popover">
-                  <button
-                    type="button"
-                    className="resume-item-menu-action"
-                    onClick={() => {
-                      setBasicsMenuOpen(false)
-                      Message.warning('基本信息板块不支持删除或重命名')
-                    }}
-                  >
-                    暂无可用操作
-                  </button>
-                </div>
-              ) : null}
+                {showAddSectionMenu ? (
+                  <div className="resume-item-menu-popover resume-editor-add-menu-panel">
+                    <section className="resume-editor-add-menu-section">
+                      <h4 className="resume-editor-add-menu-title">已有模块</h4>
+                      <div className="resume-editor-existing-modules-list">
+                        {existingModuleTabs.length > 0 ? (
+                          <DndContext
+                            sensors={existingModuleSortSensors}
+                            collisionDetection={closestCenter}
+                            onDragEnd={handleExistingModuleSortEnd}
+                          >
+                            <SortableContext items={existingModuleSortableIds} strategy={verticalListSortingStrategy}>
+                              {existingModuleTabs.map(tab => (
+                                <SortableExistingModuleRow
+                                  key={tab.id}
+                                  sectionId={tab.id}
+                                  title={tab.title}
+                                  canRename={!tab.locked}
+                                  canDelete={tab.removable}
+                                  onRename={() => {
+                                    openRenameDialog(tab.id)
+                                    setAddMenuOpen(false)
+                                    setOpenTabMenuId(null)
+                                  }}
+                                  onDelete={() => {
+                                    openDeleteDialog(tab.id)
+                                    setAddMenuOpen(false)
+                                    setOpenTabMenuId(null)
+                                  }}
+                                />
+                              ))}
+                            </SortableContext>
+                          </DndContext>
+                        ) : (
+                          <div className="resume-editor-existing-module-empty">暂无模块</div>
+                        )}
+                      </div>
+                    </section>
+
+                    <section className="resume-editor-add-menu-section">
+                      <h4 className="resume-editor-add-menu-title">添加模块</h4>
+                      <div className="resume-editor-add-modules-list">
+                        {addableSectionIds.map(sectionId => (
+                          <button
+                            key={sectionId}
+                            type="button"
+                            className="resume-editor-add-module-row"
+                            onClick={event => {
+                              event.stopPropagation()
+                              addSectionToEditor(sectionId)
+                              setOpenTabMenuId(null)
+                            }}
+                          >
+                            <span className="resume-editor-add-module-plus" aria-hidden="true">
+                              <IconPlus />
+                            </span>
+                            <span>{getSectionDisplayTitle(data, sectionId)}</span>
+                          </button>
+                        ))}
+                        <button
+                          type="button"
+                          className="resume-editor-add-module-row"
+                          onClick={event => {
+                            event.stopPropagation()
+                            addCustomSectionFromHeader()
+                            setOpenTabMenuId(null)
+                          }}
+                        >
+                          <span className="resume-editor-add-module-plus" aria-hidden="true">
+                            <IconPlus />
+                          </span>
+                          <span>自定义</span>
+                        </button>
+                      </div>
+                    </section>
+                  </div>
+                ) : null}
+              </div>
             </div>
+
+            {activeSectionTab ? (
+              <div className="resume-editor-menu-shell resume-editor-panel-menu-shell" onClick={event => event.stopPropagation()}>
+                <div className={joinClassNames('resume-item-menu', 'resume-editor-panel-menu', sectionMenuOpen && 'is-open')}>
+                  <Button
+                    type="text"
+                    size="mini"
+                    className="resume-inline-icon-btn"
+                    icon={<IconMoreHorizontal />}
+                    onClick={() => {
+                      setOpenTabMenuId(sectionMenuOpen ? null : activeSectionTab.id)
+                      setAddMenuOpen(false)
+                    }}
+                    aria-label={`${activeSectionTab.title}板块操作`}
+                  />
+                  {sectionMenuOpen ? <div className="resume-item-menu-popover">{activeSectionMenuContent}</div> : null}
+                </div>
+              </div>
+            ) : null}
           </div>
         </div>
-        <CollapseMotion open={expandedSectionIds.includes('basics')} className="resume-section-item-collapse">
-          <div className="resume-section-item-body">
-            <BasicsEditor />
-          </div>
-        </CollapseMotion>
       </div>
 
-      <div
-        data-editor-section-id="intention"
-        className={joinClassNames('resume-section-item', 'resume-focus-target', expandedSectionIds.includes('intention') && 'is-expanded')}
-      >
-        <div
-          role="button"
-          tabIndex={0}
-          className="resume-section-item-row is-static"
-          onClick={() => toggleExpanded('intention')}
-          onKeyDown={event => {
-            if (event.key === 'Enter' || event.key === ' ') {
-              event.preventDefault()
-              toggleExpanded('intention')
-            }
-          }}
-        >
-          <span
-            className={joinClassNames(
-              'resume-section-item-chevron text-muted-foreground',
-              expandedSectionIds.includes('intention') && 'is-expanded',
+      <div ref={scrollContainerRef} className="resume-scroll-shell resume-editor-tab-content-scroll">
+        <div className="resume-side-panel-body resume-workbench-panel-body resume-editor-panel-body resume-editor-tab-content-body">
+          <div data-editor-section-id={resolvedActiveSectionId} className="resume-editor-tab-content resume-focus-target">
+            {resolvedActiveSectionId === 'basics' ? (
+              <BasicsEditor />
+            ) : resolvedActiveSectionId === 'intention' ? (
+              <IntentionEditor />
+            ) : (
+              <SectionEditorBody sectionId={resolvedActiveSectionId} />
             )}
-          >
-            <IconChevronRight />
-          </span>
-          <span className="resume-section-item-title">求职意向</span>
-          <div className="resume-section-item-actions" onClick={event => event.stopPropagation()}>
-            <Tooltip content="求职意向板块不支持隐藏">
-              <Button type="text" size="mini" className="resume-inline-icon-btn" icon={<IconEye />} disabled aria-label="隐藏板块" />
-            </Tooltip>
+
+            {showAddItemRow ? (
+              <div className="resume-editor-tab-add-row">
+                <AddRowButton label="新增条目" onClick={() => addSectionItem(resolvedActiveSectionId)} />
+              </div>
+            ) : null}
           </div>
+
         </div>
-        <CollapseMotion open={expandedSectionIds.includes('intention')} className="resume-section-item-collapse">
-          <div className="resume-section-item-body">
-            <IntentionEditor />
-          </div>
-        </CollapseMotion>
-      </div>
-
-      {dndReady ? (
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-          onDragCancel={() => setActiveSectionId(null)}
-        >
-          <SortableContext items={orderedSectionIds} strategy={verticalListSortingStrategy}>
-            {renderSectionList(true)}
-          </SortableContext>
-
-          <DragOverlay>{activeSectionId ? <DragOverlaySectionCard sectionId={activeSectionId} /> : null}</DragOverlay>
-        </DndContext>
-      ) : (
-        renderSectionList(false)
-      )}
-
-      <div className="resume-sections-add-row">
-        <AddRowButton label="新增自定义板块" onClick={() => addCustomSection('summary')} />
       </div>
 
       <Modal
@@ -3275,605 +3119,20 @@ function IntegratedSectionsEditor({
   )
 }
 
-function LayoutAndStylePanel({
-  pane,
-  smartOnePage,
-}: {
-  pane: StyleTool
-  smartOnePage: SmartOnePageComputation
-}) {
-  const [browserTab, setBrowserTab] = useState<StyleBrowserTab>('elements')
-  const [styleQuery, setStyleQuery] = useState('')
-  const [elementCategory, setElementCategory] = useState<StyleBrowserCategory>('all')
-  const data = useResumeBuilderStore(state => state.data)
-  const setTemplate = useResumeBuilderStore(state => state.setTemplate)
-  const updateResumeData = useResumeBuilderStore(state => state.updateResumeData)
-  const templateDefaultColor = getTemplateDefaultPrimaryColor(data.metadata.template)
-  const primaryColor = resolveColorInputValue(data.metadata.design.colors.primary, templateDefaultColor)
-  const textColor = resolveColorInputValue(data.metadata.design.colors.text, DEFAULT_TEXT_COLOR)
-  const activeHeaderVariant = resolveHeaderVariantForTemplate(data.metadata.template, data.metadata.design.headerVariant)
-  const activeSectionVariant = resolveSectionVariantForTemplate(data.metadata.template, data.metadata.design.sectionVariant)
-  const activeSkillsVariant = resolveSkillsVariant(data.metadata.design.skillsVariant)
-  const unifiedFontFamily = normalizeResumeFontFamily(
-    data.metadata.typography.body.fontFamily || data.metadata.typography.heading.fontFamily,
-  )
-  const searchKeyword = styleQuery.trim().toLowerCase()
-  const smartOnePageGapState =
-    smartOnePage.effectiveData.metadata.page.gapY < smartOnePage.managedData.metadata.page.gapY - 0.15
-      ? '已收紧'
-      : smartOnePage.effectiveData.metadata.page.gapY > smartOnePage.managedData.metadata.page.gapY + 0.15
-        ? '已放宽'
-        : '默认留白'
-  const smartOnePageStatusText =
-    !smartOnePage.enabled
-      ? '关闭后恢复系统默认留白，正文排版只受你手动设置影响。'
-      : smartOnePage.reason === 'free-form'
-        ? '当前是自由高度，系统会记住这个开关；切回 A4 / Letter 后会继续自动贴合单页。'
-        : smartOnePage.reason === 'unsupported-template'
-          ? '当前模板暂不支持持续一页适配。'
-          : smartOnePage.after
-            ? `当前生效：正文 ${smartOnePage.effectiveData.metadata.typography.body.fontSize.toFixed(1)}pt，行高 ${smartOnePage.effectiveData.metadata.typography.body.lineHeight.toFixed(2)}，${smartOnePageGapState}，预测差值 ${smartOnePage.after.overflowPx >= 0 ? '+' : ''}${smartOnePage.after.overflowPx.toFixed(1)}px。`
-            : '系统会在可读范围内持续调节正文行高、字号和版面留白，尽量稳定贴合单页。'
+function resolvePreviewFitTarget(previewContent: HTMLDivElement | null) {
+  if (!previewContent) return null
 
-  const layoutCards = useMemo<StyleBrowserCard[]>(
-    () => [
-      {
-        id: 'template-1',
-        label: '标准单栏',
-        preview: 'layout-grid',
-        previewImage: '/template-style-previews/layout-standard.png',
-        category: 'section',
-        groupId: 'layout',
-        groupTitle: '布局模板 / LAYOUT',
-        keywords: ['模板', '布局', '单栏', '标准'],
-        selected: data.metadata.template === 'template-1',
-        onSelect: () => setTemplate('template-1'),
-      },
-      {
-        id: 'template-5',
-        label: '双栏分区',
-        preview: 'layout-split',
-        previewImage: '/template-style-previews/layout-split.png',
-        category: 'section',
-        groupId: 'layout',
-        groupTitle: '布局模板 / LAYOUT',
-        keywords: ['模板', '布局', '双栏', '侧栏'],
-        selected: data.metadata.template === 'template-5',
-        onSelect: () => setTemplate('template-5'),
-      },
-      {
-        id: 'template-3',
-        label: '签条布局',
-        preview: 'layout-column',
-        previewImage: '/template-style-previews/layout-strip.png',
-        category: 'skills',
-        groupId: 'layout',
-        groupTitle: '布局模板 / LAYOUT',
-        keywords: ['模板', '布局', '签条', '结构'],
-        selected: data.metadata.template === 'template-3',
-        onSelect: () => setTemplate('template-3'),
-      },
-    ],
-    [data.metadata.template, setTemplate],
-  )
-
-  const elementCards = useMemo<StyleBrowserCard[]>(
-    () => [
-      {
-        id: 'header-1',
-        label: '铜版卡片',
-        preview: 'header-centered',
-        previewImage: '/template-style-previews/header-bronze-card.png',
-        category: 'header',
-        groupId: 'header',
-        groupTitle: '页眉样式 / HEADER',
-        keywords: ['页眉', '铜版', '卡片', 'header 1'],
-        selected: activeHeaderVariant === 'header-1',
-        onSelect: () =>
-          updateResumeData(draft => {
-            draft.metadata.design.headerVariant = 'header-1'
-          }),
-      },
-      {
-        id: 'header-2',
-        label: '雪纹线性',
-        preview: 'header-centered',
-        previewImage: '/template-style-previews/header-snow-line.png',
-        category: 'header',
-        groupId: 'header',
-        groupTitle: '页眉样式 / HEADER',
-        keywords: ['页眉', '线性', '雪纹', 'header 2'],
-        selected: activeHeaderVariant === 'header-2',
-        onSelect: () =>
-          updateResumeData(draft => {
-            draft.metadata.design.headerVariant = 'header-2'
-          }),
-      },
-      {
-        id: 'header-3',
-        label: '绯红横幅',
-        preview: 'header-centered',
-        previewImage: '/template-style-previews/header-crimson-banner.png',
-        category: 'header',
-        groupId: 'header',
-        groupTitle: '页眉样式 / HEADER',
-        keywords: ['页眉', '横幅', '绯红', 'header 3'],
-        selected: activeHeaderVariant === 'header-3',
-        onSelect: () =>
-          updateResumeData(draft => {
-            draft.metadata.design.headerVariant = 'header-3'
-          }),
-      },
-      {
-        id: 'header-4',
-        label: '经典居中',
-        preview: 'header-centered',
-        previewImage: '/template-style-previews/header-classic-centered.png',
-        category: 'header',
-        groupId: 'header',
-        groupTitle: '页眉样式 / HEADER',
-        keywords: ['页眉', '居中', '经典', '姓名'],
-        selected: activeHeaderVariant === 'header-4',
-        onSelect: () =>
-          updateResumeData(draft => {
-            draft.metadata.design.headerVariant = 'header-4'
-          }),
-      },
-      {
-        id: 'header-5',
-        label: '侧重头像',
-        preview: 'header-avatar',
-        previewImage: '/template-style-previews/header-side-avatar.png',
-        category: 'header',
-        groupId: 'header',
-        groupTitle: '页眉样式 / HEADER',
-        keywords: ['页眉', '头像', '侧边'],
-        selected: activeHeaderVariant === 'header-5',
-        onSelect: () =>
-          updateResumeData(draft => {
-            draft.metadata.design.headerVariant = 'header-5'
-          }),
-      },
-      {
-        id: 'section-1',
-        label: '铜版网格',
-        preview: 'timeline-vertical',
-        previewImage: '/template-style-previews/section-bronze-grid.png',
-        category: 'section',
-        groupId: 'section',
-        groupTitle: '模块样式 / SECTION',
-        keywords: ['section', '标题', '经历', '铜版', '网格'],
-        selected: activeSectionVariant === 'section-1',
-        wide: true,
-        onSelect: () =>
-          updateResumeData(draft => {
-            draft.metadata.design.sectionVariant = 'section-1'
-          }),
-      },
-      {
-        id: 'section-2',
-        label: '雪纹简章',
-        preview: 'title-band',
-        previewImage: '/template-style-previews/section-snow-booklet.png',
-        category: 'section',
-        groupId: 'section',
-        groupTitle: '模块样式 / SECTION',
-        keywords: ['section', '标题', '经历', '雪纹', '简章'],
-        selected: activeSectionVariant === 'section-2',
-        onSelect: () =>
-          updateResumeData(draft => {
-            draft.metadata.design.sectionVariant = 'section-2'
-          }),
-      },
-      {
-        id: 'section-3',
-        label: '强调签条',
-        preview: 'title-band',
-        previewImage: '/template-style-previews/title-accent-band.png',
-        category: 'section',
-        groupId: 'section',
-        groupTitle: '模块样式 / SECTION',
-        keywords: ['标题', '签条', '强调'],
-        selected: activeSectionVariant === 'section-3',
-        onSelect: () =>
-          updateResumeData(draft => {
-            draft.metadata.design.sectionVariant = 'section-3'
-          }),
-      },
-      {
-        id: 'section-4',
-        label: '浅紫书页',
-        preview: 'timeline-vertical',
-        previewImage: '/template-style-previews/section-lavender-page.png',
-        category: 'section',
-        groupId: 'section',
-        groupTitle: '模块样式 / SECTION',
-        keywords: ['section', '标题', '经历', '浅紫', '书页'],
-        selected: activeSectionVariant === 'section-4',
-        onSelect: () =>
-          updateResumeData(draft => {
-            draft.metadata.design.sectionVariant = 'section-4'
-          }),
-      },
-      {
-        id: 'skills-1',
-        label: '标签形式',
-        preview: 'skills-pill',
-        previewImage: '/template-style-previews/skills-tags.png',
-        category: 'skills',
-        groupId: 'skills',
-        groupTitle: '技能 / SKILLS',
-        keywords: ['技能', '标签', '方块', 'chip'],
-        selected: activeSkillsVariant === 'skills-1',
-        onSelect: () =>
-          updateResumeData(draft => {
-            draft.metadata.design.skillsVariant = 'skills-1'
-          }),
-      },
-      {
-        id: 'skills-2',
-        label: '进度条',
-        preview: 'skills-bars',
-        previewImage: '/template-style-previews/skills-progress.png',
-        category: 'skills',
-        groupId: 'skills',
-        groupTitle: '技能 / SKILLS',
-        keywords: ['技能', '进度条', '百分比'],
-        selected: activeSkillsVariant === 'skills-2',
-        onSelect: () =>
-          updateResumeData(draft => {
-            draft.metadata.design.skillsVariant = 'skills-2'
-          }),
-      },
-      {
-        id: 'skills-3',
-        label: '逗号分隔',
-        preview: 'skills-inline',
-        previewImage: '/template-style-previews/skills-inline.png',
-        category: 'skills',
-        groupId: 'skills',
-        groupTitle: '技能 / SKILLS',
-        keywords: ['技能', '逗号', '一行'],
-        selected: activeSkillsVariant === 'skills-3',
-        onSelect: () =>
-          updateResumeData(draft => {
-            draft.metadata.design.skillsVariant = 'skills-3'
-          }),
-      },
-      {
-        id: 'skills-4',
-        label: '熟练度对照',
-        preview: 'skills-rating',
-        previewImage: '/template-style-previews/skills-rating.png',
-        category: 'skills',
-        groupId: 'skills',
-        groupTitle: '技能 / SKILLS',
-        keywords: ['技能', '熟练度', '左右'],
-        selected: activeSkillsVariant === 'skills-4',
-        onSelect: () =>
-          updateResumeData(draft => {
-            draft.metadata.design.skillsVariant = 'skills-4'
-          }),
-      },
-    ],
-    [activeHeaderVariant, activeSectionVariant, activeSkillsVariant, updateResumeData],
-  )
-
-  const filteredLayoutCards = useMemo(
-    () =>
-      layoutCards.filter(card => {
-        if (!searchKeyword) return true
-        return [card.label, ...card.keywords].some(keyword => keyword.toLowerCase().includes(searchKeyword))
-      }),
-    [layoutCards, searchKeyword],
-  )
-
-  const filteredElementCards = useMemo(
-    () =>
-      elementCards.filter(card => {
-        const matchesCategory = elementCategory === 'all' || card.category === elementCategory
-        if (!matchesCategory) return false
-        if (!searchKeyword) return true
-        return [card.label, card.groupTitle, ...card.keywords].some(keyword => keyword.toLowerCase().includes(searchKeyword))
-      }),
-    [elementCards, elementCategory, searchKeyword],
-  )
-
-  const groupedElementCards = useMemo(() => {
-    const groups = new Map<string, { title: string; cards: StyleBrowserCard[] }>()
-    filteredElementCards.forEach(card => {
-      const current = groups.get(card.groupId)
-      if (current) {
-        current.cards.push(card)
-        return
-      }
-      groups.set(card.groupId, {
-        title: card.groupTitle,
-        cards: [card],
-      })
-    })
-    return Array.from(groups.entries()).map(([id, value]) => ({ id, ...value }))
-  }, [filteredElementCards])
-
-  const renderStyleCard = (card: StyleBrowserCard) => (
-    <button
-      key={card.id}
-      type="button"
-      className={joinClassNames('resume-style-browser-card', card.selected && 'is-selected', card.wide && 'is-wide')}
-      onClick={card.onSelect}
-      aria-pressed={card.selected}
-      title={card.label}
-    >
-      <div className="resume-style-browser-card-frame">
-        <StyleBrowserPreview kind={card.preview} image={card.previewImage} />
-      </div>
-      <span className="resume-style-browser-card-label">{card.label}</span>
-    </button>
-  )
-
-  if (pane === 'typesetting') {
-    return (
-      <div className="space-y-4">
-        <div>
-          <label className="text-xs text-muted-foreground block mb-1" htmlFor="resume-typography-text-color">
-            字体色
-          </label>
-          <input
-            id="resume-typography-text-color"
-            type="color"
-            className="resume-inline-color-input"
-            value={textColor}
-            onChange={event =>
-              updateResumeData(draft => {
-                draft.metadata.design.colors.text = event.target.value
-              })
-            }
-            aria-label="字体色"
-          />
-        </div>
-
-        <div className="grid grid-cols-1 gap-2">
-          <div>
-            <label className="text-xs text-muted-foreground block mb-1">字体（全局）</label>
-            <Select
-              value={unifiedFontFamily}
-              onChange={value =>
-                updateResumeData(draft => {
-                  const nextFont = Array.isArray(value) ? value[0] || '' : value
-                  const unifiedNextFont = normalizeResumeFontFamily(nextFont)
-                  draft.metadata.typography.body.fontFamily = unifiedNextFont
-                  draft.metadata.typography.heading.fontFamily = unifiedNextFont
-                })
-              }
-            >
-              {RESUME_FONT_PRESETS.map(font => (
-                <Option key={font.value} value={font.value}>
-                  {font.label}
-                </Option>
-              ))}
-            </Select>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 gap-2">
-          <NumberComboField
-            label="正文字号 (pt)"
-            value={data.metadata.typography.body.fontSize}
-            config={RESUME_EDITOR_LIMITS.typography.bodyFontSize}
-            onChange={next =>
-              updateResumeData(draft => {
-                draft.metadata.typography.body.fontSize = next
-              })
-            }
-          />
-          <NumberComboField
-            label="标题字号 (pt)"
-            value={data.metadata.typography.heading.fontSize}
-            config={RESUME_EDITOR_LIMITS.typography.headingFontSize}
-            onChange={next =>
-              updateResumeData(draft => {
-                draft.metadata.typography.heading.fontSize = next
-              })
-            }
-          />
-        </div>
-
-        <div className="grid grid-cols-1 gap-2">
-          <NumberComboField
-            label="正文行高"
-            value={data.metadata.typography.body.lineHeight}
-            config={RESUME_EDITOR_LIMITS.typography.bodyLineHeight}
-            onChange={next =>
-              updateResumeData(draft => {
-                draft.metadata.typography.body.lineHeight = next
-              })
-            }
-          />
-          <NumberComboField
-            label="标题行高"
-            value={data.metadata.typography.heading.lineHeight}
-            config={RESUME_EDITOR_LIMITS.typography.headingLineHeight}
-            onChange={next =>
-              updateResumeData(draft => {
-                draft.metadata.typography.heading.lineHeight = next
-              })
-            }
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-2">
-          <div>
-            <label className="text-xs text-muted-foreground block mb-1">纸张</label>
-            <Select
-              value={data.metadata.page.format}
-              onChange={value =>
-                updateResumeData(draft => {
-                  draft.metadata.page.format = (Array.isArray(value) ? value[0] : value) as ResumeData['metadata']['page']['format']
-                })
-              }
-            >
-              <Option value="a4">A4</Option>
-              <Option value="letter">Letter</Option>
-              <Option value="free-form">自由高度</Option>
-            </Select>
-          </div>
-          <div>
-            <label className="text-xs text-muted-foreground block mb-1">语言区域</label>
-            <Input
-              value={data.metadata.page.locale}
-              onChange={value =>
-                updateResumeData(draft => {
-                  draft.metadata.page.locale = value
-                })
-              }
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-2">
-          <NumberComboField
-            label="左右页边距 (pt)"
-            value={data.metadata.page.marginX}
-            config={RESUME_EDITOR_LIMITS.page.marginX}
-            onChange={next =>
-              updateResumeData(draft => {
-                draft.metadata.page.marginX = next
-              })
-            }
-          />
-          <NumberComboField
-            label="上下页边距 (pt)"
-            value={data.metadata.page.marginY}
-            config={RESUME_EDITOR_LIMITS.page.marginY}
-            onChange={next =>
-              updateResumeData(draft => {
-                draft.metadata.page.marginY = next
-              })
-            }
-          />
-        </div>
-
-        <div className="space-y-2 rounded-sm border border-border/70 bg-[var(--control-surface)] p-2.5">
-          <div className="flex items-start gap-2">
-            <Checkbox
-              checked={data.metadata.page.smartOnePageEnabled}
-              onChange={checked =>
-                updateResumeData(draft => {
-                  draft.metadata.page.smartOnePageEnabled = checked
-                })
-              }
-            />
-            <div className="min-w-0 space-y-1">
-              <div className="text-xs text-foreground">智能一页</div>
-              <div className="text-[11px] text-muted-foreground">
-                开启后系统会持续调节正文行高、字号和版面留白；你继续改内容时，它会跟着重新计算。
-              </div>
-            </div>
-          </div>
-          <div className="text-[11px] text-muted-foreground">
-            {smartOnePageStatusText}
-          </div>
-        </div>
-      </div>
-    )
+  const compareStage = previewContent.querySelector<HTMLElement>('.resume-ai-compare-stage')
+  if (compareStage) {
+    return compareStage
   }
 
-  return (
-    <div className="resume-style-browser-shell">
-      <div className="resume-style-browser-tabs" role="tablist" aria-label="样式浏览模式">
-        <button
-          type="button"
-          className="resume-style-browser-tab"
-          data-active={browserTab === 'layout' ? 'true' : undefined}
-          onClick={() => setBrowserTab('layout')}
-        >
-          全局布局
-        </button>
-        <button
-          type="button"
-          className="resume-style-browser-tab"
-          data-active={browserTab === 'elements' ? 'true' : undefined}
-          onClick={() => setBrowserTab('elements')}
-          >
-            局部组件
-          </button>
-      </div>
+  const pages = previewContent.querySelectorAll<HTMLElement>('[data-template]')
+  if (pages.length > 0) {
+    return pages[0]
+  }
 
-      <div className="resume-style-browser-search-box">
-        <label className="resume-style-browser-search">
-          <Search size={18} />
-          <input
-            value={styleQuery}
-            onChange={event => setStyleQuery(event.target.value)}
-            placeholder="搜索样式关键词..."
-            aria-label="搜索样式关键词"
-          />
-        </label>
-      </div>
-
-      <div className="resume-style-browser-theme-row">
-        <span className="resume-style-browser-theme-label">主题色</span>
-        <input
-          type="color"
-          className="resume-inline-color-input"
-          value={primaryColor}
-          onChange={event =>
-            updateResumeData(draft => {
-              draft.metadata.design.colors.primary = event.target.value
-            })
-          }
-          aria-label="主题色"
-        />
-      </div>
-
-      {browserTab === 'elements' ? (
-          <div className="resume-style-browser-filters" role="tablist" aria-label="样式分类筛选">
-            {([
-              ['all', '全部'],
-              ['header', '页眉'],
-              ['section', 'Section'],
-              ['skills', '技能'],
-            ] as Array<[StyleBrowserCategory, string]>).map(([value, label]) => (
-              <button
-                key={value}
-              type="button"
-              className="resume-style-browser-filter"
-              data-active={elementCategory === value ? 'true' : undefined}
-              onClick={() => setElementCategory(value)}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-      ) : null}
-
-      <div className="resume-style-browser-content">
-        {browserTab === 'layout' ? (
-          <section className="resume-style-browser-group">
-            <div className="resume-style-browser-group-head">
-              <div className="resume-style-browser-group-title">布局模板 / LAYOUT</div>
-            </div>
-            <div className="resume-style-browser-grid">
-              {filteredLayoutCards.map(renderStyleCard)}
-            </div>
-          </section>
-        ) : null}
-
-        {browserTab === 'elements'
-          ? groupedElementCards.map(group => (
-              <section key={group.id} className="resume-style-browser-group">
-                <div className="resume-style-browser-group-head">
-                  <div className="resume-style-browser-group-title">{group.title}</div>
-                </div>
-                <div className="resume-style-browser-grid">
-                  {group.cards.map(renderStyleCard)}
-                </div>
-              </section>
-            ))
-          : null}
-      </div>
-    </div>
-  )
+  return previewContent.querySelector<HTMLElement>('.resume-preview-root') || previewContent
 }
 
 function resolvePreviewFitScale(viewport: HTMLDivElement | null, previewContent: HTMLDivElement | null) {
@@ -3881,9 +3140,10 @@ function resolvePreviewFitScale(viewport: HTMLDivElement | null, previewContent:
     return PREVIEW_INITIAL_SCALE
   }
 
-  const pages = previewContent.querySelectorAll<HTMLElement>('[data-template]')
-  const target =
-    (pages.length === 1 ? pages[0] : previewContent.querySelector<HTMLElement>('.resume-preview-root')) || previewContent
+  const target = resolvePreviewFitTarget(previewContent)
+  if (!target) {
+    return PREVIEW_INITIAL_SCALE
+  }
 
   const availableWidth = Math.max(viewport.clientWidth - PREVIEW_FIT_HORIZONTAL_PADDING * 2, 0)
   const availableHeight = Math.max(viewport.clientHeight - PREVIEW_FIT_HEIGHT_PADDING * 2, 0)
@@ -3904,9 +3164,8 @@ function resolvePreviewFitScale(viewport: HTMLDivElement | null, previewContent:
 function hasPreviewLayoutReady(viewport: HTMLDivElement | null, previewContent: HTMLDivElement | null) {
   if (!viewport || !previewContent) return false
 
-  const pages = previewContent.querySelectorAll<HTMLElement>('[data-template]')
-  const target =
-    (pages.length === 1 ? pages[0] : previewContent.querySelector<HTMLElement>('.resume-preview-root')) || previewContent
+  const target = resolvePreviewFitTarget(previewContent)
+  if (!target) return false
 
   const availableWidth = Math.max(viewport.clientWidth - PREVIEW_FIT_HORIZONTAL_PADDING * 2, 0)
   const availableHeight = Math.max(viewport.clientHeight - PREVIEW_FIT_HEIGHT_PADDING * 2, 0)
@@ -3933,135 +3192,28 @@ function resolveCenteredScrollTop(
   return baseCenter * nextScale - viewport.clientHeight / 2 + verticalPadding
 }
 
-interface ResumePreviewCanvasProps {
-  content: ReactNode
-  previewContentRef: RefObject<HTMLDivElement | null>
-  previewViewportRef: RefObject<HTMLDivElement | null>
-  previewScale: number
-  previewScrollSpaceHeight: number
-  verticalPadding: number
-  ready: boolean
-}
-
-function ResumePreviewCanvas({
-  content,
-  previewContentRef,
-  previewViewportRef,
-  previewScale,
-  previewScrollSpaceHeight,
-  verticalPadding,
-  ready,
-}: ResumePreviewCanvasProps) {
-  const scrollSpaceHeight = previewScrollSpaceHeight > 0 ? previewScrollSpaceHeight : 1
-
-  return (
-    <div ref={previewViewportRef} className="resume-preview-viewport">
-      <div className="resume-preview-scroll-space" style={{ height: scrollSpaceHeight }}>
-        <div
-          className="resume-preview-stage-shell"
-          style={{
-            top: verticalPadding,
-            transform: `translateX(-50%) scale(${previewScale})`,
-            opacity: ready ? 1 : 0,
-          }}
-        >
-          <div ref={previewContentRef} className="resume-preview-stage">
-            {content}
-          </div>
-        </div>
-      </div>
-    </div>
+function resolveEditorPanelWidthMax() {
+  if (typeof window === 'undefined') return EDITOR_PANEL_WIDTH_MAX
+  return Math.max(
+    EDITOR_PANEL_WIDTH_MIN,
+    Math.min(EDITOR_PANEL_WIDTH_MAX, Math.round(window.innerWidth * 0.46)),
   )
 }
 
-function ResumePreviewDock({
-  scale,
-  ready,
-  onZoomIn,
-  onZoomOut,
-  onCenter,
-  onFit,
-}: {
-  scale: number
-  ready: boolean
-  onZoomIn: () => void
-  onZoomOut: () => void
-  onCenter: () => void
-  onFit: () => void
-}) {
-  const undo = useResumeBuilderStore(state => state.undo)
-  const redo = useResumeBuilderStore(state => state.redo)
-
-  return (
-    <div className="resume-preview-dock-wrap no-print">
-      <div className="resume-preview-dock">
-        <Tooltip content="撤销">
-          <Button type="text" size="small" icon={<IconUndo />} onClick={undo} className="resume-dock-btn" aria-label="撤销" />
-        </Tooltip>
-        <Tooltip content="重做">
-          <Button type="text" size="small" icon={<IconRedo />} onClick={redo} className="resume-dock-btn" aria-label="重做" />
-        </Tooltip>
-
-        <span className="resume-preview-dock-divider" />
-
-        <Tooltip content="放大">
-          <Button
-            type="text"
-            size="small"
-            icon={<ZoomIn className="h-4 w-4" />}
-            onClick={onZoomIn}
-            className="resume-dock-btn"
-            aria-label="放大预览"
-          />
-        </Tooltip>
-        <Tooltip content="缩小">
-          <Button
-            type="text"
-            size="small"
-            icon={<ZoomOut className="h-4 w-4" />}
-            onClick={onZoomOut}
-            className="resume-dock-btn"
-            aria-label="缩小预览"
-          />
-        </Tooltip>
-        <Tooltip content="重置缩放">
-          <Button
-            type="text"
-            size="small"
-            icon={<IconRefresh />}
-            onClick={onCenter}
-            className="resume-dock-btn"
-            aria-label="恢复初始缩放"
-          />
-        </Tooltip>
-        <Tooltip content="适应画布">
-          <Button
-            type="text"
-            size="small"
-            icon={<IconMaximize />}
-            onClick={onFit}
-            className="resume-dock-btn"
-            aria-label="适应画布"
-          />
-        </Tooltip>
-
-        <Button type="text" size="small" onClick={onCenter} className="resume-dock-btn text-xs tabular-nums">
-          {ready ? `${Math.round(scale * 100)}%` : '适配中'}
-        </Button>
-      </div>
-    </div>
-  )
+function clampEditorPanelWidth(value: number) {
+  return clamp(Math.round(value), EDITOR_PANEL_WIDTH_MIN, resolveEditorPanelWidthMax())
 }
 
 export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilderClientProps) {
   const router = useRouter()
   const { auth, ensureAuthenticated } = useAuthSnapshot({ eager: true })
+  const builderScopeRef = useRef<HTMLDivElement | null>(null)
   const previewContentRef = useRef<HTMLDivElement>(null)
   const previewViewportRef = useRef<HTMLDivElement | null>(null)
   const sidePanelScrollRef = useRef<HTMLDivElement | null>(null)
   const previewScaleRef = useRef(PREVIEW_INITIAL_SCALE)
   const initialPreviewScaleRef = useRef(PREVIEW_INITIAL_SCALE)
-  const previewAutoFitDoneKeyRef = useRef('')
+  const previewHasInitialFitRef = useRef(false)
   const previewPendingScrollTopRef = useRef<number | null>(null)
   const previewContentHeightRef = useRef(0)
 
@@ -4076,13 +3228,10 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
   const saveNow = useResumeBuilderStore(state => state.saveNow)
   const saveState = useResumeBuilderStore(state => state.save)
 
-  const [activeTool, setActiveTool] = useState<BuilderTool>('sections')
-  const [theme, setTheme] = useState<'light' | 'dark'>('light')
+  const [activeTool, setActiveTool] = useState<ActiveBuilderTool>('typesetting')
   const [exporting, setExporting] = useState(false)
   const [fillStrategy, setFillStrategy] = useState<'overwrite' | 'preserve'>('overwrite')
-  const [sideToolsExpanded, setSideToolsExpanded] = useState(false)
   const [sidePanelScrolling, setSidePanelScrolling] = useState(false)
-  const [sidebarWidth, setSidebarWidth] = useState(SIDEBAR_DEFAULT_WIDTH)
   const [resumeTitle, setResumeTitle] = useState(initialResume.title)
   const [isSavingTitle, setIsSavingTitle] = useState(false)
   const [spaceZoomActive, setSpaceZoomActive] = useState(false)
@@ -4090,21 +3239,21 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
   const [previewAutoFitReady, setPreviewAutoFitReady] = useState(false)
   const [previewScale, setPreviewScale] = useState(PREVIEW_INITIAL_SCALE)
   const [previewContentHeight, setPreviewContentHeight] = useState(0)
-  const [smartPreviewFitRevision, setSmartPreviewFitRevision] = useState(0)
+  const [editorPanelWidth, setEditorPanelWidth] = useState(EDITOR_PANEL_WIDTH_DEFAULT)
   const [aiPreviewState, setAiPreviewState] = useState<AIPreviewState | null>(null)
   const [aiPreviewActionLoading, setAiPreviewActionLoading] = useState<'new_version' | 'overwrite' | 'discard' | null>(null)
   const [resolvedDraftId, setResolvedDraftId] = useState<string | null>(null)
+  const [heightDebugSnapshot, setHeightDebugSnapshot] = useState<HeightDebugSnapshot | null>(null)
   const [editorFocusRequest, setEditorFocusRequest] = useState<EditorFocusRequest | null>(null)
   const [authModalOpen, setAuthModalOpen] = useState(false)
   const focusRequestCounterRef = useRef(0)
+  const editorPanelResizeRef = useRef<{ pointerId: number; startX: number; startWidth: number } | null>(null)
+  const editorPanelWidthLiveRef = useRef(EDITOR_PANEL_WIDTH_DEFAULT)
+  const editorPanelResizingRef = useRef(false)
+  const editorPanelWidthHydratedRef = useRef(false)
   const restoredAuthDraftRef = useRef(false)
   const resumeTitleRef = useRef(initialResume.title)
   const sidePanelScrollTimerRef = useRef<number | null>(null)
-  const sidebarResizingRef = useRef<{
-    pointerId: number
-    startX: number
-    startWidth: number
-  } | null>(null)
   const isGuestDraft = initialResume.id.startsWith('guest-')
   const isTranslateCompareMode = activeTool === 'ai' && aiPreviewState?.intent === 'translate_resume'
   const activeAIDraftId = activeTool === 'ai' ? aiPreviewState?.draftId : undefined
@@ -4117,9 +3266,6 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
   const comparePreviewData = aiSmartOnePage?.effectiveData || aiPreviewState?.data || null
   const previewRenderSmartState = activeTool === 'ai' && aiSmartOnePage ? aiSmartOnePage : baseSmartOnePage
   const previewRenderData = previewRenderSmartState.effectiveData
-  const smartPreviewActive =
-    previewRenderSmartState.active ||
-    (isTranslateCompareMode && (baseSmartOnePage.active || Boolean(aiSmartOnePage?.active)))
   const basePreviewPageCount = useMemo(() => estimateTemplatePageCountForData(basePreviewData), [basePreviewData])
   const previewRenderPageCount = useMemo(
     () => estimateTemplatePageCountForData(previewRenderData),
@@ -4138,9 +3284,9 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
   const previewFitKey = useMemo(() => {
     if (!initialized) return `${initialResume.id}:0`
     if (isTranslateCompareMode && aiPreviewState) {
-      return `${initialResume.id}:compare:${basePreviewPageCount}:${comparePreviewPageCount}:${basePreviewFitFingerprint}:${comparePreviewFitFingerprint}:${smartPreviewFitRevision}`
+      return `${initialResume.id}:compare:${basePreviewPageCount}:${comparePreviewPageCount}:${basePreviewFitFingerprint}:${comparePreviewFitFingerprint}`
     }
-    return `${initialResume.id}:${previewRenderPageCount}:${previewRenderFitFingerprint}:${smartPreviewActive ? smartPreviewFitRevision : 0}`
+    return `${initialResume.id}:${previewRenderPageCount}:${previewRenderFitFingerprint}`
   }, [
     aiPreviewState,
     basePreviewFitFingerprint,
@@ -4152,20 +3298,27 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
     isTranslateCompareMode,
     previewRenderFitFingerprint,
     previewRenderPageCount,
-    smartPreviewActive,
-    smartPreviewFitRevision,
   ])
   const previewScaledHeight = Math.max(previewContentHeight * previewScale, 0)
   const previewScrollSpaceHeight = previewScaledHeight + PREVIEW_SCROLL_VERTICAL_PADDING * 2
-  const sidePanelWidth = sidebarWidth + (sideToolsExpanded ? SIDE_TOOLS_WIDTH_DELTA : 0)
+  const applyEditorPanelWidthVar = useCallback((value: number) => {
+    const scope = builderScopeRef.current
+    if (!scope) return
+    scope.style.setProperty('--resume-editor-panel-width', `${value}px`)
+  }, [])
+
   const handlePreviewNavigate = useCallback((target: PreviewNavigationTarget) => {
-    setActiveTool('sections')
     focusRequestCounterRef.current += 1
     setEditorFocusRequest({
       ...target,
       requestId: focusRequestCounterRef.current,
     })
   }, [])
+
+  const handleHeightDebugSnapshot = useCallback((snapshot: HeightDebugSnapshot | null) => {
+    setHeightDebugSnapshot(snapshot)
+  }, [])
+
   const previewDocument = useMemo(() => {
     if (isTranslateCompareMode && aiPreviewState) {
       return (
@@ -4186,14 +3339,10 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
       <ResumeReactivePreview
         data={previewRenderData}
         onNavigate={handlePreviewNavigate}
+        onHeightDebugSnapshot={handleHeightDebugSnapshot}
       />
     )
-  }, [aiPreviewState, basePreviewData, comparePreviewData, handlePreviewNavigate, isTranslateCompareMode, previewRenderData])
-
-  useEffect(() => {
-    if (!initialized || !smartPreviewActive) return
-    setSmartPreviewFitRevision(previous => previous + 1)
-  }, [activeTool, aiPreviewState, data, initialized, smartPreviewActive])
+  }, [aiPreviewState, basePreviewData, comparePreviewData, handleHeightDebugSnapshot, handlePreviewNavigate, isTranslateCompareMode, previewRenderData])
 
   const handlePreviewDraftInCanvas = useCallback((payload: {
     draftId: string
@@ -4333,6 +3482,10 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
     setActiveTool(tool)
   }, [])
 
+  const handleCloseTool = useCallback(() => {
+    setActiveTool(null)
+  }, [])
+
   useEffect(() => {
     if (activeTool !== 'ai' && aiPreviewState) {
       setAiPreviewState(null)
@@ -4344,22 +3497,10 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
     setAiPreviewState(null)
     setAiPreviewActionLoading(null)
     setResolvedDraftId(null)
+    setHeightDebugSnapshot(null)
+    previewHasInitialFitRef.current = false
+    setPreviewAutoFitReady(false)
   }, [initialResume.id])
-
-  const toggleSideToolsExpanded = useCallback(() => {
-    setSideToolsExpanded(previous => {
-      const next = !previous
-      if (typeof window !== 'undefined') {
-        window.localStorage.setItem(SIDE_TOOLS_EXPANDED_STORAGE_KEY, next ? '1' : '0')
-      }
-      return next
-    })
-  }, [])
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    setSideToolsExpanded(window.localStorage.getItem(SIDE_TOOLS_EXPANDED_STORAGE_KEY) === '1')
-  }, [])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -4510,14 +3651,8 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
 
   const handlePreviewCenter = useCallback(() => {
     setPreviewAutoFitReady(true)
-    const nextScale = initialPreviewScaleRef.current
-    previewScaleRef.current = nextScale
-    setPreviewScale(nextScale)
-    const viewport = previewViewportRef.current
-    const nextScrollSpaceHeight = previewContentHeightRef.current * nextScale + PREVIEW_SCROLL_VERTICAL_PADDING * 2
-    const maxScrollTop = resolvePreviewScrollMax(viewport, nextScrollSpaceHeight)
-    previewPendingScrollTopRef.current = clamp(PREVIEW_SCROLL_VERTICAL_PADDING, 0, maxScrollTop)
-  }, [])
+    void fitPreviewToHeight()
+  }, [fitPreviewToHeight])
 
   useEffect(() => {
     previewScaleRef.current = previewScale
@@ -4557,11 +3692,14 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
   }, [previewFitKey])
 
   useEffect(() => {
-    setPreviewAutoFitReady(false)
+    if (!previewHasInitialFitRef.current) {
+      setPreviewAutoFitReady(false)
+    }
   }, [previewFitKey])
 
   useEffect(() => {
-    if (previewAutoFitDoneKeyRef.current === previewFitKey) return
+    if (!initialized) return
+    if (previewHasInitialFitRef.current) return
     if (previewContentHeight <= 0) return
 
     let cancelled = false
@@ -4569,16 +3707,14 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
     void (async () => {
       const fitted = await fitPreviewToHeight()
       if (cancelled) return
-      if (fitted) {
-        previewAutoFitDoneKeyRef.current = previewFitKey
-      }
+      previewHasInitialFitRef.current = fitted
       setPreviewAutoFitReady(true)
     })()
 
     return () => {
       cancelled = true
     }
-  }, [fitPreviewToHeight, previewContentHeight, previewFitKey])
+  }, [fitPreviewToHeight, initialized, previewContentHeight, previewFitKey])
 
   useEffect(() => {
     const viewport = previewViewportRef.current
@@ -4736,18 +3872,78 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
     document.body.classList.add('resume-builder-mono')
     return () => {
       document.body.classList.remove('resume-builder-mono')
+      document.body.classList.remove('resume-editor-panel-resizing')
     }
   }, [])
 
   useEffect(() => {
-    const nextTheme = resolveThemePreference()
-    setTheme(currentTheme => (currentTheme === nextTheme ? currentTheme : nextTheme))
+    if (typeof document === 'undefined') return
+    document.documentElement.setAttribute('data-theme', 'dark')
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(THEME_STORAGE_KEY, 'dark')
+    }
   }, [])
 
   useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const stored = window.localStorage.getItem(EDITOR_PANEL_WIDTH_STORAGE_KEY)
+    let nextWidth = clampEditorPanelWidth(EDITOR_PANEL_WIDTH_DEFAULT)
+    if (stored) {
+      const parsed = Number.parseInt(stored, 10)
+      if (Number.isFinite(parsed)) {
+        nextWidth = clampEditorPanelWidth(parsed)
+      }
+    }
+
+    editorPanelWidthLiveRef.current = nextWidth
+    applyEditorPanelWidthVar(nextWidth)
+    setEditorPanelWidth(nextWidth)
+    editorPanelWidthHydratedRef.current = true
+  }, [applyEditorPanelWidthVar])
+
+  useEffect(() => {
+    editorPanelWidthLiveRef.current = editorPanelWidth
+    applyEditorPanelWidthVar(editorPanelWidth)
+  }, [applyEditorPanelWidthVar, editorPanelWidth])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (!editorPanelWidthHydratedRef.current) return
+
+    const nextWidth = clampEditorPanelWidth(editorPanelWidth)
+    if (nextWidth !== editorPanelWidth) {
+      setEditorPanelWidth(nextWidth)
+      return
+    }
+
+    window.localStorage.setItem(EDITOR_PANEL_WIDTH_STORAGE_KEY, String(nextWidth))
+  }, [editorPanelWidth])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const onResize = () => {
+      const nextWidth = clampEditorPanelWidth(editorPanelWidthLiveRef.current)
+      editorPanelWidthLiveRef.current = nextWidth
+      applyEditorPanelWidthVar(nextWidth)
+      setEditorPanelWidth(previous => (previous === nextWidth ? previous : nextWidth))
+    }
+
+    window.addEventListener('resize', onResize)
     return () => {
+      window.removeEventListener('resize', onResize)
+    }
+  }, [applyEditorPanelWidthVar])
+
+  useEffect(() => {
+    return () => {
+      editorPanelResizingRef.current = false
       if (sidePanelScrollTimerRef.current) {
         window.clearTimeout(sidePanelScrollTimerRef.current)
+      }
+      if (typeof document !== 'undefined') {
+        document.body.classList.remove('resume-editor-panel-resizing')
       }
     }
   }, [])
@@ -4786,32 +3982,52 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
     }
   }, [previewInteractionActive])
 
-  const handleSidebarResizeStart = (event: ReactPointerEvent<HTMLDivElement>) => {
+  const handleEditorPanelResizeStart = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
+    if (typeof window !== 'undefined' && window.innerWidth <= 1120) {
+      return
+    }
+
     preventDefaultIfCancelable(event)
-    sidebarResizingRef.current = {
+    event.stopPropagation()
+    editorPanelResizingRef.current = true
+    editorPanelResizeRef.current = {
       pointerId: event.pointerId,
       startX: event.clientX,
-      startWidth: sidebarWidth,
+      startWidth: editorPanelWidthLiveRef.current,
     }
     event.currentTarget.setPointerCapture(event.pointerId)
-  }
+    if (typeof document !== 'undefined') {
+      document.body.classList.add('resume-editor-panel-resizing')
+    }
+  }, [])
 
-  const handleSidebarResizeMove = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if (!sidebarResizingRef.current || sidebarResizingRef.current.pointerId !== event.pointerId) return
+  const handleEditorPanelResizeMove = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
+    const drag = editorPanelResizeRef.current
+    if (!drag || drag.pointerId !== event.pointerId) return
+
     preventDefaultIfCancelable(event)
-    const deltaX = event.clientX - sidebarResizingRef.current.startX
-    const rawWidth = sidebarResizingRef.current.startWidth + deltaX
-    const nextWidth = clamp(rawWidth, SIDEBAR_WIDTH_MIN, SIDEBAR_WIDTH_MAX)
-    setSidebarWidth(nextWidth)
-  }
+    event.stopPropagation()
+    const deltaX = event.clientX - drag.startX
+    const nextWidth = clampEditorPanelWidth(drag.startWidth - deltaX)
+    if (nextWidth === editorPanelWidthLiveRef.current) return
+    editorPanelWidthLiveRef.current = nextWidth
+    applyEditorPanelWidthVar(nextWidth)
+  }, [applyEditorPanelWidthVar])
 
-  const handleSidebarResizeEnd = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if (!sidebarResizingRef.current || sidebarResizingRef.current.pointerId !== event.pointerId) return
+  const handleEditorPanelResizeEnd = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
+    const drag = editorPanelResizeRef.current
+    if (!drag || drag.pointerId !== event.pointerId) return
+
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId)
     }
-    sidebarResizingRef.current = null
-  }
+    editorPanelResizingRef.current = false
+    editorPanelResizeRef.current = null
+    setEditorPanelWidth(previous => (previous === editorPanelWidthLiveRef.current ? previous : editorPanelWidthLiveRef.current))
+    if (typeof document !== 'undefined') {
+      document.body.classList.remove('resume-editor-panel-resizing')
+    }
+  }, [])
 
   const handleFill = async (strategy: 'overwrite' | 'preserve') => {
     if (!(await ensureAuthForAction())) {
@@ -4824,7 +4040,7 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
     }
 
     applyDataSource(strategy, selectedDataSourceId)
-    Message.success(strategy === 'overwrite' ? '数据源内容已覆盖填充' : '数据源内容已补充填充')
+    Message.success(strategy === 'overwrite' ? '已按数据源覆盖当前简历文案' : '已按数据源补全当前简历空白内容')
   }
 
   const saveResumeTitle = useCallback(async () => {
@@ -4947,7 +4163,7 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
     return () => window.removeEventListener('keydown', onKeydown, { capture: true })
   }, [handleManualSave])
 
-  const exportResumePagesAsImages = async () => {
+  const exportResumePagesAsImage = async (format: ResumeImageExportFormat) => {
     try {
       await ensureFontsReady()
       const snapdom = await loadSnapdom()
@@ -4966,7 +4182,7 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
       const normalizedTitle = (resumeTitleRef.current || initialResume.title || 'resume').trim().replace(/[^\w\u4e00-\u9fa5-]+/g, '-') || 'resume'
       const renderOptions: SnapdomOptions = {
         backgroundColor: '#ffffff',
-        scale: 2,
+        scale: IMAGE_EXPORT_RENDER_SCALE,
         embedFonts: true,
         cache: 'auto',
       }
@@ -5013,26 +4229,32 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
           drawTop += canvas.height
         })
 
-        const blob = await new Promise<Blob | null>(resolve => stitchedCanvas.toBlob(resolve, 'image/png', 1))
+        const mimeType = format === 'jpg' ? 'image/jpeg' : 'image/png'
+        const quality = format === 'jpg' ? 0.92 : 1
+        const blob = await new Promise<Blob | null>(resolve => stitchedCanvas.toBlob(resolve, mimeType, quality))
         if (!blob) {
           throw new Error('图片生成失败')
         }
 
-        const filename = capturePages.length === 1 ? `${normalizedTitle}.png` : `${normalizedTitle}-continuous.png`
+        const filename = capturePages.length === 1
+          ? `${normalizedTitle}.${format}`
+          : `${normalizedTitle}-continuous.${format}`
         downloadBlob(blob, filename)
-        Message.success(capturePages.length === 1 ? '已下载图片' : '已下载长图')
+        const formatLabel = format.toUpperCase()
+        Message.success(capturePages.length === 1 ? `已下载 ${formatLabel}` : `已下载 ${formatLabel} 长图`)
       } finally {
         captureHost.remove()
       }
     } catch (error) {
-      Message.error(error instanceof Error ? error.message : '下载图片失败')
+      Message.error(error instanceof Error ? error.message : `下载 ${format.toUpperCase()} 失败`)
     }
   }
 
   const exportResumePagesAsPdf = async () => {
+    const profiler = createExportProfiler('PDF export timing')
     try {
-      await ensureFontsReady()
-      const [snapdom, JsPDF] = await Promise.all([loadSnapdom(), loadJsPdf()])
+      await profiler.measure('fonts.ready', () => ensureFontsReady())
+      const snapdom = await profiler.measure('load snapdom', () => loadSnapdom())
       const previewRoot = previewContentRef.current?.querySelector<HTMLElement>('.resume-preview-root')
       if (!previewRoot) {
         Message.error('预览尚未准备完成，请稍后重试')
@@ -5048,7 +4270,7 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
       const normalizedTitle = (resumeTitleRef.current || initialResume.title || 'resume').trim().replace(/[^\w\u4e00-\u9fa5-]+/g, '-') || 'resume'
       const renderOptions: SnapdomOptions = {
         backgroundColor: '#ffffff',
-        scale: 2,
+        scale: PDF_EXPORT_RENDER_SCALE,
         embedFonts: true,
         cache: 'auto',
       }
@@ -5056,57 +4278,98 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
         return snapdom.toCanvas(page, renderOptions)
       }
 
-      const { captureHost, captureRoot } = createOffscreenExportCaptureRoot(previewRoot)
+      const { captureHost, captureRoot } = await profiler.measure('clone preview root', () => createOffscreenExportCaptureRoot(previewRoot))
       try {
-        await nextAnimationFrame()
-        await nextAnimationFrame()
+        await profiler.measure('wait 2 animation frames', async () => {
+          await nextAnimationFrame()
+          await nextAnimationFrame()
+        })
 
-        const capturePages = Array.from(captureRoot.querySelectorAll<HTMLElement>('[data-template]'))
+        const capturePages = await profiler.measure(
+          'query capture pages',
+          () => Array.from(captureRoot.querySelectorAll<HTMLElement>('[data-template]')),
+        )
         if (capturePages.length === 0) {
           throw new Error('PDF 生成失败')
         }
 
         const renderedCanvases: HTMLCanvasElement[] = []
-        for (const page of capturePages) {
-          const canvas = await renderPageToCanvas(page)
+        const pageStats: PdfExportPageStat[] = []
+        for (const [index, page] of capturePages.entries()) {
+          const canvas = await profiler.measure(`page ${index + 1} toCanvas`, () => renderPageToCanvas(page))
           renderedCanvases.push(canvas)
         }
         if (renderedCanvases.length === 0) {
           throw new Error('PDF 生成失败')
         }
 
-        const firstCanvas = renderedCanvases[0]
-        const firstOrientation: JsPdfPageOrientation = firstCanvas.width >= firstCanvas.height ? 'landscape' : 'portrait'
-        const pdf = new JsPDF({
-          orientation: firstOrientation,
-          unit: 'px',
-          format: [firstCanvas.width, firstCanvas.height],
-          compress: true,
-        })
-
-        renderedCanvases.forEach((canvas, index) => {
-          if (index > 0) {
-            const orientation: JsPdfPageOrientation = canvas.width >= canvas.height ? 'landscape' : 'portrait'
-            pdf.addPage([canvas.width, canvas.height], orientation)
+        const workerPages: ResumePdfWorkerPagePayload[] = []
+        const pageFormat = previewRenderData.metadata.page.format
+        for (const [index, canvas] of renderedCanvases.entries()) {
+          const imageBlob = await profiler.measure(`page ${index + 1} toBlob(${PDF_EXPORT_IMAGE_FORMAT})`, () =>
+            canvasToBlob(canvas, PDF_EXPORT_IMAGE_MIME, PDF_EXPORT_IMAGE_QUALITY),
+          )
+          if (!imageBlob) {
+            throw new Error(`第 ${index + 1} 页图片编码失败`)
           }
+          const imageBuffer = await profiler.measure(`page ${index + 1} blob.arrayBuffer`, () => imageBlob.arrayBuffer())
+          const pageSizeMm = resolvePdfPageSizeMm(canvas, pageFormat)
+          pageStats.push({
+            page: index + 1,
+            canvasWidth: canvas.width,
+            canvasHeight: canvas.height,
+            pixelCount: canvas.width * canvas.height,
+            blobBytes: imageBlob.size,
+            pageWidthMm: pageSizeMm.widthMm,
+            pageHeightMm: pageSizeMm.heightMm,
+          })
+          workerPages.push({
+            width: canvas.width,
+            height: canvas.height,
+            widthMm: pageSizeMm.widthMm,
+            heightMm: pageSizeMm.heightMm,
+            format: PDF_EXPORT_IMAGE_FORMAT,
+            buffer: imageBuffer,
+          })
+        }
 
-          const pageWidth = pdf.internal.pageSize.getWidth()
-          const pageHeight = pdf.internal.pageSize.getHeight()
-          const imageData = canvas.toDataURL('image/png', 1)
-          pdf.addImage(imageData, 'PNG', 0, 0, pageWidth, pageHeight, undefined, 'FAST')
+        const workerResult = await profiler.measure('worker build pdf', () => {
+          return buildPdfInWorker({
+            filename: `${normalizedTitle}.pdf`,
+            pages: workerPages,
+          })
         })
-
-        pdf.save(`${normalizedTitle}.pdf`)
-        Message.success(`已下载 PDF（${renderedCanvases.length} 页）`)
+        workerResult.timings.forEach(entry => {
+          profiler.record(`worker ${entry.step}`, entry.durationMs)
+        })
+        await profiler.measure('trigger browser download', () => {
+          downloadBlob(workerResult.blob, workerResult.filename)
+        })
+        const totalDurationMs = profiler.flush({
+          pageCount: workerPages.length,
+          filename: workerResult.filename,
+          pageStats,
+          workerPdfBytes: workerResult.size,
+          pdfImage: {
+            format: PDF_EXPORT_IMAGE_FORMAT,
+            quality: PDF_EXPORT_IMAGE_QUALITY,
+            renderScale: PDF_EXPORT_RENDER_SCALE,
+          },
+        })
+        Message.success(`已下载 PDF（${renderedCanvases.length} 页，${formatDurationMs(totalDurationMs)}，详情见控制台）`)
       } finally {
         captureHost.remove()
       }
     } catch (error) {
+      profiler.flush({
+        status: 'failed',
+        error: error instanceof Error ? error.message : 'unknown',
+      })
       Message.error(error instanceof Error ? error.message : '下载 PDF 失败')
     }
   }
 
-  const handleDownloadImage = async () => {
+  const handleDownloadImage = async (format: ResumeImageExportFormat) => {
     if (exporting) return
     if (!(await ensureAuthForAction())) {
       return
@@ -5114,7 +4377,7 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
 
     setExporting(true)
     try {
-      await exportResumePagesAsImages()
+      await exportResumePagesAsImage(format)
     } finally {
       setExporting(false)
     }
@@ -5134,9 +4397,55 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
     }
   }
 
+  const toolPanelContent =
+    activeTool === null ? null : activeTool === 'fill' ? (
+      <div className="resume-workbench-stack">
+        <FillToolPanel
+          dataSources={dataSources}
+          selectedDataSourceId={selectedDataSourceId}
+          fillStrategy={fillStrategy}
+          onDataSourceChange={setSelectedDataSourceId}
+          onFillStrategyChange={setFillStrategy}
+          onFill={strategy => {
+            void handleFill(strategy)
+          }}
+        />
+      </div>
+    ) : activeTool === 'ai' ? (
+      <AIChatPanel
+        resumeId={initialResume.id}
+        resumeTitle={resumeTitle}
+        isGuestDraft={isGuestDraft}
+        resolvedDraftId={resolvedDraftId}
+        onClose={handleCloseTool}
+        onPreviewDraftInCanvas={handlePreviewDraftInCanvas}
+        onCardPreviewRequest={payload => {
+          void handleCardPreviewRequest(payload)
+        }}
+      />
+    ) : activeTool === 'height-debug' ? (
+      <div className="resume-workbench-stack">
+        <HeightDebugPanel snapshot={heightDebugSnapshot} />
+      </div>
+    ) : (
+      <div className="resume-workbench-stack">
+        <LayoutAndStylePanel pane={activeTool} smartOnePage={baseSmartOnePage} />
+      </div>
+    )
+
+  const resumeCompleteness = useMemo(() => computeResumeCompleteness(data), [data])
+  const editorPanelContent = (
+    <IntegratedSectionsEditor
+      focusRequest={editorFocusRequest}
+      completeness={resumeCompleteness}
+      scrollContainerRef={sidePanelScrollRef}
+      onOpenAIDiagnosis={() => handleSelectTool('ai')}
+    />
+  )
+
   return (
     <div className="h-full overflow-hidden">
-      <div className="resume-builder-scope h-full flex flex-col overflow-hidden">
+      <div ref={builderScopeRef} className="resume-builder-scope h-full flex flex-col overflow-hidden">
         <ResumeBuilderToolbar
           resumeTitle={resumeTitle}
           saveStatus={<SaveStatusTag />}
@@ -5145,234 +4454,53 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
           onResumeTitleChange={setResumeTitle}
           onResumeTitleBlur={() => void saveResumeTitle()}
           downloadLoading={exporting}
-          onDownloadImage={() => void handleDownloadImage()}
+          onDownloadPng={() => void handleDownloadImage('png')}
+          onDownloadJpg={() => void handleDownloadImage('jpg')}
           onDownloadPdf={() => void handleDownloadPdf()}
           onSave={() => void handleManualSave()}
         />
-
-      <div className="flex-1 flex overflow-hidden">
-        <aside
-          className="resume-side-panel flex flex-col no-print flex-shrink-0"
-          style={{ width: sidePanelWidth }}
-        >
-          <div className={joinClassNames('resume-side-shell', sideToolsExpanded && 'is-tools-expanded')}>
-            <div className={joinClassNames('resume-side-tools', sideToolsExpanded && 'is-expanded')}>
-              <div className="resume-side-tool-group">
-                <button
-                  type="button"
-                  className="resume-side-tool-btn resume-side-tool-toggle"
-                  onClick={toggleSideToolsExpanded}
-                  aria-label={sideToolsExpanded ? '收起功能栏' : '展开功能栏'}
-                >
-                  {sideToolsExpanded ? <IconSidebarClose /> : <IconSidebarOpen />}
-                </button>
-              </div>
-              <div className="resume-side-tools-divider" />
-
-              <div className="resume-side-tool-group">
-                <SideToolHint label="内容编辑" active={activeTool === 'sections'}>
-                  <button
-                    type="button"
-                    className="resume-side-tool-btn"
-                    onClick={() => handleSelectTool('sections')}
-                    aria-label="内容编辑"
-                  >
-                    <FilePenLine size={16} />
-                  </button>
-                </SideToolHint>
-                <SideToolHint label="数据填充" active={activeTool === 'fill'}>
-                  <button
-                    type="button"
-                    className="resume-side-tool-btn"
-                    onClick={() => handleSelectTool('fill')}
-                    aria-label="数据填充"
-                  >
-                    <PenLine size={16} />
-                  </button>
-                </SideToolHint>
-                <SideToolHint label="AI 助手" active={activeTool === 'ai'}>
-                  <button
-                    type="button"
-                    className="resume-side-tool-btn resume-side-tool-btn-ai"
-                    onClick={() => handleSelectTool('ai')}
-                    aria-label="AI 助手"
-                  >
-                    <BrandFlowerIcon className="resume-side-tool-ai-logo" />
-                  </button>
-                </SideToolHint>
-              </div>
-              <div className="resume-side-tools-divider" />
-
-              <div className="resume-side-tool-group">
-                <SideToolHint label="模板切换" active={activeTool === 'template'}>
-                  <button
-                    type="button"
-                    className="resume-side-tool-btn"
-                    onClick={() => handleSelectTool('template')}
-                    aria-label="模板切换"
-                  >
-                    <LayoutTemplate size={16} />
-                  </button>
-                </SideToolHint>
-                <SideToolHint label="排版设置" active={activeTool === 'typesetting'}>
-                  <button
-                    type="button"
-                    className="resume-side-tool-btn"
-                    onClick={() => handleSelectTool('typesetting')}
-                    aria-label="排版设置"
-                  >
-                    <FileText size={16} />
-                  </button>
-                </SideToolHint>
-              </div>
-
-              <div className="resume-side-tools-spacer" />
-
-              <SideToolHint label={theme === 'dark' ? '切换浅色' : '切换深色'}>
-                <button
-                  type="button"
-                  className="resume-side-tool-btn"
-                  onClick={() => {
-                    const nextTheme = theme === 'dark' ? 'light' : 'dark'
-                    setTheme(nextTheme)
-                    document.documentElement.setAttribute('data-theme', nextTheme)
-                    if (typeof window !== 'undefined') {
-                      window.localStorage.setItem(THEME_STORAGE_KEY, nextTheme)
-                    }
-                  }}
-                  aria-label={theme === 'dark' ? '切换浅色' : '切换深色'}
-                  >
-                    {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-                  </button>
-              </SideToolHint>
-            </div>
-
-            <div className="resume-side-content">
-              <div
-                ref={sidePanelScrollRef}
-                className={joinClassNames(
-                  'resume-scroll-shell',
-                  sidePanelScrolling && 'is-scrolling',
-                  activeTool === 'ai' && 'is-ai-panel',
-                )}
-                onScroll={handleSidePanelScroll}
-              >
-                <div className={joinClassNames('resume-side-panel-body', activeTool === 'ai' ? 'is-ai-panel' : 'p-4')}>
-                  {activeTool === 'sections' ? (
-                    <IntegratedSectionsEditor focusRequest={editorFocusRequest} scrollContainerRef={sidePanelScrollRef} />
-                  ) : null}
-                  {activeTool === 'fill' ? (
-                    <FillToolPanel
-                      dataSources={dataSources}
-                      selectedDataSourceId={selectedDataSourceId}
-                      fillStrategy={fillStrategy}
-                      onDataSourceChange={setSelectedDataSourceId}
-                      onFillStrategyChange={setFillStrategy}
-                      onFill={strategy => {
-                        void handleFill(strategy)
-                      }}
-                    />
-                  ) : null}
-                  {activeTool === 'ai' ? (
-                    <AIChatPanel
-                      resumeId={initialResume.id}
-                      resumeTitle={resumeTitle}
-                      isGuestDraft={isGuestDraft}
-                      resolvedDraftId={resolvedDraftId}
-                      onPreviewDraftInCanvas={handlePreviewDraftInCanvas}
-                      onCardPreviewRequest={payload => {
-                        void handleCardPreviewRequest(payload)
-                      }}
-                    />
-                  ) : null}
-                  {activeTool !== 'sections' && activeTool !== 'fill' && activeTool !== 'ai'
-                    ? <LayoutAndStylePanel pane={activeTool} smartOnePage={baseSmartOnePage} />
-                    : null}
-                </div>
-              </div>
-            </div>
-          </div>
-        </aside>
-        <div
-          className="resume-side-resizer no-print"
-          role="separator"
-          aria-label="调整侧边栏宽度"
-          onPointerDown={handleSidebarResizeStart}
-          onPointerMove={handleSidebarResizeMove}
-          onPointerUp={handleSidebarResizeEnd}
-          onPointerCancel={handleSidebarResizeEnd}
-        />
-
-        <div
-          className="resume-preview-pane relative flex flex-1 flex-col overflow-hidden"
-          onPointerEnter={() => setPreviewInteractionActive(true)}
-          onPointerDown={() => setPreviewInteractionActive(true)}
-          onPointerLeave={() => {
+        <ResumeOverlayWorkbench
+          activeTool={activeTool}
+          sidePanelScrolling={sidePanelScrolling}
+          onSelectTool={handleSelectTool}
+          onCloseTool={handleCloseTool}
+          onSidePanelScroll={handleSidePanelScroll}
+          toolPanelContent={toolPanelContent}
+          editorContent={editorPanelContent}
+          onEditorPanelResizeStart={handleEditorPanelResizeStart}
+          onEditorPanelResizeMove={handleEditorPanelResizeMove}
+          onEditorPanelResizeEnd={handleEditorPanelResizeEnd}
+          previewContent={previewDocument}
+          previewContentRef={previewContentRef}
+          previewViewportRef={previewViewportRef}
+          previewScale={previewScale}
+          previewScrollSpaceHeight={previewScrollSpaceHeight}
+          verticalPadding={PREVIEW_SCROLL_VERTICAL_PADDING}
+          previewReady={previewAutoFitReady}
+          aiPreviewVisible={activeTool === 'ai' && Boolean(activeAIDraftId)}
+          aiPreviewActionLoading={aiPreviewActionLoading}
+          onRunPreviewDraftAction={action => {
+            void runPreviewDraftAction(action)
+          }}
+          onPreviewPointerEnter={() => setPreviewInteractionActive(true)}
+          onPreviewPointerDown={() => setPreviewInteractionActive(true)}
+          onPreviewPointerLeave={() => {
             setPreviewInteractionActive(false)
             setSpaceZoomActive(false)
           }}
-        >
-          {activeTool === 'ai' && activeAIDraftId ? (
-            <div className="resume-ai-preview-actions no-print">
-              <button
-                type="button"
-                className="resume-ai-mini-btn"
-                disabled={Boolean(aiPreviewActionLoading)}
-                onClick={() => {
-                  void runPreviewDraftAction('new_version')
-                }}
-              >
-                {aiPreviewActionLoading === 'new_version' ? '保存中...' : '确认保存'}
-              </button>
-              <button
-                type="button"
-                className="resume-ai-mini-btn is-outline"
-                disabled={Boolean(aiPreviewActionLoading)}
-                onClick={() => {
-                  void runPreviewDraftAction('overwrite')
-                }}
-              >
-                {aiPreviewActionLoading === 'overwrite' ? '覆盖中...' : '覆盖原版'}
-              </button>
-              <button
-                type="button"
-                className="resume-ai-mini-btn is-ghost"
-                disabled={Boolean(aiPreviewActionLoading)}
-                onClick={() => {
-                  void runPreviewDraftAction('discard')
-                }}
-              >
-                {aiPreviewActionLoading === 'discard' ? '处理中...' : '放弃草稿'}
-              </button>
-            </div>
-          ) : null}
-          <div className="flex-1 overflow-hidden">
-            <ResumePreviewCanvas
-              content={previewDocument}
-              previewContentRef={previewContentRef}
-              previewViewportRef={previewViewportRef}
-              previewScale={previewScale}
-              previewScrollSpaceHeight={previewScrollSpaceHeight}
-              verticalPadding={PREVIEW_SCROLL_VERTICAL_PADDING}
-              ready={previewAutoFitReady}
-            />
-            <ResumePreviewDock
-              scale={previewScale}
-              ready={previewAutoFitReady}
-              onZoomIn={handlePreviewZoomIn}
-              onZoomOut={handlePreviewZoomOut}
-              onCenter={handlePreviewCenter}
-              onFit={() => void fitPreviewToHeight()}
-            />
-          </div>
-        </div>
-      </div>
-      <AuthRequiredModal
-        open={authModalOpen}
-        onClose={() => setAuthModalOpen(false)}
-        redirectPath={typeof window !== 'undefined' ? window.location.pathname + window.location.search : '/resume/templates'}
-        onBeforeLogin={cacheDraftBeforeLoginRedirect}
-      />
+          onZoomIn={handlePreviewZoomIn}
+          onZoomOut={handlePreviewZoomOut}
+          onCenter={handlePreviewCenter}
+          onFit={() => {
+            void fitPreviewToHeight()
+          }}
+        />
+        <AuthRequiredModal
+          open={authModalOpen}
+          onClose={() => setAuthModalOpen(false)}
+          redirectPath={typeof window !== 'undefined' ? window.location.pathname + window.location.search : '/resume/templates'}
+          onBeforeLogin={cacheDraftBeforeLoginRedirect}
+        />
       </div>
     </div>
   )

@@ -686,10 +686,15 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
   text-decoration: none;
   color: var(--aura-text-soft);
   font-size: 14px;
+  font: inherit;
   letter-spacing: 0.1em;
+  cursor: pointer;
   transition: color 200ms ease;
 }
 

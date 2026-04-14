@@ -12,9 +12,11 @@ import {
   SendHorizontal,
   Sparkles,
   Trash2,
+  X,
 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { ResumeData } from '@/lib/resume/types'
+import styles from './AIChatPanel.module.css'
 
 type ChatRole = 'user' | 'assistant'
 
@@ -44,6 +46,7 @@ interface AIChatPanelProps {
   resumeTitle: string
   isGuestDraft: boolean
   resolvedDraftId?: string | null
+  onClose?: () => void
   onPreviewDraftInCanvas?: (payload: {
     draftId: string
     sourceResumeId: string
@@ -297,6 +300,7 @@ export function AIChatPanel({
   resumeId,
   isGuestDraft,
   resolvedDraftId,
+  onClose,
   onPreviewDraftInCanvas,
   onCardPreviewRequest,
 }: AIChatPanelProps) {
@@ -878,7 +882,7 @@ export function AIChatPanel({
   }, [input])
 
   return (
-    <div className="resume-ai-chat">
+    <div className={`${styles.panel} resume-ai-chat`}>
       <div className="resume-ai-header">
         <div className="resume-ai-title-wrap">
           <div className="resume-ai-avatar">
@@ -914,6 +918,17 @@ export function AIChatPanel({
           >
             <Trash2 size={15} />
           </button>
+          {onClose ? (
+            <button
+              type="button"
+              className="resume-ai-icon-btn"
+              aria-label="关闭 AI 面板"
+              title="关闭面板"
+              onClick={onClose}
+            >
+              <X size={15} />
+            </button>
+          ) : null}
           {historyPanelOpen ? (
             <div className="resume-ai-history-menu" role="menu" aria-label="历史会话">
               <div className="resume-ai-history-menu-title">历史会话</div>

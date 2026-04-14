@@ -20,6 +20,11 @@ interface ResumeSummary {
   } | null
 }
 
+interface ResumeLimitPayload {
+  max: number | null
+  reached: boolean
+}
+
 const dateFormatter = new Intl.DateTimeFormat('zh-CN', {
   month: 'short',
   day: 'numeric',
@@ -33,6 +38,7 @@ function formatDate(value: string) {
 
 export function ResumesSection() {
   const [resumes, setResumes] = useState<ResumeSummary[]>([])
+  const [resumeLimit, setResumeLimit] = useState<ResumeLimitPayload>({ max: null, reached: false })
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
 
@@ -57,6 +63,10 @@ export function ResumesSection() {
         if (cancelled) return
 
         setResumes(Array.isArray(payload?.resumes) ? (payload.resumes as ResumeSummary[]) : [])
+        setResumeLimit({
+          max: typeof payload?.limit?.max === 'number' ? payload.limit.max : null,
+          reached: Boolean(payload?.limit?.reached),
+        })
       } catch (error) {
         if (cancelled) return
         console.error('Failed to load resumes:', error)
@@ -75,6 +85,7 @@ export function ResumesSection() {
     }
   }, [])
 
+  const creationLimitReached = resumeLimit.reached
   const summaryCards = useMemo(() => {
     const linkedDataSourceCount = new Set(resumes.map(resume => resume.dataSource?.id).filter(Boolean)).size
     const lastUpdated = resumes[0]?.updatedAt ? formatDate(resumes[0].updatedAt) : '暂无'
@@ -115,6 +126,9 @@ export function ResumesSection() {
           </div>
           <p className={styles.sectionDescription}>
             这里集中管理你保存过的简历版本、模板预览和关联数据源。工作台保留总览与跳转，编辑仍进入原有简历编辑器。
+            {creationLimitReached && resumeLimit.max !== null
+              ? ` 当前基础版已达到 ${resumeLimit.max} 份简历上限，升级后可继续创建更多版本。`
+              : ''}
           </p>
         </div>
 
@@ -122,9 +136,12 @@ export function ResumesSection() {
           <Link href="/resume/templates" className={cn(styles.buttonBase, styles.secondaryButton)}>
             模板中心
           </Link>
-          <Link href="/resume/templates" className={cn(styles.buttonBase, styles.primaryButton)}>
+          <Link
+            href={creationLimitReached ? '/pricing' : '/resume/templates'}
+            className={cn(styles.buttonBase, styles.primaryButton)}
+          >
             <FilePlus2 size={16} />
-            新建简历
+            {creationLimitReached ? '升级解锁更多' : '新建简历'}
           </Link>
         </div>
       </header>
@@ -201,8 +218,11 @@ export function ResumesSection() {
                       继续编辑
                       <ArrowUpRight size={15} />
                     </Link>
-                    <Link href="/resume/templates" className={cn(styles.buttonBase, styles.secondaryButton)}>
-                      再建一份
+                    <Link
+                      href={creationLimitReached ? '/pricing' : '/resume/templates'}
+                      className={cn(styles.buttonBase, styles.secondaryButton)}
+                    >
+                      {creationLimitReached ? '升级后再建' : '再建一份'}
                     </Link>
                   </div>
                 </div>
