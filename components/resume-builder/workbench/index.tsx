@@ -2,12 +2,12 @@
 
 import { X } from 'lucide-react'
 import { type ReactNode, type RefObject, type PointerEvent as ReactPointerEvent } from 'react'
-import { BUILDER_TOOL_META, type ActiveBuilderTool, type BuilderTool } from '../types'
-import { ResumeToolRail } from '../ResumeToolRail/ResumeToolRail'
-import { ResumePreviewWorkspace } from '../ResumePreviewWorkspace/ResumePreviewWorkspace'
-import styles from './ResumeOverlayWorkbench.module.scss'
+import { BUILDER_TOOL_META, type ActiveBuilderTool, type BuilderTool } from './types'
+import { ResumeToolRail } from './ResumeToolRail/ResumeToolRail'
+import { ResumePreviewWorkspace } from './ResumePreviewWorkspace/ResumePreviewWorkspace'
+import styles from './index.module.scss'
 
-interface ResumeOverlayWorkbenchProps {
+interface ResumeWorkbenchProps {
   editorPanelWidth: number
   activeTool: ActiveBuilderTool
   sidePanelScrolling: boolean
@@ -38,7 +38,7 @@ interface ResumeOverlayWorkbenchProps {
   onFit: () => void
 }
 
-export function ResumeOverlayWorkbench({
+export function ResumeWorkbench({
   editorPanelWidth,
   activeTool,
   sidePanelScrolling,
@@ -67,7 +67,7 @@ export function ResumeOverlayWorkbench({
   onZoomOut,
   onCenter,
   onFit,
-}: ResumeOverlayWorkbenchProps) {
+}: ResumeWorkbenchProps) {
   const activeToolMeta = activeTool ? BUILDER_TOOL_META[activeTool] : null
   const previewLeftPadding = activeTool ? 430 : 112
 

@@ -1,8 +1,8 @@
 .field {
-  composes: stackXs from '../../panels/shared/PanelControlPrimitives.module.scss';
+  composes: stackXs from '../../workbench/ResumeToolRail/tools/shared/PanelControlPrimitives.module.scss';
 }
 .titleRow {
-  composes: splitBaseline from '../../panels/shared/PanelControlPrimitives.module.scss';
+  composes: splitBaseline from '../../workbench/ResumeToolRail/tools/shared/PanelControlPrimitives.module.scss';
 }
 .field :global(.resume-tool-slider-label) {
   font-size: 12px;

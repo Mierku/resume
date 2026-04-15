@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-15T19:12:53.534Z",
+  "generatedAt": "2026-04-15T19:29:59.363Z",
   "plannedScssFiles": 73,
   "acceptedSnapshotScssFiles": 31,
   "actualScssFiles": 31,
@@ -873,10 +873,10 @@
     },
     {
       "path": "components/resume-builder/builder-theme.scss",
-      "lines": 3585,
+      "lines": 3952,
       "maxBlockDepth": 2,
-      "maxSelectorDepth": 1,
-      "selectorBlockCount": 419,
+      "maxSelectorDepth": 2,
+      "selectorBlockCount": 428,
       "varDefinitions": [
         "--builder-workspace-bg",
         "--builder-panel-bg",
@@ -1133,14 +1133,10 @@
       "repeatedSelectors": [
         {
           "selector": ".resume-builder-scope",
-          "count": 2
+          "count": 11
         },
         {
           "selector": "[data-theme=\"dark\"] .resume-builder-scope",
-          "count": 2
-        },
-        {
-          "selector": ".resume-builder-scope .resume-toolbar-download-spinner",
           "count": 2
         },
         {
@@ -1148,40 +1144,28 @@
           "count": 2
         },
         {
-          "selector": ".resume-builder-scope .resume-item-menu-popover",
+          "selector": ".resume-item-menu-popover",
           "count": 2
         },
         {
-          "selector": ".resume-builder-scope .resume-item-menu-action",
+          "selector": ".resume-item-menu-action",
           "count": 2
         },
         {
           "selector": ".resume-builder-scope .resume-ai-empty-title",
-          "count": 3
+          "count": 2
         },
         {
           "selector": ".resume-builder-scope .resume-ai-empty-desc",
-          "count": 3
-        },
-        {
-          "selector": ".resume-builder-scope .resume-ai-empty-actions",
           "count": 2
         },
         {
           "selector": ".resume-builder-scope .resume-ai-empty-action-label",
-          "count": 3
-        },
-        {
-          "selector": ".resume-builder-scope .resume-style-browser-grid",
-          "count": 2
-        },
-        {
-          "selector": ".resume-builder-scope .resume-style-browser-card.is-wide",
           "count": 2
         }
       ],
-      "selectorComplexityP95": 14,
-      "overrideChainLengthP95": 3
+      "selectorComplexityP95": 10,
+      "overrideChainLengthP95": 2
     },
     {
       "path": "components/resume-builder/controls/ResumeColorPickerControl/ResumeColorPickerControl.module.scss",
@@ -1383,10 +1367,10 @@
     },
     {
       "path": "components/resume-builder/workbench/workbench-layout.scss",
-      "lines": 56,
+      "lines": 62,
       "maxBlockDepth": 2,
-      "maxSelectorDepth": 1,
-      "selectorBlockCount": 6,
+      "maxSelectorDepth": 2,
+      "selectorBlockCount": 8,
       "varDefinitions": [
         "--builder-workspace-bg",
         "--builder-panel-bg",
@@ -1433,7 +1417,12 @@
         "--control-field-bg-hover",
         "--control-field-focus-ring"
       ],
-      "repeatedSelectors": [],
+      "repeatedSelectors": [
+        {
+          "selector": ".resume-builder-scope",
+          "count": 3
+        }
+      ],
       "selectorComplexityP95": 5,
       "overrideChainLengthP95": 2
     },

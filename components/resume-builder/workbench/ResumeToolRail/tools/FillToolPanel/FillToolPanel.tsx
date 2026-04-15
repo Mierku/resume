@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Button, IconRefresh, Option, Select } from '../../primitives'
+import { Button, IconRefresh, Option, Select } from '../../../../primitives'
 
 type FillMode = 'data-source' | 'resume-parse' | 'ai-fill'
 
