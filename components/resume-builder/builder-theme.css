@@ -869,22 +869,6 @@ body.resume-builder-mono .resume-builder-scope .resume-toolbar .resume-toolbar-t
   background: color-mix(in srgb, #b42318 88%, #5c1010);
 }
 
-.resume-builder-scope .resume-ai-preview-actions {
-  position: absolute;
-  top: 14px;
-  right: 16px;
-  z-index: 8;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--builder-preview-dock-bg) 84%, transparent);
-  box-shadow: var(--builder-preview-dock-shadow);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-}
-
 .resume-builder-scope .resume-ai-compare-stage {
   display: flex;
   align-items: flex-start;
@@ -1731,58 +1715,6 @@ body.resume-builder-mono .resume-builder-scope .resume-focus-target.is-preview-f
   justify-content: center;
   color: currentColor;
   flex-shrink: 0;
-}
-
-.resume-builder-scope .resume-preview-dock-wrap {
-  pointer-events: none;
-  position: absolute;
-  inset-inline: 0;
-  bottom: 16px;
-  display: flex;
-  justify-content: center;
-  z-index: 5;
-}
-
-.resume-builder-scope .resume-preview-dock {
-  pointer-events: auto;
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--builder-panel-border) 95%, transparent);
-  background: color-mix(in srgb, var(--builder-preview-dock-bg) 82%, transparent);
-  box-shadow: var(--builder-preview-dock-shadow);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  padding: 5px;
-}
-
-.resume-builder-scope .resume-preview-dock-divider {
-  width: 1px;
-  height: 18px;
-  margin: 0 2px;
-  background: color-mix(in srgb, var(--builder-panel-border) 75%, transparent);
-}
-
-.resume-builder-scope .resume-preview-dock .resume-dock-btn {
-  min-width: 27px;
-  height: 27px;
-  padding: 0 6px;
-  border-radius: 999px;
-  color: var(--builder-panel-text);
-}
-
-.resume-builder-scope .resume-preview-dock .resume-dock-btn svg {
-  width: 13px;
-  height: 13px;
-}
-
-.resume-builder-scope .resume-preview-dock .resume-dock-btn:hover {
-  background: color-mix(in srgb, var(--builder-panel-bg-soft) 72%, white);
-}
-
-[data-theme='dark'] .resume-builder-scope .resume-preview-dock .resume-dock-btn:hover {
-  background: color-mix(in srgb, var(--builder-panel-bg-soft) 86%, white);
 }
 
 .resume-builder-scope .resume-inline-icon-btn {

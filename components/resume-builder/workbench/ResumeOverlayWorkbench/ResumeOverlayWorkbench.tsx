@@ -5,6 +5,7 @@ import { type CSSProperties, type ReactNode, type RefObject, type PointerEvent a
 import { BUILDER_TOOL_META, type ActiveBuilderTool, type BuilderTool } from '../types'
 import { ResumeToolRail } from '../ResumeToolRail/ResumeToolRail'
 import { ResumePreviewWorkspace } from '../ResumePreviewWorkspace/ResumePreviewWorkspace'
+import styles from './ResumeOverlayWorkbench.module.css'
 
 interface ResumeOverlayWorkbenchProps {
   activeTool: ActiveBuilderTool
@@ -80,15 +81,15 @@ export function ResumeOverlayWorkbench({
           className={`resume-side-panel resume-context-panel no-print flex flex-col overflow-hidden${activeTool === 'ai' ? '' : ' is-auto-height'}`}
         >
           {activeTool === 'ai' || !activeToolMeta ? null : (
-            <div className="resume-workbench-panel-head">
-              <div className="resume-workbench-panel-head-row">
-                <div className="resume-workbench-panel-copy">
-                  <h2 className="resume-workbench-panel-title">{activeToolMeta.title}</h2>
+            <div className={styles.panelHead}>
+              <div className={styles.panelHeadRow}>
+                <div className={styles.panelCopy}>
+                  <h2 className={styles.panelTitle}>{activeToolMeta.title}</h2>
                 </div>
-                <div className="resume-workbench-panel-actions">
+                <div className={styles.panelActions}>
                   <button
                     type="button"
-                    className="resume-workbench-panel-close"
+                    className={styles.panelClose}
                     onClick={onCloseTool}
                     aria-label={`关闭${activeToolMeta.title}面板`}
                     title="关闭面板"
