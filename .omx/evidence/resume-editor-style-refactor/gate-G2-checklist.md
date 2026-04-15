@@ -14,3 +14,4 @@ Status: `DRAFT`
 ## Current note
 
 - Waiting for panels/controls and workbench convergence changes before G2 can be evaluated.
+- Task 5 (`b82d763`) has a completed lane audit in `task-5-workbench-audit.md`; treat it as a verified input, not final G2 closure.
