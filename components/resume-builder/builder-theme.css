@@ -1470,11 +1470,6 @@
 .resume-builder-scope .resume-focus-target.is-preview-focused .control-field:hover,
 .resume-builder-scope .resume-focus-target.is-preview-focused .control-field:focus,
 .resume-builder-scope .resume-focus-target.is-preview-focused .control-field:focus-visible,
-.resume-builder-scope .resume-focus-target.is-preview-focused .control-field[data-open='true'],
-.resume-builder-scope .resume-focus-target.is-preview-focused .control-field,
-.resume-builder-scope .resume-focus-target.is-preview-focused .control-field:hover,
-.resume-builder-scope .resume-focus-target.is-preview-focused .control-field:focus,
-.resume-builder-scope .resume-focus-target.is-preview-focused .control-field:focus-visible,
 .resume-builder-scope .resume-focus-target.is-preview-focused .control-field[data-open='true'] {
   border-color: var(--preview-focus-ring);
   background: color-mix(in srgb, var(--preview-focus-flash-bg) 78%, var(--builder-input-bg));

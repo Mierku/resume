@@ -65,13 +65,13 @@
   --color-muted-foreground: var(--muted-foreground);
   --control-surface: #ffffff;
   --control-panel-surface: #ffffff;
-  --control-hover-surface: #f8efec;
-  --control-border: rgba(74, 66, 64, 0.24);
-  --control-focus-border: rgba(74, 66, 64, 0.46);
-  --control-panel-border: rgba(232, 213, 209, 0.78);
-  --control-active-surface: rgba(232, 213, 209, 0.34);
-  --control-active-indicator: rgba(74, 66, 64, 0.9);
-  --control-panel-shadow: 0 24px 56px rgba(74, 66, 64, 0.12);
+  --control-hover-surface: rgba(17, 17, 17, 0.04);
+  --control-border: rgba(0, 0, 0, 0.18);
+  --control-focus-border: rgba(17, 17, 17, 0.8);
+  --control-panel-border: rgba(0, 0, 0, 0.16);
+  --control-active-surface: rgba(17, 17, 17, 0.08);
+  --control-active-indicator: #111111;
+  --control-panel-shadow: 0 12px 24px rgba(0, 0, 0, 0.14);
   --control-field-height: 36px;
   --control-field-radius: 3px;
   --control-field-padding-x: 12px;
@@ -104,15 +104,15 @@
   --color-border: var(--border);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
-  --control-surface: #221d1b;
-  --control-panel-surface: #1c1817;
-  --control-hover-surface: #2a2422;
-  --control-border: rgba(61, 52, 50, 0.78);
-  --control-focus-border: rgba(212, 188, 154, 0.56);
-  --control-panel-border: rgba(61, 52, 50, 0.82);
-  --control-active-surface: rgba(212, 188, 154, 0.16);
-  --control-active-indicator: rgba(236, 224, 222, 0.94);
-  --control-panel-shadow: 0 28px 64px rgba(0, 0, 0, 0.48);
+  --control-surface: #1a1a1a;
+  --control-panel-surface: #1c1c1e;
+  --control-hover-surface: #27272a;
+  --control-border: #3f3f46;
+  --control-focus-border: rgba(243, 243, 243, 0.82);
+  --control-panel-border: #3f3f46;
+  --control-active-surface: rgba(243, 243, 243, 0.12);
+  --control-active-indicator: rgba(243, 243, 243, 0.96);
+  --control-panel-shadow: 0 18px 34px rgba(0, 0, 0, 0.5);
   --control-field-height: 36px;
   --control-field-radius: 3px;
   --control-field-padding-x: 12px;
@@ -552,7 +552,6 @@
   font-size: 11px;
 }
 
-.control-date-trigger,
 .control-date-trigger {
   position: relative;
   display: inline-flex;
@@ -564,12 +563,10 @@
   font-variant-numeric: tabular-nums;
 }
 
-.control-date-trigger.has-icon,
 .control-date-trigger.has-icon {
   padding-right: 36px;
 }
 
-.control-date-trigger-icon,
 .control-date-trigger-icon {
   position: absolute;
   right: 12px;
@@ -584,14 +581,11 @@
 }
 
 .resume-period-range-trigger.is-open .control-date-trigger-icon,
-.resume-month-picker-trigger.is-open .control-date-trigger-icon,
-.resume-period-range-trigger.is-open .control-date-trigger-icon,
 .resume-month-picker-trigger.is-open .control-date-trigger-icon {
   color: var(--control-field-text, var(--color-foreground));
   transform: translateY(-50%) rotate(180deg);
 }
 
-.control-date-panel,
 .control-date-panel {
   z-index: 140;
   border-radius: 6px;
@@ -601,13 +595,11 @@
   box-shadow: var(--control-panel-shadow-value, var(--control-panel-shadow));
 }
 
-.control-date-calendar,
 .control-date-calendar {
   margin: 0;
   color: var(--control-field-text, var(--color-foreground));
 }
 
-.control-date-calendar .rdp-day_button,
 .control-date-calendar .rdp-day_button {
   border: 1px solid transparent;
   background: transparent;
@@ -615,13 +607,11 @@
   box-shadow: none;
 }
 
-.control-date-calendar .rdp-day_button:hover,
 .control-date-calendar .rdp-day_button:hover {
   background: var(--control-option-hover-bg, var(--control-active-surface));
   color: var(--control-field-text, var(--color-foreground));
 }
 
-.control-date-calendar .rdp-day_button:focus-visible,
 .control-date-calendar .rdp-day_button:focus-visible {
   outline: none;
   border-color: var(--control-field-focus-color, var(--control-focus-border));
@@ -633,9 +623,6 @@
 
 .control-date-calendar .rdp-day_button[data-selected-single='true'],
 .control-date-calendar .rdp-day_button[data-range-start='true'],
-.control-date-calendar .rdp-day_button[data-range-end='true'],
-.control-date-calendar .rdp-day_button[data-selected-single='true'],
-.control-date-calendar .rdp-day_button[data-range-start='true'],
 .control-date-calendar .rdp-day_button[data-range-end='true'] {
   border-color: transparent;
   background: var(--control-option-selected-bg, var(--control-active-surface));
@@ -643,7 +630,6 @@
   box-shadow: none;
 }
 
-.control-date-calendar .rdp-day_button[data-range-middle='true'],
 .control-date-calendar .rdp-day_button[data-range-middle='true'] {
   border-color: transparent;
   background: var(--control-option-hover-bg, var(--control-active-surface));
@@ -653,27 +639,21 @@
 
 .resume-date-picker-calendar .rdp-nav button,
 .resume-date-picker-calendar .rdp-button_previous,
-.resume-date-picker-calendar .rdp-button_next,
-.resume-date-picker-calendar .rdp-nav button,
-.resume-date-picker-calendar .rdp-button_previous,
 .resume-date-picker-calendar .rdp-button_next {
   border-radius: 3px;
 }
 
-.resume-date-picker-calendar .rdp-day_button,
 .resume-date-picker-calendar .rdp-day_button {
   font-size: 12px;
   line-height: 1;
 }
 
-.resume-date-picker-calendar .rdp-caption_label,
 .resume-date-picker-calendar .rdp-caption_label {
   font-size: 12px;
   font-weight: 500;
   color: var(--control-field-text, var(--color-foreground));
 }
 
-.resume-date-picker-calendar .rdp-weekday,
 .resume-date-picker-calendar .rdp-weekday {
   font-size: 11px;
   color: var(--control-field-placeholder, var(--color-muted-foreground));
@@ -711,7 +691,6 @@
   outline: none;
 }
 
-.control-date-actions,
 .control-date-actions {
   margin-top: 10px;
   display: flex;
@@ -722,8 +701,6 @@
   padding-top: 10px;
 }
 
-.control-date-action,
-.control-date-secondary-btn,
 .control-date-action,
 .control-date-secondary-btn {
   border: 0;
@@ -739,15 +716,11 @@
 
 .control-date-action:hover,
 .control-date-action.is-active,
-.control-date-secondary-btn:hover,
-.control-date-action:hover,
-.control-date-action.is-active,
 .control-date-secondary-btn:hover {
   background: var(--control-option-hover-bg, var(--control-active-surface));
   color: var(--control-field-text, var(--color-foreground));
 }
 
-.control-date-column,
 .control-date-column {
   min-width: 0;
   border: 1px solid color-mix(in srgb, var(--control-panel-border-color, var(--control-panel-border)) 86%, transparent);
@@ -756,20 +729,17 @@
   padding: 10px;
 }
 
-.control-date-section-label,
 .control-date-section-label {
   font-size: 11px;
   color: var(--control-field-placeholder, var(--color-muted-foreground));
 }
 
-.control-date-year-controls,
 .control-date-year-controls {
   display: flex;
   align-items: center;
   gap: 4px;
 }
 
-.control-date-year-label,
 .control-date-year-label {
   min-width: 4.5rem;
   text-align: center;
@@ -778,19 +748,16 @@
   color: var(--control-field-text, var(--color-foreground));
 }
 
-.control-date-grid,
 .control-date-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
 }
 
-.control-date-grid.grid-cols-3,
 .control-date-grid.grid-cols-3 {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
-.control-date-grid-button,
 .control-date-grid-button {
   min-height: 34px;
   border: 0;
@@ -803,24 +770,19 @@
   transition: background-color 120ms ease, color 120ms ease, box-shadow 120ms ease;
 }
 
-.control-date-grid-button:hover,
 .control-date-grid-button:hover {
   background: var(--control-option-hover-bg, var(--control-active-surface));
 }
 
-.control-date-grid-button:disabled,
 .control-date-grid-button:disabled {
   cursor: not-allowed;
   opacity: 0.38;
 }
 
-.control-date-grid-button:disabled:hover,
 .control-date-grid-button:disabled:hover {
   background: transparent;
 }
 
-.control-date-grid-button.is-active,
-.control-date-grid-button[data-selected-month='true'],
 .control-date-grid-button.is-active,
 .control-date-grid-button[data-selected-month='true'] {
   background: var(--control-option-selected-bg, var(--control-active-surface));
