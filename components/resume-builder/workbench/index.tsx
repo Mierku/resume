@@ -135,7 +135,7 @@ export function ResumeWorkbench({
 
       <div
         className={`${styles.editorResizer} no-print`}
-        style={{ right: `${editorPanelWidth + 2}px` }}
+        style={{ right: `calc(var(--resume-editor-panel-width, ${editorPanelWidth}px) + 2px)` }}
         role="separator"
         aria-orientation="vertical"
         aria-label="调整属性编辑器宽度"
@@ -147,7 +147,7 @@ export function ResumeWorkbench({
 
       <aside
         className={`resume-side-panel resume-editor-panel no-print flex flex-col overflow-hidden ${styles.editorPanel} ${styles.editorPanelShell}`}
-        style={{ width: `${editorPanelWidth}px` }}
+        style={{ width: `var(--resume-editor-panel-width, ${editorPanelWidth}px)` }}
       >
         {editorContent}
       </aside>

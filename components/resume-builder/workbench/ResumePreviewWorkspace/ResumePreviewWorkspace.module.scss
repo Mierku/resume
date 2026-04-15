@@ -8,17 +8,6 @@
   background: var(--builder-preview-bg);
   box-shadow: none;
 }
-.workspace::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(rgba(255, 255, 255, 0.022) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.022) 1px, transparent 1px);
-  background-size: 30px 30px;
-  opacity: 0.32;
-  pointer-events: none;
-}
 .viewport {
   box-sizing: border-box;
   position: relative;
@@ -59,10 +48,38 @@
   gap: 8px;
   padding: 8px;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--builder-preview-dock-bg) 84%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--builder-preview-dock-bg) 84%,
+    transparent
+  );
   box-shadow: var(--builder-preview-dock-shadow);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+}
+.workspace :global(.resume-ai-mini-btn) {
+  height: 24px;
+  border-radius: 8px;
+  border: 0;
+  background: color-mix(in srgb, var(--builder-panel-text) 12%, transparent);
+  color: var(--builder-panel-text);
+  padding: 0 9px;
+  font-size: 10px;
+  letter-spacing: 0.03em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  transition: all 120ms ease;
+}
+.workspace :global(.resume-ai-mini-btn:hover) {
+  background: color-mix(in srgb, #ffffff 22%, transparent);
+}
+.workspace :global(.resume-ai-mini-btn.is-outline) {
+  background: color-mix(in srgb, var(--builder-panel-bg) 44%, transparent);
+}
+.workspace :global(.resume-ai-mini-btn.is-ghost) {
+  background: color-mix(in srgb, var(--builder-panel-text) 8%, transparent);
 }
 .dockWrap {
   pointer-events: none;
@@ -80,7 +97,8 @@
   gap: 3px;
   padding: 6px;
   border-radius: 12px;
-  border: 1px solid color-mix(in srgb, var(--builder-panel-border) 95%, transparent);
+  border: 1px solid
+    color-mix(in srgb, var(--builder-panel-border) 95%, transparent);
   background: rgba(18, 20, 26, 0.84);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.28);
   backdrop-filter: blur(16px);

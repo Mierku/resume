@@ -2,7 +2,7 @@ import { Form, Input, Select, Button, Card } from '@/components/ui/radix-adapter
 import { IconPlus, IconDelete } from '@/components/ui/radix-icons'
 import { MonthPickerField } from '@/components/ui/month-picker'
 import { DATA_SOURCE_SECTION_IDS } from './section-meta'
-import { RichTextEditor } from '@/components/resume-builder/RichTextEditor'
+import { RichTextEditor } from '@/components/resume-builder/controls/RichTextEditor/RichTextEditor'
 
 const FormItem = Form.Item
 const { Option } = Select

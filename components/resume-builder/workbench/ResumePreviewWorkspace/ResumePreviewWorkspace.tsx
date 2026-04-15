@@ -159,7 +159,7 @@ export function ResumePreviewWorkspace({
   ...canvasProps
 }: ResumePreviewWorkspaceProps) {
   const viewportPaddingStyle = {
-    padding: `20px ${editorPanelWidth + 6}px 28px ${previewLeftPadding}px`,
+    padding: `20px calc(var(--resume-editor-panel-width, ${editorPanelWidth}px) + 6px) 28px ${previewLeftPadding}px`,
   } satisfies CSSProperties
 
   return (

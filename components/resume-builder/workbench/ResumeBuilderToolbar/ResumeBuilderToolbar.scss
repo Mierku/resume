@@ -1,0 +1,363 @@
+/* Extracted from builder-theme.scss: toolbar specific styles */
+/* ===== 动效可访问性：系统偏好减少动效 ===== */
+@media (prefers-reduced-motion: reduce) {
+  .control-floating-panel {
+    transition: none;
+  }
+
+  .resume-builder-scope {
+    .resume-toolbar-download-trigger,
+    .resume-toolbar-download-panel,
+    .resume-toolbar-download-option,
+    .resume-toolbar-download-option-icon-shell {
+      transition: none;
+    }
+
+    .resume-toolbar-download-spinner {
+      animation: none;
+    }
+
+    .resume-collapse-motion.is-animating,
+    .resume-standard-item-head-toggle svg {
+      transition: none;
+    }
+  }
+}
+
+/* 工具栏下载按钮加载动画 */
+@keyframes resume-toolbar-download-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ===== 顶部工具栏：标题编辑 + 保存按钮 ===== */
+.resume-builder-scope {
+  .resume-toolbar {
+    --color-background: var(--builder-panel-bg-soft);
+    --color-foreground: var(--builder-panel-text);
+    --color-border: var(--builder-panel-border);
+    --color-muted: color-mix(in srgb, var(--builder-panel-bg-soft) 78%, white);
+    --color-muted-foreground: var(--builder-panel-text-muted);
+    min-height: 58px;
+    position: relative;
+    z-index: 12;
+    overflow: visible;
+    background: var(--builder-panel-bg);
+    border-color: var(--builder-toolbar-border-color);
+    box-shadow: var(--builder-toolbar-shadow);
+    backdrop-filter: blur(10px);
+  }
+
+  .resume-toolbar-title-wrap {
+    flex: 0 0 auto;
+    min-width: 0;
+    max-width: min(42vw, 320px);
+  }
+
+  .resume-toolbar-title-wrap.is-editing {
+    flex: 0 1 140px;
+    width: 140px;
+  }
+
+  .resume-toolbar-title-display {
+    width: auto;
+    max-width: 100%;
+    min-height: 24px;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    color: var(--builder-panel-text);
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+    text-align: left;
+    font-size: 11px;
+    line-height: 1.2;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    user-select: none;
+    cursor: text;
+  }
+
+  .resume-toolbar-title-display:focus,
+  .resume-toolbar-title-display:focus-visible {
+    outline: none;
+  }
+
+  .resume-toolbar-title-input.control-field {
+    width: 100%;
+    min-height: 36px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: 6px;
+    background: var(--builder-toolbar-title-input-bg);
+    box-shadow: none;
+    font-size: 11px;
+    line-height: 1.2;
+    text-align: left;
+  }
+
+  .resume-toolbar-title-input.control-field:focus,
+  .resume-toolbar-title-input.control-field:focus-visible {
+    border-color: transparent;
+  }
+
+  .resume-toolbar .resume-toolbar-title-input.control-field {
+    border: 0;
+    border-radius: 6px;
+    background: var(--builder-toolbar-title-input-bg);
+  }
+
+  .resume-toolbar .resume-toolbar-title-input.control-field:hover {
+    border-color: transparent;
+  }
+
+  .resume-toolbar .resume-toolbar-title-input.control-field:focus,
+  .resume-toolbar .resume-toolbar-title-input.control-field:focus-visible {
+    border-color: transparent;
+  }
+
+  .resume-toolbar .resume-toolbar-action {
+    min-height: 20px;
+    padding: 0 16px;
+    border-radius: 999px;
+    font-weight: 600;
+  }
+
+  .resume-toolbar .resume-toolbar-action-save {
+    border-color: var(--builder-toolbar-save-border);
+    background: var(--builder-toolbar-save-bg);
+    color: var(--builder-toolbar-save-color);
+  }
+
+  .resume-toolbar .resume-toolbar-action-save:hover {
+    background: var(--builder-toolbar-save-hover-bg);
+  }
+}
+
+/* ===== 顶部工具栏扩展：保存状态 + 下载菜单 ===== */
+.resume-builder-scope {
+  .resume-save-status {
+    font-size: 11px;
+    color: color-mix(in srgb, var(--builder-panel-text-muted) 88%, transparent);
+    white-space: nowrap;
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .resume-toolbar-download-menu {
+    position: relative;
+  }
+
+  .resume-toolbar-download-trigger {
+    min-height: 35px;
+    border: 0;
+    border-radius: 999px;
+    padding: 0 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: #2563eb;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: 0.01em;
+    box-shadow:
+      0 4px 15px rgba(59, 130, 246, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.14);
+    transition:
+      background-color 180ms ease,
+      transform 180ms ease,
+      box-shadow 180ms ease;
+    cursor: pointer;
+  }
+
+  .resume-toolbar-download-trigger:hover:not(:disabled) {
+    background: #3b82f6;
+  }
+
+  .resume-toolbar-download-trigger:active:not(:disabled) {
+    transform: scale(0.95);
+  }
+
+  .resume-toolbar-download-trigger:focus-visible {
+    outline: none;
+    box-shadow:
+      0 4px 15px rgba(59, 130, 246, 0.32),
+      0 0 0 3px rgba(147, 197, 253, 0.24);
+  }
+
+  .resume-toolbar-download-trigger:disabled {
+    cursor: wait;
+  }
+
+  .resume-toolbar-download-trigger-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+  }
+
+  .resume-toolbar-download-trigger-label {
+    letter-spacing: 3px;
+    text-indent: 6px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .resume-toolbar-download-spinner {
+    animation: resume-toolbar-download-spin 900ms linear infinite;
+  }
+
+  .resume-toolbar-download-panel {
+    position: absolute;
+    top: calc(100% + 12px);
+    right: 0;
+    width: min(240px, calc(100vw - 28px));
+    z-index: 50;
+    border-radius: 18px;
+    overflow: hidden;
+    background: rgba(26, 26, 28, 0.95);
+    -webkit-backdrop-filter: blur(24px);
+    backdrop-filter: blur(24px);
+    box-shadow:
+      0 20px 50px rgba(0, 0, 0, 0.5),
+      0 0 0 1px rgba(255, 255, 255, 0.05);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(-8px);
+    transform-origin: top right;
+    clip-path: inset(0 0 100% 0 round 18px);
+    will-change: opacity, transform, clip-path;
+    transition:
+      opacity 180ms ease,
+      transform 220ms cubic-bezier(0.16, 1, 0.3, 1),
+      clip-path 220ms cubic-bezier(0.16, 1, 0.3, 1),
+      visibility 220ms ease;
+  }
+
+  .resume-toolbar-download-menu.is-open .resume-toolbar-download-panel {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateY(0);
+    clip-path: inset(0 0 0 0 round 18px);
+  }
+
+  .resume-toolbar-download-panel-body {
+    padding: 8px;
+  }
+
+  .resume-toolbar-download-option {
+    width: 100%;
+    border: 0;
+    border-radius: 16px;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: transparent;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition:
+      background-color 180ms ease,
+      color 180ms ease,
+      transform 180ms ease;
+  }
+
+  .resume-toolbar-download-option:hover:not(:disabled),
+  .resume-toolbar-download-option:focus-visible {
+    background: rgba(255, 255, 255, 0.03);
+    outline: none;
+  }
+
+  .resume-toolbar-download-option:disabled {
+    opacity: 0.5;
+    cursor: wait;
+  }
+
+  .resume-toolbar-download-option-icon-shell {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    background: rgba(255, 255, 255, 0.05);
+    transition: background-color 180ms ease;
+  }
+
+  .resume-toolbar-download-option:hover:not(:disabled)
+    .resume-toolbar-download-option-icon-shell,
+  .resume-toolbar-download-option:focus-visible
+    .resume-toolbar-download-option-icon-shell {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .resume-toolbar-download-option-copy {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .resume-toolbar-download-option-label {
+    color: #f4f4f5;
+    font-size: 13px;
+    line-height: 1.3;
+    font-weight: 500;
+  }
+
+  .resume-toolbar-download-option-desc {
+    color: #71717a;
+    font-size: 10px;
+    line-height: 1.45;
+  }
+
+  .resume-toolbar-download-file-icon.is-pdf {
+    color: #ef4444;
+  }
+
+  .resume-toolbar-download-file-icon.is-png {
+    color: #3b82f6;
+  }
+
+  .resume-toolbar-download-file-icon.is-jpg {
+    color: #10b981;
+  }
+
+  .resume-toolbar-download-panel-footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.02);
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .resume-toolbar-download-panel-footer span {
+    color: #52525b;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+
+  .resume-save-status.is-busy {
+    color: color-mix(in srgb, var(--builder-panel-text-muted) 95%, transparent);
+  }
+
+  .resume-save-status.is-error {
+    color: #d4d4d4;
+  }
+
+}

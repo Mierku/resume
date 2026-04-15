@@ -54,10 +54,11 @@ import {
   isSectionHidden,
   isStandardSectionId,
   STANDARD_SECTION_LABELS,
-} from '../editor/section-editor-shared'
-import { Button, IconChevronRight, IconDelete, IconGrip, IconMoreHorizontal, IconPlus, Input, Message } from '../primitives'
-import { useResumeBuilderStore } from '../store/useResumeBuilderStore'
-import type { ResumeCompletenessResult } from './resume-completeness'
+} from '../../editor/section-editor-shared'
+import { Button, IconChevronRight, IconDelete, IconGrip, IconMoreHorizontal, IconPlus, Input, Message } from '../../primitives'
+import { useResumeBuilderStore } from '../../store/useResumeBuilderStore'
+import type { ResumeCompletenessResult } from '../resume-completeness'
+import './IntegratedSectionsEditor.scss'
 
 export type EditorFocusRequest = PreviewNavigationTarget & { requestId: number }
 
@@ -258,8 +259,7 @@ interface IntegratedSectionsEditorProps {
   completeness: ResumeCompletenessResult
   scrollContainerRef: RefObject<HTMLDivElement | null>
   onOpenAIDiagnosis: () => void
-  renderBasicsEditor: () => ReactNode
-  renderIntentionEditor: () => ReactNode
+  renderBasicInfoEditor: () => ReactNode
   renderSectionEditorBody: (sectionId: string) => ReactNode
 }
 
@@ -447,8 +447,7 @@ export function IntegratedSectionsEditor({
   completeness,
   scrollContainerRef,
   onOpenAIDiagnosis,
-  renderBasicsEditor,
-  renderIntentionEditor,
+  renderBasicInfoEditor,
   renderSectionEditorBody,
 }: IntegratedSectionsEditorProps) {
   const data = useResumeBuilderStore((state) => state.data);
@@ -566,14 +565,6 @@ export function IntegratedSectionsEditor({
         removable: false,
         sortable: false,
       },
-      {
-        id: "intention",
-        title: "求职意向",
-        hidden: false,
-        locked: true,
-        removable: false,
-        sortable: false,
-      },
       ...dynamicTabs,
     ];
   }, [data, layoutSectionIds]);
@@ -664,6 +655,12 @@ export function IntegratedSectionsEditor({
     let retryTimer: number | null = null;
     let frameA = 0;
     let frameB = 0;
+    const normalizedSectionId =
+      focusRequest.sectionId === "intention" ? "basics" : focusRequest.sectionId;
+    const normalizedTarget = {
+      ...focusRequest,
+      sectionId: normalizedSectionId,
+    };
 
     const clearHighlight = () => {
       if (highlightedTargetRef.current) {
@@ -683,7 +680,7 @@ export function IntegratedSectionsEditor({
 
       const targetElement = findEditorFocusElement(
         scrollContainer,
-        focusRequest,
+        normalizedTarget,
       );
       if (!targetElement) {
         if (attempt < 8) {
@@ -719,8 +716,8 @@ export function IntegratedSectionsEditor({
       }, 700);
     };
 
-    if (tabs.some((tab) => tab.id === focusRequest.sectionId)) {
-      setActiveSectionId(focusRequest.sectionId);
+    if (tabs.some((tab) => tab.id === normalizedSectionId)) {
+      setActiveSectionId(normalizedSectionId);
     }
 
     frameA = requestAnimationFrame(() => {
@@ -749,7 +746,7 @@ export function IntegratedSectionsEditor({
   }, []);
 
   const toggleSectionHidden = (sectionId: string, nextHidden: boolean) => {
-    if (sectionId === "basics" || sectionId === "intention") {
+    if (sectionId === "basics") {
       Message.warning("基础板块不支持隐藏");
       return;
     }
@@ -775,7 +772,7 @@ export function IntegratedSectionsEditor({
   };
 
   const openRenameDialog = (sectionId: string) => {
-    if (sectionId === "basics" || sectionId === "intention") {
+    if (sectionId === "basics") {
       Message.warning("基础板块不支持重命名");
       return;
     }
@@ -790,7 +787,7 @@ export function IntegratedSectionsEditor({
   };
 
   const openDeleteDialog = (sectionId: string) => {
-    if (sectionId === "basics" || sectionId === "intention") {
+    if (sectionId === "basics") {
       Message.warning("基础板块不支持删除");
       return;
     }
@@ -806,8 +803,7 @@ export function IntegratedSectionsEditor({
   const addSectionItem = (sectionId: string) => {
     if (
       sectionId === "summary" ||
-      sectionId === "basics" ||
-      sectionId === "intention"
+      sectionId === "basics"
     ) {
       return;
     }
@@ -994,7 +990,7 @@ export function IntegratedSectionsEditor({
   const activeSectionTab =
     tabs.find((tab) => tab.id === activeSectionId) || tabs[0];
   const existingModuleTabs = useMemo(
-    () => tabs.filter((tab) => tab.id !== "basics" && tab.id !== "intention"),
+    () => tabs.filter((tab) => tab.id !== "basics"),
     [tabs],
   );
   const existingModuleSortableIds = useMemo(
@@ -1005,8 +1001,7 @@ export function IntegratedSectionsEditor({
   const resolvedActiveSectionId = activeSectionTab?.id || "basics";
   const showAddItemRow =
     resolvedActiveSectionId !== "summary" &&
-    resolvedActiveSectionId !== "basics" &&
-    resolvedActiveSectionId !== "intention";
+    resolvedActiveSectionId !== "basics";
   const sectionMenuOpen = Boolean(
     activeSectionTab && openTabMenuId === activeSectionTab.id,
   );
@@ -1387,9 +1382,7 @@ export function IntegratedSectionsEditor({
             className="resume-editor-tab-content resume-focus-target"
           >
             {resolvedActiveSectionId === "basics" ? (
-              renderBasicsEditor()
-            ) : resolvedActiveSectionId === "intention" ? (
-              renderIntentionEditor()
+              renderBasicInfoEditor()
             ) : (
               renderSectionEditorBody(resolvedActiveSectionId)
             )}

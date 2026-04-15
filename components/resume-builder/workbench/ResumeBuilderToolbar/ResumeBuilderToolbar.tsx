@@ -2,6 +2,7 @@
 
 import { type KeyboardEvent as ReactKeyboardEvent, type ReactNode, useEffect, useRef, useState } from 'react'
 import { Button, IconLeft, IconSave, Input, Space } from '../../primitives'
+import './ResumeBuilderToolbar.scss'
 
 function ToolbarSpinnerIcon() {
   return (

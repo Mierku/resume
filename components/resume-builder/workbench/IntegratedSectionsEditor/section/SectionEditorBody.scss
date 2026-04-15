@@ -1,0 +1,649 @@
+/* Extracted from builder-theme.scss: section editor styles */
+.resume-builder-scope {
+  /* 控件表格排版（基本信息 / 各经历条目通用） */
+  .resume-section-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 12px;
+    gap: 8px;
+    align-items: start;
+  }
+
+  .resume-section-form-field {
+    min-width: 0;
+  }
+
+  .resume-section-form-field.is-wide {
+    grid-column: 1 / -1;
+  }
+
+  /* 基本信息区域（含头像选择器） */
+  .resume-basics-grid {
+    align-items: start;
+  }
+
+  .resume-basics-label-row {
+    margin-bottom: 4px;
+    min-height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 6px;
+  }
+
+  .resume-basics-inline-checkbox {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--builder-panel-text-muted);
+    user-select: none;
+    white-space: nowrap;
+  }
+
+  .resume-basics-photo-field {
+    grid-column: 2;
+    grid-row: 1;
+    min-height: 56px;
+  }
+
+  .resume-basics-photo-control-wrap {
+    position: relative;
+    min-height: 40px;
+  }
+
+  .resume-basics-photo-placeholder-slot {
+    min-height: 40px;
+    width: 100%;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .resume-basics-photo-floating {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 40px;
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    border-radius: 12px;
+    border: 0;
+    background: var(--builder-input-bg);
+    overflow: hidden;
+    transition:
+      height 220ms cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 160ms ease,
+      background-color 140ms ease;
+  }
+
+  .resume-basics-photo-floating:hover {
+    background: var(--builder-input-bg-hover);
+  }
+
+  .resume-basics-photo-floating.is-expanded,
+  .resume-basics-photo-floating:focus-within {
+    box-shadow: 0 0 0 2px
+      color-mix(in srgb, var(--control-focus-border) 22%, transparent);
+    background: var(--builder-input-bg);
+  }
+
+  .resume-basics-photo-floating.is-expanded {
+    height: 340px;
+  }
+
+  .resume-basics-photo-trigger {
+    width: 100%;
+    min-height: 40px;
+    border: 0;
+    padding: 0 12px;
+    background: transparent;
+    color: var(--builder-panel-text);
+    text-align: left;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .resume-basics-photo-trigger:focus-visible {
+    outline: none;
+  }
+
+  .resume-basics-photo-trigger-value {
+    min-width: 0;
+    flex: 1 1 auto;
+    font-size: 11px;
+    color: var(--builder-panel-text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .resume-basics-photo-trigger-icon {
+    flex: 0 0 auto;
+    width: 14px;
+    height: 14px;
+    color: var(--builder-panel-text-muted);
+    transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .resume-basics-photo-floating.is-expanded .resume-basics-photo-trigger-icon {
+    transform: rotate(90deg);
+  }
+
+  .resume-basics-photo-expand-panel {
+    flex: 1 1 auto;
+    min-height: 0;
+    padding: 10px 12px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-6px);
+    transition:
+      opacity 160ms ease,
+      transform 180ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .resume-basics-photo-floating.is-expanded .resume-basics-photo-expand-panel {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+  }
+
+  .resume-basics-photo-head {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+  }
+
+  .resume-basics-photo-preview-shell {
+    position: relative;
+    width: min(100%, 126px);
+    align-self: center;
+  }
+
+  .resume-basics-photo-preview {
+    width: 100%;
+    aspect-ratio: 5 / 7;
+    appearance: none;
+    padding: 0;
+    border-radius: 8px;
+    border: 0;
+    background: color-mix(in srgb, var(--builder-input-bg) 94%, transparent);
+    overflow: hidden;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition:
+      transform 180ms cubic-bezier(0.22, 1, 0.36, 1),
+      background-color 140ms ease;
+  }
+
+  .resume-basics-photo-preview:hover {
+    background: color-mix(
+      in srgb,
+      var(--builder-input-bg-hover) 90%,
+      var(--builder-input-bg)
+    );
+  }
+
+  .resume-basics-photo-preview:focus-visible {
+    outline: none;
+    transform: translateY(-1px);
+  }
+
+  .resume-basics-photo-preview:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+  }
+
+  .resume-basics-photo-preview.is-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .resume-basics-photo-image {
+    width: 100%;
+    height: 100%;
+    display: block;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+  }
+
+  .resume-basics-photo-placeholder {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    font-size: 11px;
+    color: var(--builder-panel-text-muted);
+    line-height: 1.45;
+    text-align: center;
+    padding: 10px 8px;
+  }
+
+  .resume-basics-photo-hover-actions {
+    position: absolute;
+    inset-inline: 6px;
+    bottom: 6px;
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    opacity: 0;
+    transform: translateY(4px);
+    pointer-events: none;
+    transition:
+      opacity 160ms ease,
+      transform 180ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .resume-basics-photo-preview-shell.has-image:hover
+    .resume-basics-photo-hover-actions,
+  .resume-basics-photo-preview-shell.has-image:focus-within
+    .resume-basics-photo-hover-actions {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+
+  .resume-basics-photo-hover-btn {
+    flex: 1 1 0;
+    min-width: 0;
+    height: 26px;
+    border: 0;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    font-size: 11px;
+    color: #fff;
+    background: color-mix(in srgb, var(--builder-panel-bg-soft) 84%, #090909);
+    cursor: pointer;
+    transition:
+      background-color 140ms ease,
+      transform 140ms ease;
+  }
+
+  .resume-basics-photo-hover-btn svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  .resume-basics-photo-hover-btn:hover,
+  .resume-basics-photo-hover-btn:focus-visible {
+    background: color-mix(in srgb, var(--builder-panel-bg-soft) 74%, #000);
+    transform: translateY(-1px);
+  }
+
+  .resume-basics-photo-hover-btn:focus-visible {
+    outline: none;
+  }
+
+  .resume-basics-photo-hover-btn.is-danger {
+    background: color-mix(in srgb, #b42318 72%, var(--builder-panel-bg-soft));
+  }
+
+  .resume-basics-photo-hover-btn.is-danger:hover,
+  .resume-basics-photo-hover-btn.is-danger:focus-visible {
+    background: color-mix(in srgb, #b42318 88%, #5c1010);
+  }
+}
+
+/* ===== 预览定位高亮行为 + 折叠动效 + 拖拽条目 ===== */
+.resume-builder-scope {
+  .resume-focus-target.is-preview-focused {
+    background: var(--preview-focus-flash-bg);
+
+    transition-duration: 120ms;
+    transition-timing-function: ease-out;
+  }
+
+  .resume-focus-target .control-field,
+  .resume-focus-target [contenteditable="true"] {
+    transition: background-color 980ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .resume-focus-target.is-preview-focused .control-field,
+  .resume-focus-target.is-preview-focused [contenteditable="true"] {
+    transition-duration: 120ms;
+    transition-timing-function: ease-out;
+  }
+
+  .resume-focus-target.is-preview-focused .control-field,
+  .resume-focus-target.is-preview-focused .control-field:hover,
+  .resume-focus-target.is-preview-focused .control-field:focus,
+  .resume-focus-target.is-preview-focused .control-field:focus-visible,
+  .resume-focus-target.is-preview-focused .control-field[data-open="true"] {
+    border-color: var(--preview-focus-ring);
+    background: color-mix(
+      in srgb,
+      var(--preview-focus-flash-bg) 78%,
+      var(--builder-input-bg)
+    );
+    box-shadow: var(--builder-input-inset);
+  }
+
+  .resume-collapse-motion {
+    overflow: hidden;
+    will-change: height;
+  }
+
+  .resume-collapse-motion.is-animating {
+    transition: height 240ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .resume-collapse-motion-inner {
+    min-height: 0;
+  }
+
+  .resume-editor-sortable-item[data-dragging="true"] {
+    position: relative;
+    z-index: 2;
+  }
+
+  .resume-item-drag-handle {
+    width: 28px;
+    height: 28px;
+    border: 0;
+    border-radius: 9px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    color: var(--builder-panel-text-muted);
+    cursor: grab;
+    touch-action: none;
+    flex-shrink: 0;
+    transition:
+      background-color 140ms ease,
+      color 140ms ease,
+      opacity 140ms ease;
+  }
+
+  .resume-item-drag-handle:hover:not(:disabled) {
+    color: var(--builder-panel-text);
+    background: color-mix(in srgb, var(--builder-panel-text) 7%, transparent);
+  }
+
+  .resume-item-drag-handle:active:not(:disabled) {
+    cursor: grabbing;
+  }
+
+  .resume-item-drag-handle:disabled {
+    opacity: 0.38;
+    cursor: default;
+  }
+
+  .resume-item-drag-handle svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  /* 标准条目卡片（经历/项目/技能等） */
+  .resume-standard-item-card {
+    padding: 12px;
+  }
+
+  .resume-standard-item-card.is-collapsed {
+    padding-bottom: 12px;
+  }
+
+  .resume-standard-item-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .resume-standard-item-head.is-collapsible {
+    cursor: pointer;
+  }
+
+  .resume-standard-item-head-main {
+    min-width: 0;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .resume-standard-item-head-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .resume-standard-item-head-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--builder-panel-text-muted);
+    flex-shrink: 0;
+  }
+
+  .resume-standard-item-head-toggle svg {
+    width: 16px;
+    height: 16px;
+    transform: rotate(0deg);
+    transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .resume-standard-item-head-toggle.is-expanded svg {
+    transform: rotate(90deg);
+  }
+
+  .resume-standard-item-summary {
+    min-width: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    line-height: 1.3;
+  }
+
+  .resume-standard-item-summary-primary,
+  .resume-standard-item-summary-secondary {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .resume-standard-item-summary-primary {
+    color: var(--builder-panel-text);
+    font-weight: 500;
+  }
+
+  .resume-standard-item-summary-secondary,
+  .resume-standard-item-summary-sep {
+    color: var(--builder-panel-text-muted);
+  }
+
+  .resume-standard-item-content {
+    margin-top: 10px;
+  }
+
+  .resume-standard-item-field {
+    min-width: 0;
+  }
+
+  .resume-skill-inline-list {
+    display: grid;
+    gap: 8px;
+  }
+
+  .resume-skill-inline-card {
+    padding: 10px 12px;
+  }
+
+  .resume-skill-inline-content {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1.3fr) minmax(0, 0.9fr) auto;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .resume-skill-inline-drag {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .resume-skill-inline-field {
+    min-width: 0;
+  }
+
+  .resume-skill-inline-actions {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+  }
+
+  .resume-skill-inline-empty {
+    padding: 2px 2px 0;
+  }
+
+  .resume-custom-inline-item-head {
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .resume-custom-inline-item-drag {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  /* 条目新增入口 */
+  .resume-editor-tab-add-row {
+    margin-top: 10px;
+  }
+
+  .resume-add-row-button {
+    width: 100%;
+    min-height: 52px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    text-align: center;
+    border-radius: 10px;
+    border: 1px dashed
+      color-mix(in srgb, var(--builder-card-border) 90%, transparent);
+    background: color-mix(in srgb, var(--builder-input-bg) 92%, transparent);
+    color: var(--builder-panel-text-muted);
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.2;
+    padding: 10px 16px;
+    cursor: pointer;
+    transition:
+      border-color 120ms ease,
+      background-color 120ms ease,
+      color 120ms ease;
+  }
+}
+
+.resume-builder-scope {
+  .resume-add-row-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .resume-add-row-button-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: currentColor;
+    flex-shrink: 0;
+  }
+}
+
+/* 拖拽数字微调时的全局鼠标样式 */
+body.resume-number-scrubbing {
+  cursor: ew-resize !important;
+  user-select: none;
+}
+
+/* ===== 数值拖拽输入（Scrub Number）===== */
+.resume-builder-scope {
+  .resume-scrub-number {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .resume-scrub-number-input-wrap {
+    position: relative;
+    min-width: 0;
+  }
+
+  .resume-scrub-number-input.control-field {
+    min-width: 0;
+    padding-inline: 12px;
+  }
+
+  .resume-scrub-number-edge {
+    position: absolute;
+    top: 1px;
+    bottom: 1px;
+    width: 12px;
+    border: 0;
+    background: transparent;
+    cursor: ew-resize;
+    padding: 0;
+    z-index: 2;
+    opacity: 0;
+  }
+
+  .resume-scrub-number-edge.is-left {
+    left: 1px;
+    border-radius: 4px 0 0 4px;
+  }
+
+  .resume-scrub-number-edge.is-right {
+    right: 1px;
+    border-radius: 0 4px 4px 0;
+  }
+
+  .resume-scrub-number-input-wrap:hover .resume-scrub-number-edge,
+  .resume-scrub-number-edge:focus-visible {
+    opacity: 1;
+    background: color-mix(
+      in srgb,
+      var(--control-focus-border) 12%,
+      transparent
+    );
+  }
+
+  .resume-scrub-number-edge:focus-visible {
+    outline: none;
+  }
+
+  .resume-scrub-number-unit {
+    font-size: 12px;
+    color: var(--builder-panel-text-muted);
+    min-width: 20px;
+    text-align: left;
+  }
+}
+/* 时段范围选择面板滚动行为 */
+.resume-period-range-panel {
+  overflow: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
