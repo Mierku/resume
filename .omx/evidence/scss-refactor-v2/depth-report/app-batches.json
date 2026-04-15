@@ -1,0 +1,363 @@
+{
+  "summary": {
+    "generated_at": "2026-04-15T19:06:01.076Z",
+    "worker": "worker-2",
+    "task_id": "2",
+    "lane": "app batches",
+    "files_scanned": 5,
+    "max_selector_depth": 1,
+    "depth_violations": 0,
+    "total_selector_blocks": 348,
+    "total_at_rule_blocks": 13,
+    "total_non_empty_lines": 2165,
+    "total_custom_property_definitions": 53,
+    "dom_changes_required": false,
+    "new_variables_added": 0,
+    "top_offenders": [
+      {
+        "path": "app/(main)/landing.module.scss",
+        "max_selector_depth": 1,
+        "selector_blocks": 172,
+        "lines_non_empty": 1077,
+        "route": "/"
+      },
+      {
+        "path": "app/(auth)/login/login.module.scss",
+        "max_selector_depth": 1,
+        "selector_blocks": 78,
+        "lines_non_empty": 492,
+        "route": "/login"
+      },
+      {
+        "path": "app/(main)/pricing/pricing.module.scss",
+        "max_selector_depth": 1,
+        "selector_blocks": 50,
+        "lines_non_empty": 302,
+        "route": "/pricing"
+      }
+    ],
+    "first_edit_batch_plan": [
+      {
+        "order": 1,
+        "files": [
+          "app/(main)/landing.module.scss",
+          "app/(main)/resume/templates/templates.module.scss"
+        ],
+        "rationale": "Largest app surfaces by selector volume; if future parity-safe cleanup is required, start here for highest review leverage."
+      },
+      {
+        "order": 2,
+        "files": [
+          "app/(auth)/login/login.module.scss",
+          "app/(main)/pricing/pricing.module.scss"
+        ],
+        "rationale": "Second-tier surfaces with moderate selector counts; hold until parity or complexity evidence requires edits."
+      },
+      {
+        "order": 3,
+        "files": [
+          "app/(main)/resume/resume-module-theme.scss"
+        ],
+        "rationale": "Small scoped override file; touch last because it is already compact and parity-sensitive."
+      }
+    ],
+    "current_lane_conclusion": "All scoped app files already satisfy the <=3 nesting constraint; no source edits are required in this snapshot."
+  },
+  "files": [
+    {
+      "file": "app/(auth)/login/login.module.scss",
+      "importer": "app/(auth)/login/page.tsx",
+      "route": "/login",
+      "notes": "Phone / WeChat / developer login surface.",
+      "edit_batch_priority": 3,
+      "path": "app/(auth)/login/login.module.scss",
+      "lines_total": 572,
+      "lines_non_empty": 492,
+      "selector_blocks": 78,
+      "at_rule_blocks": 4,
+      "max_selector_depth": 1,
+      "deepest_selectors": [
+        {
+          "line": 1,
+          "selector": ".page",
+          "depth": 1
+        },
+        {
+          "line": 12,
+          "selector": ".shell",
+          "depth": 1
+        },
+        {
+          "line": 26,
+          "selector": ".leftPanel",
+          "depth": 1
+        },
+        {
+          "line": 34,
+          "selector": ".brandRow",
+          "depth": 1
+        },
+        {
+          "line": 39,
+          "selector": ".brandLink",
+          "depth": 1
+        },
+        {
+          "line": 47,
+          "selector": ".brandBadge",
+          "depth": 1
+        },
+        {
+          "line": 53,
+          "selector": ".brandLogo",
+          "depth": 1
+        },
+        {
+          "line": 59,
+          "selector": ".brandName",
+          "depth": 1
+        }
+      ],
+      "custom_property_definitions": 2,
+      "max_selector_length": 25,
+      "max_selector_combinators": 0,
+      "compiled_css_bytes": 9227
+    },
+    {
+      "file": "app/(main)/landing.module.scss",
+      "importer": "app/(main)/_components/HomePageClient.tsx",
+      "route": "/",
+      "notes": "Landing page + install modal surface.",
+      "edit_batch_priority": 1,
+      "path": "app/(main)/landing.module.scss",
+      "lines_total": 1249,
+      "lines_non_empty": 1077,
+      "selector_blocks": 172,
+      "at_rule_blocks": 5,
+      "max_selector_depth": 1,
+      "deepest_selectors": [
+        {
+          "line": 1,
+          "selector": ".root",
+          "depth": 1
+        },
+        {
+          "line": 30,
+          "selector": ":global([data-theme= ]) .root",
+          "depth": 1
+        },
+        {
+          "line": 46,
+          "selector": ".sandBg",
+          "depth": 1
+        },
+        {
+          "line": 56,
+          "selector": ".installOverlay",
+          "depth": 1
+        },
+        {
+          "line": 66,
+          "selector": ".installBackdrop",
+          "depth": 1
+        },
+        {
+          "line": 77,
+          "selector": ".installModal",
+          "depth": 1
+        },
+        {
+          "line": 97,
+          "selector": ".installModalScroll",
+          "depth": 1
+        },
+        {
+          "line": 107,
+          "selector": ".installModalScroll::-webkit-scrollbar",
+          "depth": 1
+        }
+      ],
+      "custom_property_definitions": 28,
+      "max_selector_length": 57,
+      "max_selector_combinators": 3,
+      "compiled_css_bytes": 23453
+    },
+    {
+      "file": "app/(main)/pricing/pricing.module.scss",
+      "importer": "app/(main)/pricing/page.tsx",
+      "route": "/pricing",
+      "notes": "Pricing hero/cards/FAQ surface.",
+      "edit_batch_priority": 4,
+      "path": "app/(main)/pricing/pricing.module.scss",
+      "lines_total": 353,
+      "lines_non_empty": 302,
+      "selector_blocks": 50,
+      "at_rule_blocks": 2,
+      "max_selector_depth": 1,
+      "deepest_selectors": [
+        {
+          "line": 1,
+          "selector": ".page",
+          "depth": 1
+        },
+        {
+          "line": 24,
+          "selector": ".container",
+          "depth": 1
+        },
+        {
+          "line": 29,
+          "selector": ".header",
+          "depth": 1
+        },
+        {
+          "line": 35,
+          "selector": ".eyebrow",
+          "depth": 1
+        },
+        {
+          "line": 44,
+          "selector": ".title",
+          "depth": 1
+        },
+        {
+          "line": 53,
+          "selector": ".titleAccent",
+          "depth": 1
+        },
+        {
+          "line": 62,
+          "selector": ".subtitle",
+          "depth": 1
+        },
+        {
+          "line": 70,
+          "selector": ".cardsGrid",
+          "depth": 1
+        }
+      ],
+      "custom_property_definitions": 11,
+      "max_selector_length": 30,
+      "max_selector_combinators": 2,
+      "compiled_css_bytes": 6486
+    },
+    {
+      "file": "app/(main)/resume/resume-module-theme.scss",
+      "importer": "app/(main)/resume/layout.tsx",
+      "route": "/resume*",
+      "notes": "Resume subtree theme override surface.",
+      "edit_batch_priority": 5,
+      "path": "app/(main)/resume/resume-module-theme.scss",
+      "lines_total": 72,
+      "lines_non_empty": 61,
+      "selector_blocks": 11,
+      "at_rule_blocks": 0,
+      "max_selector_depth": 1,
+      "deepest_selectors": [
+        {
+          "line": 1,
+          "selector": ".resume-module-scope",
+          "depth": 1
+        },
+        {
+          "line": 12,
+          "selector": "[data-theme= ] .resume-module-scope",
+          "depth": 1
+        },
+        {
+          "line": 19,
+          "selector": ".resume-module-scope button.bg-primary, .resume-module-scope button[class*= ]",
+          "depth": 1
+        },
+        {
+          "line": 26,
+          "selector": ".resume-module-scope button.bg-primary:hover, .resume-module-scope button.bg-primary:focus-visible, .resume-module-scope button[class*= ]:hover, .resume-module-scope button[class*= ]:focus-visible, .resume-module-scope button[class*= ]:hover",
+          "depth": 1
+        },
+        {
+          "line": 35,
+          "selector": ".resume-module-scope button.text-primary, .resume-module-scope button[class*= ]:hover",
+          "depth": 1
+        },
+        {
+          "line": 40,
+          "selector": ".resume-module-scope .btn-primary, .resume-module-scope .pill-primary",
+          "depth": 1
+        },
+        {
+          "line": 47,
+          "selector": ".resume-module-scope .btn-primary",
+          "depth": 1
+        },
+        {
+          "line": 53,
+          "selector": ".resume-module-scope .btn-primary:hover",
+          "depth": 1
+        }
+      ],
+      "custom_property_definitions": 12,
+      "max_selector_length": 52,
+      "max_selector_combinators": 2,
+      "compiled_css_bytes": 2390
+    },
+    {
+      "file": "app/(main)/resume/templates/templates.module.scss",
+      "importer": "app/(main)/resume/templates/page.tsx",
+      "route": "/resume/templates",
+      "notes": "Template gallery/banner/filter surface.",
+      "edit_batch_priority": 2,
+      "path": "app/(main)/resume/templates/templates.module.scss",
+      "lines_total": 270,
+      "lines_non_empty": 233,
+      "selector_blocks": 37,
+      "at_rule_blocks": 2,
+      "max_selector_depth": 1,
+      "deepest_selectors": [
+        {
+          "line": 1,
+          "selector": ".page",
+          "depth": 1
+        },
+        {
+          "line": 5,
+          "selector": ".banner",
+          "depth": 1
+        },
+        {
+          "line": 18,
+          "selector": ".banner::before",
+          "depth": 1
+        },
+        {
+          "line": 28,
+          "selector": ".banner::after",
+          "depth": 1
+        },
+        {
+          "line": 41,
+          "selector": ".bannerContent",
+          "depth": 1
+        },
+        {
+          "line": 49,
+          "selector": ".bannerEyebrow",
+          "depth": 1
+        },
+        {
+          "line": 57,
+          "selector": ".bannerTitle",
+          "depth": 1
+        },
+        {
+          "line": 65,
+          "selector": ".bannerSubtitle",
+          "depth": 1
+        }
+      ],
+      "custom_property_definitions": 0,
+      "max_selector_length": 37,
+      "max_selector_combinators": 2,
+      "compiled_css_bytes": 6591
+    }
+  ]
+}
