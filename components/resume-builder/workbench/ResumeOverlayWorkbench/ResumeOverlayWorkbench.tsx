@@ -78,7 +78,7 @@ export function ResumeOverlayWorkbench({
 
       {activeTool ? (
         <aside
-          className={`resume-side-panel resume-context-panel no-print flex flex-col overflow-hidden${activeTool === 'ai' ? '' : ' is-auto-height'}`}
+          className={`resume-side-panel resume-context-panel no-print flex flex-col overflow-hidden ${styles.contextPanel}${activeTool === 'ai' ? '' : ` ${styles.contextPanelAutoHeight}`}`}
         >
           {activeTool === 'ai' || !activeToolMeta ? null : (
             <div className={styles.panelHead}>
@@ -105,7 +105,7 @@ export function ResumeOverlayWorkbench({
             className={`resume-scroll-shell${sidePanelScrolling ? ' is-scrolling' : ''}${activeTool === 'ai' ? ' is-ai-panel' : ''}`}
             onScroll={onSidePanelScroll}
           >
-            <div className={`resume-side-panel-body resume-workbench-panel-body${activeTool === 'ai' ? ' is-ai-panel' : ' py-4 px-3'}`}>
+            <div className={`resume-side-panel-body ${styles.workbenchPanelBody}${activeTool === 'ai' ? ' is-ai-panel' : ' py-4 px-3'}`}>
               {toolPanelContent}
             </div>
           </div>
@@ -133,7 +133,7 @@ export function ResumeOverlayWorkbench({
       />
 
       <div
-        className="resume-editor-panel-resizer no-print"
+        className={`${styles.editorResizer} no-print`}
         role="separator"
         aria-orientation="vertical"
         aria-label="调整属性编辑器宽度"
@@ -143,7 +143,7 @@ export function ResumeOverlayWorkbench({
         onPointerCancel={onEditorPanelResizeEnd}
       />
 
-      <aside className={`resume-side-panel resume-editor-panel no-print flex flex-col overflow-hidden ${styles.editorPanel}`}>
+      <aside className={`resume-side-panel resume-editor-panel no-print flex flex-col overflow-hidden ${styles.editorPanel} ${styles.editorPanelShell}`}>
         {editorContent}
       </aside>
     </div>
