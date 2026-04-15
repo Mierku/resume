@@ -10,7 +10,6 @@
   backdrop-filter: blur(16px) saturate(112%);
   -webkit-backdrop-filter: blur(16px) saturate(112%);
 }
-
 .panel :global(.resume-ai-header),
 .panel :global(.resume-ai-messages),
 .panel :global(.resume-ai-input-area),
@@ -18,7 +17,6 @@
   position: relative;
   z-index: 1;
 }
-
 .panel :global(.resume-ai-header) {
   display: flex;
   align-items: center;
@@ -29,14 +27,12 @@
   backdrop-filter: blur(8px) saturate(105%);
   -webkit-backdrop-filter: blur(8px) saturate(105%);
 }
-
 .panel :global(.resume-ai-title-wrap) {
   display: flex;
   align-items: center;
   gap: 10px;
   min-width: 0;
 }
-
 .panel :global(.resume-ai-avatar) {
   width: 34px;
   height: 34px;
@@ -47,7 +43,6 @@
   color: color-mix(in srgb, var(--builder-panel-text) 92%, transparent);
   background: color-mix(in srgb, #ffffff 14%, transparent);
 }
-
 .panel :global(.resume-ai-title) {
   margin: 0;
   font-size: 12px;
@@ -56,7 +51,6 @@
   letter-spacing: 0.02em;
   color: var(--builder-panel-text);
 }
-
 .panel :global(.resume-ai-conversation-id) {
   margin-top: 2px;
   display: block;
@@ -69,14 +63,12 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-
 .panel :global(.resume-ai-header-actions) {
   position: relative;
   display: inline-flex;
   align-items: center;
   gap: 6px;
 }
-
 .panel :global(.resume-ai-icon-btn) {
   width: 28px;
   height: 28px;
@@ -89,25 +81,21 @@
   color: color-mix(in srgb, var(--builder-panel-text-muted) 88%, transparent);
   transition: all 140ms ease;
 }
-
 .panel :global(.resume-ai-icon-btn:hover:not(:disabled)),
 .panel :global(.resume-ai-icon-btn:focus-visible) {
   color: var(--builder-panel-text);
   background: color-mix(in srgb, var(--builder-panel-text) 9%, transparent);
   outline: none;
 }
-
 .panel :global(.resume-ai-icon-btn.is-danger:hover:not(:disabled)),
 .panel :global(.resume-ai-icon-btn.is-danger:focus-visible) {
   color: color-mix(in srgb, #ff8b8b 84%, var(--builder-panel-text));
 }
-
 .panel :global(.resume-ai-icon-btn:disabled),
 .panel :global(.resume-ai-send-btn:disabled) {
   opacity: 0.45;
   cursor: not-allowed;
 }
-
 .panel :global(.resume-ai-history-menu) {
   position: absolute;
   top: 34px;
@@ -117,7 +105,6 @@
   z-index: 10;
   overflow: hidden;
 }
-
 .panel :global(.resume-ai-history-menu-title) {
   height: 34px;
   display: flex;
@@ -129,23 +116,19 @@
   color: color-mix(in srgb, var(--builder-panel-text-muted) 92%, transparent);
   border-bottom: 1px solid var(--resume-select-panel-border);
 }
-
 .panel :global(.resume-ai-history-menu-state) {
   padding: 14px 12px;
   font-size: 12px;
   line-height: 1.5;
   color: color-mix(in srgb, var(--builder-panel-text-muted) 92%, transparent);
 }
-
 .panel :global(.resume-ai-history-menu-state.is-error) {
   color: color-mix(in srgb, #ff9f9f 82%, var(--builder-panel-text-muted));
 }
-
 .panel :global(.resume-ai-history-list) {
   max-height: 280px;
   overflow-y: auto;
 }
-
 .panel :global(.resume-ai-history-item) {
   width: 100%;
   border: 0;
@@ -159,24 +142,20 @@
   border-radius: 2px;
   transition: background-color 120ms ease, color 120ms ease;
 }
-
 .panel :global(.resume-ai-history-item:hover:not(:disabled)),
 .panel :global(.resume-ai-history-item:focus-visible) {
   background: var(--resume-select-option-hover);
   color: var(--resume-select-text);
   outline: none;
 }
-
 .panel :global(.resume-ai-history-item:disabled) {
   opacity: 0.52;
   cursor: not-allowed;
 }
-
 .panel :global(.resume-ai-history-item.is-active) {
   background: var(--resume-select-option-selected-bg);
   color: var(--resume-select-option-selected-text);
 }
-
 .panel :global(.resume-ai-history-item-title) {
   font-size: 12px;
   line-height: 1.35;
@@ -184,26 +163,22 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-
 .panel :global(.resume-ai-history-item-meta) {
   font-size: 10px;
   line-height: 1.3;
   color: color-mix(in srgb, var(--builder-panel-text-muted) 84%, transparent);
 }
-
 .panel :global(.resume-ai-messages) {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
   padding: 12px 14px 10px;
 }
-
 .panel :global(.resume-ai-messages.is-empty) {
   display: flex;
   align-items: center;
   justify-content: center;
 }
-
 .panel :global(.resume-ai-empty-state) {
   width: min(760px, 100%);
   margin: auto;
@@ -214,13 +189,11 @@
   text-align: center;
   padding: 10px 2px 12px;
 }
-
 .panel :global(.resume-ai-empty-hero) {
   position: relative;
   width: 110px;
   height: 110px;
 }
-
 .panel :global(.resume-ai-empty-hero-icon) {
   width: 100%;
   height: 100%;
@@ -236,7 +209,6 @@
     inset 0 0 0 1px rgba(168, 180, 255, 0.22),
     0 24px 44px rgba(0, 0, 0, 0.48);
 }
-
 .panel :global(.resume-ai-empty-hero-icon::after) {
   content: '';
   position: absolute;
@@ -246,7 +218,6 @@
   filter: blur(18px);
   z-index: -1;
 }
-
 .panel :global(.resume-ai-empty-hero-check) {
   position: absolute;
   right: -8px;
@@ -261,11 +232,9 @@
   background: rgba(26, 88, 55, 0.8);
   box-shadow: inset 0 0 0 1px rgba(96, 255, 170, 0.34);
 }
-
 .panel :global(.resume-ai-empty-copy) {
   max-width: 580px;
 }
-
 .panel :global(.resume-ai-empty-title) {
   margin: 0;
   font-size: 26px;
@@ -274,14 +243,12 @@
   font-weight: 650;
   color: color-mix(in srgb, var(--builder-panel-text) 96%, #ffffff 4%);
 }
-
 .panel :global(.resume-ai-empty-desc) {
   margin: 12px 0 0;
   font-size: 14px;
   line-height: 1.55;
   color: color-mix(in srgb, var(--builder-panel-text-muted) 92%, #ffffff 8%);
 }
-
 .panel :global(.resume-ai-empty-actions) {
   width: 100%;
   display: grid;
@@ -289,7 +256,6 @@
   gap: 14px;
   margin-top: 6px;
 }
-
 .panel :global(.resume-ai-empty-action) {
   width: 100%;
   min-height: 112px;
@@ -308,7 +274,6 @@
     border-color 180ms ease,
     opacity 140ms ease;
 }
-
 .panel :global(.resume-ai-empty-action:hover:not(:disabled)),
 .panel :global(.resume-ai-empty-action:focus-visible) {
   transform: translateY(-2px);
@@ -318,12 +283,10 @@
     inset 0 0 0 1px color-mix(in srgb, #ffffff 10%, transparent);
   outline: none;
 }
-
 .panel :global(.resume-ai-empty-action:disabled) {
   opacity: 0.48;
   cursor: not-allowed;
 }
-
 .panel :global(.resume-ai-empty-action-icon) {
   width: 54px;
   height: 54px;
@@ -334,76 +297,61 @@
   justify-content: center;
   background: color-mix(in srgb, #000000 68%, transparent);
 }
-
 .panel :global(.resume-ai-empty-action-icon.is-blue) {
   color: #63a4ff;
 }
-
 .panel :global(.resume-ai-empty-action-icon.is-violet) {
   color: #c37bff;
 }
-
 .panel :global(.resume-ai-empty-action-icon.is-amber) {
   color: #ffa743;
 }
-
 .panel :global(.resume-ai-empty-action-icon.is-emerald) {
   color: #2fe08d;
 }
-
 .panel :global(.resume-ai-empty-action-label) {
   font-size: 18px;
   line-height: 1.3;
   letter-spacing: 0.01em;
   font-weight: 500;
 }
-
 .panel :global(.resume-ai-history-list::-webkit-scrollbar),
 .panel :global(.resume-ai-messages::-webkit-scrollbar) {
   width: 4px;
 }
-
 .panel :global(.resume-ai-history-list::-webkit-scrollbar-thumb),
 .panel :global(.resume-ai-messages::-webkit-scrollbar-thumb) {
   background: color-mix(in srgb, var(--builder-panel-text) 26%, transparent);
   border-radius: 999px;
 }
-
 .panel :global(.resume-ai-message) {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
-
 .panel :global(.resume-ai-message.is-user) {
   align-items: flex-end;
 }
-
 .panel :global(.resume-ai-message.is-ai) {
   align-items: flex-start;
 }
-
 .panel :global(.resume-ai-bubble) {
   max-width: 92%;
   padding: 10px 11px;
 }
-
 .panel :global(.resume-ai-bubble.is-ai) {
   border-radius: 14px 14px 14px 6px;
 }
-
 .panel :global(.resume-ai-bubble.is-user) {
   border-radius: 14px 14px 6px 14px;
   background: var(--builder-input-bg2);
 }
-
 .panel :global(.resume-ai-bubble.is-progress) {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   background: color-mix(in srgb, var(--builder-panel-bg) 64%, transparent);
 }
-
 .panel :global(.resume-ai-progress-dot) {
   width: 8px;
   height: 8px;
@@ -412,7 +360,6 @@
   background: color-mix(in srgb, #ffffff 74%, transparent);
   animation: aiProgressPulse 1.1s ease-in-out infinite;
 }
-
 .panel :global(.resume-ai-bubble-text) {
   margin: 0;
   font-size: 12px;
@@ -420,13 +367,11 @@
   color: var(--builder-panel-text);
   white-space: pre-wrap;
 }
-
 .panel :global(.resume-ai-time) {
   font-size: 10px;
   color: color-mix(in srgb, var(--builder-panel-text-muted) 84%, transparent);
   padding: 0 2px;
 }
-
 .panel :global(.resume-ai-card) {
   margin-top: 10px;
   position: relative;
@@ -439,7 +384,6 @@
   box-shadow: 0 20px 42px rgba(0, 0, 0, 0.46);
   padding: 18px;
 }
-
 .panel :global(.resume-ai-card.is-clickable) {
   cursor: pointer;
   transition:
@@ -447,7 +391,6 @@
     box-shadow 240ms cubic-bezier(0.2, 1, 0.3, 1),
     border-color 180ms ease;
 }
-
 .panel :global(.resume-ai-card.is-clickable:hover),
 .panel :global(.resume-ai-card.is-clickable:focus-visible) {
   transform: translateY(-4px) scale(1.01);
@@ -457,7 +400,6 @@
     inset 0 0 0 1px color-mix(in srgb, #ffffff 22%, transparent);
   outline: none;
 }
-
 .panel :global(.resume-ai-card::after) {
   content: '';
   position: absolute;
@@ -475,7 +417,6 @@
   animation: aiCardSpin 10s linear infinite;
   pointer-events: none;
 }
-
 .panel :global(.resume-ai-card-abstract) {
   position: absolute;
   top: -28px;
@@ -488,7 +429,6 @@
   filter: blur(32px);
   pointer-events: none;
 }
-
 .panel :global(.resume-ai-card-meta) {
   display: flex;
   align-items: baseline;
@@ -496,7 +436,6 @@
   gap: 8px;
   margin-bottom: 10px;
 }
-
 .panel :global(.resume-ai-card-dot) {
   width: 6px;
   height: 6px;
@@ -504,7 +443,6 @@
   background: #f2f2f2;
   box-shadow: 0 0 12px rgba(255, 255, 255, 0.28);
 }
-
 .panel :global(.resume-ai-card-kicker) {
   font-size: 9px;
   line-height: 1;
@@ -513,7 +451,6 @@
   text-transform: uppercase;
   color: color-mix(in srgb, #ffffff 52%, transparent);
 }
-
 .panel :global(.resume-ai-card-badge) {
   height: 18px;
   border-radius: 999px;
@@ -526,13 +463,11 @@
   color: color-mix(in srgb, #ffffff 92%, transparent);
   background: color-mix(in srgb, #ffffff 18%, transparent);
 }
-
 .panel :global(.resume-ai-card-status) {
   font-size: 9px;
   line-height: 1;
   color: color-mix(in srgb, #ffffff 68%, transparent);
 }
-
 .panel :global(.resume-ai-card-title) {
   font-size: 18px;
   font-weight: 300;
@@ -542,14 +477,12 @@
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
-
 .panel :global(.resume-ai-card-desc) {
   margin-top: 8px;
   font-size: 12px;
   line-height: 1.62;
   color: color-mix(in srgb, #ffffff 66%, transparent);
 }
-
 .panel :global(.resume-ai-card-hint) {
   margin-top: 14px;
   display: inline-flex;
@@ -564,7 +497,6 @@
   color: color-mix(in srgb, #ffffff 78%, transparent);
   background: color-mix(in srgb, #ffffff 8%, transparent);
 }
-
 .panel :global(.resume-ai-card-layer) {
   position: absolute;
   right: 18px;
@@ -577,21 +509,18 @@
   user-select: none;
   pointer-events: none;
 }
-
 .panel :global(.resume-ai-card-actions) {
   margin-top: 10px;
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
 }
-
 .panel :global(.resume-ai-input-area) {
   padding: 10px 14px 14px;
   background: color-mix(in srgb, var(--builder-panel-bg) 78%, transparent);
   backdrop-filter: blur(8px) saturate(105%);
   -webkit-backdrop-filter: blur(8px) saturate(105%);
 }
-
 .panel :global(.resume-ai-input-shell) {
   display: flex;
   flex-direction: column;
@@ -604,7 +533,6 @@
   background: var(--builder-input-bg2);
   padding: 12px 12px 12px 14px;
 }
-
 .panel :global(.resume-ai-input-shell .resume-ai-composer) {
   width: 100%;
   min-height: 74px;
@@ -622,7 +550,6 @@
   line-height: 1.55;
   padding: 2px 6px 0 0;
 }
-
 .panel :global(.resume-ai-input-shell .resume-ai-composer:hover),
 .panel :global(.resume-ai-input-shell .resume-ai-composer:focus),
 .panel :global(.resume-ai-input-shell .resume-ai-composer:focus-visible) {
@@ -631,25 +558,21 @@
   background: transparent;
   outline: none;
 }
-
 .panel :global(.resume-ai-input-shell .resume-ai-composer::placeholder) {
   color: color-mix(in srgb, var(--builder-panel-text-muted) 86%, transparent);
 }
-
 .panel :global(.resume-ai-input-footer) {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
   gap: 10px;
 }
-
 .panel :global(.resume-ai-input-actions) {
   display: flex;
   align-items: center;
   gap: 8px;
   min-width: 0;
 }
-
 .panel :global(.resume-ai-input-action) {
   height: 30px;
   border-radius: 999px;
@@ -664,12 +587,10 @@
   line-height: 1;
   white-space: nowrap;
 }
-
 .panel :global(.resume-ai-input-action.is-plus) {
   width: 30px;
   padding: 0;
 }
-
 .panel :global(.resume-ai-send-btn) {
   width: 46px;
   height: 46px;
@@ -683,60 +604,48 @@
   flex-shrink: 0;
   transition: transform 120ms ease, opacity 120ms ease;
 }
-
 .panel :global(.resume-ai-send-btn:hover:not(:disabled)) {
   transform: translateY(-1px) scale(1.01);
 }
-
 @media (max-width: 920px) {
   .panel :global(.resume-ai-empty-title) {
     font-size: 24px;
   }
-
   .panel :global(.resume-ai-empty-desc) {
     font-size: 13px;
   }
-
   .panel :global(.resume-ai-empty-action-label) {
     font-size: 16px;
   }
 }
-
 @media (max-width: 680px) {
   .panel :global(.resume-ai-empty-actions) {
     grid-template-columns: minmax(0, 1fr);
   }
-
   .panel :global(.resume-ai-empty-title) {
     font-size: 22px;
   }
-
   .panel :global(.resume-ai-empty-desc) {
     font-size: 13px;
   }
-
   .panel :global(.resume-ai-empty-action-label) {
     font-size: 15px;
   }
 }
-
 @keyframes aiCardSpin {
   from {
     transform: rotate(0deg);
   }
-
   to {
     transform: rotate(360deg);
   }
 }
-
 @keyframes aiProgressPulse {
   0%,
   100% {
     opacity: 0.42;
     transform: scale(0.88);
   }
-
   50% {
     opacity: 1;
     transform: scale(1.06);

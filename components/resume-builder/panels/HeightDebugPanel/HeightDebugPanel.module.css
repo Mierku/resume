@@ -1,68 +1,52 @@
 .hero {
   composes: surfaceCard from '../shared/PanelControlPrimitives.module.css';
 }
-
 .metricGrid {
   composes: twoColumnGrid from '../shared/PanelControlPrimitives.module.css';
 }
-
 .metricCard {
   composes: surfaceCard from '../shared/PanelControlPrimitives.module.css';
 }
-
 .summaryCard {
   composes: surfaceCard from '../shared/PanelControlPrimitives.module.css';
   composes: stackSm from '../shared/PanelControlPrimitives.module.css';
 }
-
 .emptyCard {
   composes: surfaceCard from '../shared/PanelControlPrimitives.module.css';
 }
-
 .metricValue {
   composes: monoText from '../shared/PanelControlPrimitives.module.css';
 }
-
 .summaryRow {
   composes: monoText from '../shared/PanelControlPrimitives.module.css';
 }
-
 .blockMetric {
   composes: monoText from '../shared/PanelControlPrimitives.module.css';
 }
-
 .detailColumn {
   composes: monoText from '../shared/PanelControlPrimitives.module.css';
 }
-
 .blockCard {
   composes: surfaceCard from '../shared/PanelControlPrimitives.module.css';
 }
-
 .blockTitle {
   composes: splitBaseline from '../shared/PanelControlPrimitives.module.css';
 }
-
 .blockMetric {
   composes: insetCard from '../shared/PanelControlPrimitives.module.css';
 }
-
 .detailColumn {
   composes: insetCard from '../shared/PanelControlPrimitives.module.css';
 }
-
 .blockDetailGrid {
   composes: twoColumnGrid from '../shared/PanelControlPrimitives.module.css';
 }
-
 .panel {
   padding-top: 12px;
 }
-
 .hero {
   padding: 16px;
 }
-
 .heroTitle {
   display: block;
   font-size: 18px;
@@ -70,20 +54,17 @@
   font-weight: 650;
   color: var(--builder-panel-text);
 }
-
 .heroText {
   margin: 8px 0 0;
   color: var(--builder-panel-text-muted);
   font-size: 12px;
   line-height: 1.6;
 }
-
 .metricCard {
   display: grid;
   gap: 6px;
   padding: 14px 12px;
 }
-
 .metricLabel,
 .metricMeta,
 .emptyText,
@@ -93,7 +74,6 @@
   font-size: 12px;
   line-height: 1.5;
 }
-
 .metricValue,
 .emptyTitle {
   color: var(--builder-panel-text);
@@ -101,16 +81,13 @@
   line-height: 1.1;
   font-weight: 700;
 }
-
 .metricMeta {
   font-family: 'IBM Plex Mono', 'SFMono-Regular', 'Consolas', monospace;
 }
-
 .summaryCard,
 .emptyCard {
   padding: 14px 16px;
 }
-
 .summaryRow {
   display: flex;
   align-items: center;
@@ -119,63 +96,52 @@
   color: var(--builder-panel-text-soft);
   font-size: 12px;
 }
-
 .summaryRow strong,
 .blockMetric strong,
 .detailColumn span:not(.detailLabel) {
   color: var(--builder-panel-text);
   font-weight: 600;
 }
-
 .emptyTitle {
   font-size: 15px;
 }
-
 .emptyText {
   margin: 8px 0 0;
 }
-
 .blockList {
   display: grid;
   gap: 10px;
 }
-
 .blockCard {
   padding: 14px 16px;
   display: grid;
   gap: 12px;
 }
-
 .blockTitle strong {
   color: var(--builder-panel-text);
   font-size: 13px;
   line-height: 1.2;
 }
-
 .blockMetrics {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 8px;
 }
-
 .blockMetric {
   padding: 8px 10px;
   display: grid;
   gap: 5px;
   font-size: 11px;
 }
-
 .blockMetric span {
   color: var(--builder-panel-text-muted);
 }
-
 .detailColumn {
   display: grid;
   gap: 4px;
   padding: 10px 12px;
   font-size: 11px;
 }
-
 @media (max-width: 720px) {
   .metricGrid,
   .blockMetrics,

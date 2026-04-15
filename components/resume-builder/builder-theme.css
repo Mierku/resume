@@ -1,255 +1,123 @@
-/*
- * Foundation token contract
- * 1) Define new core -> semantic -> component tokens here.
- * 2) Preserve existing --builder-*, --control-*, and --resume-* variables as compatibility aliases.
- * 3) Keep builder-theme.css imported immediately before workbench-layout.css; the workbench file is the only
- *    scoped foundation override layer during the refactor.
- *
- * Alias bridge rule: do not introduce new callsites for the legacy aliases below. Prefer the --rb-* tokens for
- * future foundation work and retire the aliases phase-by-phase once downstream modules converge.
- */
 .resume-builder-scope {
-  /* Core tokens */
-  --rb-core-canvas: #f3f3f3;
-  --rb-core-surface: #ffffff;
-  --rb-core-surface-soft: #f7f7f7;
-  --rb-core-surface-muted: #f2f2f2;
-  --rb-core-text-primary: #111111;
-  --rb-core-text-secondary: #666666;
-  --rb-core-text-placeholder: #8f8f8f;
-  --rb-core-border: rgba(0, 0, 0, 0.12);
-  --rb-core-border-strong: rgba(0, 0, 0, 0.2);
-  --rb-core-border-control: rgba(0, 0, 0, 0.18);
-  --rb-core-border-control-hover: rgba(0, 0, 0, 0.26);
-  --rb-core-border-control-focus: rgba(0, 0, 0, 0.46);
-  --rb-core-overlay-dock: rgba(255, 255, 255, 0.9);
-  --rb-core-shadow-dock: 0 8px 20px rgba(0, 0, 0, 0.14);
-  --rb-core-input-inset: inset 0 1px 0 rgba(255, 255, 255, 0.64);
-
-  /* Semantic tokens */
-  --rb-semantic-canvas: var(--rb-core-canvas);
-  --rb-semantic-surface-panel: var(--rb-core-surface);
-  --rb-semantic-surface-panel-soft: var(--rb-core-surface-soft);
-  --rb-semantic-surface-input: var(--rb-core-surface);
-  --rb-semantic-surface-input-hover: var(--rb-core-surface-muted);
-  --rb-semantic-border-panel: var(--rb-core-border);
-  --rb-semantic-border-panel-strong: var(--rb-core-border-strong);
-  --rb-semantic-border-input: var(--rb-core-border-control);
-  --rb-semantic-border-input-hover: var(--rb-core-border-control-hover);
-  --rb-semantic-border-input-focus: var(--rb-core-border-control-focus);
-  --rb-semantic-text-primary: var(--rb-core-text-primary);
-  --rb-semantic-text-secondary: var(--rb-core-text-secondary);
-  --rb-semantic-text-placeholder: var(--rb-core-text-placeholder);
-  --rb-semantic-overlay-dock: var(--rb-core-overlay-dock);
-  --rb-semantic-shadow-dock: var(--rb-core-shadow-dock);
-  --rb-semantic-input-inset: var(--rb-core-input-inset);
-
-  /* Component tokens */
-  --rb-component-card-surface: none;
-  --rb-component-card-surface-hover: color-mix(in srgb, var(--rb-semantic-surface-panel-soft) 92%, #f0f0f0);
-  --rb-component-card-border: color-mix(in srgb, var(--rb-semantic-border-panel-strong) 76%, transparent);
-  --rb-component-card-border-strong: color-mix(in srgb, var(--rb-semantic-border-panel-strong) 92%, transparent);
-  --rb-component-control-surface: #ffffff;
-  --rb-component-control-surface-hover: color-mix(in srgb, var(--rb-semantic-text-primary) 5%, transparent);
-  --rb-component-control-border-focus: color-mix(in srgb, var(--rb-semantic-text-primary) 50%, transparent);
-  --rb-component-control-panel-border: color-mix(in srgb, var(--rb-semantic-border-panel-strong) 95%, transparent);
-  --rb-component-control-panel-surface: color-mix(in srgb, var(--rb-semantic-surface-panel) 98%, #ffffff);
-  --rb-component-control-panel-shadow: 0 12px 24px rgba(0, 0, 0, 0.16);
-  --rb-component-control-active-surface: color-mix(in srgb, var(--rb-semantic-text-primary) 8%, transparent);
-  --rb-component-control-active-indicator: var(--rb-semantic-text-primary);
-  --rb-component-toolbar-border: var(--rb-semantic-border-panel);
-  --rb-component-toolbar-shadow: none;
-  --rb-component-toolbar-title-height: 36px;
-  --rb-component-toolbar-title-radius: 6px;
-  --rb-component-toolbar-title-display-bg: transparent;
-  --rb-component-toolbar-title-input-bg: color-mix(in srgb, var(--rb-semantic-surface-panel-soft) 94%, white);
-  --rb-component-toolbar-title-input-border: 1px solid color-mix(in srgb, var(--rb-semantic-border-panel-strong) 88%, transparent);
-  --rb-component-toolbar-title-input-hover-border: var(--rb-component-control-border-focus);
-  --rb-component-toolbar-title-input-focus-border: var(--rb-component-control-border-focus);
-  --rb-component-toolbar-action-padding: 0 16px;
-  --rb-component-toolbar-save-border: color-mix(in srgb, var(--rb-semantic-border-panel-strong) 88%, transparent);
-  --rb-component-toolbar-save-bg: color-mix(in srgb, var(--rb-semantic-surface-panel-soft) 96%, white);
-  --rb-component-toolbar-save-hover-bg: color-mix(in srgb, var(--rb-semantic-text-primary) 6%, var(--rb-semantic-surface-panel-soft));
-  --rb-component-toolbar-save-color: var(--rb-semantic-text-primary);
-  --rb-component-control-field-radius: 3px;
-
-  /* Legacy alias bridge */
-  --builder-workspace-bg: var(--rb-semantic-canvas);
-  --builder-panel-bg: var(--rb-semantic-surface-panel);
-  --builder-panel-bg-soft: var(--rb-semantic-surface-panel-soft);
-  --builder-panel-border: var(--rb-semantic-border-panel);
-  --builder-panel-border-strong: var(--rb-semantic-border-panel-strong);
-  --builder-panel-text: var(--rb-semantic-text-primary);
-  --builder-panel-text-muted: var(--rb-semantic-text-secondary);
-  --builder-preview-dock-bg: var(--rb-semantic-overlay-dock);
-  --builder-preview-dock-shadow: var(--rb-semantic-shadow-dock);
-  --builder-card-bg: var(--rb-component-card-surface);
-  --builder-card-bg-hover: var(--rb-component-card-surface-hover);
-  --builder-card-border: var(--rb-component-card-border);
-  --builder-card-border-strong: var(--rb-component-card-border-strong);
-  --builder-input-bg: var(--rb-semantic-surface-input);
-  --builder-input-bg-hover: var(--rb-semantic-surface-input-hover);
-  --builder-input-border: var(--rb-semantic-border-input);
-  --builder-input-border-hover: var(--rb-semantic-border-input-hover);
-  --builder-input-border-focus: var(--rb-semantic-border-input-focus);
-  --builder-input-placeholder: var(--rb-semantic-text-placeholder);
-  --builder-input-inset: var(--rb-semantic-input-inset);
-  --builder-input-bg2: var(--rb-core-surface-muted);
-  --control-surface: var(--rb-component-control-surface);
-  --control-hover-surface: var(--rb-component-control-surface-hover);
-  --control-focus-border: var(--rb-component-control-border-focus);
-  --control-panel-border: var(--rb-component-control-panel-border);
-  --control-panel-surface: var(--rb-component-control-panel-surface);
-  --control-panel-shadow: var(--rb-component-control-panel-shadow);
-  --control-active-surface: var(--rb-component-control-active-surface);
-  --control-active-indicator: var(--rb-component-control-active-indicator);
-  --builder-toolbar-border-color: var(--rb-component-toolbar-border);
-  --builder-toolbar-shadow: var(--rb-component-toolbar-shadow);
-  --builder-toolbar-title-height: var(--rb-component-toolbar-title-height);
-  --builder-toolbar-title-radius: var(--rb-component-toolbar-title-radius);
-  --builder-toolbar-title-display-bg: var(--rb-component-toolbar-title-display-bg);
-  --builder-toolbar-title-input-bg: var(--rb-component-toolbar-title-input-bg);
-  --builder-toolbar-title-input-border: var(--rb-component-toolbar-title-input-border);
-  --builder-toolbar-title-input-hover-border: var(--rb-component-toolbar-title-input-hover-border);
-  --builder-toolbar-title-input-focus-border: var(--rb-component-toolbar-title-input-focus-border);
-  --builder-toolbar-action-padding: var(--rb-component-toolbar-action-padding);
-  --builder-toolbar-save-border: var(--rb-component-toolbar-save-border);
-  --builder-toolbar-save-bg: var(--rb-component-toolbar-save-bg);
-  --builder-toolbar-save-hover-bg: var(--rb-component-toolbar-save-hover-bg);
-  --builder-toolbar-save-color: var(--rb-component-toolbar-save-color);
-  --control-field-radius: var(--rb-component-control-field-radius);
+  --builder-workspace-bg: #f3f3f3;
+  --builder-panel-bg: #ffffff;
+  --builder-panel-bg-soft: #f7f7f7;
+  --builder-panel-border: rgba(0, 0, 0, 0.12);
+  --builder-panel-border-strong: rgba(0, 0, 0, 0.2);
+  --builder-panel-text: #111111;
+  --builder-panel-text-muted: #666666;
+  --builder-preview-dock-bg: rgba(255, 255, 255, 0.9);
+  --builder-preview-dock-shadow: 0 8px 20px rgba(0, 0, 0, 0.14);
+  --builder-card-bg: none;
+  --builder-card-bg-hover: color-mix(in srgb, var(--builder-panel-bg-soft) 92%, #f0f0f0);
+  --builder-card-border: color-mix(in srgb, var(--builder-panel-border-strong) 76%, transparent);
+  --builder-card-border-strong: color-mix(in srgb, var(--builder-panel-border-strong) 92%, transparent);
+  --builder-input-bg: #ffffff;
+  --builder-input-bg-hover: #f2f2f2;
+  --builder-input-border: rgba(0, 0, 0, 0.18);
+  --builder-input-border-hover: rgba(0, 0, 0, 0.26);
+  --builder-input-border-focus: rgba(0, 0, 0, 0.46);
+  --builder-input-placeholder: #8f8f8f;
+  --builder-input-inset: inset 0 1px 0 rgba(255, 255, 255, 0.64);
+  --builder-input-bg2: #f2f2f2;
+  --control-surface: #ffffff;
+  --control-hover-surface: color-mix(in srgb, var(--builder-panel-text) 5%, transparent);
+  --control-focus-border: color-mix(in srgb, var(--builder-panel-text) 50%, transparent);
+  --control-panel-border: color-mix(in srgb, var(--builder-panel-border-strong) 95%, transparent);
+  --control-panel-surface: color-mix(in srgb, var(--builder-panel-bg) 98%, #ffffff);
+  --control-panel-shadow: 0 12px 24px rgba(0, 0, 0, 0.16);
+  --control-active-surface: color-mix(in srgb, var(--builder-panel-text) 8%, transparent);
+  --control-active-indicator: var(--builder-panel-text);
+  --builder-toolbar-border-color: var(--builder-panel-border);
+  --builder-toolbar-shadow: none;
+  --builder-toolbar-title-height: 36px;
+  --builder-toolbar-title-radius: 6px;
+  --builder-toolbar-title-display-bg: transparent;
+  --builder-toolbar-title-input-bg: color-mix(in srgb, var(--builder-panel-bg-soft) 94%, white);
+  --builder-toolbar-title-input-border: 1px solid color-mix(in srgb, var(--builder-panel-border-strong) 88%, transparent);
+  --builder-toolbar-title-input-hover-border: var(--control-focus-border);
+  --builder-toolbar-title-input-focus-border: var(--control-focus-border);
+  --builder-toolbar-action-padding: 0 16px;
+  --builder-toolbar-save-border: color-mix(in srgb, var(--builder-panel-border-strong) 88%, transparent);
+  --builder-toolbar-save-bg: color-mix(in srgb, var(--builder-panel-bg-soft) 96%, white);
+  --builder-toolbar-save-hover-bg: color-mix(in srgb, var(--builder-panel-text) 6%, var(--builder-panel-bg-soft));
+  --builder-toolbar-save-color: var(--builder-panel-text);
+  --control-field-radius: 3px;
   background: var(--builder-workspace-bg);
   overscroll-behavior: none;
 }
 
 [data-theme='dark'] .resume-builder-scope {
-  /* Core tokens */
-  --rb-core-surface: #191919;
-  --rb-core-surface-soft: #1b1b1b;
-  --rb-core-surface-muted: #1c1c1c;
-  --rb-core-text-primary: #f3f3f3;
-  --rb-core-text-secondary: #a3a3a3;
-  --rb-core-text-placeholder: rgba(166, 166, 166, 0.9);
-  --rb-core-border: rgba(255, 255, 255, 0.1);
-  --rb-core-border-strong: rgba(255, 255, 255, 0.2);
-  --rb-core-border-control: rgba(255, 255, 255, 0.18);
-  --rb-core-border-control-hover: rgba(255, 255, 255, 0.3);
-  --rb-core-border-control-focus: rgba(255, 255, 255, 0.5);
-  --rb-core-overlay-dock: rgba(18, 18, 18, 0.92);
-  --rb-core-shadow-dock: 0 12px 28px rgba(0, 0, 0, 0.34);
-  --rb-core-input-inset: inset 0 1px 0 rgba(255, 255, 255, 0.04), inset 0 -1px 0 rgba(0, 0, 0, 0.44);
-
-  /* Semantic tokens */
-  --rb-semantic-surface-input: #1a1a1a;
-  --rb-semantic-surface-input-hover: #222222;
-
-  /* Component tokens */
-  --rb-component-card-surface: #1f1f1f;
-  --rb-component-card-surface-hover: color-mix(in srgb, var(--rb-semantic-surface-panel-soft) 90%, #202020);
-  --rb-component-card-border: none;
-  --rb-component-card-border-strong: rgba(255, 255, 255, 0.22);
-  --rb-component-control-surface: transparent;
-  --rb-component-control-surface-hover: color-mix(in srgb, var(--rb-semantic-text-primary) 6%, transparent);
-  --rb-component-control-border-focus: color-mix(in srgb, var(--rb-semantic-text-primary) 84%, transparent);
-  --rb-component-control-panel-border: color-mix(in srgb, var(--rb-semantic-border-panel-strong) 94%, transparent);
-  --rb-component-control-panel-surface: color-mix(in srgb, #1a1a1a 88%, #111111);
-  --rb-component-control-panel-shadow: 0 16px 34px rgba(0, 0, 0, 0.38);
-  --rb-component-control-active-surface: color-mix(in srgb, var(--rb-semantic-text-primary) 12%, transparent);
-  --rb-component-control-active-indicator: var(--rb-semantic-text-primary);
-
-  /* Legacy alias bridge */
-  --builder-panel-header: #212121;
+  --builder-panel-bg: #191919;
+  --builder-panel-header:#212121;
+  --builder-panel-bg-soft: #1b1b1b;
+  --builder-panel-border: rgba(255, 255, 255, 0.1);
+  --builder-panel-border-strong: rgba(255, 255, 255, 0.2);
+  --builder-panel-text: #f3f3f3;
+  --builder-panel-text-muted: #a3a3a3;
+  --builder-preview-dock-bg: rgba(18, 18, 18, 0.92);
+  --builder-preview-dock-shadow: 0 12px 28px rgba(0, 0, 0, 0.34);
+  --builder-card-bg: #1f1f1f;
+  --builder-card-bg-hover: color-mix(in srgb, var(--builder-panel-bg-soft) 90%, #202020);
+  --builder-card-border: none;
+  --builder-card-border-strong: rgba(255, 255, 255, 0.22);
+  --builder-input-bg: #1a1a1a;
+  --builder-input-bg-hover: #222222;
+  --builder-input-border: rgba(255, 255, 255, 0.18);
+  --builder-input-border-hover: rgba(255, 255, 255, 0.3);
+  --builder-input-border-focus: rgba(255, 255, 255, 0.5);
+  --builder-input-placeholder: rgba(166, 166, 166, 0.9);
+  --builder-input-inset: inset 0 1px 0 rgba(255, 255, 255, 0.04), inset 0 -1px 0 rgba(0, 0, 0, 0.44);
+  --builder-input-bg2: #1c1c1c;
+  --control-surface: transparent;
+  --control-hover-surface: color-mix(in srgb, var(--builder-panel-text) 6%, transparent);
+  --control-focus-border: color-mix(in srgb, var(--builder-panel-text) 84%, transparent);
+  --control-panel-border: color-mix(in srgb, var(--builder-panel-border-strong) 94%, transparent);
+  --control-panel-surface: color-mix(in srgb, #1a1a1a 88%, #111111);
+  --control-panel-shadow: 0 16px 34px rgba(0, 0, 0, 0.38);
+  --control-active-surface: color-mix(in srgb, var(--builder-panel-text) 12%, transparent);
+  --control-active-indicator: var(--builder-panel-text);
 }
 
 body.resume-builder-mono {
-  /* Core tokens */
-  --rb-mono-core-background: #ffffff;
-  --rb-mono-core-foreground: #111111;
-  --rb-mono-core-border: rgba(0, 0, 0, 0.18);
-  --rb-mono-core-muted-surface: #f5f5f5;
-  --rb-mono-core-muted-foreground: #666666;
-  --rb-mono-core-primary: #111111;
-  --rb-mono-core-primary-hover: #2a2a2a;
-  --rb-mono-core-select-muted: #71717a;
-  --rb-mono-core-select-focus: #fac460;
-  --rb-mono-core-select-panel-border: rgba(0, 0, 0, 0.16);
-  --rb-mono-core-select-panel-shadow: 0 12px 24px -6px rgba(0, 0, 0, 0.24);
-  --rb-mono-core-select-option-hover: rgba(0, 0, 0, 0.06);
-
-  /* Semantic tokens */
-  --rb-mono-semantic-background: var(--rb-mono-core-background);
-  --rb-mono-semantic-foreground: var(--rb-mono-core-foreground);
-  --rb-mono-semantic-border: var(--rb-mono-core-border);
-  --rb-mono-semantic-muted-surface: var(--rb-mono-core-muted-surface);
-  --rb-mono-semantic-muted-foreground: var(--rb-mono-core-muted-foreground);
-  --rb-mono-semantic-primary: var(--rb-mono-core-primary);
-  --rb-mono-semantic-primary-hover: var(--rb-mono-core-primary-hover);
-  --rb-mono-semantic-select-surface: var(--rb-mono-core-background);
-  --rb-mono-semantic-select-surface-hover: var(--rb-mono-core-muted-surface);
-  --rb-mono-semantic-select-text: var(--rb-mono-core-foreground);
-  --rb-mono-semantic-select-muted: var(--rb-mono-core-select-muted);
-  --rb-mono-semantic-select-border: var(--rb-mono-core-border);
-  --rb-mono-semantic-select-border-hover: rgba(0, 0, 0, 0.26);
-  --rb-mono-semantic-select-border-focus: var(--rb-mono-core-select-focus);
-  --rb-mono-semantic-select-panel-bg: var(--rb-mono-core-background);
-  --rb-mono-semantic-select-panel-border: var(--rb-mono-core-select-panel-border);
-  --rb-mono-semantic-select-panel-shadow: var(--rb-mono-core-select-panel-shadow);
-  --rb-mono-semantic-select-option-hover: var(--rb-mono-core-select-option-hover);
-  --rb-mono-semantic-select-option-selected-bg: color-mix(in srgb, var(--rb-mono-semantic-select-border-focus) 12%, transparent);
-  --rb-mono-semantic-select-option-selected-text: var(--rb-mono-semantic-select-border-focus);
-
-  /* Component tokens */
-  --rb-mono-component-control-surface: transparent;
-  --rb-mono-component-control-hover-surface: color-mix(in srgb, var(--rb-mono-semantic-foreground) 4%, transparent);
-  --rb-mono-component-control-focus-border: color-mix(in srgb, var(--rb-mono-semantic-foreground) 80%, transparent);
-  --rb-mono-component-control-panel-border: color-mix(in srgb, var(--rb-mono-semantic-border) 95%, transparent);
-  --rb-mono-component-control-panel-surface: color-mix(in srgb, var(--rb-mono-semantic-background) 96%, #ffffff);
-  --rb-mono-component-control-panel-shadow: 0 12px 24px rgba(0, 0, 0, 0.14);
-  --rb-mono-component-control-active-surface: color-mix(in srgb, var(--rb-mono-semantic-foreground) 8%, transparent);
-  --rb-mono-component-control-active-indicator: var(--rb-mono-semantic-foreground);
-  --rb-mono-component-select-ring: color-mix(in srgb, var(--rb-mono-semantic-select-border-focus) 16%, transparent);
-
-  /* Existing app tokens */
-  --background: var(--rb-mono-semantic-background);
-  --foreground: var(--rb-mono-semantic-foreground);
-  --border: var(--rb-mono-semantic-border);
-  --muted: var(--rb-mono-semantic-muted-surface);
-  --muted-foreground: var(--rb-mono-semantic-muted-foreground);
-  --primary: var(--rb-mono-semantic-primary);
-  --primary-hover: var(--rb-mono-semantic-primary-hover);
-  --color-background: var(--rb-mono-semantic-background);
-  --color-foreground: var(--rb-mono-semantic-foreground);
-  --color-muted-foreground: var(--rb-mono-semantic-muted-foreground);
-  --color-border: var(--rb-mono-semantic-border);
-  --color-primary: var(--rb-mono-semantic-primary);
-  --color-primary-hover: var(--rb-mono-semantic-primary-hover);
-
-  /* Legacy alias bridge */
-  --control-surface: var(--rb-mono-component-control-surface);
-  --control-hover-surface: var(--rb-mono-component-control-hover-surface);
-  --control-focus-border: var(--rb-mono-component-control-focus-border);
-  --control-panel-border: var(--rb-mono-component-control-panel-border);
-  --control-panel-surface: var(--rb-mono-component-control-panel-surface);
-  --control-panel-shadow: var(--rb-mono-component-control-panel-shadow);
-  --control-active-surface: var(--rb-mono-component-control-active-surface);
-  --control-active-indicator: var(--rb-mono-component-control-active-indicator);
-  --resume-control-line: color-mix(in srgb, var(--rb-mono-semantic-border) 96%, transparent);
-  --resume-control-line-hover: color-mix(in srgb, var(--rb-mono-semantic-foreground) 44%, transparent);
-  --resume-control-line-focus: color-mix(in srgb, var(--rb-mono-semantic-foreground) 84%, transparent);
-  --resume-select-bg: var(--rb-mono-semantic-select-surface);
-  --resume-select-bg-hover: var(--rb-mono-semantic-select-surface-hover);
-  --resume-select-text: var(--rb-mono-semantic-select-text);
-  --resume-select-muted: var(--rb-mono-semantic-select-muted);
-  --resume-select-border: var(--rb-mono-semantic-select-border);
-  --resume-select-border-hover: var(--rb-mono-semantic-select-border-hover);
-  --resume-select-border-focus: var(--rb-mono-semantic-select-border-focus);
-  --resume-select-ring: var(--rb-mono-component-select-ring);
-  --resume-select-panel-bg: var(--rb-mono-semantic-select-panel-bg);
-  --resume-select-panel-border: var(--rb-mono-semantic-select-panel-border);
-  --resume-select-panel-shadow: var(--rb-mono-semantic-select-panel-shadow);
-  --resume-select-option-hover: var(--rb-mono-semantic-select-option-hover);
-  --resume-select-option-selected-bg: var(--rb-mono-semantic-select-option-selected-bg);
-  --resume-select-option-selected-text: var(--rb-mono-semantic-select-option-selected-text);
+  --background: #ffffff;
+  --foreground: #111111;
+  --border: rgba(0, 0, 0, 0.18);
+  --muted: #f5f5f5;
+  --muted-foreground: #666666;
+  --primary: #111111;
+  --primary-hover: #2a2a2a;
+  --color-background: #ffffff;
+  --color-foreground: #111111;
+  --color-muted-foreground: #666666;
+  --color-border: rgba(0, 0, 0, 0.18);
+  --color-primary: #111111;
+  --color-primary-hover: #2a2a2a;
+  --control-surface: transparent;
+  --control-hover-surface: color-mix(in srgb, var(--color-foreground) 4%, transparent);
+  --control-focus-border: color-mix(in srgb, var(--color-foreground) 80%, transparent);
+  --control-panel-border: color-mix(in srgb, var(--color-border) 95%, transparent);
+  --control-panel-surface: color-mix(in srgb, var(--color-background) 96%, #ffffff);
+  --control-panel-shadow: 0 12px 24px rgba(0, 0, 0, 0.14);
+  --control-active-surface: color-mix(in srgb, var(--color-foreground) 8%, transparent);
+  --control-active-indicator: var(--color-foreground);
+  --resume-control-line: color-mix(in srgb, var(--color-border) 96%, transparent);
+  --resume-control-line-hover: color-mix(in srgb, var(--color-foreground) 44%, transparent);
+  --resume-control-line-focus: color-mix(in srgb, var(--color-foreground) 84%, transparent);
+  --resume-select-bg: #ffffff;
+  --resume-select-bg-hover: #f5f5f5;
+  --resume-select-text: #111111;
+  --resume-select-muted: #71717a;
+  --resume-select-border: rgba(0, 0, 0, 0.18);
+  --resume-select-border-hover: rgba(0, 0, 0, 0.26);
+  --resume-select-border-focus: #fac460;
+  --resume-select-ring: color-mix(in srgb, var(--resume-select-border-focus) 16%, transparent);
+  --resume-select-panel-bg: #ffffff;
+  --resume-select-panel-border: rgba(0, 0, 0, 0.16);
+  --resume-select-panel-shadow: 0 12px 24px -6px rgba(0, 0, 0, 0.24);
+  --resume-select-option-hover: rgba(0, 0, 0, 0.06);
+  --resume-select-option-selected-bg: color-mix(in srgb, var(--resume-select-border-focus) 12%, transparent);
+  --resume-select-option-selected-text: var(--resume-select-border-focus);
   --control-field-bg: var(--resume-select-bg);
   --control-field-bg-hover: var(--resume-select-bg-hover);
   --control-field-border-color: var(--resume-select-border);
@@ -267,39 +135,60 @@ body.resume-builder-mono {
 }
 
 [data-theme='dark'] body.resume-builder-mono {
-  /* Core tokens */
-  --rb-mono-core-background: #090909;
-  --rb-mono-core-foreground: rgba(243, 243, 243, 0.96);
-  --rb-mono-core-border: rgba(255, 255, 255, 0.2);
-  --rb-mono-core-muted-surface: #1b1b1b;
-  --rb-mono-core-muted-foreground: rgba(163, 163, 163, 0.82);
-  --rb-mono-core-primary: #f3f3f3;
-  --rb-mono-core-primary-hover: #d4d4d4;
-  --rb-mono-core-select-muted: #a1a1aa;
-  --rb-mono-core-select-focus: #fa6060;
-  --rb-mono-core-select-panel-border: #3f3f46;
-  --rb-mono-core-select-panel-shadow: 0 12px 24px -6px rgba(0, 0, 0, 0.5);
-  --rb-mono-core-select-option-hover: #27272a;
-
-  /* Semantic tokens */
-  --rb-mono-semantic-select-surface: #1a1a1a;
-  --rb-mono-semantic-select-surface-hover: #242427;
-  --rb-mono-semantic-select-border-hover: #52525b;
-  --rb-mono-semantic-select-panel-bg: #1c1c1e;
-  --rb-mono-semantic-select-option-selected-bg: color-mix(in srgb, var(--rb-mono-semantic-select-border-focus) 14%, transparent);
-
-  /* Component tokens */
-  --rb-mono-component-control-hover-surface: color-mix(in srgb, var(--rb-mono-semantic-foreground) 6%, transparent);
-  --rb-mono-component-control-focus-border: color-mix(in srgb, var(--rb-mono-semantic-foreground) 82%, transparent);
-  --rb-mono-component-control-panel-surface: color-mix(in srgb, var(--rb-mono-semantic-background) 94%, #000000);
-  --rb-mono-component-control-panel-shadow: 0 18px 34px rgba(0, 0, 0, 0.5);
-  --rb-mono-component-control-active-surface: color-mix(in srgb, var(--rb-mono-semantic-foreground) 12%, transparent);
-
-  /* Legacy alias bridge */
-  --resume-control-line: color-mix(in srgb, var(--rb-mono-semantic-border) 100%, transparent);
-  --resume-control-line-hover: color-mix(in srgb, var(--rb-mono-semantic-foreground) 56%, transparent);
-  --resume-control-line-focus: color-mix(in srgb, var(--rb-mono-semantic-foreground) 86%, transparent);
+  --background: #090909;
+  --foreground: rgba(243, 243, 243, 0.96);
+  --border: rgba(255, 255, 255, 0.2);
+  --muted: #1b1b1b;
+  --muted-foreground: rgba(163, 163, 163, 0.82);
+  --primary: #f3f3f3;
+  --primary-hover: #d4d4d4;
+  --color-background: #090909;
+  --color-foreground: rgba(243, 243, 243, 0.96);
+  --color-border: rgba(255, 255, 255, 0.2);
+  --color-muted-foreground: rgba(163, 163, 163, 0.82);
+  --color-primary: #f3f3f3;
+  --color-primary-hover: #d4d4d4;
+  --control-hover-surface: color-mix(in srgb, var(--color-foreground) 6%, transparent);
+  --control-focus-border: color-mix(in srgb, var(--color-foreground) 82%, transparent);
+  --control-panel-border: color-mix(in srgb, var(--color-border) 95%, transparent);
+  --control-panel-surface: color-mix(in srgb, var(--color-background) 94%, #000000);
+  --control-panel-shadow: 0 18px 34px rgba(0, 0, 0, 0.5);
+  --control-active-surface: color-mix(in srgb, var(--color-foreground) 12%, transparent);
+  --control-active-indicator: var(--color-foreground);
+  --resume-control-line: color-mix(in srgb, var(--color-border) 100%, transparent);
+  --resume-control-line-hover: color-mix(in srgb, var(--color-foreground) 56%, transparent);
+  --resume-control-line-focus: color-mix(in srgb, var(--color-foreground) 86%, transparent);
+  --resume-select-bg: #1a1a1a;
+  --resume-select-bg-hover: #242427;
+  --resume-select-text: #d4d4d8;
+  --resume-select-muted: #a1a1aa;
+  --resume-select-border: #3f3f46;
+  --resume-select-border-hover: #52525b;
+  --resume-select-border-focus: #fa6060;
+  --resume-select-ring: color-mix(in srgb, var(--resume-select-border-focus) 16%, transparent);
+  --resume-select-panel-bg: #1c1c1e;
+  --resume-select-panel-border: #3f3f46;
+  --resume-select-panel-shadow: 0 12px 24px -6px rgba(0, 0, 0, 0.5);
+  --resume-select-option-hover: #27272a;
+  --resume-select-option-selected-bg: color-mix(in srgb, var(--resume-select-border-focus) 14%, transparent);
+  --resume-select-option-selected-text: var(--resume-select-border-focus);
+  --control-field-bg: var(--resume-select-bg);
+  --control-field-bg-hover: var(--resume-select-bg-hover);
+  --control-field-border-color: var(--resume-select-border);
+  --control-field-border-hover: var(--resume-select-border-hover);
+  --control-field-focus-color: var(--resume-select-border-focus);
+  --control-field-focus-ring: var(--resume-select-ring);
+  --control-field-text: var(--resume-select-text);
+  --control-field-placeholder: var(--resume-select-muted);
+  --control-panel-bg: var(--resume-select-panel-bg);
+  --control-panel-border-color: var(--resume-select-panel-border);
+  --control-panel-shadow-value: var(--resume-select-panel-shadow);
+  --control-option-hover-bg: var(--resume-select-option-hover);
+  --control-option-selected-bg: var(--resume-select-option-selected-bg);
+  --control-option-selected-text: var(--resume-select-option-selected-text);
 }
+
+
 
 @media (prefers-reduced-motion: reduce) {
   body.resume-builder-mono .control-floating-panel {
@@ -978,6 +867,22 @@ body.resume-builder-mono .resume-builder-scope .resume-toolbar .resume-toolbar-t
 .resume-builder-scope .resume-basics-photo-hover-btn.is-danger:hover,
 .resume-builder-scope .resume-basics-photo-hover-btn.is-danger:focus-visible {
   background: color-mix(in srgb, #b42318 88%, #5c1010);
+}
+
+.resume-builder-scope .resume-ai-preview-actions {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  z-index: 8;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--builder-preview-dock-bg) 84%, transparent);
+  box-shadow: var(--builder-preview-dock-shadow);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .resume-builder-scope .resume-ai-compare-stage {
@@ -1826,6 +1731,58 @@ body.resume-builder-mono .resume-builder-scope .resume-focus-target.is-preview-f
   justify-content: center;
   color: currentColor;
   flex-shrink: 0;
+}
+
+.resume-builder-scope .resume-preview-dock-wrap {
+  pointer-events: none;
+  position: absolute;
+  inset-inline: 0;
+  bottom: 16px;
+  display: flex;
+  justify-content: center;
+  z-index: 5;
+}
+
+.resume-builder-scope .resume-preview-dock {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--builder-panel-border) 95%, transparent);
+  background: color-mix(in srgb, var(--builder-preview-dock-bg) 82%, transparent);
+  box-shadow: var(--builder-preview-dock-shadow);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  padding: 5px;
+}
+
+.resume-builder-scope .resume-preview-dock-divider {
+  width: 1px;
+  height: 18px;
+  margin: 0 2px;
+  background: color-mix(in srgb, var(--builder-panel-border) 75%, transparent);
+}
+
+.resume-builder-scope .resume-preview-dock .resume-dock-btn {
+  min-width: 27px;
+  height: 27px;
+  padding: 0 6px;
+  border-radius: 999px;
+  color: var(--builder-panel-text);
+}
+
+.resume-builder-scope .resume-preview-dock .resume-dock-btn svg {
+  width: 13px;
+  height: 13px;
+}
+
+.resume-builder-scope .resume-preview-dock .resume-dock-btn:hover {
+  background: color-mix(in srgb, var(--builder-panel-bg-soft) 72%, white);
+}
+
+[data-theme='dark'] .resume-builder-scope .resume-preview-dock .resume-dock-btn:hover {
+  background: color-mix(in srgb, var(--builder-panel-bg-soft) 86%, white);
 }
 
 .resume-builder-scope .resume-inline-icon-btn {
