@@ -1,0 +1,1571 @@
+{
+  "generatedAt": "2026-04-15T19:05:08.429Z",
+  "expectedScssFiles": 73,
+  "actualScssFiles": 31,
+  "files": [
+    {
+      "path": "app/(auth)/login/login.module.scss",
+      "lines": 572,
+      "maxBlockDepth": 2,
+      "maxSelectorDepth": 1,
+      "selectorBlockCount": 78,
+      "varDefinitions": [
+        "--tab-count",
+        "--active-index"
+      ],
+      "uniqueVarDefinitions": [
+        "--active-index",
+        "--tab-count"
+      ],
+      "repeatedSelectors": [
+        {
+          "selector": ".page",
+          "count": 2
+        },
+        {
+          "selector": ".shell",
+          "count": 3
+        },
+        {
+          "selector": ".leftPanel",
+          "count": 3
+        },
+        {
+          "selector": ".brandName",
+          "count": 2
+        },
+        {
+          "selector": ".title",
+          "count": 2
+        },
+        {
+          "selector": ".subtitle",
+          "count": 2
+        },
+        {
+          "selector": ".methodBody",
+          "count": 3
+        },
+        {
+          "selector": ".splitField",
+          "count": 2
+        },
+        {
+          "selector": ".codeButton",
+          "count": 2
+        },
+        {
+          "selector": ".rightPanel",
+          "count": 3
+        },
+        {
+          "selector": ".rightCard",
+          "count": 2
+        },
+        {
+          "selector": ".rightTitle",
+          "count": 2
+        },
+        {
+          "selector": ".spin",
+          "count": 2
+        }
+      ],
+      "selectorComplexityP95": 4,
+      "overrideChainLengthP95": 1
+    },
+    {
+      "path": "app/(main)/landing.module.scss",
+      "lines": 1249,
+      "maxBlockDepth": 2,
+      "maxSelectorDepth": 1,
+      "selectorBlockCount": 172,
+      "varDefinitions": [
+        "--aura-pink",
+        "--aura-bg-gradient",
+        "--aura-accent",
+        "--aura-text",
+        "--aura-text-soft",
+        "--aura-gold",
+        "--aura-card-bg",
+        "--aura-card-border",
+        "--aura-sans",
+        "--aura-serif",
+        "--aura-card-shadow",
+        "--aura-input-line",
+        "--aura-btn-bg",
+        "--aura-btn-text",
+        "--aura-gold-glow",
+        "--aura-pink",
+        "--aura-bg-gradient",
+        "--aura-accent",
+        "--aura-text",
+        "--aura-text-soft",
+        "--aura-gold",
+        "--aura-card-bg",
+        "--aura-card-border",
+        "--aura-card-shadow",
+        "--aura-input-line",
+        "--aura-btn-bg",
+        "--aura-btn-text",
+        "--aura-gold-glow"
+      ],
+      "uniqueVarDefinitions": [
+        "--aura-accent",
+        "--aura-bg-gradient",
+        "--aura-btn-bg",
+        "--aura-btn-text",
+        "--aura-card-bg",
+        "--aura-card-border",
+        "--aura-card-shadow",
+        "--aura-gold",
+        "--aura-gold-glow",
+        "--aura-input-line",
+        "--aura-pink",
+        "--aura-sans",
+        "--aura-serif",
+        "--aura-text",
+        "--aura-text-soft"
+      ],
+      "repeatedSelectors": [
+        {
+          "selector": ".installOverlay",
+          "count": 2
+        },
+        {
+          "selector": ".installModal",
+          "count": 2
+        },
+        {
+          "selector": ".installModalHeader",
+          "count": 2
+        },
+        {
+          "selector": ".installTitle",
+          "count": 2
+        },
+        {
+          "selector": ".installClose",
+          "count": 2
+        },
+        {
+          "selector": ".installVersionGrid",
+          "count": 2
+        },
+        {
+          "selector": ".installBrowserTabs",
+          "count": 2
+        },
+        {
+          "selector": ".installBrowserTab, .installBrowserTabActive",
+          "count": 2
+        },
+        {
+          "selector": ".installStep",
+          "count": 2
+        },
+        {
+          "selector": ".installStepIndex",
+          "count": 2
+        },
+        {
+          "selector": ".installCopyButton, .installPathAction, .installPrimaryAction",
+          "count": 2
+        },
+        {
+          "selector": ".nav",
+          "count": 2
+        },
+        {
+          "selector": ".navLinks",
+          "count": 2
+        },
+        {
+          "selector": ".hero",
+          "count": 2
+        },
+        {
+          "selector": ".heroGrid",
+          "count": 3
+        },
+        {
+          "selector": ".copyCol",
+          "count": 3
+        },
+        {
+          "selector": ".title",
+          "count": 2
+        },
+        {
+          "selector": ".titleAccent",
+          "count": 2
+        },
+        {
+          "selector": ".subtitle",
+          "count": 3
+        },
+        {
+          "selector": ".actions",
+          "count": 2
+        },
+        {
+          "selector": ".ctaPrimary",
+          "count": 2
+        },
+        {
+          "selector": ".visualCol",
+          "count": 2
+        },
+        {
+          "selector": ".chromeWindowHero",
+          "count": 2
+        },
+        {
+          "selector": ".chromeWindowContent",
+          "count": 2
+        },
+        {
+          "selector": ".locationRow",
+          "count": 2
+        },
+        {
+          "selector": ".checkBubble",
+          "count": 2
+        },
+        {
+          "selector": ".compatibility",
+          "count": 2
+        },
+        {
+          "selector": ".compatibilityEyebrow",
+          "count": 2
+        },
+        {
+          "selector": ".compatibilityTitle",
+          "count": 2
+        },
+        {
+          "selector": ".compatibilitySubtitle",
+          "count": 2
+        },
+        {
+          "selector": ".logoWall",
+          "count": 2
+        },
+        {
+          "selector": ".logoTrack",
+          "count": 2
+        },
+        {
+          "selector": ".logoItem",
+          "count": 2
+        },
+        {
+          "selector": ".logoMark",
+          "count": 2
+        },
+        {
+          "selector": ".logoMark span",
+          "count": 2
+        },
+        {
+          "selector": ".logoName",
+          "count": 2
+        },
+        {
+          "selector": ".compatibilityNote",
+          "count": 2
+        },
+        {
+          "selector": ".footer",
+          "count": 2
+        },
+        {
+          "selector": ".footerInner",
+          "count": 2
+        },
+        {
+          "selector": ".footerText",
+          "count": 2
+        },
+        {
+          "selector": ".footerMeta",
+          "count": 2
+        }
+      ],
+      "selectorComplexityP95": 6,
+      "overrideChainLengthP95": 2
+    },
+    {
+      "path": "app/(main)/pricing/pricing.module.scss",
+      "lines": 353,
+      "maxBlockDepth": 2,
+      "maxSelectorDepth": 1,
+      "selectorBlockCount": 50,
+      "varDefinitions": [
+        "--price-bg",
+        "--price-card",
+        "--price-card-soft",
+        "--price-border",
+        "--price-text-main",
+        "--price-text-sub",
+        "--price-accent",
+        "--price-accent-strong",
+        "--price-btn-bg",
+        "--price-btn-text",
+        "--price-shadow"
+      ],
+      "uniqueVarDefinitions": [
+        "--price-accent",
+        "--price-accent-strong",
+        "--price-bg",
+        "--price-border",
+        "--price-btn-bg",
+        "--price-btn-text",
+        "--price-card",
+        "--price-card-soft",
+        "--price-shadow",
+        "--price-text-main",
+        "--price-text-sub"
+      ],
+      "repeatedSelectors": [
+        {
+          "selector": ".page",
+          "count": 2
+        },
+        {
+          "selector": ".header",
+          "count": 2
+        },
+        {
+          "selector": ".title",
+          "count": 2
+        },
+        {
+          "selector": ".titleAccent",
+          "count": 2
+        },
+        {
+          "selector": ".subtitle",
+          "count": 2
+        },
+        {
+          "selector": ".cardsGrid",
+          "count": 3
+        },
+        {
+          "selector": ".card",
+          "count": 2
+        },
+        {
+          "selector": ".price",
+          "count": 2
+        },
+        {
+          "selector": ".trustWall",
+          "count": 2
+        },
+        {
+          "selector": ".trustItem",
+          "count": 2
+        },
+        {
+          "selector": ".faqCard",
+          "count": 2
+        }
+      ],
+      "selectorComplexityP95": 2,
+      "overrideChainLengthP95": 1
+    },
+    {
+      "path": "app/(main)/resume/resume-module-theme.scss",
+      "lines": 72,
+      "maxBlockDepth": 1,
+      "maxSelectorDepth": 1,
+      "selectorBlockCount": 11,
+      "varDefinitions": [
+        "--resume-button-bg",
+        "--resume-button-bg-hover",
+        "--resume-button-border",
+        "--resume-button-border-hover",
+        "--resume-button-text",
+        "--resume-pill-bg",
+        "--resume-pill-border",
+        "--resume-pill-text",
+        "--resume-button-text",
+        "--resume-pill-bg",
+        "--resume-pill-border",
+        "--resume-pill-text"
+      ],
+      "uniqueVarDefinitions": [
+        "--resume-button-bg",
+        "--resume-button-bg-hover",
+        "--resume-button-border",
+        "--resume-button-border-hover",
+        "--resume-button-text",
+        "--resume-pill-bg",
+        "--resume-pill-border",
+        "--resume-pill-text"
+      ],
+      "repeatedSelectors": [],
+      "selectorComplexityP95": 29,
+      "overrideChainLengthP95": 2
+    },
+    {
+      "path": "app/(main)/resume/templates/templates.module.scss",
+      "lines": 270,
+      "maxBlockDepth": 2,
+      "maxSelectorDepth": 1,
+      "selectorBlockCount": 37,
+      "varDefinitions": [],
+      "uniqueVarDefinitions": [],
+      "repeatedSelectors": [
+        {
+          "selector": ".page",
+          "count": 2
+        },
+        {
+          "selector": ".banner",
+          "count": 2
+        },
+        {
+          "selector": ".bannerTitle",
+          "count": 2
+        },
+        {
+          "selector": ".bannerSubtitle",
+          "count": 2
+        },
+        {
+          "selector": ".searchWrap",
+          "count": 2
+        },
+        {
+          "selector": ".searchField",
+          "count": 2
+        },
+        {
+          "selector": ".categoryWrap",
+          "count": 2
+        },
+        {
+          "selector": ".toolbar",
+          "count": 2
+        }
+      ],
+      "selectorComplexityP95": 6,
+      "overrideChainLengthP95": 2
+    },
+    {
+      "path": "app/globals.scss",
+      "lines": 1162,
+      "maxBlockDepth": 2,
+      "maxSelectorDepth": 1,
+      "selectorBlockCount": 145,
+      "varDefinitions": [
+        "--font-sans",
+        "--color-background",
+        "--color-foreground",
+        "--color-border",
+        "--color-border-weak",
+        "--color-muted",
+        "--color-muted-foreground",
+        "--color-primary",
+        "--color-primary-hover",
+        "--radius-sm",
+        "--radius-md",
+        "--radius-lg",
+        "--font-heading",
+        "--color-sidebar-ring",
+        "--color-sidebar-border",
+        "--color-sidebar-accent-foreground",
+        "--color-sidebar-accent",
+        "--color-sidebar-primary-foreground",
+        "--color-sidebar-primary",
+        "--color-sidebar-foreground",
+        "--color-sidebar",
+        "--color-chart-5",
+        "--color-chart-4",
+        "--color-chart-3",
+        "--color-chart-2",
+        "--color-chart-1",
+        "--color-ring",
+        "--color-input",
+        "--color-destructive",
+        "--color-accent-foreground",
+        "--color-accent",
+        "--color-secondary-foreground",
+        "--color-secondary",
+        "--color-primary-foreground",
+        "--color-popover-foreground",
+        "--color-popover",
+        "--color-card-foreground",
+        "--color-card",
+        "--radius-xl",
+        "--radius-2xl",
+        "--radius-3xl",
+        "--radius-4xl",
+        "--font-family-base",
+        "--primary",
+        "--primary-hover",
+        "--border",
+        "--muted",
+        "--muted-foreground",
+        "--color-primary",
+        "--color-primary-hover",
+        "--color-background",
+        "--color-foreground",
+        "--color-border",
+        "--color-muted",
+        "--color-muted-foreground",
+        "--control-surface",
+        "--control-panel-surface",
+        "--control-hover-surface",
+        "--control-border",
+        "--control-focus-border",
+        "--control-panel-border",
+        "--control-active-surface",
+        "--control-active-indicator",
+        "--control-panel-shadow",
+        "--control-field-height",
+        "--control-field-radius",
+        "--control-field-padding-x",
+        "--control-search-height",
+        "--header-bg",
+        "--header-border",
+        "--background",
+        "--foreground",
+        "--primary",
+        "--primary-hover",
+        "--background",
+        "--foreground",
+        "--border",
+        "--muted",
+        "--muted-foreground",
+        "--color-primary",
+        "--color-primary-hover",
+        "--color-background",
+        "--color-foreground",
+        "--color-border",
+        "--color-muted",
+        "--color-muted-foreground",
+        "--control-surface",
+        "--control-panel-surface",
+        "--control-hover-surface",
+        "--control-border",
+        "--control-focus-border",
+        "--control-panel-border",
+        "--control-active-surface",
+        "--control-active-indicator",
+        "--control-panel-shadow",
+        "--control-field-height",
+        "--control-field-radius",
+        "--control-field-padding-x",
+        "--control-search-height",
+        "--header-bg",
+        "--header-border",
+        "--control-panel-anchor-transform"
+      ],
+      "uniqueVarDefinitions": [
+        "--background",
+        "--border",
+        "--color-accent",
+        "--color-accent-foreground",
+        "--color-background",
+        "--color-border",
+        "--color-border-weak",
+        "--color-card",
+        "--color-card-foreground",
+        "--color-chart-1",
+        "--color-chart-2",
+        "--color-chart-3",
+        "--color-chart-4",
+        "--color-chart-5",
+        "--color-destructive",
+        "--color-foreground",
+        "--color-input",
+        "--color-muted",
+        "--color-muted-foreground",
+        "--color-popover",
+        "--color-popover-foreground",
+        "--color-primary",
+        "--color-primary-foreground",
+        "--color-primary-hover",
+        "--color-ring",
+        "--color-secondary",
+        "--color-secondary-foreground",
+        "--color-sidebar",
+        "--color-sidebar-accent",
+        "--color-sidebar-accent-foreground",
+        "--color-sidebar-border",
+        "--color-sidebar-foreground",
+        "--color-sidebar-primary",
+        "--color-sidebar-primary-foreground",
+        "--color-sidebar-ring",
+        "--control-active-indicator",
+        "--control-active-surface",
+        "--control-border",
+        "--control-field-height",
+        "--control-field-padding-x",
+        "--control-field-radius",
+        "--control-focus-border",
+        "--control-hover-surface",
+        "--control-panel-anchor-transform",
+        "--control-panel-border",
+        "--control-panel-shadow",
+        "--control-panel-surface",
+        "--control-search-height",
+        "--control-surface",
+        "--font-family-base",
+        "--font-heading",
+        "--font-sans",
+        "--foreground",
+        "--header-bg",
+        "--header-border",
+        "--muted",
+        "--muted-foreground",
+        "--primary",
+        "--primary-hover",
+        "--radius-2xl",
+        "--radius-3xl",
+        "--radius-4xl",
+        "--radius-lg",
+        "--radius-md",
+        "--radius-sm",
+        "--radius-xl"
+      ],
+      "repeatedSelectors": [
+        {
+          "selector": ":root",
+          "count": 2
+        },
+        {
+          "selector": ".container",
+          "count": 2
+        },
+        {
+          "selector": "from",
+          "count": 6
+        },
+        {
+          "selector": "to",
+          "count": 6
+        },
+        {
+          "selector": "html",
+          "count": 2
+        },
+        {
+          "selector": "body",
+          "count": 2
+        }
+      ],
+      "selectorComplexityP95": 10,
+      "overrideChainLengthP95": 2
+    },
+    {
+      "path": "components/ChromeWindow/ChromeWindow.module.scss",
+      "lines": 183,
+      "maxBlockDepth": 3,
+      "maxSelectorDepth": 3,
+      "selectorBlockCount": 25,
+      "varDefinitions": [],
+      "uniqueVarDefinitions": [],
+      "repeatedSelectors": [
+        {
+          "selector": "svg",
+          "count": 2
+        },
+        {
+          "selector": ".webContent",
+          "count": 2
+        }
+      ],
+      "selectorComplexityP95": 23,
+      "overrideChainLengthP95": 14
+    },
+    {
+      "path": "components/dashboard/account-binding.module.scss",
+      "lines": 301,
+      "maxBlockDepth": 2,
+      "maxSelectorDepth": 1,
+      "selectorBlockCount": 45,
+      "varDefinitions": [],
+      "uniqueVarDefinitions": [],
+      "repeatedSelectors": [],
+      "selectorComplexityP95": 4,
+      "overrideChainLengthP95": 2
+    },
+    {
+      "path": "components/dashboard/admin-users-section.module.scss",
+      "lines": 181,
+      "maxBlockDepth": 2,
+      "maxSelectorDepth": 1,
+      "selectorBlockCount": 28,
+      "varDefinitions": [],
+      "uniqueVarDefinitions": [],
+      "repeatedSelectors": [
+        {
+          "selector": ".searchForm",
+          "count": 2
+        },
+        {
+          "selector": ".resultsMeta",
+          "count": 2
+        }
+      ],
+      "selectorComplexityP95": 4,
+      "overrideChainLengthP95": 1
+    },
+    {
+      "path": "components/dashboard/dashboard-workbench.module.scss",
+      "lines": 1341,
+      "maxBlockDepth": 2,
+      "maxSelectorDepth": 1,
+      "selectorBlockCount": 187,
+      "varDefinitions": [
+        "--dash-sidebar-width",
+        "--dash-bg",
+        "--dash-card",
+        "--dash-border",
+        "--dash-text",
+        "--dash-text-soft",
+        "--dash-text-muted",
+        "--dash-brand",
+        "--dash-accent",
+        "--dash-accent-soft",
+        "--dash-accent-border",
+        "--dash-blue",
+        "--dash-amber",
+        "--dash-green",
+        "--dash-red",
+        "--control-field-height",
+        "--control-field-radius",
+        "--control-field-padding-x",
+        "--control-search-height",
+        "--resume-select-bg",
+        "--resume-select-bg-hover",
+        "--resume-select-text",
+        "--resume-select-muted",
+        "--resume-select-border",
+        "--resume-select-border-hover",
+        "--resume-select-border-focus",
+        "--resume-select-ring",
+        "--resume-select-panel-bg",
+        "--resume-select-panel-border",
+        "--resume-select-panel-shadow",
+        "--resume-select-option-hover",
+        "--resume-select-option-selected-bg",
+        "--resume-select-option-selected-text",
+        "--control-field-bg",
+        "--control-field-bg-hover",
+        "--control-field-border-color",
+        "--control-field-border-hover",
+        "--control-field-focus-color",
+        "--control-field-focus-ring",
+        "--control-field-text",
+        "--control-field-placeholder",
+        "--control-panel-bg",
+        "--control-panel-border-color",
+        "--control-panel-shadow-value",
+        "--control-option-hover-bg",
+        "--control-option-selected-bg",
+        "--control-option-selected-text"
+      ],
+      "uniqueVarDefinitions": [
+        "--control-field-bg",
+        "--control-field-bg-hover",
+        "--control-field-border-color",
+        "--control-field-border-hover",
+        "--control-field-focus-color",
+        "--control-field-focus-ring",
+        "--control-field-height",
+        "--control-field-padding-x",
+        "--control-field-placeholder",
+        "--control-field-radius",
+        "--control-field-text",
+        "--control-option-hover-bg",
+        "--control-option-selected-bg",
+        "--control-option-selected-text",
+        "--control-panel-bg",
+        "--control-panel-border-color",
+        "--control-panel-shadow-value",
+        "--control-search-height",
+        "--dash-accent",
+        "--dash-accent-border",
+        "--dash-accent-soft",
+        "--dash-amber",
+        "--dash-bg",
+        "--dash-blue",
+        "--dash-border",
+        "--dash-brand",
+        "--dash-card",
+        "--dash-green",
+        "--dash-red",
+        "--dash-sidebar-width",
+        "--dash-text",
+        "--dash-text-muted",
+        "--dash-text-soft",
+        "--resume-select-bg",
+        "--resume-select-bg-hover",
+        "--resume-select-border",
+        "--resume-select-border-focus",
+        "--resume-select-border-hover",
+        "--resume-select-muted",
+        "--resume-select-option-hover",
+        "--resume-select-option-selected-bg",
+        "--resume-select-option-selected-text",
+        "--resume-select-panel-bg",
+        "--resume-select-panel-border",
+        "--resume-select-panel-shadow",
+        "--resume-select-ring",
+        "--resume-select-text"
+      ],
+      "repeatedSelectors": [
+        {
+          "selector": ".mobileTopbar",
+          "count": 2
+        },
+        {
+          "selector": ".sections",
+          "count": 2
+        },
+        {
+          "selector": ".sectionHeader",
+          "count": 2
+        },
+        {
+          "selector": ".sectionHeaderActions",
+          "count": 2
+        },
+        {
+          "selector": ".topSearchField",
+          "count": 3
+        },
+        {
+          "selector": ".resumeGrid",
+          "count": 2
+        },
+        {
+          "selector": ".accountGrid",
+          "count": 2
+        },
+        {
+          "selector": ".profileMetaItem",
+          "count": 2
+        }
+      ],
+      "selectorComplexityP95": 6,
+      "overrideChainLengthP95": 2
+    },
+    {
+      "path": "components/legal/legal-document.module.scss",
+      "lines": 69,
+      "maxBlockDepth": 1,
+      "maxSelectorDepth": 1,
+      "selectorBlockCount": 11,
+      "varDefinitions": [],
+      "uniqueVarDefinitions": [],
+      "repeatedSelectors": [],
+      "selectorComplexityP95": 4,
+      "overrideChainLengthP95": 3
+    },
+    {
+      "path": "components/resume-builder/builder-theme.scss",
+      "lines": 3585,
+      "maxBlockDepth": 2,
+      "maxSelectorDepth": 1,
+      "selectorBlockCount": 419,
+      "varDefinitions": [
+        "--builder-workspace-bg",
+        "--builder-panel-bg",
+        "--builder-panel-bg-soft",
+        "--builder-panel-border",
+        "--builder-panel-border-strong",
+        "--builder-panel-text",
+        "--builder-panel-text-muted",
+        "--builder-preview-dock-bg",
+        "--builder-preview-dock-shadow",
+        "--builder-card-bg",
+        "--builder-card-bg-hover",
+        "--builder-card-border",
+        "--builder-card-border-strong",
+        "--builder-input-bg",
+        "--builder-input-bg-hover",
+        "--builder-input-placeholder",
+        "--builder-input-inset",
+        "--builder-input-bg2",
+        "--control-surface",
+        "--control-hover-surface",
+        "--control-focus-border",
+        "--control-panel-border",
+        "--control-panel-surface",
+        "--control-panel-shadow",
+        "--control-active-surface",
+        "--control-active-indicator",
+        "--builder-toolbar-border-color",
+        "--builder-toolbar-shadow",
+        "--builder-toolbar-title-display-bg",
+        "--builder-toolbar-title-input-bg",
+        "--builder-toolbar-save-border",
+        "--builder-toolbar-save-bg",
+        "--builder-toolbar-save-hover-bg",
+        "--builder-toolbar-save-color",
+        "--builder-panel-bg",
+        "--builder-panel-header",
+        "--builder-panel-bg-soft",
+        "--builder-panel-border",
+        "--builder-panel-border-strong",
+        "--builder-panel-text",
+        "--builder-panel-text-muted",
+        "--builder-preview-dock-bg",
+        "--builder-preview-dock-shadow",
+        "--builder-card-bg",
+        "--builder-card-bg-hover",
+        "--builder-card-border",
+        "--builder-card-border-strong",
+        "--builder-input-bg",
+        "--builder-input-bg-hover",
+        "--builder-input-placeholder",
+        "--builder-input-inset",
+        "--builder-input-bg2",
+        "--control-surface",
+        "--control-hover-surface",
+        "--control-focus-border",
+        "--control-panel-border",
+        "--control-panel-surface",
+        "--control-panel-shadow",
+        "--control-active-surface",
+        "--control-active-indicator",
+        "--background",
+        "--foreground",
+        "--border",
+        "--muted",
+        "--muted-foreground",
+        "--primary",
+        "--primary-hover",
+        "--color-background",
+        "--color-foreground",
+        "--color-muted-foreground",
+        "--color-border",
+        "--color-primary",
+        "--color-primary-hover",
+        "--control-surface",
+        "--control-hover-surface",
+        "--control-focus-border",
+        "--control-panel-border",
+        "--control-panel-surface",
+        "--control-panel-shadow",
+        "--control-active-surface",
+        "--control-active-indicator",
+        "--resume-select-bg",
+        "--resume-select-bg-hover",
+        "--resume-select-text",
+        "--resume-select-muted",
+        "--resume-select-border",
+        "--resume-select-border-hover",
+        "--resume-select-border-focus",
+        "--resume-select-ring",
+        "--resume-select-panel-bg",
+        "--resume-select-panel-border",
+        "--resume-select-panel-shadow",
+        "--resume-select-option-hover",
+        "--resume-select-option-selected-bg",
+        "--resume-select-option-selected-text",
+        "--control-field-bg",
+        "--control-field-bg-hover",
+        "--control-field-focus-ring",
+        "--control-field-text",
+        "--control-field-placeholder",
+        "--control-panel-bg",
+        "--control-panel-border-color",
+        "--control-panel-shadow-value",
+        "--control-option-hover-bg",
+        "--control-option-selected-bg",
+        "--control-option-selected-text",
+        "--background",
+        "--foreground",
+        "--border",
+        "--muted",
+        "--muted-foreground",
+        "--primary",
+        "--primary-hover",
+        "--color-background",
+        "--color-foreground",
+        "--color-border",
+        "--color-muted-foreground",
+        "--color-primary",
+        "--color-primary-hover",
+        "--control-hover-surface",
+        "--control-focus-border",
+        "--control-panel-border",
+        "--control-panel-surface",
+        "--control-panel-shadow",
+        "--control-active-surface",
+        "--control-active-indicator",
+        "--resume-select-bg",
+        "--resume-select-bg-hover",
+        "--resume-select-text",
+        "--resume-select-muted",
+        "--resume-select-border",
+        "--resume-select-border-hover",
+        "--resume-select-border-focus",
+        "--resume-select-ring",
+        "--resume-select-panel-bg",
+        "--resume-select-panel-border",
+        "--resume-select-panel-shadow",
+        "--resume-select-option-hover",
+        "--resume-select-option-selected-bg",
+        "--resume-select-option-selected-text",
+        "--control-field-bg",
+        "--control-field-bg-hover",
+        "--control-field-focus-ring",
+        "--control-field-text",
+        "--control-field-placeholder",
+        "--control-panel-bg",
+        "--control-panel-border-color",
+        "--control-panel-shadow-value",
+        "--control-option-hover-bg",
+        "--control-option-selected-bg",
+        "--control-option-selected-text",
+        "--color-background",
+        "--color-foreground",
+        "--color-border",
+        "--color-muted",
+        "--color-muted-foreground",
+        "--color-background",
+        "--color-foreground",
+        "--color-border",
+        "--color-muted",
+        "--color-muted-foreground",
+        "--resume-editor-tab-active-bg",
+        "--resume-editor-tab-text",
+        "--resume-editor-tab-active-text",
+        "--resume-editor-tab-divider",
+        "--preview-focus-flash-bg",
+        "--preview-focus-ring",
+        "--preview-focus-flash-bg",
+        "--preview-focus-ring"
+      ],
+      "uniqueVarDefinitions": [
+        "--background",
+        "--border",
+        "--builder-card-bg",
+        "--builder-card-bg-hover",
+        "--builder-card-border",
+        "--builder-card-border-strong",
+        "--builder-input-bg",
+        "--builder-input-bg-hover",
+        "--builder-input-bg2",
+        "--builder-input-inset",
+        "--builder-input-placeholder",
+        "--builder-panel-bg",
+        "--builder-panel-bg-soft",
+        "--builder-panel-border",
+        "--builder-panel-border-strong",
+        "--builder-panel-header",
+        "--builder-panel-text",
+        "--builder-panel-text-muted",
+        "--builder-preview-dock-bg",
+        "--builder-preview-dock-shadow",
+        "--builder-toolbar-border-color",
+        "--builder-toolbar-save-bg",
+        "--builder-toolbar-save-border",
+        "--builder-toolbar-save-color",
+        "--builder-toolbar-save-hover-bg",
+        "--builder-toolbar-shadow",
+        "--builder-toolbar-title-display-bg",
+        "--builder-toolbar-title-input-bg",
+        "--builder-workspace-bg",
+        "--color-background",
+        "--color-border",
+        "--color-foreground",
+        "--color-muted",
+        "--color-muted-foreground",
+        "--color-primary",
+        "--color-primary-hover",
+        "--control-active-indicator",
+        "--control-active-surface",
+        "--control-field-bg",
+        "--control-field-bg-hover",
+        "--control-field-focus-ring",
+        "--control-field-placeholder",
+        "--control-field-text",
+        "--control-focus-border",
+        "--control-hover-surface",
+        "--control-option-hover-bg",
+        "--control-option-selected-bg",
+        "--control-option-selected-text",
+        "--control-panel-bg",
+        "--control-panel-border",
+        "--control-panel-border-color",
+        "--control-panel-shadow",
+        "--control-panel-shadow-value",
+        "--control-panel-surface",
+        "--control-surface",
+        "--foreground",
+        "--muted",
+        "--muted-foreground",
+        "--preview-focus-flash-bg",
+        "--preview-focus-ring",
+        "--primary",
+        "--primary-hover",
+        "--resume-editor-tab-active-bg",
+        "--resume-editor-tab-active-text",
+        "--resume-editor-tab-divider",
+        "--resume-editor-tab-text",
+        "--resume-select-bg",
+        "--resume-select-bg-hover",
+        "--resume-select-border",
+        "--resume-select-border-focus",
+        "--resume-select-border-hover",
+        "--resume-select-muted",
+        "--resume-select-option-hover",
+        "--resume-select-option-selected-bg",
+        "--resume-select-option-selected-text",
+        "--resume-select-panel-bg",
+        "--resume-select-panel-border",
+        "--resume-select-panel-shadow",
+        "--resume-select-ring",
+        "--resume-select-text"
+      ],
+      "repeatedSelectors": [
+        {
+          "selector": ".resume-builder-scope",
+          "count": 2
+        },
+        {
+          "selector": "[data-theme=\"dark\"] .resume-builder-scope",
+          "count": 2
+        },
+        {
+          "selector": ".resume-builder-scope .resume-toolbar-download-spinner",
+          "count": 2
+        },
+        {
+          "selector": "to",
+          "count": 2
+        },
+        {
+          "selector": ".resume-builder-scope .resume-item-menu-popover",
+          "count": 2
+        },
+        {
+          "selector": ".resume-builder-scope .resume-item-menu-action",
+          "count": 2
+        },
+        {
+          "selector": ".resume-builder-scope .resume-ai-empty-title",
+          "count": 3
+        },
+        {
+          "selector": ".resume-builder-scope .resume-ai-empty-desc",
+          "count": 3
+        },
+        {
+          "selector": ".resume-builder-scope .resume-ai-empty-actions",
+          "count": 2
+        },
+        {
+          "selector": ".resume-builder-scope .resume-ai-empty-action-label",
+          "count": 3
+        },
+        {
+          "selector": ".resume-builder-scope .resume-style-browser-grid",
+          "count": 2
+        },
+        {
+          "selector": ".resume-builder-scope .resume-style-browser-card.is-wide",
+          "count": 2
+        }
+      ],
+      "selectorComplexityP95": 14,
+      "overrideChainLengthP95": 3
+    },
+    {
+      "path": "components/resume-builder/controls/ResumeColorPickerControl/ResumeColorPickerControl.module.scss",
+      "lines": 158,
+      "maxBlockDepth": 1,
+      "maxSelectorDepth": 1,
+      "selectorBlockCount": 19,
+      "varDefinitions": [],
+      "uniqueVarDefinitions": [],
+      "repeatedSelectors": [],
+      "selectorComplexityP95": 19,
+      "overrideChainLengthP95": 2
+    },
+    {
+      "path": "components/resume-builder/controls/RichTextEditor/RichTextEditor.module.scss",
+      "lines": 82,
+      "maxBlockDepth": 1,
+      "maxSelectorDepth": 1,
+      "selectorBlockCount": 14,
+      "varDefinitions": [],
+      "uniqueVarDefinitions": [],
+      "repeatedSelectors": [],
+      "selectorComplexityP95": 8,
+      "overrideChainLengthP95": 3
+    },
+    {
+      "path": "components/resume-builder/controls/ToolSliderField/ToolSliderField.module.scss",
+      "lines": 35,
+      "maxBlockDepth": 1,
+      "maxSelectorDepth": 1,
+      "selectorBlockCount": 7,
+      "varDefinitions": [],
+      "uniqueVarDefinitions": [],
+      "repeatedSelectors": [],
+      "selectorComplexityP95": 10,
+      "overrideChainLengthP95": 2
+    },
+    {
+      "path": "components/resume-builder/panels/AIChatPanel/AIChatPanel.module.scss",
+      "lines": 654,
+      "maxBlockDepth": 2,
+      "maxSelectorDepth": 1,
+      "selectorBlockCount": 92,
+      "varDefinitions": [],
+      "uniqueVarDefinitions": [],
+      "repeatedSelectors": [
+        {
+          "selector": ".panel :global(.resume-ai-empty-title)",
+          "count": 3
+        },
+        {
+          "selector": ".panel :global(.resume-ai-empty-desc)",
+          "count": 3
+        },
+        {
+          "selector": ".panel :global(.resume-ai-empty-actions)",
+          "count": 2
+        },
+        {
+          "selector": ".panel :global(.resume-ai-empty-action-label)",
+          "count": 3
+        }
+      ],
+      "selectorComplexityP95": 14,
+      "overrideChainLengthP95": 2
+    },
+    {
+      "path": "components/resume-builder/panels/HeightDebugPanel/HeightDebugPanel.module.scss",
+      "lines": 152,
+      "maxBlockDepth": 2,
+      "maxSelectorDepth": 1,
+      "selectorBlockCount": 35,
+      "varDefinitions": [],
+      "uniqueVarDefinitions": [],
+      "repeatedSelectors": [
+        {
+          "selector": ".hero",
+          "count": 2
+        },
+        {
+          "selector": ".metricCard",
+          "count": 2
+        },
+        {
+          "selector": ".summaryRow",
+          "count": 2
+        },
+        {
+          "selector": ".blockMetric",
+          "count": 3
+        },
+        {
+          "selector": ".detailColumn",
+          "count": 3
+        },
+        {
+          "selector": ".blockCard",
+          "count": 2
+        }
+      ],
+      "selectorComplexityP95": 11,
+      "overrideChainLengthP95": 2
+    },
+    {
+      "path": "components/resume-builder/panels/LayoutAndStylePanel/LayoutAndStylePanel.module.scss",
+      "lines": 776,
+      "maxBlockDepth": 2,
+      "maxSelectorDepth": 1,
+      "selectorBlockCount": 126,
+      "varDefinitions": [],
+      "uniqueVarDefinitions": [],
+      "repeatedSelectors": [
+        {
+          "selector": ".panel :global(.resume-font-preview-grid)",
+          "count": 2
+        },
+        {
+          "selector": ".styleBrowser :global(.resume-style-browser-grid)",
+          "count": 2
+        },
+        {
+          "selector": ".styleBrowser :global(.resume-style-browser-card.is-wide)",
+          "count": 2
+        }
+      ],
+      "selectorComplexityP95": 8,
+      "overrideChainLengthP95": 3
+    },
+    {
+      "path": "components/resume-builder/panels/shared/PanelControlPrimitives.module.scss",
+      "lines": 31,
+      "maxBlockDepth": 1,
+      "maxSelectorDepth": 1,
+      "selectorBlockCount": 7,
+      "varDefinitions": [],
+      "uniqueVarDefinitions": [],
+      "repeatedSelectors": [],
+      "selectorComplexityP95": 2,
+      "overrideChainLengthP95": 1
+    },
+    {
+      "path": "components/resume-builder/workbench/ResumeOverlayWorkbench/ResumeOverlayWorkbench.module.scss",
+      "lines": 147,
+      "maxBlockDepth": 2,
+      "maxSelectorDepth": 1,
+      "selectorBlockCount": 26,
+      "varDefinitions": [],
+      "uniqueVarDefinitions": [],
+      "repeatedSelectors": [
+        {
+          "selector": ".contextPanel",
+          "count": 3
+        },
+        {
+          "selector": ".editorPanelShell",
+          "count": 3
+        },
+        {
+          "selector": ".editorResizer",
+          "count": 3
+        }
+      ],
+      "selectorComplexityP95": 6,
+      "overrideChainLengthP95": 2
+    },
+    {
+      "path": "components/resume-builder/workbench/ResumePreviewWorkspace/ResumePreviewWorkspace.module.scss",
+      "lines": 119,
+      "maxBlockDepth": 2,
+      "maxSelectorDepth": 1,
+      "selectorBlockCount": 15,
+      "varDefinitions": [],
+      "uniqueVarDefinitions": [],
+      "repeatedSelectors": [
+        {
+          "selector": ".viewport",
+          "count": 3
+        }
+      ],
+      "selectorComplexityP95": 4,
+      "overrideChainLengthP95": 2
+    },
+    {
+      "path": "components/resume-builder/workbench/ResumeToolRail/ResumeToolRail.module.scss",
+      "lines": 104,
+      "maxBlockDepth": 2,
+      "maxSelectorDepth": 1,
+      "selectorBlockCount": 13,
+      "varDefinitions": [],
+      "uniqueVarDefinitions": [],
+      "repeatedSelectors": [
+        {
+          "selector": ".rail",
+          "count": 3
+        }
+      ],
+      "selectorComplexityP95": 8,
+      "overrideChainLengthP95": 2
+    },
+    {
+      "path": "components/resume-builder/workbench/workbench-layout.scss",
+      "lines": 56,
+      "maxBlockDepth": 2,
+      "maxSelectorDepth": 1,
+      "selectorBlockCount": 6,
+      "varDefinitions": [
+        "--builder-workspace-bg",
+        "--builder-panel-bg",
+        "--builder-panel-bg-soft",
+        "--builder-panel-text",
+        "--builder-panel-text-muted",
+        "--builder-preview-bg",
+        "--builder-card-bg",
+        "--builder-card-bg-hover",
+        "--builder-input-bg",
+        "--builder-input-bg-hover",
+        "--builder-toolbar-border-color",
+        "--builder-toolbar-shadow",
+        "--builder-toolbar-title-display-bg",
+        "--builder-toolbar-title-input-bg",
+        "--builder-toolbar-save-border",
+        "--builder-toolbar-save-bg",
+        "--builder-toolbar-save-hover-bg",
+        "--builder-toolbar-save-color",
+        "--control-field-bg",
+        "--control-field-bg-hover",
+        "--control-field-focus-ring"
+      ],
+      "uniqueVarDefinitions": [
+        "--builder-card-bg",
+        "--builder-card-bg-hover",
+        "--builder-input-bg",
+        "--builder-input-bg-hover",
+        "--builder-panel-bg",
+        "--builder-panel-bg-soft",
+        "--builder-panel-text",
+        "--builder-panel-text-muted",
+        "--builder-preview-bg",
+        "--builder-toolbar-border-color",
+        "--builder-toolbar-save-bg",
+        "--builder-toolbar-save-border",
+        "--builder-toolbar-save-color",
+        "--builder-toolbar-save-hover-bg",
+        "--builder-toolbar-shadow",
+        "--builder-toolbar-title-display-bg",
+        "--builder-toolbar-title-input-bg",
+        "--builder-workspace-bg",
+        "--control-field-bg",
+        "--control-field-bg-hover",
+        "--control-field-focus-ring"
+      ],
+      "repeatedSelectors": [],
+      "selectorComplexityP95": 5,
+      "overrideChainLengthP95": 2
+    },
+    {
+      "path": "components/resume-reactive-preview/preview.module.scss",
+      "lines": 378,
+      "maxBlockDepth": 2,
+      "maxSelectorDepth": 1,
+      "selectorBlockCount": 56,
+      "varDefinitions": [
+        "--resume-theme-primary",
+        "--resume-theme-text",
+        "--resume-theme-bg",
+        "--page-space-x",
+        "--page-space-y"
+      ],
+      "uniqueVarDefinitions": [
+        "--page-space-x",
+        "--page-space-y",
+        "--resume-theme-bg",
+        "--resume-theme-primary",
+        "--resume-theme-text"
+      ],
+      "repeatedSelectors": [
+        {
+          "selector": ".page",
+          "count": 2
+        }
+      ],
+      "selectorComplexityP95": 13,
+      "overrideChainLengthP95": 2
+    },
+    {
+      "path": "components/resume-reactive-preview/templates/styles/composed-template-renderer.module.scss",
+      "lines": 379,
+      "maxBlockDepth": 1,
+      "maxSelectorDepth": 1,
+      "selectorBlockCount": 55,
+      "varDefinitions": [
+        "--skills-neutral-strong",
+        "--skills-neutral-base",
+        "--skills-neutral-muted",
+        "--skills-neutral-soft",
+        "--skills-neutral-surface",
+        "--skills-neutral-surface-line",
+        "--skills-neutral-track",
+        "--skills-neutral-divider"
+      ],
+      "uniqueVarDefinitions": [
+        "--skills-neutral-base",
+        "--skills-neutral-divider",
+        "--skills-neutral-muted",
+        "--skills-neutral-soft",
+        "--skills-neutral-strong",
+        "--skills-neutral-surface",
+        "--skills-neutral-surface-line",
+        "--skills-neutral-track"
+      ],
+      "repeatedSelectors": [],
+      "selectorComplexityP95": 4,
+      "overrideChainLengthP95": 1
+    },
+    {
+      "path": "components/resume-reactive-preview/templates/styles/headers/header-1.module.scss",
+      "lines": 55,
+      "maxBlockDepth": 1,
+      "maxSelectorDepth": 1,
+      "selectorBlockCount": 9,
+      "varDefinitions": [],
+      "uniqueVarDefinitions": [],
+      "repeatedSelectors": [],
+      "selectorComplexityP95": 6,
+      "overrideChainLengthP95": 1
+    },
+    {
+      "path": "components/resume-reactive-preview/templates/styles/headers/header-2.module.scss",
+      "lines": 45,
+      "maxBlockDepth": 1,
+      "maxSelectorDepth": 1,
+      "selectorBlockCount": 9,
+      "varDefinitions": [],
+      "uniqueVarDefinitions": [],
+      "repeatedSelectors": [],
+      "selectorComplexityP95": 6,
+      "overrideChainLengthP95": 1
+    },
+    {
+      "path": "components/resume-reactive-preview/templates/styles/headers/header-3.module.scss",
+      "lines": 61,
+      "maxBlockDepth": 1,
+      "maxSelectorDepth": 1,
+      "selectorBlockCount": 11,
+      "varDefinitions": [],
+      "uniqueVarDefinitions": [],
+      "repeatedSelectors": [],
+      "selectorComplexityP95": 6,
+      "overrideChainLengthP95": 1
+    },
+    {
+      "path": "components/resume-reactive-preview/templates/styles/headers/header-4.module.scss",
+      "lines": 46,
+      "maxBlockDepth": 1,
+      "maxSelectorDepth": 1,
+      "selectorBlockCount": 9,
+      "varDefinitions": [],
+      "uniqueVarDefinitions": [],
+      "repeatedSelectors": [],
+      "selectorComplexityP95": 6,
+      "overrideChainLengthP95": 1
+    },
+    {
+      "path": "components/resume-reactive-preview/templates/styles/headers/header-5.module.scss",
+      "lines": 122,
+      "maxBlockDepth": 1,
+      "maxSelectorDepth": 1,
+      "selectorBlockCount": 18,
+      "varDefinitions": [],
+      "uniqueVarDefinitions": [],
+      "repeatedSelectors": [],
+      "selectorComplexityP95": 8,
+      "overrideChainLengthP95": 1
+    },
+    {
+      "path": "components/resume-reactive-preview/templates/styles/headers/header-photo.module.scss",
+      "lines": 21,
+      "maxBlockDepth": 1,
+      "maxSelectorDepth": 1,
+      "selectorBlockCount": 2,
+      "varDefinitions": [],
+      "uniqueVarDefinitions": [],
+      "repeatedSelectors": [],
+      "selectorComplexityP95": 2,
+      "overrideChainLengthP95": 1
+    }
+  ]
+}
