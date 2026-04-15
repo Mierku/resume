@@ -23,6 +23,7 @@ import { useResumeBuilderStore } from '../../store/useResumeBuilderStore'
 import { ToolSliderField } from '../../controls/ToolSliderField/ToolSliderField'
 import type { SmartOnePageComputation } from '@/components/resume-reactive-preview/templates/smart-one-page'
 import type { StyleTool } from '../../workbench/types'
+import sharedStyles from '../shared/PanelControlPrimitives.module.css'
 import styles from './LayoutAndStylePanel.module.css'
 
 type StyleBrowserCategory = 'template' | 'header' | 'section' | 'skills'
@@ -265,8 +266,8 @@ function SliderField({
   const renderValue = formatter ? formatter(shown) : String(shown)
 
   return (
-    <div className="resume-slider-field">
-      <div className="resume-slider-field-head">
+    <div className={joinClassNames('resume-slider-field', sharedStyles.surfaceCard, sharedStyles.stackSm)}>
+      <div className={joinClassNames('resume-slider-field-head', sharedStyles.splitBaseline)}>
         <span className="resume-slider-field-label">{label}</span>
         <span className="resume-slider-field-value">{renderValue}</span>
       </div>
@@ -301,8 +302,8 @@ function SliderChoiceField<T extends string>({
   const activeOption = options[activeIndex] || options[0]
 
   return (
-    <div className="resume-slider-field">
-      <div className="resume-slider-field-head">
+    <div className={joinClassNames('resume-slider-field', sharedStyles.surfaceCard, sharedStyles.stackSm)}>
+      <div className={joinClassNames('resume-slider-field-head', sharedStyles.splitBaseline)}>
         <span className="resume-slider-field-label">{label}</span>
         <span className="resume-slider-field-value">{activeOption.label}</span>
       </div>

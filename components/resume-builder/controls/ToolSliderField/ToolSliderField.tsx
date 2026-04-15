@@ -60,7 +60,7 @@ export function ToolSliderField({
 
   return (
     <div className={`resume-tool-slider-field ${styles.field}`} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
-      <div className="resume-tool-slider-title-row">
+      <div className={`resume-tool-slider-title-row ${styles.titleRow}`}>
         <span className="resume-tool-slider-label">{label}</span>
       </div>
       <div className="resume-tool-slider-row">

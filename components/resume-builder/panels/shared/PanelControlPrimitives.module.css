@@ -1,0 +1,36 @@
+.surfaceCard {
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.insetCard {
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.stackSm {
+  display: grid;
+  gap: 8px;
+}
+
+.stackXs {
+  display: grid;
+  gap: 4px;
+}
+
+.splitBaseline {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.twoColumnGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.monoText {
+  font-family: 'IBM Plex Mono', 'SFMono-Regular', 'Consolas', monospace;
+}

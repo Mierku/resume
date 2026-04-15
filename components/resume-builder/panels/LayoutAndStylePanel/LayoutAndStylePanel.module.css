@@ -1,20 +1,9 @@
 .panel :global(.resume-slider-field) {
-  display: grid;
-  gap: 8px;
   padding: 12px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.04);
 }
 
 .panel :global(.resume-slider-field.is-readonly) {
   padding-block: 10px;
-}
-
-.panel :global(.resume-slider-field-head) {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
 }
 
 .panel :global(.resume-slider-field-label) {

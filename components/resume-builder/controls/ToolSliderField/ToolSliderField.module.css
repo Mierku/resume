@@ -1,13 +1,9 @@
 .field {
-  display: grid;
-  gap: 4px;
+  composes: stackXs from '../../panels/shared/PanelControlPrimitives.module.css';
 }
 
-.field :global(.resume-tool-slider-title-row) {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+.titleRow {
+  composes: splitBaseline from '../../panels/shared/PanelControlPrimitives.module.css';
 }
 
 .field :global(.resume-tool-slider-label) {
