@@ -35,6 +35,6 @@
 | Gate | Diff command | Result | Reviewer note |
 | --- | --- | --- | --- |
 | G0 | `git diff --name-only` | PASS | Scaffold-only baseline, no product diff in worker-4 worktree. |
-| G1 | `git diff --name-only <baseline>...HEAD` | PENDING | Run after token/layer lane is integrated. |
-| G2 | `git diff --name-only <g1>...HEAD` | PENDING | Run after module convergence lane is integrated. |
-| G3 | `git diff --name-only <g2>...HEAD` | PENDING | Final sign-off must fail on any out-of-scope product path. |
+| G1 | `git diff --name-only 5c61c5e...2170d34` | PASS | Integrated diff stays within `components/resume-builder/**` plus evidence artifacts; foundation files are covered in `g1-worker-1-foundation-draft.md`. |
+| G2 | `git diff --name-only 5c61c5e...2170d34` | PASS | Integrated workbench/panels/controls files remain inside the same allowlist; lane-level workbench audit is captured in `task-5-workbench-audit.md`. |
+| G3 | `git diff --name-only 5c61c5e...2170d34` | PASS WITH RESIDUAL RISK | Scope guard passed on the integrated snapshot, but final parity/visual/manual gate evidence remains incomplete. |

@@ -1,17 +1,18 @@
 # Gate G2 Checklist
 
-Status: `DRAFT`
+Status: `REVIEWED WITH RESIDUAL RISK`
 
 ## Required before sign-off
 
-- [ ] Module convergence changes integrated.
+- [x] Module convergence changes integrated on the reviewed `main` snapshot.
 - [ ] Tabs/sorting regression run completed.
 - [ ] Panel open/close regression run completed.
 - [ ] Right editor flow regression run completed.
 - [ ] Interaction matrix reaches `100% PASS`.
-- [ ] Allowlist check updated for the integrated P2 diff.
+- [x] Allowlist check updated for the integrated P2 diff.
 
 ## Current note
 
-- Waiting for panels/controls and workbench convergence changes before G2 can be evaluated.
-- Task 5 (`b82d763`) has a completed lane audit in `task-5-workbench-audit.md`; treat it as a verified input, not final G2 closure.
+- Task 5 (`b82d763`) has a completed lane audit in `task-5-workbench-audit.md`.
+- Integrated TS/TSX review for current P2 changes is summarized in `integrated-review-summary.md`.
+- G2 still lacks executed interaction evidence, so this gate is review-complete but not manually/visually signed off.

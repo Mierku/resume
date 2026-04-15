@@ -46,8 +46,8 @@ PASS — no business/data/API/state semantic changes were introduced in this lan
 
 ### FAIL / BLOCKED
 - `npx eslint components/resume-builder/ResumeBuilderClient.tsx` → existing `react-hooks/set-state-in-effect` errors and warnings in unchanged logic regions of the target file
-- `pnpm build` → blocked in this worktree because `node_modules` is missing and `prisma` is unavailable during `prebuild`
+- `pnpm build` → blocked in the detached worker worktree when `node_modules` / `prisma` were unavailable locally
 
 ## G1 Readiness
 - Code-side foundation lane: READY FOR INTEGRATION REVIEW
-- Full G1 parity sign-off: BLOCKED pending dependency-complete build environment plus visual/interaction evidence from the verification lane
+- Full G1 parity sign-off: BLOCKED pending visual/interaction evidence from the verification lane and a contention-free build run on the integrated branch
