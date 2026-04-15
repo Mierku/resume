@@ -27,7 +27,7 @@ import { DataSourcesSection } from '@/components/dashboard/DataSourcesSection'
 import { AccountSection } from '@/components/dashboard/AccountSection'
 import { AdminUsersSection } from '@/components/dashboard/AdminUsersSection'
 import { cn } from '@/lib/utils'
-import styles from './dashboard-workbench.module.css'
+import styles from './dashboard-workbench.module.scss'
 
 const SECTION_ITEMS: Array<{
   id: DashboardSection

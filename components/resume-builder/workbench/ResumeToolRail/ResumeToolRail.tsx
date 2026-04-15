@@ -4,7 +4,7 @@ import { FileText, LayoutTemplate, PenLine, Ruler, Type } from 'lucide-react'
 import { type FocusEvent as ReactFocusEvent, type ReactNode, useCallback, useState } from 'react'
 import { BrandFlowerIcon } from '@/components/BrandFlowerIcon'
 import type { ActiveBuilderTool, BuilderTool } from '../types'
-import styles from './ResumeToolRail.module.css'
+import styles from './ResumeToolRail.module.scss'
 
 function ToolButton({
   label,

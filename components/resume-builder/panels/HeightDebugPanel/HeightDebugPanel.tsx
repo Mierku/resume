@@ -1,7 +1,7 @@
 'use client'
 
 import type { HeightDebugSnapshot } from '@/components/resume-reactive-preview/height-debug'
-import styles from './HeightDebugPanel.module.css'
+import styles from './HeightDebugPanel.module.scss'
 
 interface HeightDebugPanelProps {
   snapshot: HeightDebugSnapshot | null

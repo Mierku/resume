@@ -453,8 +453,8 @@ function IconChevronDown() {
   return <ChevronDown className="h-4 w-4" />
 }
 
-export function IconChevronRight() {
-  return <ChevronRight className="h-4 w-4" />
+export function IconChevronRight({ className = 'h-4 w-4' }: { className?: string }) {
+  return <ChevronRight className={className} />
 }
 
 export function IconMaximize() {

@@ -16,7 +16,7 @@ import {
 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { ResumeData } from '@/lib/resume/types'
-import styles from './AIChatPanel.module.css'
+import styles from './AIChatPanel.module.scss'
 
 type ChatRole = 'user' | 'assistant'
 

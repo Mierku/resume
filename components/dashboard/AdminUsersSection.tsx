@@ -15,8 +15,8 @@ import { Skeleton } from '@/components/ui/Skeleton'
 import { getUserDisplayName, isAdminRole } from '@/lib/user'
 import { formatAuthProviderLabels } from '@/lib/auth-provider-labels'
 import { cn } from '@/lib/utils'
-import styles from './dashboard-workbench.module.css'
-import adminStyles from './admin-users-section.module.css'
+import styles from './dashboard-workbench.module.scss'
+import adminStyles from './admin-users-section.module.scss'
 
 interface AdminUserSummary {
   totalUsers: number

@@ -3566,6 +3566,10 @@ body.resume-number-scrubbing {
   background: color-mix(in srgb, var(--control-focus-border) 12%, transparent);
 }
 
+.resume-builder-scope .resume-scrub-number-edge:focus-visible {
+  outline: none;
+}
+
 .resume-builder-scope .resume-scrub-number-unit {
   font-size: 12px;
   color: var(--builder-panel-text-muted);

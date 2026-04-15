@@ -23,8 +23,8 @@ import { useResumeBuilderStore } from '../../store/useResumeBuilderStore'
 import { ToolSliderField } from '../../controls/ToolSliderField/ToolSliderField'
 import type { SmartOnePageComputation } from '@/components/resume-reactive-preview/templates/smart-one-page'
 import type { StyleTool } from '../../workbench/types'
-import sharedStyles from '../shared/PanelControlPrimitives.module.css'
-import styles from './LayoutAndStylePanel.module.css'
+import sharedStyles from '../shared/PanelControlPrimitives.module.scss'
+import styles from './LayoutAndStylePanel.module.scss'
 
 type StyleBrowserCategory = 'template' | 'header' | 'section' | 'skills'
 type StylePreviewKind =

@@ -21,7 +21,7 @@ import { RECORD_STATUS_OPTIONS } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import { toast } from '@/lib/toast'
 import { getDashboardSectionHref } from '@/components/dashboard/types'
-import styles from './dashboard-workbench.module.css'
+import styles from './dashboard-workbench.module.scss'
 
 type RecordStatus = 'pending' | 'submitted' | 'recorded' | 'abandoned'
 

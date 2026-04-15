@@ -7,7 +7,7 @@ import {
   type NumericLimitConfig,
 } from '@/lib/resume/editor-limits'
 import { Slider } from '../../primitives'
-import styles from './ToolSliderField.module.css'
+import styles from './ToolSliderField.module.scss'
 
 export function ToolSliderField({
   label,

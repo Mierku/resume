@@ -181,14 +181,10 @@ export function ResumeBuilderToolbar({
   ] as const
 
   return (
-    <div className="resume-toolbar border-b px-4 py-2 grid grid-cols-[1fr_auto_1fr] items-center gap-3 no-print flex-shrink-0">
-      <div className="resume-toolbar-left flex min-w-0 items-center gap-2 justify-self-start">
+    <div className="resume-toolbar border-b px-4 py-2 flex items-center gap-3 no-print flex-shrink-0">
+      <div className="resume-toolbar-left flex min-w-0 flex-1 items-center gap-2">
         <Button type="text" icon={<IconLeft />} onClick={onBack} aria-label="返回" />
-        <div className="resume-toolbar-status-wrap">{saveStatus}</div>
-      </div>
-
-      <div className="flex min-w-0 items-center px-2 justify-self-center">
-        <div className="resume-toolbar-title-wrap">
+        <div className={`resume-toolbar-title-wrap${isTitleEditing ? ' is-editing' : ''}`}>
           {isTitleEditing ? (
             <Input
               value={resumeTitle}
@@ -210,22 +206,23 @@ export function ResumeBuilderToolbar({
                 }
               }}
               autoFocus
-              className="resume-toolbar-title-input text-center"
+              className="resume-toolbar-title-input"
             />
           ) : (
             <button
               type="button"
               className="resume-toolbar-title-display"
-              onDoubleClick={startTitleEditing}
-              aria-label="双击编辑简历标题"
+              onClick={startTitleEditing}
+              aria-label="点击编辑简历标题"
             >
               {displayTitle}
             </button>
           )}
         </div>
+        <div className="resume-toolbar-status-wrap">{saveStatus}</div>
       </div>
 
-      <div className="justify-self-end flex items-center gap-3">
+      <div className="flex items-center gap-3">
         <Space className="gap-3">
           <Button
             type="secondary"

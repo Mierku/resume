@@ -1,6 +1,6 @@
 'use client'
 
-import './resume-module-theme.css'
+import './resume-module-theme.scss'
 import { ReactNode } from 'react'
 import { usePathname } from 'next/navigation'
 

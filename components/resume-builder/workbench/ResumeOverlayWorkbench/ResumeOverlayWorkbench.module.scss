@@ -77,8 +77,6 @@
 .editorPanelShell {
   right: 10px;
   bottom: 12px;
-  width: var(--resume-editor-panel-width);
-  --control-field-radius: 4px;
 }
 .editorPanel :global(.resume-editor-tab-content-body) {
   padding: 12px;
@@ -97,7 +95,6 @@
   position: absolute;
   top: 12px;
   bottom: 12px;
-  right: calc(var(--resume-editor-panel-width) + 2px);
   width: 14px;
   z-index: 9;
   cursor: ew-resize;

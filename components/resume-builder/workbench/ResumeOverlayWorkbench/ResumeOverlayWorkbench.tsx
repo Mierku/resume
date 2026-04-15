@@ -1,13 +1,14 @@
 'use client'
 
 import { X } from 'lucide-react'
-import { type CSSProperties, type ReactNode, type RefObject, type PointerEvent as ReactPointerEvent } from 'react'
+import { type ReactNode, type RefObject, type PointerEvent as ReactPointerEvent } from 'react'
 import { BUILDER_TOOL_META, type ActiveBuilderTool, type BuilderTool } from '../types'
 import { ResumeToolRail } from '../ResumeToolRail/ResumeToolRail'
 import { ResumePreviewWorkspace } from '../ResumePreviewWorkspace/ResumePreviewWorkspace'
-import styles from './ResumeOverlayWorkbench.module.css'
+import styles from './ResumeOverlayWorkbench.module.scss'
 
 interface ResumeOverlayWorkbenchProps {
+  editorPanelWidth: number
   activeTool: ActiveBuilderTool
   sidePanelScrolling: boolean
   onSelectTool: (tool: BuilderTool) => void
@@ -38,6 +39,7 @@ interface ResumeOverlayWorkbenchProps {
 }
 
 export function ResumeOverlayWorkbench({
+  editorPanelWidth,
   activeTool,
   sidePanelScrolling,
   onSelectTool,
@@ -67,13 +69,10 @@ export function ResumeOverlayWorkbench({
   onFit,
 }: ResumeOverlayWorkbenchProps) {
   const activeToolMeta = activeTool ? BUILDER_TOOL_META[activeTool] : null
-  const workbenchStyle = {
-    ['--resume-preview-left-padding' as string]: activeTool ? '430px' : '112px',
-    ['--resume-preview-left-padding-medium' as string]: activeTool ? '360px' : '112px',
-  } as CSSProperties
+  const previewLeftPadding = activeTool ? 430 : 112
 
   return (
-    <div className="resume-builder-workbench flex-1 overflow-hidden" style={workbenchStyle}>
+    <div className="resume-builder-workbench flex-1 overflow-hidden">
       <ResumeToolRail activeTool={activeTool} onSelectTool={onSelectTool} />
 
       {activeTool ? (
@@ -113,6 +112,8 @@ export function ResumeOverlayWorkbench({
       ) : null}
 
       <ResumePreviewWorkspace
+        editorPanelWidth={editorPanelWidth}
+        previewLeftPadding={previewLeftPadding}
         content={previewContent}
         previewContentRef={previewContentRef}
         previewViewportRef={previewViewportRef}
@@ -134,6 +135,7 @@ export function ResumeOverlayWorkbench({
 
       <div
         className={`${styles.editorResizer} no-print`}
+        style={{ right: `${editorPanelWidth + 2}px` }}
         role="separator"
         aria-orientation="vertical"
         aria-label="调整属性编辑器宽度"
@@ -143,7 +145,10 @@ export function ResumeOverlayWorkbench({
         onPointerCancel={onEditorPanelResizeEnd}
       />
 
-      <aside className={`resume-side-panel resume-editor-panel no-print flex flex-col overflow-hidden ${styles.editorPanel} ${styles.editorPanelShell}`}>
+      <aside
+        className={`resume-side-panel resume-editor-panel no-print flex flex-col overflow-hidden ${styles.editorPanel} ${styles.editorPanelShell}`}
+        style={{ width: `${editorPanelWidth}px` }}
+      >
         {editorContent}
       </aside>
     </div>

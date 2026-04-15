@@ -9,7 +9,7 @@ import { Message } from '@/components/ui/radix-adapter'
 import { invalidateAuthSnapshotCache } from '@/lib/auth/client'
 import { formatAuthProviderLabels } from '@/lib/auth-provider-labels'
 import { isAdminRole, type SessionUser } from '@/lib/user'
-import styles from './account-binding.module.css'
+import styles from './account-binding.module.scss'
 
 type BindingProvider = 'email' | 'wechat'
 type WechatBindUiState = 'idle' | 'loading' | 'ready' | 'expired' | 'error'

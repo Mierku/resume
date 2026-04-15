@@ -6,7 +6,7 @@ import { Check, Database, Edit3, Plus, Trash2 } from 'lucide-react'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { cn } from '@/lib/utils'
 import { toast } from '@/lib/toast'
-import styles from './dashboard-workbench.module.css'
+import styles from './dashboard-workbench.module.scss'
 
 interface DataSource {
   id: string

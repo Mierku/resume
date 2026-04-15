@@ -13,7 +13,7 @@ import {
   Tooltip,
 } from '../../primitives'
 import { sanitizeHtml } from '@/lib/resume/sanitize'
-import styles from './RichTextEditor.module.css'
+import styles from './RichTextEditor.module.scss'
 
 interface RichTextEditorProps {
   value: string

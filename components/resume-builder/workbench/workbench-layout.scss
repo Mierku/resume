@@ -1,6 +1,6 @@
 /*
  * Scoped workbench foundation overrides.
- * Import this file immediately after builder-theme.css and keep all overrides expressed through the
+ * Import this file immediately after builder-theme.scss and keep all overrides expressed through the
  * foundation tokens/legacy aliases below so the rest of the workbench can migrate incrementally.
  */
 .resume-builder-scope {
@@ -14,31 +14,17 @@
   --builder-card-bg-hover: rgba(255, 255, 255, 0.07);
   --builder-input-bg: rgba(255, 255, 255, 0.06);
   --builder-input-bg-hover: rgba(255, 255, 255, 0.1);
-  --builder-input-border-focus: rgba(90, 142, 255, 0.84);
   --builder-toolbar-border-color: transparent;
   --builder-toolbar-shadow: 0 14px 32px rgba(0, 0, 0, 0.28);
-  --builder-toolbar-title-height: 40px;
-  --builder-toolbar-title-radius: 12px;
   --builder-toolbar-title-display-bg: rgba(255, 255, 255, 0.06);
   --builder-toolbar-title-input-bg: rgba(255, 255, 255, 0.06);
-  --builder-toolbar-title-input-border: 0;
-  --builder-toolbar-title-input-hover-border: transparent;
-  --builder-toolbar-title-input-focus-border: transparent;
-  --builder-toolbar-action-padding: 0 16px;
   --builder-toolbar-save-border: transparent;
   --builder-toolbar-save-bg: rgba(255, 255, 255, 0.08);
   --builder-toolbar-save-hover-bg: rgba(255, 255, 255, 0.12);
   --builder-toolbar-save-color: #f5f7fb;
-  --control-field-min-height: 40px;
-  --control-field-radius: 12px;
   --control-field-bg: rgba(255, 255, 255, 0.06);
   --control-field-bg-hover: rgba(255, 255, 255, 0.1);
-  --control-field-border-color: transparent;
-  --control-field-border-hover: transparent;
-  --control-field-focus-color: transparent;
   --control-field-focus-ring: color-mix(in srgb, rgba(90, 142, 255, 0.84) 22%, transparent);
-  --resume-editor-panel-width: 412px;
-  --resume-preview-left-padding: 430px;
 }
 .resume-builder-scope .resume-builder-workbench {
   position: relative;

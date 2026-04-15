@@ -1,12 +1,13 @@
 'use client'
 
-import { type RefObject, type ReactNode } from 'react'
+import { type CSSProperties, type RefObject, type ReactNode } from 'react'
 import { ZoomIn, ZoomOut } from 'lucide-react'
 import { Button, IconMaximize, IconRefresh, IconRedo, IconUndo, Tooltip } from '../../primitives'
 import { useResumeBuilderStore } from '../../store/useResumeBuilderStore'
-import styles from './ResumePreviewWorkspace.module.css'
+import styles from './ResumePreviewWorkspace.module.scss'
 
 interface ResumePreviewCanvasProps {
+  viewportPaddingStyle?: CSSProperties
   content: ReactNode
   previewContentRef: RefObject<HTMLDivElement | null>
   previewViewportRef: RefObject<HTMLDivElement | null>
@@ -17,6 +18,7 @@ interface ResumePreviewCanvasProps {
 }
 
 function ResumePreviewCanvas({
+  viewportPaddingStyle,
   content,
   previewContentRef,
   previewViewportRef,
@@ -28,7 +30,7 @@ function ResumePreviewCanvas({
   const scrollSpaceHeight = previewScrollSpaceHeight > 0 ? previewScrollSpaceHeight : 1
 
   return (
-    <div ref={previewViewportRef} className={styles.viewport}>
+    <div ref={previewViewportRef} className={styles.viewport} style={viewportPaddingStyle}>
       <div className={styles.scrollSpace} style={{ height: scrollSpaceHeight }}>
         <div
           className={styles.stageShell}
@@ -127,6 +129,8 @@ function ResumePreviewDock({
 }
 
 interface ResumePreviewWorkspaceProps extends ResumePreviewCanvasProps {
+  editorPanelWidth: number
+  previewLeftPadding: number
   aiPreviewVisible: boolean
   aiPreviewActionLoading: 'new_version' | 'overwrite' | 'discard' | null
   onRunPreviewDraftAction: (action: 'new_version' | 'overwrite' | 'discard') => void
@@ -140,6 +144,8 @@ interface ResumePreviewWorkspaceProps extends ResumePreviewCanvasProps {
 }
 
 export function ResumePreviewWorkspace({
+  editorPanelWidth,
+  previewLeftPadding,
   aiPreviewVisible,
   aiPreviewActionLoading,
   onRunPreviewDraftAction,
@@ -152,6 +158,10 @@ export function ResumePreviewWorkspace({
   onFit,
   ...canvasProps
 }: ResumePreviewWorkspaceProps) {
+  const viewportPaddingStyle = {
+    padding: `20px ${editorPanelWidth + 6}px 28px ${previewLeftPadding}px`,
+  } satisfies CSSProperties
+
   return (
     <div
       className={styles.workspace}
@@ -189,7 +199,7 @@ export function ResumePreviewWorkspace({
       ) : null}
 
       <div className="flex-1 overflow-hidden">
-        <ResumePreviewCanvas {...canvasProps} />
+        <ResumePreviewCanvas {...canvasProps} viewportPaddingStyle={viewportPaddingStyle} />
         <ResumePreviewDock
           scale={canvasProps.previewScale}
           ready={canvasProps.ready}

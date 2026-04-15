@@ -16,7 +16,7 @@ import { BrandFlowerIcon } from '@/components/BrandFlowerIcon'
 import { markAuthSessionHintAuthenticated } from '@/lib/auth/client'
 import { sanitizeNextPath } from '@/lib/auth-redirect'
 import { LEGAL_PRIVACY_VERSION, LEGAL_TERMS_VERSION } from '@/lib/legal'
-import s from './login.module.css'
+import s from './login.module.scss'
 
 interface WechatOfficialLoginStartResponse {
   attemptId: string

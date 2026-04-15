@@ -1,5 +1,5 @@
 import type { LegalSection } from '@/lib/legal'
-import styles from './legal-document.module.css'
+import styles from './legal-document.module.scss'
 
 interface LegalDocumentPageProps {
   title: string

@@ -11,7 +11,7 @@ import { Select } from '@/components/ui/Select'
 import { Button } from '@/components/ui/Button'
 import { useAuthSnapshot } from '@/lib/hooks/useAuthSnapshot'
 import { cn } from '@/lib/utils'
-import s from './templates.module.css'
+import s from './templates.module.scss'
 
 interface DataSource {
   id: string

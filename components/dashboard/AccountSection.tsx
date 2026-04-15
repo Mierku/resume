@@ -9,7 +9,7 @@ import { getUserDisplayName, isAdminRole, type SessionUser } from '@/lib/user'
 import { cn } from '@/lib/utils'
 import { getDashboardSectionHref } from '@/components/dashboard/types'
 import { AccountBindingPanel } from '@/components/dashboard/AccountBindingPanel'
-import styles from './dashboard-workbench.module.css'
+import styles from './dashboard-workbench.module.scss'
 
 interface DataSourceSummary {
   id: string

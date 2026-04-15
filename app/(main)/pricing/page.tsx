@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 import { Check } from 'lucide-react'
 import { buildMetadata } from '@/lib/seo'
-import styles from './pricing.module.css'
+import styles from './pricing.module.scss'
 
 export const metadata: Metadata = {
   ...buildMetadata({

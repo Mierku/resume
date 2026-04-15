@@ -3,7 +3,7 @@ import Script from 'next/script'
 import { Toaster } from 'sonner'
 import { SITE_NAME, SITE_DESCRIPTION } from '@/lib/constants'
 import { siteOrigin } from '@/lib/seo'
-import './globals.css'
+import './globals.scss'
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteOrigin),

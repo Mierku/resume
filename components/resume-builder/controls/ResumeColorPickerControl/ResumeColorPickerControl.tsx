@@ -4,7 +4,7 @@ import { Pipette } from 'lucide-react'
 import { HexAlphaColorPicker } from 'react-colorful'
 import { type CSSProperties, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import styles from './ResumeColorPickerControl.module.css'
+import styles from './ResumeColorPickerControl.module.scss'
 
 function normalizeHexAlpha(value: string) {
   const trimmed = String(value || '').trim().replace(/^#/, '')

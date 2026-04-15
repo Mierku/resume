@@ -1,45 +1,45 @@
 .hero {
-  composes: surfaceCard from '../shared/PanelControlPrimitives.module.css';
+  composes: surfaceCard from '../shared/PanelControlPrimitives.module.scss';
 }
 .metricGrid {
-  composes: twoColumnGrid from '../shared/PanelControlPrimitives.module.css';
+  composes: twoColumnGrid from '../shared/PanelControlPrimitives.module.scss';
 }
 .metricCard {
-  composes: surfaceCard from '../shared/PanelControlPrimitives.module.css';
+  composes: surfaceCard from '../shared/PanelControlPrimitives.module.scss';
 }
 .summaryCard {
-  composes: surfaceCard from '../shared/PanelControlPrimitives.module.css';
-  composes: stackSm from '../shared/PanelControlPrimitives.module.css';
+  composes: surfaceCard from '../shared/PanelControlPrimitives.module.scss';
+  composes: stackSm from '../shared/PanelControlPrimitives.module.scss';
 }
 .emptyCard {
-  composes: surfaceCard from '../shared/PanelControlPrimitives.module.css';
+  composes: surfaceCard from '../shared/PanelControlPrimitives.module.scss';
 }
 .metricValue {
-  composes: monoText from '../shared/PanelControlPrimitives.module.css';
+  composes: monoText from '../shared/PanelControlPrimitives.module.scss';
 }
 .summaryRow {
-  composes: monoText from '../shared/PanelControlPrimitives.module.css';
+  composes: monoText from '../shared/PanelControlPrimitives.module.scss';
 }
 .blockMetric {
-  composes: monoText from '../shared/PanelControlPrimitives.module.css';
+  composes: monoText from '../shared/PanelControlPrimitives.module.scss';
 }
 .detailColumn {
-  composes: monoText from '../shared/PanelControlPrimitives.module.css';
+  composes: monoText from '../shared/PanelControlPrimitives.module.scss';
 }
 .blockCard {
-  composes: surfaceCard from '../shared/PanelControlPrimitives.module.css';
+  composes: surfaceCard from '../shared/PanelControlPrimitives.module.scss';
 }
 .blockTitle {
-  composes: splitBaseline from '../shared/PanelControlPrimitives.module.css';
+  composes: splitBaseline from '../shared/PanelControlPrimitives.module.scss';
 }
 .blockMetric {
-  composes: insetCard from '../shared/PanelControlPrimitives.module.css';
+  composes: insetCard from '../shared/PanelControlPrimitives.module.scss';
 }
 .detailColumn {
-  composes: insetCard from '../shared/PanelControlPrimitives.module.css';
+  composes: insetCard from '../shared/PanelControlPrimitives.module.scss';
 }
 .blockDetailGrid {
-  composes: twoColumnGrid from '../shared/PanelControlPrimitives.module.css';
+  composes: twoColumnGrid from '../shared/PanelControlPrimitives.module.scss';
 }
 .panel {
   padding-top: 12px;

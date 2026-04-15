@@ -17,7 +17,7 @@ const contentGlobs = [
   "next.config.ts",
 ];
 
-const cssGlobs = ["app/**/*.css", "components/**/*.css"];
+const cssGlobs = ["app/**/*.scss", "components/**/*.scss"];
 
 const safelist = {
   standard: [

@@ -127,8 +127,8 @@ import {
   toSingleSelectValue,
   WORK_YEAR_OPTIONS,
 } from './editor/section-editor-shared'
-import './builder-theme.css'
-import './workbench/workbench-layout.css'
+import './builder-theme.scss'
+import './workbench/workbench-layout.scss'
 
 const ResumeReactivePreview = dynamic(
   () => import('@/components/resume-reactive-preview').then(module => module.ResumeReactivePreview),
@@ -1181,6 +1181,7 @@ function BasicsEditor() {
   const updateResumeData = useResumeBuilderStore(state => state.updateResumeData)
   const photoInputRef = useRef<HTMLInputElement | null>(null)
   const [photoUploading, setPhotoUploading] = useState(false)
+  const [photoPanelExpanded, setPhotoPanelExpanded] = useState(false)
 
   const updateField = (field: keyof ResumeData['basics'], value: string) => {
     updateResumeData(draft => {
@@ -1246,21 +1247,8 @@ function BasicsEditor() {
           <Input value={basics.name} onChange={value => updateField('name', value)} placeholder="请输入姓名" />
         </EditorAnchor>
 
-        <EditorAnchor sectionId="basics" fieldKey="picture" className="resume-basics-photo-field p-3">
-          <div className="resume-basics-photo-head">
-            <span className="resume-anchor-label text-xs text-muted-foreground">证件照</span>
-            <label className="resume-basics-inline-checkbox">
-              <Checkbox
-                checked={!picture.hidden}
-                onChange={checked =>
-                  updateResumeData(draft => {
-                    draft.picture.hidden = !Boolean(checked)
-                  })
-                }
-              />
-              展示照片
-            </label>
-          </div>
+        <EditorAnchor sectionId="basics" fieldKey="picture" className="resume-basics-photo-field">
+          <label className="text-xs text-muted-foreground block mb-1">证件照</label>
 
           <input
             ref={photoInputRef}
@@ -1276,63 +1264,97 @@ function BasicsEditor() {
             }}
           />
 
-          <div className={joinClassNames('resume-basics-photo-preview-shell', picture.url && 'has-image')}>
-            <button
-              type="button"
-              className={joinClassNames('resume-basics-photo-preview', !picture.url && 'is-empty')}
-              onClick={() => photoInputRef.current?.click()}
-              disabled={photoUploading}
-              aria-label={picture.url ? '更换证件照' : '上传证件照'}
-            >
-              {photoUploading ? (
-                <div className="resume-basics-photo-placeholder">
-                  <span>上传中...</span>
-                </div>
-              ) : picture.url ? (
-                <div
-                  role="img"
-                  aria-label="证件照预览"
-                  className="resume-basics-photo-image"
-                  style={{ backgroundImage: `url(${picture.url})` }}
-                />
-              ) : (
-                <div className="resume-basics-photo-placeholder">
-                  <span>点击上传证件照</span>
-                  <span>一寸比例（5:7）</span>
-                </div>
-              )}
-            </button>
+          <div className="resume-basics-photo-control-wrap">
+            <div className="resume-basics-photo-placeholder-slot" aria-hidden="true" />
 
-            {picture.url ? (
-              <div className="resume-basics-photo-hover-actions">
-                <button
-                  type="button"
-                  className="resume-basics-photo-hover-btn"
-                  onClick={event => {
-                    event.preventDefault()
-                    event.stopPropagation()
-                    handlePreviewPhoto()
-                  }}
-                >
-                  <IconEye />
-                  预览
-                </button>
-                <button
-                  type="button"
-                  className="resume-basics-photo-hover-btn is-danger"
-                  onClick={event => {
-                    event.preventDefault()
-                    event.stopPropagation()
-                    handleDeletePhoto()
-                  }}
-                >
-                  <IconDelete />
-                  删除
-                </button>
+            <div className={joinClassNames('resume-basics-photo-floating', photoPanelExpanded && 'is-expanded')}>
+              <button
+                type="button"
+                className="resume-basics-photo-trigger"
+                onClick={() => setPhotoPanelExpanded(expanded => !expanded)}
+                aria-expanded={photoPanelExpanded}
+                aria-label={photoPanelExpanded ? '收起证件照上传面板' : '展开证件照上传面板'}
+              >
+                <span className="resume-basics-photo-trigger-value">
+                  {photoUploading ? '上传中…' : picture.url ? '已上传，点击管理' : '点击上传'}
+                </span>
+                <IconChevronRight className="resume-basics-photo-trigger-icon" />
+              </button>
+
+              <div className="resume-basics-photo-expand-panel">
+                <div className="resume-basics-photo-head">
+                  <label className="resume-basics-inline-checkbox">
+                    <Checkbox
+                      checked={!picture.hidden}
+                      onChange={checked =>
+                        updateResumeData(draft => {
+                          draft.picture.hidden = !Boolean(checked)
+                        })
+                      }
+                    />
+                    展示照片
+                  </label>
+                </div>
+
+                <div className={joinClassNames('resume-basics-photo-preview-shell', picture.url && 'has-image')}>
+                  <button
+                    type="button"
+                    className={joinClassNames('resume-basics-photo-preview', !picture.url && 'is-empty')}
+                    onClick={() => photoInputRef.current?.click()}
+                    disabled={photoUploading}
+                    aria-label={picture.url ? '更换证件照' : '上传证件照'}
+                  >
+                    {photoUploading ? (
+                      <div className="resume-basics-photo-placeholder">
+                        <span>上传中...</span>
+                      </div>
+                    ) : picture.url ? (
+                      <div
+                        role="img"
+                        aria-label="证件照预览"
+                        className="resume-basics-photo-image"
+                        style={{ backgroundImage: `url(${picture.url})` }}
+                      />
+                    ) : (
+                      <div className="resume-basics-photo-placeholder">
+                        <span>点击上传证件照</span>
+                        <span>一寸比例（5:7）</span>
+                      </div>
+                    )}
+                  </button>
+
+                  {picture.url ? (
+                    <div className="resume-basics-photo-hover-actions">
+                      <button
+                        type="button"
+                        className="resume-basics-photo-hover-btn"
+                        onClick={event => {
+                          event.preventDefault()
+                          event.stopPropagation()
+                          handlePreviewPhoto()
+                        }}
+                      >
+                        <IconEye />
+                        预览
+                      </button>
+                      <button
+                        type="button"
+                        className="resume-basics-photo-hover-btn is-danger"
+                        onClick={event => {
+                          event.preventDefault()
+                          event.stopPropagation()
+                          handleDeletePhoto()
+                        }}
+                      >
+                        <IconDelete />
+                        删除
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
               </div>
-            ) : null}
+            </div>
           </div>
-
         </EditorAnchor>
 
         <EditorAnchor sectionId="basics" fieldKey="gender">
@@ -3301,11 +3323,6 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
   ])
   const previewScaledHeight = Math.max(previewContentHeight * previewScale, 0)
   const previewScrollSpaceHeight = previewScaledHeight + PREVIEW_SCROLL_VERTICAL_PADDING * 2
-  const applyEditorPanelWidthVar = useCallback((value: number) => {
-    const scope = builderScopeRef.current
-    if (!scope) return
-    scope.style.setProperty('--resume-editor-panel-width', `${value}px`)
-  }, [])
 
   const handlePreviewNavigate = useCallback((target: PreviewNavigationTarget) => {
     focusRequestCounterRef.current += 1
@@ -3895,15 +3912,13 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
     }
 
     editorPanelWidthLiveRef.current = nextWidth
-    applyEditorPanelWidthVar(nextWidth)
     setEditorPanelWidth(nextWidth)
     editorPanelWidthHydratedRef.current = true
-  }, [applyEditorPanelWidthVar])
+  }, [])
 
   useEffect(() => {
     editorPanelWidthLiveRef.current = editorPanelWidth
-    applyEditorPanelWidthVar(editorPanelWidth)
-  }, [applyEditorPanelWidthVar, editorPanelWidth])
+  }, [editorPanelWidth])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -3924,7 +3939,6 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
     const onResize = () => {
       const nextWidth = clampEditorPanelWidth(editorPanelWidthLiveRef.current)
       editorPanelWidthLiveRef.current = nextWidth
-      applyEditorPanelWidthVar(nextWidth)
       setEditorPanelWidth(previous => (previous === nextWidth ? previous : nextWidth))
     }
 
@@ -3932,7 +3946,7 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
     return () => {
       window.removeEventListener('resize', onResize)
     }
-  }, [applyEditorPanelWidthVar])
+  }, [])
 
   useEffect(() => {
     return () => {
@@ -4009,8 +4023,8 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
     const nextWidth = clampEditorPanelWidth(drag.startWidth - deltaX)
     if (nextWidth === editorPanelWidthLiveRef.current) return
     editorPanelWidthLiveRef.current = nextWidth
-    applyEditorPanelWidthVar(nextWidth)
-  }, [applyEditorPanelWidthVar])
+    setEditorPanelWidth(previous => (previous === nextWidth ? previous : nextWidth))
+  }, [])
 
   const handleEditorPanelResizeEnd = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
     const drag = editorPanelResizeRef.current
@@ -4458,6 +4472,7 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
           onSave={() => void handleManualSave()}
         />
         <ResumeOverlayWorkbench
+          editorPanelWidth={editorPanelWidth}
           activeTool={activeTool}
           sidePanelScrolling={sidePanelScrolling}
           onSelectTool={handleSelectTool}

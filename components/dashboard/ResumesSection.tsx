@@ -6,7 +6,7 @@ import { ArrowUpRight, FilePlus2, FileText, Layers3, WandSparkles } from 'lucide
 import { RESUME_TEMPLATES } from '@/lib/constants'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { cn } from '@/lib/utils'
-import styles from './dashboard-workbench.module.css'
+import styles from './dashboard-workbench.module.scss'
 
 interface ResumeSummary {
   id: string
