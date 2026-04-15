@@ -21,6 +21,7 @@
     "resume:template:migrate": "node scripts/migrate-template-ids-to-numbered.js",
     "css:purge:dry": "node scripts/purge-unused-css.mjs --dry-run",
     "css:purge": "node scripts/purge-unused-css.mjs",
+    "qa:scss:v2": "node scripts/qa-scss-v2.mjs",
     "knip": "knip"
   },
   "dependencies": {
