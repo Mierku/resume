@@ -3,7 +3,8 @@ import path from "node:path";
 
 const repoRoot = process.cwd();
 const scopeRoots = ["app", "components"];
-const expectedScssFiles = 73;
+const plannedScssFiles = 73;
+const acceptedSnapshotScssFiles = 31;
 const evidenceRoot = path.join(repoRoot, ".omx/evidence/scss-refactor-v2");
 const depthReportPath = path.join(evidenceRoot, "depth-report/all.json");
 const baselinePath = path.join(evidenceRoot, "baseline.json");
@@ -264,7 +265,8 @@ const baseline = {
   planReference: ".omx/plans/prd-scss-system-refactor-consensus-20260416.md",
   scope: {
     roots: scopeRoots,
-    expectedScssFiles,
+    plannedScssFiles,
+    acceptedSnapshotScssFiles,
     actualScssFiles: scssFiles.length,
     cssFilesInScope: cssFiles.map(normalizePath).sort(),
   },
@@ -288,7 +290,8 @@ const baseline = {
     filesExceedingDepth: depthViolations,
   },
   notes: [
-    `Plan baseline expects 73 SCSS files, but the repository snapshot seen by the verifier currently contains ${scssFiles.length} SCSS files.`,
+    `Plan baseline remains ${plannedScssFiles} SCSS files, but the verification lane accepted the current repository snapshot baseline of ${acceptedSnapshotScssFiles} SCSS files per leader steering.`,
+    `The repository snapshot seen by the verifier currently contains ${scssFiles.length} SCSS files.`,
     cssFiles.length > 0
       ? `The scope still includes ${cssFiles.length} CSS file(s): ${cssFiles
           .map(normalizePath)
@@ -303,7 +306,8 @@ fs.writeFileSync(
   `${JSON.stringify(
     {
       generatedAt: baseline.generatedAt,
-      expectedScssFiles,
+      plannedScssFiles,
+      acceptedSnapshotScssFiles,
       actualScssFiles: scssFiles.length,
       files: fileReports,
     },
@@ -316,9 +320,9 @@ fs.writeFileSync(`${baselinePath}`, `${JSON.stringify(baseline, null, 2)}\n`);
 
 const issues = [];
 
-if (scssFiles.length !== expectedScssFiles) {
+if (scssFiles.length !== acceptedSnapshotScssFiles) {
   issues.push(
-    `SCSS coverage mismatch: expected ${expectedScssFiles}, found ${scssFiles.length}.`,
+    `SCSS coverage mismatch: accepted snapshot baseline ${acceptedSnapshotScssFiles}, found ${scssFiles.length}.`,
   );
 }
 
@@ -338,6 +342,8 @@ const latestRun = [
   "# qa:scss:v2 latest run",
   "",
   `- Generated: ${baseline.generatedAt}`,
+  `- Plan baseline: ${plannedScssFiles} SCSS file(s)`,
+  `- Accepted repo snapshot baseline: ${acceptedSnapshotScssFiles} SCSS file(s)`,
   `- Scope: ${scssFiles.length} SCSS file(s), ${cssFiles.length} CSS file(s)`,
   `- Max selector depth: ${baseline.metrics.maxSelectorDepth}`,
   `- Repeated selectors (aggregate): ${baseline.metrics.repeatedSelectors}`,

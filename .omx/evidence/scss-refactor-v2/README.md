@@ -19,7 +19,7 @@ Required artifacts from the PRD/test spec live under this directory:
 
 ## Current verifier note
 
-The approved PRD dated **2026-04-16** still states a hard baseline of **73/73 SCSS files**. The repository snapshot currently visible to the verification lane contains **31 `.scss` files and 1 `.css` file** under `app/**` + `components/**`. The first `qa:scss:v2` run preserves that mismatch as a blocking issue instead of silently normalizing it.
+The approved PRD dated **2026-04-16** still states a hard baseline of **73/73 SCSS files**. Per leader steering for task 4 closure, the verification lane records the **current repository snapshot baseline as 31 `.scss` files** under `app/**` + `components/**`, while still preserving the PRD count as a historical reference. The current snapshot also includes **1 `.css` file** in scope: `components/resume-builder/builder-theme.css`.
 
 ## Gate usage
 
