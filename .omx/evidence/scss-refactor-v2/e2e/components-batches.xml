@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="components-batches-review" tests="1" skipped="1" failures="0">
+  <testcase classname="components-batches-review" name="integrated-parity-e2e-required">
+    <skipped message="This documentation/review lane did not generate a component-only E2E run. Integrated interaction verification is still required for photo control parity and workbench resize behavior." />
+  </testcase>
+</testsuite>

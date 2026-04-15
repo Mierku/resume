@@ -1,0 +1,27 @@
+{
+  "plan": ".omx/plans/prd-scss-system-refactor-consensus-20260416.md",
+  "lane": "components-batches",
+  "worker": "worker-3",
+  "captured_on": "2026-04-16",
+  "comparison_base": "5c61c5e4e28ee231744e47046cb73788f6e3a2e9",
+  "snapshot_head": "7ba25b724688d471805529483baffe95b605d6d6",
+  "scope": {
+    "components_scss_files": 25,
+    "app_and_components_scss_files": 31,
+    "remaining_app_and_components_css_files": 0,
+    "changed_component_paths_since_base": 39,
+    "changed_component_tsx_files_since_base": 20,
+    "changed_component_style_assets_since_base": 19
+  },
+  "plan_reference": {
+    "stated_baseline_style_files": 73,
+    "current_snapshot_note": "The current repo snapshot now holds 31 app/components SCSS files after consolidation and legacy CSS removal.",
+    "inference_note": "This count is derived from the current checkout and does not by itself prove the plan-wide 73/73 gate."
+  },
+  "review_focus": [
+    "Current components SCSS nesting depth and coverage",
+    "Allowlist / scope discipline for components-owned paths",
+    "Semantic-drift review of TSX changes that accompanied the SCSS migration",
+    "Evidence scaffolding for the new .omx/evidence/scss-refactor-v2 contract"
+  ]
+}

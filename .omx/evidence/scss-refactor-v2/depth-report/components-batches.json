@@ -1,0 +1,112 @@
+{
+  "lane": "components-batches",
+  "worker": "worker-3",
+  "captured_on": "2026-04-16",
+  "scope_glob": "components/**/*.scss",
+  "method": "Lightweight brace/prelude scan of current components SCSS files. Selector blocks increment depth; at-rules are treated as neutral containers for this lane-level audit.",
+  "file_count": 25,
+  "max_depth_overall": 3,
+  "violations": [],
+  "files": [
+    {
+      "path": "components/ChromeWindow/ChromeWindow.module.scss",
+      "max_depth": 3
+    },
+    {
+      "path": "components/dashboard/account-binding.module.scss",
+      "max_depth": 1
+    },
+    {
+      "path": "components/dashboard/admin-users-section.module.scss",
+      "max_depth": 1
+    },
+    {
+      "path": "components/dashboard/dashboard-workbench.module.scss",
+      "max_depth": 1
+    },
+    {
+      "path": "components/legal/legal-document.module.scss",
+      "max_depth": 1
+    },
+    {
+      "path": "components/resume-builder/builder-theme.scss",
+      "max_depth": 1
+    },
+    {
+      "path": "components/resume-builder/controls/ResumeColorPickerControl/ResumeColorPickerControl.module.scss",
+      "max_depth": 1
+    },
+    {
+      "path": "components/resume-builder/controls/RichTextEditor/RichTextEditor.module.scss",
+      "max_depth": 1
+    },
+    {
+      "path": "components/resume-builder/controls/ToolSliderField/ToolSliderField.module.scss",
+      "max_depth": 1
+    },
+    {
+      "path": "components/resume-builder/panels/AIChatPanel/AIChatPanel.module.scss",
+      "max_depth": 1
+    },
+    {
+      "path": "components/resume-builder/panels/HeightDebugPanel/HeightDebugPanel.module.scss",
+      "max_depth": 1
+    },
+    {
+      "path": "components/resume-builder/panels/LayoutAndStylePanel/LayoutAndStylePanel.module.scss",
+      "max_depth": 1
+    },
+    {
+      "path": "components/resume-builder/panels/shared/PanelControlPrimitives.module.scss",
+      "max_depth": 1
+    },
+    {
+      "path": "components/resume-builder/workbench/ResumeOverlayWorkbench/ResumeOverlayWorkbench.module.scss",
+      "max_depth": 1
+    },
+    {
+      "path": "components/resume-builder/workbench/ResumePreviewWorkspace/ResumePreviewWorkspace.module.scss",
+      "max_depth": 1
+    },
+    {
+      "path": "components/resume-builder/workbench/ResumeToolRail/ResumeToolRail.module.scss",
+      "max_depth": 1
+    },
+    {
+      "path": "components/resume-builder/workbench/workbench-layout.scss",
+      "max_depth": 1
+    },
+    {
+      "path": "components/resume-reactive-preview/preview.module.scss",
+      "max_depth": 1
+    },
+    {
+      "path": "components/resume-reactive-preview/templates/styles/composed-template-renderer.module.scss",
+      "max_depth": 1
+    },
+    {
+      "path": "components/resume-reactive-preview/templates/styles/headers/header-1.module.scss",
+      "max_depth": 1
+    },
+    {
+      "path": "components/resume-reactive-preview/templates/styles/headers/header-2.module.scss",
+      "max_depth": 1
+    },
+    {
+      "path": "components/resume-reactive-preview/templates/styles/headers/header-3.module.scss",
+      "max_depth": 1
+    },
+    {
+      "path": "components/resume-reactive-preview/templates/styles/headers/header-4.module.scss",
+      "max_depth": 1
+    },
+    {
+      "path": "components/resume-reactive-preview/templates/styles/headers/header-5.module.scss",
+      "max_depth": 1
+    },
+    {
+      "path": "components/resume-reactive-preview/templates/styles/headers/header-photo.module.scss",
+      "max_depth": 1
+    }
+  ]
+}
