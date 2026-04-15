@@ -127,6 +127,8 @@ import {
   toSingleSelectValue,
   WORK_YEAR_OPTIONS,
 } from './editor/section-editor-shared'
+// Foundation CSS import order is intentional: base token bridge first, scoped workbench overrides second.
+// Keep these adjacent so downstream module styles resolve against a stable alias contract during the refactor.
 import './builder-theme.css'
 import './workbench/workbench-layout.css'
 

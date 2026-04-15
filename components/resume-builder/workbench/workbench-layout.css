@@ -1,39 +1,81 @@
+/*
+ * Scoped workbench foundation overrides.
+ * Import this file immediately after builder-theme.css and keep all overrides expressed through the
+ * foundation tokens/legacy aliases below so the rest of the workbench can migrate incrementally.
+ */
 .resume-builder-scope {
-  --builder-workspace-bg: #05070b;
-  --builder-panel-bg: rgba(18, 20, 26, 0.92);
-  --builder-panel-bg-soft: rgba(12, 14, 19, 0.98);
-  --builder-panel-text: #f5f7fb;
-  --builder-panel-text-muted: rgba(204, 212, 223, 0.62);
-  --builder-preview-bg: #05070b;
-  --builder-card-bg: rgba(255, 255, 255, 0.04);
-  --builder-card-bg-hover: rgba(255, 255, 255, 0.07);
-  --builder-input-bg: rgba(255, 255, 255, 0.06);
-  --builder-input-bg-hover: rgba(255, 255, 255, 0.1);
-  --builder-input-border-focus: rgba(90, 142, 255, 0.84);
-  --builder-toolbar-border-color: transparent;
-  --builder-toolbar-shadow: 0 14px 32px rgba(0, 0, 0, 0.28);
-  --builder-toolbar-title-height: 40px;
-  --builder-toolbar-title-radius: 12px;
-  --builder-toolbar-title-display-bg: rgba(255, 255, 255, 0.06);
-  --builder-toolbar-title-input-bg: rgba(255, 255, 255, 0.06);
-  --builder-toolbar-title-input-border: 0;
-  --builder-toolbar-title-input-hover-border: transparent;
-  --builder-toolbar-title-input-focus-border: transparent;
-  --builder-toolbar-action-padding: 0 16px;
-  --builder-toolbar-save-border: transparent;
-  --builder-toolbar-save-bg: rgba(255, 255, 255, 0.08);
-  --builder-toolbar-save-hover-bg: rgba(255, 255, 255, 0.12);
-  --builder-toolbar-save-color: var(--builder-panel-text);
-  --control-field-min-height: 40px;
-  --control-field-radius: 12px;
-  --control-field-bg: rgba(255, 255, 255, 0.06);
-  --control-field-bg-hover: rgba(255, 255, 255, 0.1);
-  --control-field-border-color: transparent;
-  --control-field-border-hover: transparent;
-  --control-field-focus-color: transparent;
-  --control-field-focus-ring: color-mix(in srgb, var(--builder-input-border-focus) 22%, transparent);
-  --resume-editor-panel-width: 412px;
-  --resume-preview-left-padding: 430px;
+  --rb-workbench-surface-canvas: #05070b;
+  --rb-workbench-surface-panel: rgba(18, 20, 26, 0.92);
+  --rb-workbench-surface-panel-soft: rgba(12, 14, 19, 0.98);
+  --rb-workbench-text-primary: #f5f7fb;
+  --rb-workbench-text-muted: rgba(204, 212, 223, 0.62);
+  --rb-workbench-surface-preview: #05070b;
+  --rb-workbench-card-surface: rgba(255, 255, 255, 0.04);
+  --rb-workbench-card-surface-hover: rgba(255, 255, 255, 0.07);
+  --rb-workbench-input-surface: rgba(255, 255, 255, 0.06);
+  --rb-workbench-input-surface-hover: rgba(255, 255, 255, 0.1);
+  --rb-workbench-input-focus: rgba(90, 142, 255, 0.84);
+  --rb-workbench-toolbar-border: transparent;
+  --rb-workbench-toolbar-shadow: 0 14px 32px rgba(0, 0, 0, 0.28);
+  --rb-workbench-toolbar-title-height: 40px;
+  --rb-workbench-toolbar-title-radius: 12px;
+  --rb-workbench-toolbar-title-display-bg: rgba(255, 255, 255, 0.06);
+  --rb-workbench-toolbar-title-input-bg: rgba(255, 255, 255, 0.06);
+  --rb-workbench-toolbar-title-input-border: 0;
+  --rb-workbench-toolbar-title-input-hover-border: transparent;
+  --rb-workbench-toolbar-title-input-focus-border: transparent;
+  --rb-workbench-toolbar-action-padding: 0 16px;
+  --rb-workbench-toolbar-save-border: transparent;
+  --rb-workbench-toolbar-save-bg: rgba(255, 255, 255, 0.08);
+  --rb-workbench-toolbar-save-hover-bg: rgba(255, 255, 255, 0.12);
+  --rb-workbench-toolbar-save-color: var(--rb-workbench-text-primary);
+  --rb-workbench-control-field-min-height: 40px;
+  --rb-workbench-control-field-radius: 12px;
+  --rb-workbench-control-field-bg: rgba(255, 255, 255, 0.06);
+  --rb-workbench-control-field-bg-hover: rgba(255, 255, 255, 0.1);
+  --rb-workbench-control-field-border: transparent;
+  --rb-workbench-control-field-border-hover: transparent;
+  --rb-workbench-control-field-focus-color: transparent;
+  --rb-workbench-control-field-focus-ring: color-mix(in srgb, var(--rb-workbench-input-focus) 22%, transparent);
+  --rb-workbench-editor-panel-width: 412px;
+  --rb-workbench-preview-left-padding: 430px;
+
+  /* Legacy alias bridge */
+  --builder-workspace-bg: var(--rb-workbench-surface-canvas);
+  --builder-panel-bg: var(--rb-workbench-surface-panel);
+  --builder-panel-bg-soft: var(--rb-workbench-surface-panel-soft);
+  --builder-panel-text: var(--rb-workbench-text-primary);
+  --builder-panel-text-muted: var(--rb-workbench-text-muted);
+  --builder-preview-bg: var(--rb-workbench-surface-preview);
+  --builder-card-bg: var(--rb-workbench-card-surface);
+  --builder-card-bg-hover: var(--rb-workbench-card-surface-hover);
+  --builder-input-bg: var(--rb-workbench-input-surface);
+  --builder-input-bg-hover: var(--rb-workbench-input-surface-hover);
+  --builder-input-border-focus: var(--rb-workbench-input-focus);
+  --builder-toolbar-border-color: var(--rb-workbench-toolbar-border);
+  --builder-toolbar-shadow: var(--rb-workbench-toolbar-shadow);
+  --builder-toolbar-title-height: var(--rb-workbench-toolbar-title-height);
+  --builder-toolbar-title-radius: var(--rb-workbench-toolbar-title-radius);
+  --builder-toolbar-title-display-bg: var(--rb-workbench-toolbar-title-display-bg);
+  --builder-toolbar-title-input-bg: var(--rb-workbench-toolbar-title-input-bg);
+  --builder-toolbar-title-input-border: var(--rb-workbench-toolbar-title-input-border);
+  --builder-toolbar-title-input-hover-border: var(--rb-workbench-toolbar-title-input-hover-border);
+  --builder-toolbar-title-input-focus-border: var(--rb-workbench-toolbar-title-input-focus-border);
+  --builder-toolbar-action-padding: var(--rb-workbench-toolbar-action-padding);
+  --builder-toolbar-save-border: var(--rb-workbench-toolbar-save-border);
+  --builder-toolbar-save-bg: var(--rb-workbench-toolbar-save-bg);
+  --builder-toolbar-save-hover-bg: var(--rb-workbench-toolbar-save-hover-bg);
+  --builder-toolbar-save-color: var(--rb-workbench-toolbar-save-color);
+  --control-field-min-height: var(--rb-workbench-control-field-min-height);
+  --control-field-radius: var(--rb-workbench-control-field-radius);
+  --control-field-bg: var(--rb-workbench-control-field-bg);
+  --control-field-bg-hover: var(--rb-workbench-control-field-bg-hover);
+  --control-field-border-color: var(--rb-workbench-control-field-border);
+  --control-field-border-hover: var(--rb-workbench-control-field-border-hover);
+  --control-field-focus-color: var(--rb-workbench-control-field-focus-color);
+  --control-field-focus-ring: var(--rb-workbench-control-field-focus-ring);
+  --resume-editor-panel-width: var(--rb-workbench-editor-panel-width);
+  --resume-preview-left-padding: var(--rb-workbench-preview-left-padding);
 }
 
 .resume-builder-scope .resume-builder-workbench {
