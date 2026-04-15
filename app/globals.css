@@ -553,7 +553,7 @@
 }
 
 .control-date-trigger,
-body.resume-builder-mono .resume-builder-scope .control-date-trigger {
+.control-date-trigger {
   position: relative;
   display: inline-flex;
   width: 100%;
@@ -565,12 +565,12 @@ body.resume-builder-mono .resume-builder-scope .control-date-trigger {
 }
 
 .control-date-trigger.has-icon,
-body.resume-builder-mono .resume-builder-scope .control-date-trigger.has-icon {
+.control-date-trigger.has-icon {
   padding-right: 36px;
 }
 
 .control-date-trigger-icon,
-body.resume-builder-mono .resume-builder-scope .control-date-trigger-icon {
+.control-date-trigger-icon {
   position: absolute;
   right: 12px;
   top: 50%;
@@ -585,14 +585,14 @@ body.resume-builder-mono .resume-builder-scope .control-date-trigger-icon {
 
 .resume-period-range-trigger.is-open .control-date-trigger-icon,
 .resume-month-picker-trigger.is-open .control-date-trigger-icon,
-body.resume-builder-mono .resume-builder-scope .resume-period-range-trigger.is-open .control-date-trigger-icon,
-body.resume-builder-mono .resume-builder-scope .resume-month-picker-trigger.is-open .control-date-trigger-icon {
+.resume-period-range-trigger.is-open .control-date-trigger-icon,
+.resume-month-picker-trigger.is-open .control-date-trigger-icon {
   color: var(--control-field-text, var(--color-foreground));
   transform: translateY(-50%) rotate(180deg);
 }
 
 .control-date-panel,
-body.resume-builder-mono .resume-builder-scope .control-date-panel {
+.control-date-panel {
   z-index: 140;
   border-radius: 6px;
   padding: 12px;
@@ -602,13 +602,13 @@ body.resume-builder-mono .resume-builder-scope .control-date-panel {
 }
 
 .control-date-calendar,
-body.resume-builder-mono .resume-builder-scope .control-date-calendar {
+.control-date-calendar {
   margin: 0;
   color: var(--control-field-text, var(--color-foreground));
 }
 
 .control-date-calendar .rdp-day_button,
-body.resume-builder-mono .resume-builder-scope .control-date-calendar .rdp-day_button {
+.control-date-calendar .rdp-day_button {
   border: 1px solid transparent;
   background: transparent;
   color: var(--control-field-text, var(--color-foreground));
@@ -616,13 +616,13 @@ body.resume-builder-mono .resume-builder-scope .control-date-calendar .rdp-day_b
 }
 
 .control-date-calendar .rdp-day_button:hover,
-body.resume-builder-mono .resume-builder-scope .control-date-calendar .rdp-day_button:hover {
+.control-date-calendar .rdp-day_button:hover {
   background: var(--control-option-hover-bg, var(--control-active-surface));
   color: var(--control-field-text, var(--color-foreground));
 }
 
 .control-date-calendar .rdp-day_button:focus-visible,
-body.resume-builder-mono .resume-builder-scope .control-date-calendar .rdp-day_button:focus-visible {
+.control-date-calendar .rdp-day_button:focus-visible {
   outline: none;
   border-color: var(--control-field-focus-color, var(--control-focus-border));
   box-shadow: 0 0 0 2px var(
@@ -634,9 +634,9 @@ body.resume-builder-mono .resume-builder-scope .control-date-calendar .rdp-day_b
 .control-date-calendar .rdp-day_button[data-selected-single='true'],
 .control-date-calendar .rdp-day_button[data-range-start='true'],
 .control-date-calendar .rdp-day_button[data-range-end='true'],
-body.resume-builder-mono .resume-builder-scope .control-date-calendar .rdp-day_button[data-selected-single='true'],
-body.resume-builder-mono .resume-builder-scope .control-date-calendar .rdp-day_button[data-range-start='true'],
-body.resume-builder-mono .resume-builder-scope .control-date-calendar .rdp-day_button[data-range-end='true'] {
+.control-date-calendar .rdp-day_button[data-selected-single='true'],
+.control-date-calendar .rdp-day_button[data-range-start='true'],
+.control-date-calendar .rdp-day_button[data-range-end='true'] {
   border-color: transparent;
   background: var(--control-option-selected-bg, var(--control-active-surface));
   color: var(--control-option-selected-text, var(--control-active-indicator));
@@ -644,7 +644,7 @@ body.resume-builder-mono .resume-builder-scope .control-date-calendar .rdp-day_b
 }
 
 .control-date-calendar .rdp-day_button[data-range-middle='true'],
-body.resume-builder-mono .resume-builder-scope .control-date-calendar .rdp-day_button[data-range-middle='true'] {
+.control-date-calendar .rdp-day_button[data-range-middle='true'] {
   border-color: transparent;
   background: var(--control-option-hover-bg, var(--control-active-surface));
   color: var(--control-field-text, var(--color-foreground));
@@ -654,27 +654,27 @@ body.resume-builder-mono .resume-builder-scope .control-date-calendar .rdp-day_b
 .resume-date-picker-calendar .rdp-nav button,
 .resume-date-picker-calendar .rdp-button_previous,
 .resume-date-picker-calendar .rdp-button_next,
-body.resume-builder-mono .resume-builder-scope .resume-date-picker-calendar .rdp-nav button,
-body.resume-builder-mono .resume-builder-scope .resume-date-picker-calendar .rdp-button_previous,
-body.resume-builder-mono .resume-builder-scope .resume-date-picker-calendar .rdp-button_next {
+.resume-date-picker-calendar .rdp-nav button,
+.resume-date-picker-calendar .rdp-button_previous,
+.resume-date-picker-calendar .rdp-button_next {
   border-radius: 3px;
 }
 
 .resume-date-picker-calendar .rdp-day_button,
-body.resume-builder-mono .resume-builder-scope .resume-date-picker-calendar .rdp-day_button {
+.resume-date-picker-calendar .rdp-day_button {
   font-size: 12px;
   line-height: 1;
 }
 
 .resume-date-picker-calendar .rdp-caption_label,
-body.resume-builder-mono .resume-builder-scope .resume-date-picker-calendar .rdp-caption_label {
+.resume-date-picker-calendar .rdp-caption_label {
   font-size: 12px;
   font-weight: 500;
   color: var(--control-field-text, var(--color-foreground));
 }
 
 .resume-date-picker-calendar .rdp-weekday,
-body.resume-builder-mono .resume-builder-scope .resume-date-picker-calendar .rdp-weekday {
+.resume-date-picker-calendar .rdp-weekday {
   font-size: 11px;
   color: var(--control-field-placeholder, var(--color-muted-foreground));
 }
@@ -712,7 +712,7 @@ body.resume-builder-mono .resume-builder-scope .resume-date-picker-calendar .rdp
 }
 
 .control-date-actions,
-body.resume-builder-mono .resume-builder-scope .control-date-actions {
+.control-date-actions {
   margin-top: 10px;
   display: flex;
   align-items: center;
@@ -724,8 +724,8 @@ body.resume-builder-mono .resume-builder-scope .control-date-actions {
 
 .control-date-action,
 .control-date-secondary-btn,
-body.resume-builder-mono .resume-builder-scope .control-date-action,
-body.resume-builder-mono .resume-builder-scope .control-date-secondary-btn {
+.control-date-action,
+.control-date-secondary-btn {
   border: 0;
   border-radius: 3px;
   background: transparent;
@@ -740,15 +740,15 @@ body.resume-builder-mono .resume-builder-scope .control-date-secondary-btn {
 .control-date-action:hover,
 .control-date-action.is-active,
 .control-date-secondary-btn:hover,
-body.resume-builder-mono .resume-builder-scope .control-date-action:hover,
-body.resume-builder-mono .resume-builder-scope .control-date-action.is-active,
-body.resume-builder-mono .resume-builder-scope .control-date-secondary-btn:hover {
+.control-date-action:hover,
+.control-date-action.is-active,
+.control-date-secondary-btn:hover {
   background: var(--control-option-hover-bg, var(--control-active-surface));
   color: var(--control-field-text, var(--color-foreground));
 }
 
 .control-date-column,
-body.resume-builder-mono .resume-builder-scope .control-date-column {
+.control-date-column {
   min-width: 0;
   border: 1px solid color-mix(in srgb, var(--control-panel-border-color, var(--control-panel-border)) 86%, transparent);
   border-radius: 6px;
@@ -757,20 +757,20 @@ body.resume-builder-mono .resume-builder-scope .control-date-column {
 }
 
 .control-date-section-label,
-body.resume-builder-mono .resume-builder-scope .control-date-section-label {
+.control-date-section-label {
   font-size: 11px;
   color: var(--control-field-placeholder, var(--color-muted-foreground));
 }
 
 .control-date-year-controls,
-body.resume-builder-mono .resume-builder-scope .control-date-year-controls {
+.control-date-year-controls {
   display: flex;
   align-items: center;
   gap: 4px;
 }
 
 .control-date-year-label,
-body.resume-builder-mono .resume-builder-scope .control-date-year-label {
+.control-date-year-label {
   min-width: 4.5rem;
   text-align: center;
   font-size: 12px;
@@ -779,19 +779,19 @@ body.resume-builder-mono .resume-builder-scope .control-date-year-label {
 }
 
 .control-date-grid,
-body.resume-builder-mono .resume-builder-scope .control-date-grid {
+.control-date-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
 }
 
 .control-date-grid.grid-cols-3,
-body.resume-builder-mono .resume-builder-scope .control-date-grid.grid-cols-3 {
+.control-date-grid.grid-cols-3 {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .control-date-grid-button,
-body.resume-builder-mono .resume-builder-scope .control-date-grid-button {
+.control-date-grid-button {
   min-height: 34px;
   border: 0;
   border-radius: 3px;
@@ -804,25 +804,25 @@ body.resume-builder-mono .resume-builder-scope .control-date-grid-button {
 }
 
 .control-date-grid-button:hover,
-body.resume-builder-mono .resume-builder-scope .control-date-grid-button:hover {
+.control-date-grid-button:hover {
   background: var(--control-option-hover-bg, var(--control-active-surface));
 }
 
 .control-date-grid-button:disabled,
-body.resume-builder-mono .resume-builder-scope .control-date-grid-button:disabled {
+.control-date-grid-button:disabled {
   cursor: not-allowed;
   opacity: 0.38;
 }
 
 .control-date-grid-button:disabled:hover,
-body.resume-builder-mono .resume-builder-scope .control-date-grid-button:disabled:hover {
+.control-date-grid-button:disabled:hover {
   background: transparent;
 }
 
 .control-date-grid-button.is-active,
 .control-date-grid-button[data-selected-month='true'],
-body.resume-builder-mono .resume-builder-scope .control-date-grid-button.is-active,
-body.resume-builder-mono .resume-builder-scope .control-date-grid-button[data-selected-month='true'] {
+.control-date-grid-button.is-active,
+.control-date-grid-button[data-selected-month='true'] {
   background: var(--control-option-selected-bg, var(--control-active-surface));
   color: var(--control-option-selected-text, var(--control-active-indicator));
   box-shadow: none;

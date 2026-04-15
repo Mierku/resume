@@ -79,7 +79,7 @@
   --control-active-indicator: var(--builder-panel-text);
 }
 
-body.resume-builder-mono {
+.resume-builder-scope {
   --background: #ffffff;
   --foreground: #111111;
   --border: rgba(0, 0, 0, 0.18);
@@ -134,7 +134,7 @@ body.resume-builder-mono {
   --control-option-selected-text: var(--resume-select-option-selected-text);
 }
 
-[data-theme='dark'] body.resume-builder-mono {
+[data-theme='dark'] .resume-builder-scope {
   --background: #090909;
   --foreground: rgba(243, 243, 243, 0.96);
   --border: rgba(255, 255, 255, 0.2);
@@ -191,7 +191,7 @@ body.resume-builder-mono {
 
 
 @media (prefers-reduced-motion: reduce) {
-  body.resume-builder-mono .control-floating-panel {
+  .control-floating-panel {
     transition: none;
   }
 
@@ -282,18 +282,18 @@ body.resume-builder-mono {
   border-color: var(--control-focus-border);
 }
 
-body.resume-builder-mono .resume-builder-scope .resume-toolbar .resume-toolbar-title-input.control-field {
+.resume-builder-scope .resume-toolbar .resume-toolbar-title-input.control-field {
   border: var(--builder-toolbar-title-input-border, 1px solid var(--resume-control-line));
   border-radius: var(--builder-toolbar-title-radius);
   background: var(--builder-toolbar-title-input-bg, transparent);
 }
 
-body.resume-builder-mono .resume-builder-scope .resume-toolbar .resume-toolbar-title-input.control-field:hover {
+.resume-builder-scope .resume-toolbar .resume-toolbar-title-input.control-field:hover {
   border-color: var(--builder-toolbar-title-input-hover-border, var(--resume-control-line-hover));
 }
 
-body.resume-builder-mono .resume-builder-scope .resume-toolbar .resume-toolbar-title-input.control-field:focus,
-body.resume-builder-mono .resume-builder-scope .resume-toolbar .resume-toolbar-title-input.control-field:focus-visible {
+.resume-builder-scope .resume-toolbar .resume-toolbar-title-input.control-field:focus,
+.resume-builder-scope .resume-toolbar .resume-toolbar-title-input.control-field:focus-visible {
   border-color: var(--builder-toolbar-title-input-focus-border, var(--resume-control-line-focus));
 }
 
@@ -1466,11 +1466,11 @@ body.resume-builder-mono .resume-builder-scope .resume-toolbar .resume-toolbar-t
   transition-timing-function: ease-out;
 }
 
-body.resume-builder-mono .resume-builder-scope .resume-focus-target.is-preview-focused .control-field,
-body.resume-builder-mono .resume-builder-scope .resume-focus-target.is-preview-focused .control-field:hover,
-body.resume-builder-mono .resume-builder-scope .resume-focus-target.is-preview-focused .control-field:focus,
-body.resume-builder-mono .resume-builder-scope .resume-focus-target.is-preview-focused .control-field:focus-visible,
-body.resume-builder-mono .resume-builder-scope .resume-focus-target.is-preview-focused .control-field[data-open='true'],
+.resume-builder-scope .resume-focus-target.is-preview-focused .control-field,
+.resume-builder-scope .resume-focus-target.is-preview-focused .control-field:hover,
+.resume-builder-scope .resume-focus-target.is-preview-focused .control-field:focus,
+.resume-builder-scope .resume-focus-target.is-preview-focused .control-field:focus-visible,
+.resume-builder-scope .resume-focus-target.is-preview-focused .control-field[data-open='true'],
 .resume-builder-scope .resume-focus-target.is-preview-focused .control-field,
 .resume-builder-scope .resume-focus-target.is-preview-focused .control-field:hover,
 .resume-builder-scope .resume-focus-target.is-preview-focused .control-field:focus,
@@ -1847,15 +1847,15 @@ body.resume-builder-mono .resume-builder-scope .resume-focus-target.is-preview-f
   cursor: not-allowed;
 }
 
-body.resume-builder-mono .resume-builder-scope .resume-item-menu-popover,
-body.resume-builder-mono .resume-builder-scope .resume-ai-history-menu {
+.resume-builder-scope .resume-item-menu-popover,
+.resume-builder-scope .resume-ai-history-menu {
   border: 1px solid var(--resume-select-panel-border);
   border-radius: 4px;
   background: var(--resume-select-panel-bg);
   box-shadow: var(--resume-select-panel-shadow);
 }
 
-body.resume-builder-mono .resume-builder-scope .resume-item-menu-popover {
+.resume-builder-scope .resume-item-menu-popover {
   min-width: 116px;
   z-index: 20;
 }

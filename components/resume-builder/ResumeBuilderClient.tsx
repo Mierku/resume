@@ -3869,9 +3869,7 @@ export function ResumeBuilderClient({ initialResume, dataSources }: ResumeBuilde
 
   useEffect(() => {
     if (typeof document === 'undefined') return
-    document.body.classList.add('resume-builder-mono')
     return () => {
-      document.body.classList.remove('resume-builder-mono')
       document.body.classList.remove('resume-editor-panel-resizing')
     }
   }, [])
