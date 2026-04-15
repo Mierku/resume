@@ -1,6 +1,7 @@
 {
-  "generatedAt": "2026-04-15T19:05:08.429Z",
-  "expectedScssFiles": 73,
+  "generatedAt": "2026-04-15T19:12:53.534Z",
+  "plannedScssFiles": 73,
+  "acceptedSnapshotScssFiles": 31,
   "actualScssFiles": 31,
   "files": [
     {
