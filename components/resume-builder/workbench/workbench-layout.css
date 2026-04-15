@@ -86,60 +86,6 @@
   background: #05070b;
 }
 
-.resume-builder-scope .resume-preview-pane {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  background: var(--builder-preview-bg);
-  box-shadow: none;
-}
-
-.resume-builder-scope .resume-preview-pane::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(rgba(255, 255, 255, 0.022) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.022) 1px, transparent 1px);
-  background-size: 30px 30px;
-  opacity: 0.32;
-  pointer-events: none;
-}
-
-.resume-builder-scope .resume-preview-viewport {
-  box-sizing: border-box;
-  height: 100%;
-  padding: 20px calc(var(--resume-editor-panel-width) + 6px) 28px var(--resume-preview-left-padding);
-  position: relative;
-  overflow-y: auto;
-  overflow-x: hidden;
-  overscroll-behavior: contain;
-  touch-action: pan-y;
-  user-select: auto;
-  z-index: 1;
-}
-
-.resume-builder-scope .resume-preview-scroll-space {
-  position: relative;
-  width: 100%;
-  min-height: 100%;
-}
-
-.resume-builder-scope .resume-preview-stage-shell {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform-origin: top center;
-  will-change: transform;
-}
-
-.resume-builder-scope .resume-preview-stage {
-  width: fit-content;
-  height: fit-content;
-  user-select: text;
-  filter: drop-shadow(0 40px 70px rgba(0, 0, 0, 0.34));
-}
-
 .resume-builder-scope .resume-tool-rail,
 .resume-builder-scope .resume-context-panel,
 .resume-builder-scope .resume-editor-panel {
@@ -218,12 +164,6 @@ body.resume-editor-panel-resizing * {
 
 
 @media (max-width: 1120px) {
-  .resume-builder-scope .resume-preview-viewport {
-    padding-left: 24px;
-    padding-right: 24px;
-    padding-bottom: 430px;
-  }
-
   .resume-builder-scope .resume-tool-rail,
   .resume-builder-scope .resume-context-panel,
   .resume-builder-scope .resume-editor-panel,
@@ -264,10 +204,6 @@ body.resume-editor-panel-resizing * {
 
   .resume-builder-scope .resume-toolbar-status-wrap {
     display: none;
-  }
-
-  .resume-builder-scope .resume-preview-viewport {
-    padding: 80px 16px 420px;
   }
 
   .resume-builder-scope .resume-tool-rail {
