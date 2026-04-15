@@ -28,17 +28,17 @@ function ResumePreviewCanvas({
   const scrollSpaceHeight = previewScrollSpaceHeight > 0 ? previewScrollSpaceHeight : 1
 
   return (
-    <div ref={previewViewportRef} className="resume-preview-viewport">
-      <div className="resume-preview-scroll-space" style={{ height: scrollSpaceHeight }}>
+    <div ref={previewViewportRef} className={styles.viewport}>
+      <div className={styles.scrollSpace} style={{ height: scrollSpaceHeight }}>
         <div
-          className="resume-preview-stage-shell"
+          className={styles.stageShell}
           style={{
             top: verticalPadding,
             transform: `translateX(-50%) scale(${previewScale})`,
             opacity: ready ? 1 : 0,
           }}
         >
-          <div ref={previewContentRef} className="resume-preview-stage">
+          <div ref={previewContentRef} className={styles.stage}>
             {content}
           </div>
         </div>
@@ -154,7 +154,7 @@ export function ResumePreviewWorkspace({
 }: ResumePreviewWorkspaceProps) {
   return (
     <div
-      className={`resume-preview-pane relative flex flex-col overflow-hidden ${styles.workspace}`}
+      className={styles.workspace}
       onPointerEnter={onPointerEnter}
       onPointerDown={onPointerDown}
       onPointerLeave={onPointerLeave}
