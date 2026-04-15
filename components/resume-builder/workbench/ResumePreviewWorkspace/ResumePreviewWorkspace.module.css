@@ -1,4 +1,4 @@
-.workspace :global(.resume-ai-preview-actions) {
+.previewActions {
   position: absolute;
   top: 14px;
   right: 10px;
@@ -14,7 +14,7 @@
   -webkit-backdrop-filter: blur(12px);
 }
 
-.workspace :global(.resume-preview-dock-wrap) {
+.dockWrap {
   pointer-events: none;
   position: absolute;
   inset-inline: 0;
@@ -24,7 +24,7 @@
   z-index: 9;
 }
 
-.workspace :global(.resume-preview-dock) {
+.dock {
   pointer-events: auto;
   display: inline-flex;
   align-items: center;
@@ -38,11 +38,11 @@
   -webkit-backdrop-filter: blur(16px);
 }
 
-.workspace :global(.resume-preview-dock-divider) {
+.dockDivider {
   display: none;
 }
 
-.workspace :global(.resume-preview-dock .resume-dock-btn) {
+.dockButton {
   min-width: 30px;
   height: 30px;
   padding: 0 6px;
@@ -51,11 +51,11 @@
   background: transparent;
 }
 
-.workspace :global(.resume-preview-dock .resume-dock-btn svg) {
+.dockButton svg {
   width: 13px;
   height: 13px;
 }
 
-.workspace :global(.resume-preview-dock .resume-dock-btn:hover) {
+.dockButton:hover {
   background: rgba(255, 255, 255, 0.08);
 }

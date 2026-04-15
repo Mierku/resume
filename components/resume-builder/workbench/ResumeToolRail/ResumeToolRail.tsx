@@ -22,14 +22,14 @@ function ToolButton({
   return (
     <button
       type="button"
-      className={`resume-side-tool-btn${active ? ' is-active' : ''}${className ? ` ${className}` : ''}`}
+      className={`${styles.toolButton}${active ? ` ${styles.toolButtonActive}` : ''}${className ? ` ${className}` : ''}`}
       onClick={onSelect}
       aria-label={label}
     >
-      <span className="resume-side-tool-icon" aria-hidden="true">
+      <span className={styles.toolIcon} aria-hidden="true">
         {children}
       </span>
-      <span className="resume-side-tool-label">{label}</span>
+      <span className={styles.toolLabel}>{label}</span>
     </button>
   )
 }
@@ -63,14 +63,14 @@ export function ResumeToolRail({ activeTool, onSelectTool }: ResumeToolRailProps
 
   return (
     <aside
-      className={`resume-tool-rail no-print ${styles.rail}${expanded ? ' is-expanded' : ''}`}
+      className={`resume-tool-rail no-print ${styles.rail}${expanded ? ` ${styles.railExpanded}` : ''}`}
       onPointerEnter={() => setExpanded(true)}
       onPointerLeave={() => setExpanded(false)}
       onFocusCapture={() => setExpanded(true)}
       onBlurCapture={handleBlurCapture}
     >
-      <div className="resume-tool-rail-shell">
-        <div className="resume-side-tool-group">
+      <div className={styles.railShell}>
+        <div className={styles.toolGroup}>
           <ToolButton label="自动填充" active={activeTool === 'fill'} onSelect={() => handleToolSelect('fill')}>
             <PenLine size={14} />
           </ToolButton>
@@ -78,15 +78,14 @@ export function ResumeToolRail({ activeTool, onSelectTool }: ResumeToolRailProps
             label="AI 助手"
             active={activeTool === 'ai'}
             onSelect={() => handleToolSelect('ai')}
-            className="resume-side-tool-btn-ai"
           >
-            <BrandFlowerIcon className="resume-side-tool-ai-logo" />
+            <BrandFlowerIcon className={styles.aiLogo} />
           </ToolButton>
         </div>
 
-        <div className="resume-side-tools-divider" />
+        <div className={styles.toolsDivider} />
 
-        <div className="resume-side-tool-group">
+        <div className={styles.toolGroup}>
           <ToolButton label="简历样式" active={activeTool === 'template'} onSelect={() => handleToolSelect('template')}>
             <LayoutTemplate size={14} />
           </ToolButton>

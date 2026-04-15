@@ -52,3 +52,26 @@
   font-weight: 650;
   color: var(--builder-panel-text);
 }
+
+.editorPanel :global(.resume-editor-tabs-layout) {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
+.editorPanel :global(.resume-editor-tab-content-body) {
+  padding: 12px;
+}
+
+.editorPanel :global(.resume-soft-card) {
+  border-radius: 7px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.editorPanel :global(.resume-add-row-button) {
+  min-height: 56px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+}

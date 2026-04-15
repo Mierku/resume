@@ -214,29 +214,6 @@ body.resume-editor-panel-resizing * {
   gap: 14px;
 }
 
-.resume-builder-scope .resume-editor-panel .resume-editor-tabs-layout {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  height: 100%;
-}
-
-.resume-builder-scope .resume-editor-panel .resume-editor-tab-content-body {
-  padding: 12px;
-}
-
-.resume-builder-scope .resume-editor-panel .resume-soft-card {
-  border-radius: 7px;
-  overflow: hidden;
-  background: rgba(255, 255, 255, 0.04);
-}
-
-.resume-builder-scope .resume-editor-panel .resume-add-row-button {
-  min-height: 56px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.04);
-}
-
 
 
 

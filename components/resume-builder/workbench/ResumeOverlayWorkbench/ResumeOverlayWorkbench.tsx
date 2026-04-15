@@ -143,7 +143,7 @@ export function ResumeOverlayWorkbench({
         onPointerCancel={onEditorPanelResizeEnd}
       />
 
-      <aside className="resume-side-panel resume-editor-panel no-print flex flex-col overflow-hidden">
+      <aside className={`resume-side-panel resume-editor-panel no-print flex flex-col overflow-hidden ${styles.editorPanel}`}>
         {editorContent}
       </aside>
     </div>

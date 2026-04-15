@@ -66,16 +66,16 @@ function ResumePreviewDock({
   const redo = useResumeBuilderStore(state => state.redo)
 
   return (
-    <div className="resume-preview-dock-wrap no-print">
-      <div className="resume-preview-dock">
+    <div className={`${styles.dockWrap} no-print`}>
+      <div className={styles.dock}>
         <Tooltip content="撤销">
-          <Button type="text" size="small" icon={<IconUndo />} onClick={undo} className="resume-dock-btn" aria-label="撤销" />
+          <Button type="text" size="small" icon={<IconUndo />} onClick={undo} className={styles.dockButton} aria-label="撤销" />
         </Tooltip>
         <Tooltip content="重做">
-          <Button type="text" size="small" icon={<IconRedo />} onClick={redo} className="resume-dock-btn" aria-label="重做" />
+          <Button type="text" size="small" icon={<IconRedo />} onClick={redo} className={styles.dockButton} aria-label="重做" />
         </Tooltip>
 
-        <span className="resume-preview-dock-divider" />
+        <span className={styles.dockDivider} />
 
         <Tooltip content="放大">
           <Button
@@ -83,7 +83,7 @@ function ResumePreviewDock({
             size="small"
             icon={<ZoomIn className="h-4 w-4" />}
             onClick={onZoomIn}
-            className="resume-dock-btn"
+            className={styles.dockButton}
             aria-label="放大预览"
           />
         </Tooltip>
@@ -93,7 +93,7 @@ function ResumePreviewDock({
             size="small"
             icon={<ZoomOut className="h-4 w-4" />}
             onClick={onZoomOut}
-            className="resume-dock-btn"
+            className={styles.dockButton}
             aria-label="缩小预览"
           />
         </Tooltip>
@@ -103,7 +103,7 @@ function ResumePreviewDock({
             size="small"
             icon={<IconRefresh />}
             onClick={onCenter}
-            className="resume-dock-btn"
+            className={styles.dockButton}
             aria-label="恢复初始缩放"
           />
         </Tooltip>
@@ -113,12 +113,12 @@ function ResumePreviewDock({
             size="small"
             icon={<IconMaximize />}
             onClick={onFit}
-            className="resume-dock-btn"
+            className={styles.dockButton}
             aria-label="适应画布"
           />
         </Tooltip>
 
-        <Button type="text" size="small" onClick={onCenter} className="resume-dock-btn text-xs tabular-nums">
+        <Button type="text" size="small" onClick={onCenter} className={`${styles.dockButton} text-xs tabular-nums`}>
           {ready ? `${Math.round(scale * 100)}%` : '适配中'}
         </Button>
       </div>
@@ -160,7 +160,7 @@ export function ResumePreviewWorkspace({
       onPointerLeave={onPointerLeave}
     >
       {aiPreviewVisible ? (
-        <div className="resume-ai-preview-actions no-print">
+        <div className={`${styles.previewActions} no-print`}>
           <button
             type="button"
             className="resume-ai-mini-btn"
