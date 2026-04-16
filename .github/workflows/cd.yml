@@ -239,7 +239,9 @@ jobs:
               chmod 600 .env
             fi
 
+            echo "Preflight: checking docker runtime..."
             if ! command -v docker >/dev/null 2>&1; then
+              echo "Preflight: docker not found, attempting auto-install..."
               if [ "$(id -u)" -eq 0 ]; then
                 curl -fsSL https://get.docker.com | sh
               elif command -v sudo >/dev/null 2>&1; then
@@ -248,6 +250,8 @@ jobs:
                 echo "docker is not installed and sudo is unavailable"
                 exit 1
               fi
+            else
+              echo "Preflight: docker found at $(command -v docker)"
             fi
 
             docker_cmd() {
