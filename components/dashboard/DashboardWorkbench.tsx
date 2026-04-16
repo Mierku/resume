@@ -254,8 +254,8 @@ function DashboardWorkbenchInner() {
         </div>
       </div>
 
-      <div className={cn(styles.drawerShell, mobileNavOpen && styles.drawerOpen)}>
-        <aside className={styles.drawerSidebar}>
+      <div className={cn(styles.drawer, styles.drawerShell, mobileNavOpen && styles.drawerOpen)}>
+        <aside className={cn(styles.sidebar, styles.drawerSidebar)}>
           <div className={cn(styles.brand, styles.drawerBrand)}>
             <div className={styles.drawerBrandIdentity}>
               <Link href="/" className={cn(styles.brandMark, styles.drawerBrandMark)} aria-label="返回首页">
