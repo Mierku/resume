@@ -169,53 +169,53 @@ function DashboardWorkbenchInner() {
 
         <div className={styles.desktopBody}>
           <aside className={styles.desktopSidebar}>
-          <nav className={styles.nav} aria-label="个人工作台导航">
-            {visiblePrimarySectionItems.map(item => {
-              const Icon = item.icon
-              return (
-                <Link
-                  key={item.id}
-                  href={getDashboardSectionHref(item.id)}
-                  className={cn(styles.navLink, resolvedActiveSection === item.id && styles.navLinkActive)}
-                  scroll={false}
-                  onClick={() => handleSectionVisit(item.id)}
-                >
-                  <Icon className={styles.navIcon} />
-                  <span className={styles.navText}>{item.label}</span>
-                </Link>
-              )
-            })}
-          </nav>
+            <nav className={styles.nav} aria-label="个人工作台导航">
+              {visiblePrimarySectionItems.map(item => {
+                const Icon = item.icon
+                return (
+                  <Link
+                    key={item.id}
+                    href={getDashboardSectionHref(item.id)}
+                    className={cn(styles.navLink, resolvedActiveSection === item.id && styles.navLinkActive)}
+                    scroll={false}
+                    onClick={() => handleSectionVisit(item.id)}
+                  >
+                    <Icon className={styles.navIcon} />
+                    <span className={styles.navText}>{item.label}</span>
+                  </Link>
+                )
+              })}
+            </nav>
 
-          <div className={styles.sidebarFooter}>
-            <Link
-              href={getDashboardSectionHref(ACCOUNT_SECTION_ITEM.id)}
-              className={cn(styles.navLink, styles.footerNavLink, resolvedActiveSection === ACCOUNT_SECTION_ITEM.id && styles.navLinkActive)}
-              scroll={false}
-              onClick={() => handleSectionVisit(ACCOUNT_SECTION_ITEM.id)}
-              aria-label={ACCOUNT_SECTION_ITEM.label}
-              title={getUserDisplayName(user)}
-            >
-              <ACCOUNT_SECTION_ITEM.icon className={styles.navIcon} />
-              <span className={styles.navText}>{ACCOUNT_SECTION_ITEM.label}</span>
-            </Link>
-          </div>
+            <div className={styles.sidebarFooter}>
+              <Link
+                href={getDashboardSectionHref(ACCOUNT_SECTION_ITEM.id)}
+                className={cn(styles.navLink, styles.footerNavLink, resolvedActiveSection === ACCOUNT_SECTION_ITEM.id && styles.navLinkActive)}
+                scroll={false}
+                onClick={() => handleSectionVisit(ACCOUNT_SECTION_ITEM.id)}
+                aria-label={ACCOUNT_SECTION_ITEM.label}
+                title={getUserDisplayName(user)}
+              >
+                <ACCOUNT_SECTION_ITEM.icon className={styles.navIcon} />
+                <span className={styles.navText}>{ACCOUNT_SECTION_ITEM.label}</span>
+              </Link>
+            </div>
           </aside>
 
           <main className={cn(styles.desktopMain, styles.sections)}>
             <div className={styles.mobileTopbar}>
-            <button
-              type="button"
-              className={styles.mobileMenuButton}
-              onClick={() => setMobileNavOpen(true)}
-              aria-label="打开导航"
-            >
-              <Menu size={20} />
-            </button>
-            <div className={styles.mobileSectionChip}>
-              <ActiveSectionIcon size={16} />
-              {activeItem.label}
-            </div>
+              <button
+                type="button"
+                className={styles.mobileMenuButton}
+                onClick={() => setMobileNavOpen(true)}
+                aria-label="打开导航"
+              >
+                <Menu size={20} />
+              </button>
+              <div className={styles.mobileSectionChip}>
+                <ActiveSectionIcon size={16} />
+                {activeItem.label}
+              </div>
             </div>
 
             <div className={cn(styles.sectionFrame, resolvedActiveSection !== 'tracking' && styles.sectionFrameHidden)}>
