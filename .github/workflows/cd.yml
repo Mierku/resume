@@ -261,6 +261,19 @@ jobs:
               fi
             }
 
+            compose_cmd() {
+              if docker_cmd compose version >/dev/null 2>&1; then
+                docker_cmd compose -f docker-compose.prod.yml "$@"
+              elif command -v docker-compose >/dev/null 2>&1; then
+                docker-compose -f docker-compose.prod.yml "$@"
+              elif command -v sudo >/dev/null 2>&1 && sudo docker-compose version >/dev/null 2>&1; then
+                sudo docker-compose -f docker-compose.prod.yml "$@"
+              else
+                echo "docker compose is unavailable (missing compose plugin/binary)"
+                exit 1
+              fi
+            }
+
             wait_healthy() {
               container="$1"
               retries=60
@@ -311,12 +324,12 @@ jobs:
 
             echo "Deploying app image: ${IMAGE_NAME}:${IMAGE_TAG}"
 
-            docker_cmd compose -f docker-compose.prod.yml up -d db redis
+            compose_cmd up -d db redis
             wait_healthy resume-db
             wait_healthy resume-redis
-            docker_cmd compose -f docker-compose.prod.yml pull app nginx
-            docker_cmd compose -f docker-compose.prod.yml run --rm app pnpm exec prisma migrate deploy
-            docker_cmd compose -f docker-compose.prod.yml up -d --remove-orphans app nginx
+            compose_cmd pull app nginx
+            compose_cmd run --rm app pnpm exec prisma migrate deploy
+            compose_cmd up -d --remove-orphans app nginx
             wait_healthy resume-app
             wait_healthy resume-nginx
 
