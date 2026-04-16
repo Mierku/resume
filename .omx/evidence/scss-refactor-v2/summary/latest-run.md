@@ -1,11 +1,11 @@
 # qa:scss:v2 latest run
 
-- Generated: 2026-04-16T16:56:11.546Z
+- Generated: 2026-04-16T16:54:21.035Z
 - Plan baseline: 73 SCSS file(s)
 - Accepted repo snapshot baseline: 31 SCSS file(s)
 - Scope: 36 SCSS file(s), 0 CSS file(s)
 - Max selector depth: 3
-- Repeated selectors (aggregate): 157
+- Repeated selectors (aggregate): 154
 - Selector complexity p95: 29
 - Override chain length p95: 3
 

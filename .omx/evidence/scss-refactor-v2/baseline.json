@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-16T16:56:11.546Z",
+  "generatedAt": "2026-04-16T16:54:21.035Z",
   "planReference": ".omx/plans/prd-scss-system-refactor-consensus-20260416.md",
   "scope": {
     "roots": [
@@ -12,10 +12,10 @@
     "cssFilesInScope": []
   },
   "metrics": {
-    "totalScssLines": 11612,
-    "uniqueVarDefinitions": 207,
-    "varDefinitionOccurrences": 418,
-    "repeatedSelectors": 157,
+    "totalScssLines": 11457,
+    "uniqueVarDefinitions": 192,
+    "varDefinitionOccurrences": 403,
+    "repeatedSelectors": 154,
     "selectorComplexityP95": 29,
     "overrideChainLengthP95": 3,
     "maxSelectorDepth": 3,
