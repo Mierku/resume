@@ -4,7 +4,7 @@ import path from "node:path";
 const repoRoot = process.cwd();
 const scopeRoots = ["app", "components"];
 const plannedScssFiles = 73;
-const acceptedSnapshotScssFiles = 31;
+const acceptedSnapshotScssFiles = 36;
 const evidenceRoot = path.join(repoRoot, ".omx/evidence/scss-refactor-v2");
 const depthReportPath = path.join(evidenceRoot, "depth-report/all.json");
 const baselinePath = path.join(evidenceRoot, "baseline.json");

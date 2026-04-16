@@ -396,8 +396,8 @@ const chainIntegrity = Object.fromEntries(
   }),
 )
 
-const sidebarSelectorPattern = /\.sidebar[\w-]*/i
-const headerSelectorPattern = /\.(sectionHeader|dashboardHeader|mobileTopbar|topbar|header)[\w-]*/i
+const sidebarSelectorPattern = /\.[\w-]*sidebar[\w-]*/i
+const headerSelectorPattern = /\.[\w-]*header[\w-]*/i
 const plateContinuityChainValid =
   usesDashVar(scssBlocks, sidebarSelectorPattern, '--dash-plate-bg') &&
   usesDashVar(scssBlocks, sidebarSelectorPattern, '--dash-plate-text') &&
