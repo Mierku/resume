@@ -152,9 +152,38 @@ jobs:
             fi
 
             # Optional: write .env from GitHub secret DEPLOY_ENV_B64.
+            # Supports both:
+            # 1) Base64-encoded env content (recommended)
+            # 2) Plain-text env content (fallback for misconfigured secret)
             if [ -n "${{ secrets.DEPLOY_ENV_B64 }}" ]; then
-              echo "${{ secrets.DEPLOY_ENV_B64 }}" | base64 -d > .env
+              raw_env_secret="${{ secrets.DEPLOY_ENV_B64 }}"
+              tmp_env_file="$(mktemp)"
+              env_loaded_mode=""
+
+              if printf '%s' "$raw_env_secret" | base64 -d > "$tmp_env_file" 2>/dev/null; then
+                env_loaded_mode="base64"
+              elif printf '%s' "$raw_env_secret" | base64 --decode > "$tmp_env_file" 2>/dev/null; then
+                env_loaded_mode="base64"
+              else
+                printf '%s\n' "$raw_env_secret" > "$tmp_env_file"
+                env_loaded_mode="plain"
+              fi
+
+              if [ ! -s "$tmp_env_file" ]; then
+                echo "DEPLOY_ENV_B64 resolved to empty content"
+                rm -f "$tmp_env_file"
+                exit 1
+              fi
+
+              if ! grep -Eq '^[A-Za-z_][A-Za-z0-9_]*=' "$tmp_env_file"; then
+                echo "DEPLOY_ENV_B64 content is not a valid .env key-value payload"
+                rm -f "$tmp_env_file"
+                exit 1
+              fi
+
+              mv "$tmp_env_file" .env
               chmod 600 .env
+              echo ".env loaded from DEPLOY_ENV_B64 (${env_loaded_mode})"
             fi
 
             if [ ! -f ".env" ]; then
