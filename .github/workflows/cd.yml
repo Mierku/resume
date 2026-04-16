@@ -262,8 +262,10 @@ jobs:
             }
 
             compose_cmd() {
-              if docker_cmd compose version >/dev/null 2>&1; then
-                docker_cmd compose -f docker-compose.prod.yml "$@"
+              if docker info >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
+                docker compose -f docker-compose.prod.yml "$@"
+              elif command -v sudo >/dev/null 2>&1 && sudo docker info >/dev/null 2>&1 && sudo docker compose version >/dev/null 2>&1; then
+                sudo --preserve-env=IMAGE_NAME,IMAGE_TAG docker compose -f docker-compose.prod.yml "$@"
               elif command -v docker-compose >/dev/null 2>&1; then
                 docker-compose -f docker-compose.prod.yml "$@"
               elif command -v sudo >/dev/null 2>&1 && sudo docker-compose version >/dev/null 2>&1; then
@@ -323,6 +325,12 @@ jobs:
             fi
 
             echo "Deploying app image: ${IMAGE_NAME}:${IMAGE_TAG}"
+
+            echo "Validating compose configuration..."
+            if ! compose_cmd config -q; then
+              echo "docker compose config validation failed"
+              exit 1
+            fi
 
             compose_cmd up -d db redis
             wait_healthy resume-db
