@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-16T16:54:21.035Z",
+  "generatedAt": "2026-04-16T18:18:15.130Z",
   "planReference": ".omx/plans/prd-scss-system-refactor-consensus-20260416.md",
   "scope": {
     "roots": [
@@ -7,23 +7,23 @@
       "components"
     ],
     "plannedScssFiles": 73,
-    "acceptedSnapshotScssFiles": 31,
-    "actualScssFiles": 36,
+    "acceptedSnapshotScssFiles": 36,
+    "actualScssFiles": 41,
     "cssFilesInScope": []
   },
   "metrics": {
-    "totalScssLines": 11457,
-    "uniqueVarDefinitions": 192,
-    "varDefinitionOccurrences": 403,
+    "totalScssLines": 11853,
+    "uniqueVarDefinitions": 200,
+    "varDefinitionOccurrences": 389,
     "repeatedSelectors": 154,
-    "selectorComplexityP95": 29,
+    "selectorComplexityP95": 23,
     "overrideChainLengthP95": 3,
     "maxSelectorDepth": 3,
     "filesExceedingDepth": []
   },
   "notes": [
-    "Plan baseline remains 73 SCSS files, but the verification lane accepted the current repository snapshot baseline of 31 SCSS files per leader steering.",
-    "The repository snapshot seen by the verifier currently contains 36 SCSS files.",
+    "Plan baseline remains 73 SCSS files, but the verification lane accepted the current repository snapshot baseline of 36 SCSS files per leader steering.",
+    "The repository snapshot seen by the verifier currently contains 41 SCSS files.",
     "No CSS files remain in the scoped app/components tree.",
     "Depth numbers are based on selector-block nesting in the current SCSS source and ignore at-rule wrappers for the selector-depth total."
   ]

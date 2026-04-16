@@ -5,12 +5,6 @@
 }
 
 .h2Interactive {
-  transition: background-color 120ms ease;
-}
-
-.h2Interactive:hover,
-.h2Interactive:focus-visible {
-  background: color-mix(in srgb, var(--resume-theme-primary) 4%, transparent);
 }
 
 .h2Content {

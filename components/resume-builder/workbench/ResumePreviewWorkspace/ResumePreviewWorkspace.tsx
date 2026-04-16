@@ -2,7 +2,7 @@
 
 import { type CSSProperties, type RefObject, type ReactNode } from 'react'
 import { ZoomIn, ZoomOut } from 'lucide-react'
-import { Button, IconMaximize, IconRefresh, IconRedo, IconUndo, Tooltip } from '../../primitives'
+import { Button, IconMaximize, IconRefresh, IconRedo, IconUndo } from '../../primitives'
 import { useResumeBuilderStore } from '../../store/useResumeBuilderStore'
 import styles from './ResumePreviewWorkspace.module.scss'
 
@@ -70,55 +70,66 @@ function ResumePreviewDock({
   return (
     <div className={`${styles.dockWrap} no-print`}>
       <div className={styles.dock}>
-        <Tooltip content="撤销">
-          <Button type="text" size="small" icon={<IconUndo />} onClick={undo} className={styles.dockButton} aria-label="撤销" />
-        </Tooltip>
-        <Tooltip content="重做">
-          <Button type="text" size="small" icon={<IconRedo />} onClick={redo} className={styles.dockButton} aria-label="重做" />
-        </Tooltip>
+        <Button
+          type="text"
+          size="small"
+          icon={<IconUndo />}
+          onClick={undo}
+          className={styles.dockButton}
+          aria-label="撤销"
+          tipPlacement="top"
+        />
+        <Button
+          type="text"
+          size="small"
+          icon={<IconRedo />}
+          onClick={redo}
+          className={styles.dockButton}
+          aria-label="重做"
+          tipPlacement="top"
+        />
 
         <span className={styles.dockDivider} />
 
-        <Tooltip content="放大">
-          <Button
-            type="text"
-            size="small"
-            icon={<ZoomIn className="h-4 w-4" />}
-            onClick={onZoomIn}
-            className={styles.dockButton}
-            aria-label="放大预览"
-          />
-        </Tooltip>
-        <Tooltip content="缩小">
-          <Button
-            type="text"
-            size="small"
-            icon={<ZoomOut className="h-4 w-4" />}
-            onClick={onZoomOut}
-            className={styles.dockButton}
-            aria-label="缩小预览"
-          />
-        </Tooltip>
-        <Tooltip content="重置缩放">
-          <Button
-            type="text"
-            size="small"
-            icon={<IconRefresh />}
-            onClick={onCenter}
-            className={styles.dockButton}
-            aria-label="恢复初始缩放"
-          />
-        </Tooltip>
-        <Tooltip content="适应画布">
-          <Button
-            type="text"
-            size="small"
-            icon={<IconMaximize />}
-            onClick={onFit}
-            className={styles.dockButton}
-            aria-label="适应画布"
-          />
-        </Tooltip>
+        <Button
+          type="text"
+          size="small"
+          icon={<ZoomIn className="h-4 w-4" />}
+          onClick={onZoomIn}
+          className={styles.dockButton}
+          aria-label="放大预览"
+          tip="放大"
+          tipPlacement="top"
+        />
+        <Button
+          type="text"
+          size="small"
+          icon={<ZoomOut className="h-4 w-4" />}
+          onClick={onZoomOut}
+          className={styles.dockButton}
+          aria-label="缩小预览"
+          tip="缩小"
+          tipPlacement="top"
+        />
+        <Button
+          type="text"
+          size="small"
+          icon={<IconRefresh />}
+          onClick={onCenter}
+          className={styles.dockButton}
+          aria-label="恢复初始缩放"
+          tip="重置缩放"
+          tipPlacement="top"
+        />
+        <Button
+          type="text"
+          size="small"
+          icon={<IconMaximize />}
+          onClick={onFit}
+          className={styles.dockButton}
+          aria-label="适应画布"
+          tipPlacement="top"
+        />
 
         <Button type="text" size="small" onClick={onCenter} className={`${styles.dockButton} text-xs tabular-nums`}>
           {ready ? `${Math.round(scale * 100)}%` : '适配中'}

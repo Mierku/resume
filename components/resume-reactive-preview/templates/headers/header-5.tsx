@@ -26,11 +26,7 @@ export function renderHeader5({ block, data, marginBottom, onNavigate, helpers }
       key={block.id}
       style={shellStyle}
       data-composed-block-id={block.id}
-      {...helpers.getPreviewActionProps(
-        onNavigate,
-        { sectionId: block.sectionId },
-        helpers.cx(styles.h5Root, styles.h5Interactive),
-      )}
+      className={helpers.cx(styles.h5Root, styles.h5Interactive)}
     >
       <div className={styles.h5Seal} aria-hidden="true">
         {photoUrl ? (

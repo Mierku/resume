@@ -22,12 +22,6 @@
 }
 
 .h5Interactive {
-  transition: background-color 120ms ease;
-}
-
-.h5Interactive:hover,
-.h5Interactive:focus-visible {
-  background: color-mix(in srgb, var(--resume-theme-primary) 3%, transparent);
 }
 
 .h5Seal {

@@ -113,6 +113,12 @@ function buildSectionOrder(data: ResumeData) {
   return ['summary', ...Object.keys(data.sections), ...data.customSections.map(section => section.id)]
 }
 
+const SEEDED_STANDARD_SECTIONS_ON_INIT: StandardSectionType[] = [
+  'experience',
+  'projects',
+  'education',
+]
+
 function normalizeDataForSingleColumnLayout(input: ResumeData): ResumeData {
   const data = cloneData(input)
   const available = collectAvailableSectionIds(data)
@@ -122,6 +128,12 @@ function normalizeDataForSingleColumnLayout(input: ResumeData): ResumeData {
     ...item,
     proficiency: resolveSkillProficiencyTier(String(item.proficiency || ''), item.level) || DEFAULT_SKILL_PROFICIENCY,
   }))
+
+  SEEDED_STANDARD_SECTIONS_ON_INIT.forEach(sectionId => {
+    const section = data.sections[sectionId]
+    if (!section || section.items.length > 0) return
+    section.items.push(createSectionItem(sectionId) as never)
+  })
 
   if (!Array.isArray(data.metadata.layout.pages) || data.metadata.layout.pages.length === 0) {
     data.metadata.layout.pages = [

@@ -162,6 +162,54 @@ jobs:
               exit 1
             fi
 
+            upsert_env_var() {
+              key="$1"
+              value="$2"
+              if [ -z "$value" ]; then
+                return 0
+              fi
+
+              tmp_file="$(mktemp)"
+              awk -v key="$key" -v value="$value" '
+                BEGIN {
+                  found = 0
+                  gsub(/\\/,"\\\\", value)
+                  gsub(/"/,"\\\"", value)
+                }
+                $0 ~ ("^" key "=") {
+                  print key "=\"" value "\""
+                  found = 1
+                  next
+                }
+                { print }
+                END {
+                  if (!found) {
+                    print key "=\"" value "\""
+                  }
+                }
+              ' .env > "$tmp_file"
+              mv "$tmp_file" .env
+            }
+
+            wechat_secret_count=0
+            [ -n "${{ secrets.PROD_WECHAT_OA_APP_ID }}" ] && wechat_secret_count=$((wechat_secret_count + 1))
+            [ -n "${{ secrets.PROD_WECHAT_OA_APP_SECRET }}" ] && wechat_secret_count=$((wechat_secret_count + 1))
+            [ -n "${{ secrets.PROD_WECHAT_OA_TOKEN }}" ] && wechat_secret_count=$((wechat_secret_count + 1))
+            [ -n "${{ secrets.PROD_WECHAT_OA_ENCODING_AES_KEY }}" ] && wechat_secret_count=$((wechat_secret_count + 1))
+
+            if [ "$wechat_secret_count" -ne 0 ] && [ "$wechat_secret_count" -ne 4 ]; then
+              echo "PROD_WECHAT_OA_* secrets must be configured together (0 or 4 set)."
+              exit 1
+            fi
+
+            if [ "$wechat_secret_count" -eq 4 ]; then
+              upsert_env_var WECHAT_OA_APP_ID "${{ secrets.PROD_WECHAT_OA_APP_ID }}"
+              upsert_env_var WECHAT_OA_APP_SECRET "${{ secrets.PROD_WECHAT_OA_APP_SECRET }}"
+              upsert_env_var WECHAT_OA_TOKEN "${{ secrets.PROD_WECHAT_OA_TOKEN }}"
+              upsert_env_var WECHAT_OA_ENCODING_AES_KEY "${{ secrets.PROD_WECHAT_OA_ENCODING_AES_KEY }}"
+              chmod 600 .env
+            fi
+
             if ! command -v docker >/dev/null 2>&1; then
               if [ "$(id -u)" -eq 0 ]; then
                 curl -fsSL https://get.docker.com | sh

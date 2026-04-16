@@ -13,12 +13,6 @@
 }
 
 .h1Interactive {
-  transition: background-color 120ms ease;
-}
-
-.h1Interactive:hover,
-.h1Interactive:focus-visible {
-  background: color-mix(in srgb, var(--resume-theme-primary) 4%, transparent);
 }
 
 .h1Content {

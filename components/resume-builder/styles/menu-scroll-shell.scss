@@ -1,0 +1,119 @@
+/* Layer 3: shared menu/popover/scroll shell */
+/* ===== 通用菜单 + 滚动容器 + AI 侧栏容器 ===== */
+.resume-builder-scope {
+  .resume-item-menu,
+  .resume-month-picker-field,
+  .resume-period-range-field {
+    position: relative;
+  }
+
+  .resume-item-menu-popover {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    padding: 6px;
+  }
+
+  .resume-item-menu-action {
+    width: 100%;
+    border: 0;
+    border-radius: 2px;
+    background: transparent;
+    color: var(--resume-select-muted);
+    font-size: 11px;
+    text-align: left;
+    padding: 6px 8px;
+    cursor: pointer;
+    transition:
+      background-color 120ms ease,
+      color 120ms ease,
+      box-shadow 120ms ease;
+  }
+
+  .resume-item-menu-action {
+    line-height: 1.1;
+  }
+
+  .resume-item-menu-action:hover:not(:disabled),
+  .resume-item-menu-action:focus-visible {
+    background: var(--resume-select-option-hover);
+    color: var(--resume-select-text);
+    outline: none;
+  }
+
+  .resume-item-menu-action.is-danger {
+    color: #d4d4d4;
+  }
+
+  .resume-item-menu-action.is-disabled {
+    opacity: 0.48;
+    cursor: not-allowed;
+  }
+
+  .resume-item-menu-popover,
+  .resume-ai-history-menu {
+    border: 1px solid var(--resume-select-panel-border);
+    border-radius: 4px;
+    background: var(--resume-select-panel-bg);
+    box-shadow: var(--resume-select-panel-shadow);
+  }
+
+  .resume-item-menu-popover {
+    min-width: 116px;
+    z-index: 20;
+  }
+
+  .resume-scroll-shell {
+    min-height: 0;
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: none;
+    scrollbar-gutter: stable;
+  }
+
+  .resume-scroll-shell::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .resume-scroll-shell::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .resume-scroll-shell::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: transparent;
+    transition: background-color 160ms ease;
+  }
+
+  .resume-scroll-shell.is-scrolling {
+    scrollbar-width: thin;
+  }
+
+  .resume-scroll-shell.is-scrolling::-webkit-scrollbar-thumb,
+  .resume-scroll-shell:hover::-webkit-scrollbar-thumb {
+    background: color-mix(
+      in srgb,
+      var(--builder-panel-border-strong) 76%,
+      transparent
+    );
+  }
+
+  .resume-scroll-shell.is-ai-panel {
+    overflow: hidden;
+  }
+
+  .resume-side-panel-body {
+    min-height: 100%;
+    padding-top: 14px;
+    padding-bottom: 18px;
+  }
+
+  .resume-side-panel-body.is-ai-panel {
+    min-height: 100%;
+    height: 100%;
+    padding: 0;
+    display: flex;
+  }
+}

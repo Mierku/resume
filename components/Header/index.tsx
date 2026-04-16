@@ -179,7 +179,13 @@ export function Header() {
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-40 border-b transition-colors duration-300" data-landing={isLanding ? "true" : "false"} data-scrolled={scrolled ? "true" : "false"} data-tracking={isTracking ? "true" : "false"}>
+      <header
+        className="fixed top-0 left-0 right-0 z-40 border-b transition-colors duration-300"
+        data-site-header="true"
+        data-landing={isLanding ? "true" : "false"}
+        data-scrolled={scrolled ? "true" : "false"}
+        data-tracking={isTracking ? "true" : "false"}
+      >
         <div className="max-w-full mx-auto px-10">
           <div className="flex items-center justify-between h-[64px]">
           {/* Logo */}

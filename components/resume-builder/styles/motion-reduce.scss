@@ -1,0 +1,25 @@
+/* Layer 4: motion accessibility baseline */
+/* ===== 动效可访问性：系统偏好减少动效 ===== */
+@media (prefers-reduced-motion: reduce) {
+  .control-floating-panel {
+    transition: none;
+  }
+
+  .resume-builder-scope {
+    .resume-toolbar-download-trigger,
+    .resume-toolbar-download-panel,
+    .resume-toolbar-download-option,
+    .resume-toolbar-download-option-icon-shell {
+      transition: none;
+    }
+
+    .resume-toolbar-download-spinner {
+      animation: none;
+    }
+
+    .resume-collapse-motion.is-animating,
+    .resume-standard-item-head-toggle svg {
+      transition: none;
+    }
+  }
+}

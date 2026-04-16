@@ -6,12 +6,14 @@ import {
   type InputHTMLAttributes,
   cloneElement,
   isValidElement,
+  useMemo,
   type ReactNode,
 } from 'react'
 import { toast } from '@/lib/toast'
 import { Checkbox as UICheckbox } from '@/components/ui/checkbox'
 import { Input as UIInput } from '@/components/ui/Input'
 import { CustomSelect, getSelectLabelText, type CustomSelectOption } from '@/components/ui/select-core'
+import { Tip, type TipPlacement } from '@/components/ui/Tip'
 import { Textarea as UITextarea } from '@/components/ui/Textarea'
 import {
   ArrowDown,
@@ -45,6 +47,7 @@ import {
   Trash2,
   Underline,
   Undo2,
+  X,
 } from 'lucide-react'
 
 type ButtonType = 'primary' | 'secondary' | 'outline' | 'text'
@@ -55,6 +58,8 @@ interface ButtonProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>
   size?: ButtonSize
   status?: 'danger'
   icon?: ReactNode
+  tip?: ReactNode
+  tipPlacement?: TipPlacement
   long?: boolean
   loading?: boolean
 }
@@ -77,14 +82,21 @@ export function Button({
   size = 'default',
   status,
   icon,
+  tip,
+  tipPlacement = 'top',
   className = '',
   children,
   long = false,
   loading = false,
   disabled,
+  title,
+  'aria-label': ariaLabel,
   ...props
 }: ButtonProps) {
-  return (
+  const iconOnly = Boolean(icon) && !Children.toArray(children).some(Boolean)
+  const resolvedTip = tip ?? (iconOnly && typeof ariaLabel === 'string' ? ariaLabel : undefined)
+
+  const buttonNode = (
     <button
       type="button"
       className={[
@@ -97,34 +109,78 @@ export function Button({
         className,
       ].join(' ')}
       disabled={disabled || loading}
+      title={resolvedTip ? undefined : title}
+      aria-label={ariaLabel}
       {...props}
     >
       {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : icon}
       {children}
     </button>
   )
+
+  if (!resolvedTip) {
+    return buttonNode
+  }
+
+  return (
+    <Tip content={resolvedTip} placement={tipPlacement}>
+      {buttonNode}
+    </Tip>
+  )
 }
 
 interface InputBaseProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'> {
   value: string
   onChange: (value: string) => void
+  allowClear?: boolean
+  clearAriaLabel?: string
 }
 
 function inputClass(className = '') {
   return ['text-sm', className].filter(Boolean).join(' ')
 }
 
-function InputBase({ value, onChange, placeholder, className, style, type = 'text', ...props }: InputBaseProps) {
+function InputBase({
+  value,
+  onChange,
+  placeholder,
+  className,
+  style,
+  type = 'text',
+  allowClear = false,
+  clearAriaLabel = '清空输入',
+  ...props
+}: InputBaseProps) {
+  const showClear = useMemo(
+    () => allowClear && !props.disabled && !props.readOnly && value.trim().length > 0,
+    [allowClear, props.disabled, props.readOnly, value],
+  )
+
   return (
-    <UIInput
-      type={type}
-      value={value}
-      onChange={event => onChange(event.target.value)}
-      placeholder={placeholder}
-      className={inputClass(className)}
-      style={style}
-      {...props}
-    />
+    <div className="group relative">
+      <UIInput
+        type={type}
+        value={value}
+        onChange={event => onChange(event.target.value)}
+        placeholder={placeholder}
+        className={inputClass([className, allowClear ? 'pr-8' : ''].filter(Boolean).join(' '))}
+        style={style}
+        {...props}
+      />
+      {showClear ? (
+        <button
+          type="button"
+          className="pointer-events-none absolute right-2 top-1/2 z-10 inline-flex h-4 w-4 -translate-y-1/2 items-center justify-center rounded-full opacity-0 transition-[color,opacity] duration-150 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100 text-[var(--control-field-placeholder,var(--color-muted-foreground))] hover:text-[var(--control-field-text,var(--color-foreground))] focus-visible:outline-none"
+          aria-label={clearAriaLabel}
+          onMouseDown={event => {
+            event.preventDefault()
+          }}
+          onClick={() => onChange('')}
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
+      ) : null}
+    </div>
   )
 }
 
@@ -278,12 +334,19 @@ export function Space({ children, className }: { children: ReactNode; className?
   return <div className={['inline-flex items-center gap-1.5', className].filter(Boolean).join(' ')}>{children}</div>
 }
 
-export function Tooltip({ content, children }: { content: ReactNode; children: ReactNode }) {
-  const title = typeof content === 'string' ? content : undefined
+export function Tooltip({
+  content,
+  children,
+  placement = 'top',
+}: {
+  content: ReactNode
+  children: ReactNode
+  placement?: TipPlacement
+}) {
   return (
-    <span title={title} className="inline-flex">
+    <Tip content={content} placement={placement}>
       {children}
-    </span>
+    </Tip>
   )
 }
 

@@ -23,12 +23,6 @@
 }
 
 .h3Interactive {
-  transition: background-color 120ms ease;
-}
-
-.h3Interactive:hover,
-.h3Interactive:focus-visible {
-  background: color-mix(in srgb, var(--resume-theme-primary) 4%, transparent);
 }
 
 .h3Name {

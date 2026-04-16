@@ -1,0 +1,100 @@
+/* Layer 2: shared side-panel form/control baseline */
+.resume-builder-scope {
+  /* 右侧编辑面板基础控件（输入框、卡片、标签） */
+  .resume-side-panel {
+    --color-background: var(--builder-panel-bg-soft);
+    --color-foreground: var(--builder-panel-text);
+    --color-border: var(--builder-panel-border);
+    --color-muted: color-mix(in srgb, var(--builder-panel-bg-soft) 78%, white);
+    --color-muted-foreground: var(--builder-panel-text-muted);
+    container-type: inline-size;
+    container-name: resume-side-panel;
+    background: var(--builder-panel-bg);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    border-radius: 12px;
+    color: var(--builder-panel-text);
+  }
+
+  .resume-side-panel .control-field,
+  .resume-side-panel input:not([type="range"]):not([type="color"]),
+  .resume-side-panel textarea,
+  .resume-side-panel select {
+    box-sizing: border-box;
+    min-height: 40px;
+    background: var(--control-field-bg);
+    color: var(--control-field-text, var(--builder-panel-text));
+    border-radius: 4px;
+    transition:
+      background-color 160ms ease,
+      box-shadow 180ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .resume-side-panel .control-field:hover,
+  .resume-side-panel input:not([type="range"]):not([type="color"]):hover,
+  .resume-side-panel textarea:hover,
+  .resume-side-panel select:hover {
+    background: var(--control-field-bg-hover);
+  }
+
+  .resume-side-panel .control-field:focus,
+  .resume-side-panel .control-field:focus-visible,
+  .resume-side-panel .control-field[data-open="true"],
+  .resume-side-panel input:not([type="range"]):not([type="color"]):focus,
+  .resume-side-panel
+    input:not([type="range"]):not([type="color"]):focus-visible,
+  .resume-side-panel textarea:focus,
+  .resume-side-panel textarea:focus-visible,
+  .resume-side-panel select:focus,
+  .resume-side-panel select:focus-visible {
+    border-color: transparent;
+  }
+
+  .resume-side-panel input::placeholder,
+  .resume-side-panel textarea::placeholder {
+    color: var(--builder-input-placeholder);
+  }
+
+  /* Keep SearchField as a single-layer control inside side panels. */
+  .resume-side-panel
+    .control-search
+    input:not([type="range"]):not([type="color"]),
+  .resume-side-panel
+    .control-search
+    input:not([type="range"]):not([type="color"]):hover,
+  .resume-side-panel
+    .control-search
+    input:not([type="range"]):not([type="color"]):focus,
+  .resume-side-panel
+    .control-search
+    input:not([type="range"]):not([type="color"]):focus-visible {
+    min-height: 32px;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .resume-side-panel input[type="number"]::-webkit-outer-spin-button,
+  .resume-side-panel input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  .resume-side-panel input[type="number"] {
+    -moz-appearance: textfield;
+  }
+
+  .resume-side-panel .resume-soft-card {
+    border-radius: 12px;
+    background: var(--builder-card-bg);
+    border: 1px solid var(--builder-card-border);
+  }
+
+  .resume-side-panel label.text-xs,
+  .resume-side-panel .resume-anchor-label,
+  .resume-side-panel .text-xs.text-muted-foreground {
+    color: color-mix(in srgb, var(--builder-panel-text-muted) 94%, transparent);
+  }
+}

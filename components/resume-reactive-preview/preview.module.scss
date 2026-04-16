@@ -113,31 +113,63 @@
 }
 
 .previewInteractive {
-  cursor: pointer;
+  cursor: default;
   outline: none;
-  transition: background-color 140ms ease, text-decoration-color 140ms ease, box-shadow 140ms ease;
 }
 
-.previewInteractive:hover:is(h1, h2, h3, h4, h5, h6, p, strong, .previewInlineValue, .recordPeriod, .recordPrimary, .recordRole, .recordMeta, .itemMeta, .tag),
-.previewInteractive:focus-visible:is(h1, h2, h3, h4, h5, h6, p, strong, .previewInlineValue, .recordPeriod, .recordPrimary, .recordRole, .recordMeta, .itemMeta, .tag),
-.previewInteractive:hover > :is(h1, h2, h3, h4, h5, h6, p, span, strong):not(.sectionIcon):not(.sectionDivider),
-.previewInteractive:focus-visible > :is(h1, h2, h3, h4, h5, h6, p, span, strong):not(.sectionIcon):not(.sectionDivider),
-.previewInteractive.itemDescription:hover :global(p),
-.previewInteractive.itemDescription:focus-visible :global(p),
-.previewInteractive.itemDescription:hover :global(li),
-.previewInteractive.itemDescription:focus-visible :global(li) {
+.previewInteractive:is(h1, h2, h3, h4, h5, h6, p, span, strong, li),
+.previewInteractive.previewInlineValue,
+.previewInteractive.recordPeriod,
+.previewInteractive.recordPrimary,
+.previewInteractive.recordRole,
+.previewInteractive.recordMeta,
+.previewInteractive.itemMeta,
+.previewInteractive.tag {
   text-decoration-line: underline;
   text-decoration-style: dashed;
   text-decoration-thickness: 1px;
-  text-decoration-color: color-mix(in srgb, var(--resume-theme-primary) 48%, transparent);
-  text-underline-offset: 0.22em;
-  background: color-mix(in srgb, var(--resume-theme-primary) 12%, transparent);
-  box-decoration-break: clone;
-  -webkit-box-decoration-break: clone;
+  text-decoration-color: transparent;
+  text-underline-offset: 0.06em;
+  transition:
+    text-decoration-color 140ms ease,
+    text-underline-offset 140ms ease;
 }
 
-.previewInteractive:focus-visible {
-  box-shadow: none;
+.previewInteractive:hover:is(h1, h2, h3, h4, h5, h6, p, span, strong, li),
+.previewInteractive:focus-visible:is(h1, h2, h3, h4, h5, h6, p, span, strong, li),
+.previewInteractive.previewInlineValue:hover,
+.previewInteractive.previewInlineValue:focus-visible,
+.previewInteractive.recordPeriod:hover,
+.previewInteractive.recordPeriod:focus-visible,
+.previewInteractive.recordPrimary:hover,
+.previewInteractive.recordPrimary:focus-visible,
+.previewInteractive.recordRole:hover,
+.previewInteractive.recordRole:focus-visible,
+.previewInteractive.recordMeta:hover,
+.previewInteractive.recordMeta:focus-visible,
+.previewInteractive.itemMeta:hover,
+.previewInteractive.itemMeta:focus-visible,
+.previewInteractive.tag:hover,
+.previewInteractive.tag:focus-visible {
+  text-decoration-color: color-mix(
+    in srgb,
+    var(--resume-theme-primary) 52%,
+    transparent
+  );
+  text-underline-offset: 0.24em;
+}
+
+.previewInteractiveRichText {
+  border-bottom: 1px dashed transparent;
+  transition:
+    border-color 140ms ease,
+    transform 140ms ease;
+}
+
+.previewInteractiveRichText:hover,
+.previewInteractiveRichText:focus-visible {
+  border-bottom-color: color-mix(in srgb, var(--resume-theme-primary) 52%, transparent);
+  transform: translateY(1px);
 }
 
 .previewInlineValue {

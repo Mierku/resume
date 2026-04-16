@@ -14,11 +14,6 @@
 }
 
 .interactive {
-  transition: box-shadow 160ms ease;
-}
-
-.interactive:hover {
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--resume-theme-primary) 36%, transparent);
 }
 
 .sectionHeader {

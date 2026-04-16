@@ -6,12 +6,6 @@
 }
 
 .h4Interactive {
-  transition: background-color 120ms ease;
-}
-
-.h4Interactive:hover,
-.h4Interactive:focus-visible {
-  background: color-mix(in srgb, var(--resume-theme-primary) 4%, transparent);
 }
 
 .h4Content {

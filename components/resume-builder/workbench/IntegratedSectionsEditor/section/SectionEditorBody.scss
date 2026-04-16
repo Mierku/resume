@@ -1,11 +1,10 @@
-/* Extracted from builder-theme.scss: section editor styles */
+/* Section editor body styles */
 .resume-builder-scope {
   /* 控件表格排版（基本信息 / 各经历条目通用） */
   .resume-section-form-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    column-gap: 12px;
-    gap: 8px;
+    gap: 18px 24px;
     align-items: start;
   }
 
@@ -41,6 +40,22 @@
     white-space: nowrap;
   }
 
+  .resume-basics-inline-checkbox-button {
+    border: 0;
+    padding: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .resume-basics-inline-checkbox-button:focus-visible {
+    outline: none;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
   .resume-basics-photo-field {
     grid-column: 2;
     grid-row: 1;
@@ -67,9 +82,10 @@
     z-index: 5;
     display: flex;
     flex-direction: column;
-    border-radius: 12px;
+    border-radius: 4px;
     border: 0;
-    background: var(--builder-input-bg);
+    background: var(--control-field-bg);
+    border: 2px solid transparent;
     overflow: hidden;
     transition:
       height 220ms cubic-bezier(0.22, 1, 0.36, 1),
@@ -78,14 +94,14 @@
   }
 
   .resume-basics-photo-floating:hover {
-    background: var(--builder-input-bg-hover);
+    background: var(--control-field-bg-hover);
   }
 
   .resume-basics-photo-floating.is-expanded,
   .resume-basics-photo-floating:focus-within {
-    box-shadow: 0 0 0 2px
+    border: 2px solid
       color-mix(in srgb, var(--control-focus-border) 22%, transparent);
-    background: var(--builder-input-bg);
+    background: var(--control-field-bg);
   }
 
   .resume-basics-photo-floating.is-expanded {
@@ -94,20 +110,15 @@
 
   .resume-basics-photo-trigger {
     width: 100%;
-    min-height: 40px;
-    border: 0;
+    min-height: 38px;
     padding: 0 12px;
-    background: transparent;
+    background: var(--control-field-bg);
     color: var(--builder-panel-text);
     text-align: left;
     cursor: pointer;
-    display: inline-flex;
+    display: flex;
     align-items: center;
     gap: 8px;
-  }
-
-  .resume-basics-photo-trigger:focus-visible {
-    outline: none;
   }
 
   .resume-basics-photo-trigger-value {
@@ -296,96 +307,73 @@
   .resume-basics-photo-hover-btn.is-danger:focus-visible {
     background: color-mix(in srgb, #b42318 88%, #5c1010);
   }
+
+  .resume-basics-extra-field {
+    grid-column: 1 / -1;
+    margin-top: 6px;
+  }
+
+  .resume-basics-extra-section {
+    border-radius: 10px;
+    border: 1px solid color-mix(in srgb, var(--builder-card-border) 92%, transparent);
+    background: color-mix(in srgb, var(--builder-card-bg-hover) 68%, transparent);
+    padding: 12px;
+  }
+
+  .resume-basics-extra {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .resume-basics-extra-title {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.2;
+    color: var(--builder-panel-text-muted);
+    font-weight: 500;
+  }
+
+  .resume-basics-extra-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .resume-basics-extra-tag {
+    height: 28px;
+    border: 1px dashed color-mix(in srgb, var(--builder-panel-border-strong) 78%, transparent);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--control-field-bg) 88%, transparent);
+    color: var(--builder-panel-text-muted);
+    font-size: 12px;
+    line-height: 1;
+    padding: 0 12px;
+    cursor: pointer;
+    transition:
+      border-color 120ms ease,
+      background-color 120ms ease,
+      color 120ms ease;
+  }
+
+  .resume-basics-extra-tag:hover,
+  .resume-basics-extra-tag:focus-visible {
+    border-color: color-mix(in srgb, var(--builder-panel-border-strong) 94%, transparent);
+    background: color-mix(in srgb, var(--control-field-bg-hover) 90%, transparent);
+    color: var(--builder-panel-text);
+    outline: none;
+  }
 }
 
-/* ===== 预览定位高亮行为 + 折叠动效 + 拖拽条目 ===== */
+/* ===== 折叠与条目编辑 ===== */
 .resume-builder-scope {
-  .resume-focus-target.is-preview-focused {
-    background: var(--preview-focus-flash-bg);
-
-    transition-duration: 120ms;
-    transition-timing-function: ease-out;
-  }
-
-  .resume-focus-target .control-field,
-  .resume-focus-target [contenteditable="true"] {
-    transition: background-color 980ms cubic-bezier(0.22, 1, 0.36, 1);
-  }
-
-  .resume-focus-target.is-preview-focused .control-field,
-  .resume-focus-target.is-preview-focused [contenteditable="true"] {
-    transition-duration: 120ms;
-    transition-timing-function: ease-out;
-  }
-
-  .resume-focus-target.is-preview-focused .control-field,
-  .resume-focus-target.is-preview-focused .control-field:hover,
-  .resume-focus-target.is-preview-focused .control-field:focus,
-  .resume-focus-target.is-preview-focused .control-field:focus-visible,
-  .resume-focus-target.is-preview-focused .control-field[data-open="true"] {
-    border-color: var(--preview-focus-ring);
-    background: color-mix(
-      in srgb,
-      var(--preview-focus-flash-bg) 78%,
-      var(--builder-input-bg)
-    );
-    box-shadow: var(--builder-input-inset);
-  }
-
   .resume-collapse-motion {
     overflow: hidden;
-    will-change: height;
-  }
-
-  .resume-collapse-motion.is-animating {
-    transition: height 240ms cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   .resume-collapse-motion-inner {
     min-height: 0;
-  }
-
-  .resume-editor-sortable-item[data-dragging="true"] {
-    position: relative;
-    z-index: 2;
-  }
-
-  .resume-item-drag-handle {
-    width: 28px;
-    height: 28px;
-    border: 0;
-    border-radius: 9px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background: transparent;
-    color: var(--builder-panel-text-muted);
-    cursor: grab;
-    touch-action: none;
-    flex-shrink: 0;
-    transition:
-      background-color 140ms ease,
-      color 140ms ease,
-      opacity 140ms ease;
-  }
-
-  .resume-item-drag-handle:hover:not(:disabled) {
-    color: var(--builder-panel-text);
-    background: color-mix(in srgb, var(--builder-panel-text) 7%, transparent);
-  }
-
-  .resume-item-drag-handle:active:not(:disabled) {
-    cursor: grabbing;
-  }
-
-  .resume-item-drag-handle:disabled {
-    opacity: 0.38;
-    cursor: default;
-  }
-
-  .resume-item-drag-handle svg {
-    width: 16px;
-    height: 16px;
   }
 
   /* 标准条目卡片（经历/项目/技能等） */
@@ -435,7 +423,6 @@
     width: 16px;
     height: 16px;
     transform: rotate(0deg);
-    transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   .resume-standard-item-head-toggle.is-expanded svg {
@@ -488,15 +475,9 @@
 
   .resume-skill-inline-content {
     display: grid;
-    grid-template-columns: auto minmax(0, 1.3fr) minmax(0, 0.9fr) auto;
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.9fr) auto;
     gap: 10px;
     align-items: center;
-  }
-
-  .resume-skill-inline-drag {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
   }
 
   .resume-skill-inline-field {
@@ -519,11 +500,6 @@
     align-items: center;
     justify-content: space-between;
     gap: 8px;
-  }
-
-  .resume-custom-inline-item-drag {
-    display: inline-flex;
-    align-items: center;
   }
 
   /* 条目新增入口 */

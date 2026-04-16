@@ -2,6 +2,7 @@
 
 import { X } from 'lucide-react'
 import { type ReactNode, type RefObject, type PointerEvent as ReactPointerEvent } from 'react'
+import { Tip } from '@/components/ui/Tip'
 import { BUILDER_TOOL_META, type ActiveBuilderTool, type BuilderTool } from './types'
 import { ResumeToolRail } from './ResumeToolRail/ResumeToolRail'
 import { ResumePreviewWorkspace } from './ResumePreviewWorkspace/ResumePreviewWorkspace'
@@ -86,15 +87,16 @@ export function ResumeWorkbench({
                   <h2 className={styles.panelTitle}>{activeToolMeta.title}</h2>
                 </div>
                 <div className={styles.panelActions}>
-                  <button
-                    type="button"
-                    className={styles.panelClose}
-                    onClick={onCloseTool}
-                    aria-label={`关闭${activeToolMeta.title}面板`}
-                    title="关闭面板"
-                  >
-                    <X size={16} />
-                  </button>
+                  <Tip content="关闭面板" placement="bottom">
+                    <button
+                      type="button"
+                      className={styles.panelClose}
+                      onClick={onCloseTool}
+                      aria-label={`关闭${activeToolMeta.title}面板`}
+                    >
+                      <X size={16} />
+                    </button>
+                  </Tip>
                 </div>
               </div>
             </div>

@@ -2,7 +2,6 @@
 
 import { type KeyboardEvent as ReactKeyboardEvent, type ReactNode, useEffect, useRef, useState } from 'react'
 import { Button, IconLeft, IconSave, Input, Space } from '../../primitives'
-import './ResumeBuilderToolbar.scss'
 
 function ToolbarSpinnerIcon() {
   return (
@@ -184,7 +183,13 @@ export function ResumeBuilderToolbar({
   return (
     <div className="resume-toolbar border-b px-4 py-2 flex items-center gap-3 no-print flex-shrink-0">
       <div className="resume-toolbar-left flex min-w-0 flex-1 items-center gap-2">
-        <Button type="text" icon={<IconLeft />} onClick={onBack} aria-label="返回" />
+        <Button
+          type="text"
+          icon={<IconLeft />}
+          onClick={onBack}
+          aria-label="返回"
+          tipPlacement="bottom"
+        />
         <div className={`resume-toolbar-title-wrap${isTitleEditing ? ' is-editing' : ''}`}>
           {isTitleEditing ? (
             <Input

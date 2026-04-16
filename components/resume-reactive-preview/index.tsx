@@ -154,18 +154,9 @@ function getPreviewActionProps(
 
   return {
     className: cx(className, styles.previewInteractive),
-    role: 'button',
-    tabIndex: 0,
     onClick: event => {
       event.stopPropagation()
       onNavigate(target)
-    },
-    onKeyDown: event => {
-      if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault()
-        event.stopPropagation()
-        onNavigate(target)
-      }
     },
   }
 }
@@ -183,7 +174,11 @@ function renderRichText(
   const sanitized = sanitizeHtml(content)
   return (
     <div
-      {...getPreviewActionProps(onNavigate, target, cx(styles.itemDescription, className, 'tiptap-content'))}
+      {...getPreviewActionProps(
+        onNavigate,
+        target,
+        cx(styles.itemDescription, styles.previewInteractiveRichText, className, 'tiptap-content'),
+      )}
       dangerouslySetInnerHTML={{ __html: sanitized }}
     />
   )
@@ -385,12 +380,11 @@ function renderStandardItem(
   const itemId = String(item.id || '')
   const primaryFieldKey = SECTION_PRIMARY_FIELD_MAP[section]
   const secondaryFieldKey = SECTION_SECONDARY_FIELD_MAP[section]
-  const articleTarget = primaryFieldKey ? { sectionId: navigationSectionId, itemId, fieldKey: primaryFieldKey } : null
 
   if (section === 'profiles') {
     const website = (item.website as { url?: string; label?: string } | undefined) || {}
     return (
-      <article {...getPreviewActionProps(onNavigate, articleTarget, cx(styles.item, variant === 'compact' && styles.itemCompact))}>
+      <article className={cx(styles.item, variant === 'compact' && styles.itemCompact)}>
         <div className={styles.itemHeader}>
           <span {...getPreviewActionProps(onNavigate, { sectionId: navigationSectionId, itemId, fieldKey: 'network' }, styles.recordPrimary)}>
             {String(item.network || '')}
@@ -411,7 +405,7 @@ function renderStandardItem(
   if (section === 'education') {
     const educationRole = `${String(item.degree || '')}${item.area ? `（${String(item.area || '')}）` : ''}`.trim()
     return (
-      <article {...getPreviewActionProps(onNavigate, articleTarget, cx(styles.item, variant === 'timeline' && styles.itemTimeline))}>
+      <article className={cx(styles.item, variant === 'timeline' && styles.itemTimeline)}>
         <div className={cx(styles.recordHeader, variant === 'compact' && styles.recordHeaderCompact)}>
           <span {...getPreviewActionProps(onNavigate, { sectionId: navigationSectionId, itemId, fieldKey: 'period' }, styles.recordPeriod)}>
             {String(item.period || '')}
@@ -441,7 +435,7 @@ function renderStandardItem(
 
   if (section === 'experience') {
     return (
-      <article {...getPreviewActionProps(onNavigate, articleTarget, cx(styles.item, variant === 'timeline' && styles.itemTimeline))}>
+      <article className={cx(styles.item, variant === 'timeline' && styles.itemTimeline)}>
         <div className={cx(styles.recordHeader, variant === 'compact' && styles.recordHeaderCompact)}>
           <span {...getPreviewActionProps(onNavigate, { sectionId: navigationSectionId, itemId, fieldKey: 'period' }, styles.recordPeriod)}>
             {String(item.period || '')}
@@ -472,7 +466,7 @@ function renderStandardItem(
   if (section === 'projects') {
     const projectWebsite = (item.website as { url?: string; label?: string } | undefined) || {}
     return (
-      <article {...getPreviewActionProps(onNavigate, articleTarget, cx(styles.item, variant === 'timeline' && styles.itemTimeline))}>
+      <article className={cx(styles.item, variant === 'timeline' && styles.itemTimeline)}>
         <div className={cx(styles.recordHeader, variant === 'compact' && styles.recordHeaderCompact)}>
           <span {...getPreviewActionProps(onNavigate, { sectionId: navigationSectionId, itemId, fieldKey: 'period' }, styles.recordPeriod)}>
             {String(item.period || '')}
@@ -498,7 +492,7 @@ function renderStandardItem(
   if (section === 'languages') {
     const levelPercent = toPercentLevel(item.level)
     return (
-      <article {...getPreviewActionProps(onNavigate, articleTarget, cx(styles.item, variant === 'compact' && styles.itemCompact))}>
+      <article className={cx(styles.item, variant === 'compact' && styles.itemCompact)}>
         <div className={styles.itemHeader}>
           <span {...getPreviewActionProps(onNavigate, { sectionId: navigationSectionId, itemId, fieldKey: 'language' }, styles.recordPrimary)}>
             {String(item.language || '')}
@@ -519,7 +513,7 @@ function renderStandardItem(
   if (section === 'interests') {
     const keywords = Array.isArray(item.keywords) ? item.keywords : []
     return (
-      <article {...getPreviewActionProps(onNavigate, articleTarget, styles.item)}>
+      <article className={styles.item}>
         <div className={styles.itemHeader}>
           <span {...getPreviewActionProps(onNavigate, { sectionId: navigationSectionId, itemId, fieldKey: 'name' }, styles.recordPrimary)}>
             {String(item.name || '')}
@@ -544,7 +538,7 @@ function renderStandardItem(
   if (section === 'awards' || section === 'certifications' || section === 'publications') {
     const detailKey = section === 'awards' ? 'awarder' : section === 'certifications' ? 'issuer' : 'publisher'
     return (
-      <article {...getPreviewActionProps(onNavigate, articleTarget, styles.item)}>
+      <article className={styles.item}>
         <div className={styles.recordHeaderCompact}>
           <span {...getPreviewActionProps(onNavigate, { sectionId: navigationSectionId, itemId, fieldKey: 'title' }, styles.recordPrimary)}>
             {String(item.title || '')}
@@ -569,7 +563,7 @@ function renderStandardItem(
 
   if (section === 'volunteer') {
     return (
-      <article {...getPreviewActionProps(onNavigate, articleTarget, styles.item)}>
+      <article className={styles.item}>
         <div className={styles.recordHeader}>
           <span {...getPreviewActionProps(onNavigate, { sectionId: navigationSectionId, itemId, fieldKey: 'period' }, styles.recordPeriod)}>
             {String(item.period || '')}
@@ -593,7 +587,7 @@ function renderStandardItem(
   }
 
   return (
-    <article {...getPreviewActionProps(onNavigate, articleTarget, styles.item)}>
+    <article className={styles.item}>
       <div className={styles.recordHeaderCompact}>
         <span {...getPreviewActionProps(onNavigate, { sectionId: navigationSectionId, itemId, fieldKey: primaryFieldKey || 'name' }, styles.recordPrimary)}>
           {String(item.name || '')}
@@ -629,14 +623,14 @@ function renderCustomItem(
   const itemId = String(item.id || '')
   if (type === 'summary') {
     return (
-      <div {...getPreviewActionProps(onNavigate, { sectionId, itemId, fieldKey: 'content' }, styles.item)}>
+      <div className={styles.item}>
         {'content' in item ? renderRichText(String(item.content || ''), undefined, onNavigate, { sectionId, itemId, fieldKey: 'content' }) : null}
       </div>
     )
   }
   if (type === 'cover-letter') {
     return (
-      <div {...getPreviewActionProps(onNavigate, { sectionId, itemId, fieldKey: 'content' }, styles.item)}>
+      <div className={styles.item}>
         {'recipient' in item ? (
           <div {...getPreviewActionProps(onNavigate, { sectionId, itemId, fieldKey: 'recipient' }, styles.recordMeta)}>
             {String(item.recipient || '')}
@@ -662,19 +656,15 @@ function renderSectionHeading(
 
   return (
     <div
-      {...getPreviewActionProps(
-        onNavigate,
-        { sectionId },
-        cx(
-          styles.sectionHeading,
-          variant === 'icon-line' && styles.headingIconLine,
-          variant === 'pill' && styles.headingPill,
-          variant === 'text-line' && styles.headingTextLine,
-          variant === 'striped' && styles.headingStriped,
-          variant === 'sidebar' && styles.headingSidebar,
-          variant === 'gray-tab' && styles.headingGrayTab,
-          templateClass,
-        ),
+      className={cx(
+        styles.sectionHeading,
+        variant === 'icon-line' && styles.headingIconLine,
+        variant === 'pill' && styles.headingPill,
+        variant === 'text-line' && styles.headingTextLine,
+        variant === 'striped' && styles.headingStriped,
+        variant === 'sidebar' && styles.headingSidebar,
+        variant === 'gray-tab' && styles.headingGrayTab,
+        templateClass,
       )}
     >
       {showIcon ? (
@@ -682,7 +672,9 @@ function renderSectionHeading(
           <Icon size={12} strokeWidth={2} />
         </span>
       ) : null}
-      <h6 className={styles.sectionTitle}>{title}</h6>
+      <h6 {...getPreviewActionProps(onNavigate, { sectionId }, styles.sectionTitle)}>
+        {title}
+      </h6>
       {showDivider ? <span className={styles.sectionDivider} /> : null}
     </div>
   )

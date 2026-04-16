@@ -15,6 +15,7 @@ import {
   X,
 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { Tip } from '@/components/ui/Tip'
 import type { ResumeData } from '@/lib/resume/types'
 import styles from './AIChatPanel.module.scss'
 
@@ -898,36 +899,39 @@ export function AIChatPanel({
           </div>
         </div>
         <div className="resume-ai-header-actions" ref={historyPanelRef}>
-          <button
-            type="button"
-            className="resume-ai-icon-btn"
-            aria-label="查看历史会话"
-            title="查看历史会话"
-            onClick={() => void handleToggleHistoryPanel()}
-            disabled={disabled}
-          >
-            <History size={15} />
-          </button>
-          <button
-            type="button"
-            className="resume-ai-icon-btn is-danger"
-            aria-label="删除当前会话"
-            title="删除当前会话"
-            onClick={() => void handleDeleteConversation()}
-            disabled={disabled || !conversationId}
-          >
-            <Trash2 size={15} />
-          </button>
-          {onClose ? (
+          <Tip content="查看历史会话" placement="bottom">
             <button
               type="button"
               className="resume-ai-icon-btn"
-              aria-label="关闭 AI 面板"
-              title="关闭面板"
-              onClick={onClose}
+              aria-label="查看历史会话"
+              onClick={() => void handleToggleHistoryPanel()}
+              disabled={disabled}
             >
-              <X size={15} />
+              <History size={15} />
             </button>
+          </Tip>
+          <Tip content="删除当前会话" placement="bottom">
+            <button
+              type="button"
+              className="resume-ai-icon-btn is-danger"
+              aria-label="删除当前会话"
+              onClick={() => void handleDeleteConversation()}
+              disabled={disabled || !conversationId}
+            >
+              <Trash2 size={15} />
+            </button>
+          </Tip>
+          {onClose ? (
+            <Tip content="关闭面板" placement="bottom">
+              <button
+                type="button"
+                className="resume-ai-icon-btn"
+                aria-label="关闭 AI 面板"
+                onClick={onClose}
+              >
+                <X size={15} />
+              </button>
+            </Tip>
           ) : null}
           {historyPanelOpen ? (
             <div className="resume-ai-history-menu" role="menu" aria-label="历史会话">

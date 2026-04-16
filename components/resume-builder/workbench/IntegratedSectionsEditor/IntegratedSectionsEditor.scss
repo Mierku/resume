@@ -1,4 +1,4 @@
-/* Extracted from builder-theme.scss: integrated sections editor styles */
+/* Integrated sections editor styles */
 .resume-builder-scope {
   /* 编辑器 Tabs 与模块管理菜单 */
   .resume-editor-tabs-layout {
@@ -362,12 +362,11 @@
   }
 
   .resume-editor-add-shell,
-  .resume-editor-panel-menu-shell {
+  .resume-editor-sort-shell {
     position: relative;
   }
 
-  .resume-editor-add-menu .resume-inline-icon-btn,
-  .resume-editor-panel-menu .resume-inline-icon-btn {
+  .resume-editor-add-menu .resume-inline-icon-btn {
     min-width: 22px;
     height: 22px;
     border-radius: 4px;
@@ -379,15 +378,13 @@
   }
 
   .resume-editor-add-menu .resume-inline-icon-btn:hover,
-  .resume-editor-add-menu .resume-inline-icon-btn:focus-visible,
-  .resume-editor-panel-menu .resume-inline-icon-btn:hover,
-  .resume-editor-panel-menu .resume-inline-icon-btn:focus-visible {
+  .resume-editor-add-menu .resume-inline-icon-btn:focus-visible {
     color: var(--resume-editor-tab-active-text);
     background: rgba(255, 255, 255, 0.1);
   }
 
   .resume-editor-add-menu .resume-item-menu-popover,
-  .resume-editor-panel-menu .resume-item-menu-popover {
+  .resume-editor-sort-menu .resume-item-menu-popover {
     top: calc(100% + 6px);
     right: 0;
     z-index: 25;
@@ -429,7 +426,7 @@
       color-mix(in srgb, var(--builder-panel-border) 82%, transparent);
     background: color-mix(
       in srgb,
-      var(--builder-input-bg) 90%,
+      var(--control-field-bg) 90%,
       var(--builder-panel-bg)
     );
     color: var(--builder-panel-text);
@@ -455,8 +452,8 @@
     );
     background: color-mix(
       in srgb,
-      var(--builder-input-bg-hover) 88%,
-      var(--builder-input-bg)
+      var(--control-field-bg-hover) 88%,
+      var(--control-field-bg)
     );
     outline: none;
   }
@@ -573,22 +570,106 @@
     padding: 0;
   }
 
-  /* 预览定位高亮：默认闪烁变量 */
+  .resume-editor-content-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 2px;
+    margin-bottom: 22px;
+  }
+
+  .resume-editor-content-head-main {
+    min-width: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .resume-editor-content-title {
+    margin: 0;
+    font-size: 22px;
+    line-height: 1.1;
+    font-weight: 700;
+    color: var(--builder-panel-text);
+  }
+
+  .resume-editor-content-head-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .resume-editor-content-head-actions {
+    flex-shrink: 0;
+  }
+
+  .resume-editor-content-icon-btn {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border-radius: 8px;
+    border: 0;
+    background: transparent;
+    color: var(--builder-panel-text-muted);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition:
+      border-color 120ms ease,
+      background-color 120ms ease,
+      color 120ms ease;
+  }
+
+  .resume-editor-content-icon-btn svg {
+    width: 13px;
+    height: 13px;
+  }
+
+  .resume-editor-content-icon-btn:hover,
+  .resume-editor-content-icon-btn:focus-visible {
+    color: var(--builder-panel-text);
+    background: color-mix(in srgb, var(--builder-panel-text) 10%, transparent);
+    outline: none;
+  }
+
+  .resume-editor-content-icon-btn.is-active {
+    background: color-mix(in srgb, var(--builder-panel-text) 12%, transparent);
+    color: var(--builder-panel-text);
+  }
+
+  .resume-editor-content-icon-btn.is-danger {
+    color: #e46a6a;
+  }
+
+  .resume-editor-content-icon-btn.is-danger:hover,
+  .resume-editor-content-icon-btn.is-danger:focus-visible {
+    background: color-mix(in srgb, #c64f4f 10%, transparent);
+    color: #ff8d8d;
+  }
+
+  .resume-editor-sort-menu
+    .resume-item-menu-popover.resume-editor-sort-menu-panel {
+    width: min(320px, calc(100vw - 44px));
+    max-height: min(70vh, 520px);
+    overflow-y: auto;
+    padding: 10px;
+  }
+
+  .resume-editor-sort-menu-title {
+    margin: 0 0 8px;
+    font-size: 12px;
+    line-height: 1.2;
+    font-weight: 700;
+    color: var(--builder-panel-text);
+  }
+
+  /* 预览定位后，编辑项滚动定位锚点 */
   .resume-focus-target {
     scroll-margin-block: 96px;
-    --preview-focus-flash-bg: color-mix(
-      in srgb,
-      var(--builder-panel-bg-soft) 74%,
-      var(--builder-input-bg)
-    );
-    --preview-focus-ring: color-mix(
-      in srgb,
-      var(--builder-panel-text) 34%,
-      transparent
-    );
-    transition:
-      background-color 980ms cubic-bezier(0.22, 1, 0.36, 1),
-      box-shadow 980ms cubic-bezier(0.22, 1, 0.36, 1);
   }
 }
 
@@ -604,7 +685,7 @@
   .resume-inline-icon-btn:hover {
     background: color-mix(
       in srgb,
-      var(--builder-input-bg-hover) 88%,
+      var(--control-field-bg-hover) 88%,
       transparent
     );
     color: var(--builder-panel-text);
@@ -613,6 +694,6 @@
 /* 深色模式通用图标按钮悬停 */
 [data-theme="dark"] .resume-builder-scope {
   .resume-inline-icon-btn:hover {
-    background: color-mix(in srgb, var(--builder-input-bg-hover) 86%, #282828);
+    background: color-mix(in srgb, var(--control-field-bg-hover) 86%, #282828);
   }
 }

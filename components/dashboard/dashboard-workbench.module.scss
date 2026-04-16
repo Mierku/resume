@@ -1,7 +1,6 @@
 .app {
-  --dash-shell-rail-size: 88px;
-  --dash-shell-gap: 16px;
-  --dash-main-radius: 24px;
+  --dash-shell-rail-size: 56px;
+  --dash-main-radius: 12px;
   --dash-brand: #fa6060;
   --dash-accent: #fa6060;
   --dash-accent-soft: color-mix(in srgb, var(--dash-accent) 14%, transparent);
@@ -18,44 +17,86 @@
   min-height: 100vh;
   background: var(--dash-bg, #0a0a0a);
   color: var(--dash-text, #ededed);
-  font-family: 'IBM Plex Sans', 'Noto Sans SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  font-family:
+    "IBM Plex Sans", "Noto Sans SC", "PingFang SC", "Hiragino Sans GB",
+    "Microsoft YaHei", sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
-.app[data-dashboard-theme='builder-aligned'] {
+.app[data-dashboard-theme="builder-aligned"] {
   --dash-bridge-workspace-bg: var(--builder-workspace-bg, #0a0a0a);
-  --dash-bridge-plate-bg: var(--builder-panel-bg, #111111);
+  --dash-bridge-plate-bg: var(--builder-panel-bg-soft);
+  --dash-bridge-header-bg: var(--builder-panel-bg-soft);
   --dash-bridge-plate-text: var(--builder-panel-text, #ededed);
   --dash-bridge-plate-text-muted: var(--builder-panel-text-muted, #a1a1aa);
   --dash-bridge-card-bg: var(--builder-card-bg, #111111);
-  --dash-bridge-plate-shadow: var(--builder-toolbar-shadow, 0 14px 32px rgba(0, 0, 0, 0.28));
+  --dash-bridge-plate-shadow: var(
+    --builder-toolbar-shadow,
+    0 14px 32px rgba(0, 0, 0, 0.28)
+  );
 
   --dash-bg: var(--dash-bridge-workspace-bg, #0a0a0a);
-  --dash-plate-bg: var(--dash-bridge-plate-bg, #111111);
+  --dash-plate-bg: var(--dash-bridge-plate-bg);
+  --dash-header-bg: var(--dash-bridge-header-bg);
   --dash-plate-text: var(--dash-bridge-plate-text, #ededed);
   --dash-plate-text-muted: var(--dash-bridge-plate-text-muted, #a1a1aa);
   --dash-card: var(--dash-bridge-card-bg, #111111);
-  --dash-plate-shadow: var(--dash-bridge-plate-shadow, 0 14px 32px rgba(0, 0, 0, 0.28));
+  --dash-plate-shadow: var(
+    --dash-bridge-plate-shadow,
+    0 14px 32px rgba(0, 0, 0, 0.28)
+  );
   --dash-text: var(--dash-plate-text);
   --dash-text-soft: color-mix(in srgb, var(--dash-plate-text) 88%, transparent);
   --dash-text-muted: var(--dash-plate-text-muted);
-  --dash-border: color-mix(in srgb, var(--dash-plate-text-muted) 18%, transparent);
+  --dash-border: color-mix(
+    in srgb,
+    var(--dash-plate-text-muted) 18%,
+    transparent
+  );
   --dash-main-bg: color-mix(in srgb, var(--dash-card) 72%, var(--dash-bg));
-  --dash-main-border: color-mix(in srgb, var(--dash-plate-text-muted) 16%, transparent);
-  --dash-main-shadow: 0 24px 54px rgba(0, 0, 0, 0.32);
+  --dash-main-border: color-mix(
+    in srgb,
+    var(--dash-plate-text-muted) 16%,
+    transparent
+  );
+  --dash-main-shadow: 0px 1px 4px rgba(5, 5, 5, 0.32);
   --resume-select-bg: color-mix(in srgb, var(--dash-card) 88%, #0f1117);
   --resume-select-bg-hover: color-mix(in srgb, var(--dash-card) 96%, #12151d);
   --resume-select-text: var(--dash-plate-text);
   --resume-select-muted: var(--dash-plate-text-muted);
-  --resume-select-border: color-mix(in srgb, var(--dash-plate-text-muted) 18%, transparent);
-  --resume-select-border-hover: color-mix(in srgb, var(--dash-plate-text-muted) 28%, transparent);
+  --resume-select-border: color-mix(
+    in srgb,
+    var(--dash-plate-text-muted) 18%,
+    transparent
+  );
+  --resume-select-border-hover: color-mix(
+    in srgb,
+    var(--dash-plate-text-muted) 28%,
+    transparent
+  );
   --resume-select-border-focus: var(--dash-brand);
-  --resume-select-ring: color-mix(in srgb, var(--resume-select-border-focus) 16%, transparent);
+  --resume-select-ring: color-mix(
+    in srgb,
+    var(--resume-select-border-focus) 16%,
+    transparent
+  );
   --resume-select-panel-bg: color-mix(in srgb, var(--dash-card) 84%, #0d1017);
-  --resume-select-panel-border: color-mix(in srgb, var(--dash-plate-text-muted) 22%, transparent);
+  --resume-select-panel-border: color-mix(
+    in srgb,
+    var(--dash-plate-text-muted) 22%,
+    transparent
+  );
   --resume-select-panel-shadow: 0 16px 34px rgba(0, 0, 0, 0.42);
-  --resume-select-option-hover: color-mix(in srgb, var(--dash-card) 94%, #151924);
-  --resume-select-option-selected-bg: color-mix(in srgb, var(--resume-select-border-focus) 14%, transparent);
+  --resume-select-option-hover: color-mix(
+    in srgb,
+    var(--dash-card) 94%,
+    #151924
+  );
+  --resume-select-option-selected-bg: color-mix(
+    in srgb,
+    var(--resume-select-border-focus) 14%,
+    transparent
+  );
   --resume-select-option-selected-text: var(--resume-select-border-focus);
   --control-field-bg: var(--resume-select-bg);
   --control-field-bg-hover: var(--resume-select-bg-hover);
@@ -91,7 +132,7 @@
   min-height: 100vh;
   display: grid;
   grid-template-rows: var(--dash-shell-rail-size) minmax(0, 1fr);
-  background: var(--dash-plate-bg);
+  background: var(--dash--bg);
   color: var(--dash-plate-text);
   box-shadow: var(--dash-plate-shadow);
 }
@@ -103,8 +144,7 @@
   justify-content: space-between;
   gap: 16px;
   padding: 0 24px 0 20px;
-  border-bottom: 1px solid var(--dash-border);
-  background: var(--dash-plate-bg);
+  background: var(--dash-header-bg);
   color: var(--dash-plate-text);
 }
 
@@ -184,8 +224,7 @@
   align-items: center;
   gap: 18px;
   padding: 16px 12px 20px;
-  border-right: 1px solid var(--dash-border);
-  background: var(--dash-plate-bg);
+  background: var(--dash-header-bg);
   color: var(--dash-plate-text);
 }
 
@@ -207,7 +246,11 @@
   border-radius: 10px;
   border: 1px solid var(--dash-accent-border);
   background:
-    radial-gradient(circle at 50% 30%, color-mix(in srgb, #f97316 22%, transparent), transparent 62%),
+    radial-gradient(
+      circle at 50% 30%,
+      color-mix(in srgb, #f97316 22%, transparent),
+      transparent 62%
+    ),
     color-mix(in srgb, var(--dash-accent) 10%, #121212);
   color: var(--dash-brand);
   text-decoration: none;
@@ -219,7 +262,11 @@
 .brandMark:hover {
   border-color: color-mix(in srgb, var(--dash-accent) 42%, transparent);
   background:
-    radial-gradient(circle at 50% 28%, color-mix(in srgb, #f97316 28%, transparent), transparent 60%),
+    radial-gradient(
+      circle at 50% 28%,
+      color-mix(in srgb, #f97316 28%, transparent),
+      transparent 60%
+    ),
     color-mix(in srgb, var(--dash-accent) 14%, #131313);
 }
 
@@ -234,7 +281,11 @@
   position: absolute;
   inset: 4px;
   border-radius: 999px;
-  background: radial-gradient(circle, color-mix(in srgb, var(--dash-accent) 28%, transparent), transparent 72%);
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--dash-accent) 28%, transparent),
+    transparent 72%
+  );
   pointer-events: none;
 }
 
@@ -275,20 +326,28 @@
   border-radius: 12px;
   color: var(--dash-text-muted);
   text-decoration: none;
-  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .navLink:hover {
-  color: var(--dash-accent);
-  background: var(--dash-accent-soft);
-  border-color: color-mix(in srgb, var(--dash-accent) 12%, transparent);
+  color: var(--dash-text);
+  background: color-mix(in srgb, var(--dash-plate-text) 7%, transparent);
+  border-color: color-mix(in srgb, var(--dash-plate-text) 14%, transparent);
 }
 
 .navLinkActive {
-  color: var(--dash-accent);
-  background: var(--dash-accent-soft);
-  border-color: var(--dash-accent-border);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--dash-accent) 18%, transparent);
+  color: var(--dash-text);
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.navLinkActive:hover {
+  background: transparent;
+  border-color: transparent;
 }
 
 .navIcon {
@@ -365,11 +424,9 @@
 .desktopMain {
   min-width: 0;
   min-height: 0;
-  margin: var(--dash-shell-gap);
-  margin-left: 12px;
+  margin-right: 12px;
   background: var(--dash-main-bg);
-  border: 1px solid var(--dash-main-border);
-  border-radius: var(--dash-main-radius);
+  border-radius: var(--dash-main-radius) var(--dash-main-radius) 0 0;
   box-shadow: var(--dash-main-shadow);
 }
 
@@ -522,8 +579,11 @@
   cursor: pointer;
   text-decoration: none;
   white-space: nowrap;
-  box-shadow: 0 12px 24px color-mix(in srgb, var(--dash-accent) 20%, transparent);
-  transition: filter 0.2s ease, transform 0.2s ease;
+  box-shadow: 0 12px 24px
+    color-mix(in srgb, var(--dash-accent) 20%, transparent);
+  transition:
+    filter 0.2s ease,
+    transform 0.2s ease;
 }
 
 .topCreateButton:hover,
@@ -548,7 +608,9 @@
   background: var(--dash-card);
   border: 1px solid var(--dash-border);
   border-radius: 8px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 .metricCard {
@@ -697,7 +759,9 @@
   background: transparent;
   color: var(--dash-text-muted);
   cursor: pointer;
-  transition: color 0.2s ease, background-color 0.2s ease;
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease;
 }
 
 .toolbarIconButton:hover {
@@ -842,7 +906,7 @@
 .updatedValue {
   color: #a1a1aa;
   font-size: 11px;
-  font-family: 'IBM Plex Mono', 'SFMono-Regular', 'Consolas', monospace;
+  font-family: "IBM Plex Mono", "SFMono-Regular", "Consolas", monospace;
 }
 
 .rowActions {
@@ -905,7 +969,10 @@
   text-decoration: none;
   white-space: nowrap;
   cursor: pointer;
-  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .buttonBase:hover,
@@ -1224,7 +1291,9 @@
   color: var(--dash-text-soft);
   text-decoration: none;
   font-size: 12px;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
 }
 
 .quickActionLink:hover {
@@ -1250,8 +1319,7 @@
   background: rgba(0, 0, 0, 0.54);
 }
 
-.drawerShell,
-[data-dashboard-drawer='shell'] {
+.drawerShell {
   position: fixed;
   inset: 0 auto 0 0;
   z-index: 50;
@@ -1264,15 +1332,14 @@
   transform: translateX(0);
 }
 
-.drawerSidebar,
-[data-dashboard-drawer='sidebar'] {
+.drawerSidebar {
   min-height: 100%;
   display: flex;
   flex-direction: column;
   gap: 20px;
   padding: 20px;
   border-right: 1px solid var(--dash-border);
-  background: var(--dash-plate-bg);
+  background: var(--dash-header-bg);
   color: var(--dash-plate-text);
   box-shadow: var(--dash-plate-shadow);
 }
@@ -1308,7 +1375,7 @@
 
 .loadingSidebar {
   border-right: 1px solid var(--dash-border);
-  background: var(--dash-plate-bg);
+  background: var(--dash-header-bg);
 }
 
 .loadingMain {
@@ -1377,20 +1444,6 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .desktopHeader,
-  .desktopSidebar,
-  .loadingSidebar {
-    display: none;
-  }
-
-  .desktopMain {
-    margin: 0;
-    background: transparent;
-    border: 0;
-    border-radius: 0;
-    box-shadow: none;
-  }
-
   .loadingMain {
     margin: 16px;
   }
@@ -1427,20 +1480,17 @@
     width: min(100%, 220px);
   }
 
-  .drawerSidebar .brand,
-  [data-dashboard-drawer='sidebar'] .brand {
+  .drawerSidebar .brand {
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
   }
 
-  .drawerSidebar .nav,
-  [data-dashboard-drawer='sidebar'] .nav {
+  .drawerSidebar .nav {
     gap: 8px;
   }
 
-  .drawerSidebar .navLink,
-  [data-dashboard-drawer='sidebar'] .navLink {
+  .drawerSidebar .navLink {
     width: 100%;
     height: auto;
     justify-content: flex-start;
@@ -1451,8 +1501,7 @@
     background: color-mix(in srgb, var(--dash-card) 88%, #10131b);
   }
 
-  .drawerSidebar .navText,
-  [data-dashboard-drawer='sidebar'] .navText {
+  .drawerSidebar .navText {
     position: static;
     width: auto;
     height: auto;
@@ -1464,8 +1513,7 @@
     font-size: 13px;
   }
 
-  .drawerSidebar .sidebarFooter,
-  [data-dashboard-drawer='sidebar'] .sidebarFooter {
+  .drawerSidebar .sidebarFooter {
     margin-top: auto;
   }
 }

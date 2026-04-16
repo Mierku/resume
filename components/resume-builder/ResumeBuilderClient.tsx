@@ -39,13 +39,14 @@ import { useAuthRedirectDraft } from "./hooks/useAuthRedirectDraft";
 import { useAIPreviewDraft } from "./hooks/useAIPreviewDraft";
 import { useManualSave } from "./hooks/useManualSave";
 import { useDataSourceFill } from "./hooks/useDataSourceFill";
-import {
-  buildPreviewFitFingerprint,
-  estimateTemplatePageCountForData,
-} from "./hooks/preview-metrics";
+// Global style layers: foundation -> workbench override -> feature globals.
 import "./builder.scss";
-import "./ResumeBuilderClient.scss";
 import "./workbench/workbench-layout.scss";
+import "./ResumeBuilderClient.scss";
+import "./workbench/ResumeBuilderToolbar/ResumeBuilderToolbar.scss";
+import "./workbench/ResumeToolRail/tools/FillToolPanel/FillToolPanel.scss";
+import "./workbench/IntegratedSectionsEditor/IntegratedSectionsEditor.scss";
+import "./workbench/IntegratedSectionsEditor/section/SectionEditorBody.scss";
 
 const ResumeReactivePreview = dynamic(
   () =>
@@ -163,53 +164,17 @@ export function ResumeBuilderClient({
   const previewRenderSmartState =
     activeTool === "ai" && aiSmartOnePage ? aiSmartOnePage : baseSmartOnePage;
   const previewRenderData = previewRenderSmartState.effectiveData;
-  const basePreviewPageCount = useMemo(
-    () => estimateTemplatePageCountForData(basePreviewData),
-    [basePreviewData],
-  );
-  const previewRenderPageCount = useMemo(
-    () => estimateTemplatePageCountForData(previewRenderData),
-    [previewRenderData],
-  );
-  const comparePreviewPageCount = useMemo(
-    () =>
-      comparePreviewData
-        ? estimateTemplatePageCountForData(comparePreviewData)
-        : 1,
-    [comparePreviewData],
-  );
-  const basePreviewFitFingerprint = useMemo(
-    () => buildPreviewFitFingerprint(basePreviewData),
-    [basePreviewData],
-  );
-  const previewRenderFitFingerprint = useMemo(
-    () => buildPreviewFitFingerprint(previewRenderData),
-    [previewRenderData],
-  );
-  const comparePreviewFitFingerprint = useMemo(
-    () =>
-      comparePreviewData
-        ? buildPreviewFitFingerprint(comparePreviewData)
-        : "no-compare-preview",
-    [comparePreviewData],
-  );
   const previewFitKey = useMemo(() => {
     if (!initialized) return `${initialResume.id}:0`;
     if (isTranslateCompareMode && aiPreviewState) {
-      return `${initialResume.id}:compare:${basePreviewPageCount}:${comparePreviewPageCount}:${basePreviewFitFingerprint}:${comparePreviewFitFingerprint}`;
+      return `${initialResume.id}:compare:${aiPreviewState.draftId || "preview"}`;
     }
-    return `${initialResume.id}:${previewRenderPageCount}:${previewRenderFitFingerprint}`;
+    return `${initialResume.id}:single`;
   }, [
     aiPreviewState,
-    basePreviewFitFingerprint,
-    basePreviewPageCount,
-    comparePreviewFitFingerprint,
-    comparePreviewPageCount,
     initialResume.id,
     initialized,
     isTranslateCompareMode,
-    previewRenderFitFingerprint,
-    previewRenderPageCount,
   ]);
 
   const {
@@ -527,12 +492,19 @@ export function ResumeBuilderClient({
     () => computeResumeCompleteness(data),
     [data],
   );
+  const isAutoFillCompletenessBand = useMemo(() => {
+    const score = resumeCompleteness.score;
+    return score >= 0 && score <= 35;
+  }, [resumeCompleteness.score]);
   const editorPanelContent = (
     <IntegratedSectionsEditor
       focusRequest={editorFocusRequest}
       completeness={resumeCompleteness}
       scrollContainerRef={sidePanelScrollRef}
-      onOpenAIDiagnosis={() => handleSelectTool("ai")}
+      completenessAction={isAutoFillCompletenessBand ? "auto-fill" : "ai-diagnosis"}
+      onOpenAIDiagnosis={() =>
+        handleSelectTool(isAutoFillCompletenessBand ? "fill" : "ai")
+      }
       renderBasicInfoEditor={() => <BasicInfoSectionEditor />}
       renderSectionEditorBody={(sectionId) => (
         <SectionEditorBody sectionId={sectionId} />

@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { Button, IconRefresh, Option, Select } from '../../../../primitives'
-import './FillToolPanel.scss'
 
 type FillMode = 'data-source' | 'resume-parse' | 'ai-fill'
 

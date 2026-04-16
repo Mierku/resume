@@ -229,7 +229,7 @@ function renderSectionBlock(
       key={block.id}
       style={shellStyle}
       data-composed-block-id={block.id}
-      {...helpers.getPreviewActionProps(onNavigate, { sectionId: block.sectionId }, helpers.cx(styles.section, styles.interactive))}
+      className={helpers.cx(styles.section, styles.interactive)}
     >
       {showHeader ? sectionVariant === 'section-3' ? (
         <div className={styles.sectionHeaderCrimson} style={{ marginBottom: `${block.style.sectionHeaderGap}px` }}>

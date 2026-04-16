@@ -1,4 +1,4 @@
-import { collectUniqueSkillTokens, isRenderableSkillItem, normalizeSkillToken } from '@/lib/resume/skills'
+import { isRenderableSkillItem } from '@/lib/resume/skills'
 import type { SkillVariantEstimateProps, SkillVariantRenderProps } from '../types'
 import styles from '../styles/composed-template-renderer.module.scss'
 
@@ -9,47 +9,55 @@ const SKILLS_TAG_MIN_HEIGHT_PX = 28
 const SKILLS_TAG_LINE_HEIGHT = 1.1
 const SKILLS_TAG_FONT_WEIGHT = 500
 
-function resolveTokenTarget(
+function collectSkillTokenEntries(
   items: SkillVariantRenderProps['items'],
-  token: string,
   sectionId: string,
 ) {
-  const normalizedToken = normalizeSkillToken(token)
+  const entries: Array<{
+    id: string
+    label: string
+    target: { sectionId: string; itemId: string; fieldKey: 'name' | 'keywords' }
+  }> = []
 
-  for (const item of items) {
-    if (!isRenderableSkillItem(item)) continue
-    if (normalizeSkillToken(String(item.name || '')) === normalizedToken) {
-      return {
-        sectionId,
-        itemId: item.id,
-        fieldKey: 'name',
-      }
+  items.forEach((item, index) => {
+    if (!isRenderableSkillItem(item)) return
+    const itemId = String(item.id || `${sectionId}-${index}`)
+    const name = String(item.name || '').trim()
+    if (name) {
+      entries.push({
+        id: `${itemId}:name`,
+        label: name,
+        target: { sectionId, itemId, fieldKey: 'name' },
+      })
     }
 
-    if ((item.keywords || []).some(keyword => normalizeSkillToken(String(keyword || '')) === normalizedToken)) {
-      return {
-        sectionId,
-        itemId: item.id,
-        fieldKey: 'keywords',
-      }
-    }
-  }
+    ;(Array.isArray(item.keywords) ? item.keywords : []).forEach((keyword, keywordIndex) => {
+      const label = String(keyword || '').trim()
+      if (!label) return
 
-  return { sectionId }
+      entries.push({
+        id: `${itemId}:keyword-${keywordIndex}`,
+        label,
+        target: { sectionId, itemId, fieldKey: 'keywords' },
+      })
+    })
+  })
+
+  return entries
 }
 
 export function renderSkills1({ items, sectionId, onNavigate, helpers }: SkillVariantRenderProps) {
-  const tokens = collectUniqueSkillTokens(items.filter(isRenderableSkillItem))
-  if (tokens.length === 0) return null
+  const tokenEntries = collectSkillTokenEntries(items, sectionId)
+  if (tokenEntries.length === 0) return null
 
   return (
     <div className={styles.skillsTagGrid}>
-      {tokens.map(token => (
+      {tokenEntries.map((entry) => (
         <span
-          key={token}
-          {...helpers.getPreviewActionProps(onNavigate, resolveTokenTarget(items, token, sectionId), styles.skillsTagToken)}
+          key={entry.id}
+          {...helpers.getPreviewActionProps(onNavigate, entry.target, styles.skillsTagToken)}
         >
-          {token}
+          {entry.label}
         </span>
       ))}
     </div>
@@ -63,8 +71,8 @@ export function estimateSkills1Height({
   fontFamily,
   measureSingleLineWidth,
 }: SkillVariantEstimateProps) {
-  const tokens = collectUniqueSkillTokens(items.filter(isRenderableSkillItem))
-  if (tokens.length === 0) return 0
+  const tokenEntries = collectSkillTokenEntries(items, 'skills')
+  if (tokenEntries.length === 0) return 0
 
   const chipHorizontalPadding = SKILLS_TAG_PADDING_X_PX * 2
   // Keep the estimate aligned with `.skillsTagToken`:
@@ -75,14 +83,14 @@ export function estimateSkills1Height({
   let rowCount = 1
   let currentRowWidth = 0
 
-  tokens.forEach(token => {
+  tokenEntries.forEach(({ label }) => {
     const tokenWidth = Math.min(
       maxWidth,
       Math.max(
         chipHorizontalPadding,
         Math.ceil(
           measureSingleLineWidth({
-            text: token,
+            text: label,
             fontFamily,
             fontSizePx: style.bodyFontSize,
             fontWeight: SKILLS_TAG_FONT_WEIGHT,

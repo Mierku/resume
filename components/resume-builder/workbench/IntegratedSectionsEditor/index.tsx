@@ -20,6 +20,8 @@ import {
   Award,
   BadgeCheck,
   BookOpen,
+  Eye,
+  EyeOff,
   Briefcase,
   FileText,
   FolderOpen,
@@ -55,9 +57,11 @@ import {
   isStandardSectionId,
   STANDARD_SECTION_LABELS,
 } from '../../editor/section-editor-shared'
-import { Button, IconChevronRight, IconDelete, IconGrip, IconMoreHorizontal, IconPlus, Input, Message } from '../../primitives'
+import { Button, IconChevronRight, IconDelete, IconGrip, IconPlus, Input, Message } from '../../primitives'
 import { useResumeBuilderStore } from '../../store/useResumeBuilderStore'
 import type { ResumeCompletenessResult } from '../resume-completeness'
+import { EditorActionIconButton } from './EditorActionIconButton'
+import { setStandardSectionExpandedItem } from './section'
 import './IntegratedSectionsEditor.scss'
 
 export type EditorFocusRequest = PreviewNavigationTarget & { requestId: number }
@@ -118,6 +122,16 @@ function createBuilderId() {
     return crypto.randomUUID()
   }
   return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+}
+
+function resolveLatestStandardSectionItemId(sectionId: StandardSectionType) {
+  const sectionItems = useResumeBuilderStore.getState().data.sections[sectionId].items
+  const latestItemIndex = sectionItems.length - 1
+  if (latestItemIndex < 0) return null
+
+  const latestItem = sectionItems[latestItemIndex] as { id?: unknown }
+  const normalizedId = typeof latestItem.id === 'string' ? latestItem.id : String(latestItem.id ?? '')
+  return normalizedId.trim() || `${sectionId}-${latestItemIndex}`
 }
 
 function renderEditorTabIcon(sectionId: string) {
@@ -258,6 +272,7 @@ interface IntegratedSectionsEditorProps {
   focusRequest: EditorFocusRequest | null
   completeness: ResumeCompletenessResult
   scrollContainerRef: RefObject<HTMLDivElement | null>
+  completenessAction: 'ai-diagnosis' | 'auto-fill'
   onOpenAIDiagnosis: () => void
   renderBasicInfoEditor: () => ReactNode
   renderSectionEditorBody: (sectionId: string) => ReactNode
@@ -324,7 +339,7 @@ function SortableEditorSectionTab({
       <button
         type="button"
         className="resume-editor-tab-select"
-        aria-selected={active}
+        data-editor-tab-id={sectionId}
         onClick={onSelect}
         onKeyDown={(event) => {
           if (event.key === "Enter" || event.key === " ") {
@@ -350,17 +365,19 @@ function SortableEditorSectionTab({
 interface SortableExistingModuleRowProps {
   sectionId: string;
   title: string;
-  canRename: boolean;
-  canDelete: boolean;
-  onRename: () => void;
-  onDelete: () => void;
+  showActions?: boolean;
+  canRename?: boolean;
+  canDelete?: boolean;
+  onRename?: () => void;
+  onDelete?: () => void;
 }
 
 function SortableExistingModuleRow({
   sectionId,
   title,
-  canRename,
-  canDelete,
+  showActions = true,
+  canRename = false,
+  canDelete = false,
   onRename,
   onDelete,
 }: SortableExistingModuleRowProps) {
@@ -404,40 +421,42 @@ function SortableExistingModuleRow({
         <IconGrip />
       </button>
       <span className="resume-editor-existing-module-label">{title}</span>
-      <div className="resume-editor-existing-module-actions">
-        <button
-          type="button"
-          className={joinClassNames(
-            "resume-editor-existing-module-action",
-            !canRename && "is-disabled",
-          )}
-          disabled={!canRename}
-          onClick={(event) => {
-            event.stopPropagation();
-            if (!canRename) return;
-            onRename();
-          }}
-          aria-label={`重命名${title}`}
-        >
-          <Pencil size={14} />
-        </button>
-        <button
-          type="button"
-          className={joinClassNames(
-            "resume-editor-existing-module-action",
-            !canDelete && "is-disabled",
-          )}
-          disabled={!canDelete}
-          onClick={(event) => {
-            event.stopPropagation();
-            if (!canDelete) return;
-            onDelete();
-          }}
-          aria-label={`删除${title}`}
-        >
-          <IconDelete />
-        </button>
-      </div>
+      {showActions ? (
+        <div className="resume-editor-existing-module-actions">
+          <button
+            type="button"
+            className={joinClassNames(
+              "resume-editor-existing-module-action",
+              !canRename && "is-disabled",
+            )}
+            disabled={!canRename}
+            onClick={(event) => {
+              event.stopPropagation();
+              if (!canRename || !onRename) return;
+              onRename();
+            }}
+            aria-label={`重命名${title}`}
+          >
+            <Pencil size={14} />
+          </button>
+          <button
+            type="button"
+            className={joinClassNames(
+              "resume-editor-existing-module-action",
+              !canDelete && "is-disabled",
+            )}
+            disabled={!canDelete}
+            onClick={(event) => {
+              event.stopPropagation();
+              if (!canDelete || !onDelete) return;
+              onDelete();
+            }}
+            aria-label={`删除${title}`}
+          >
+            <IconDelete />
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -446,6 +465,7 @@ export function IntegratedSectionsEditor({
   focusRequest,
   completeness,
   scrollContainerRef,
+  completenessAction,
   onOpenAIDiagnosis,
   renderBasicInfoEditor,
   renderSectionEditorBody,
@@ -464,8 +484,8 @@ export function IntegratedSectionsEditor({
     (state) => state.updateResumeData,
   );
   const [activeSectionId, setActiveSectionId] = useState<string>("basics");
-  const [openTabMenuId, setOpenTabMenuId] = useState<string | null>(null);
   const [addMenuOpen, setAddMenuOpen] = useState(false);
+  const [sortMenuOpen, setSortMenuOpen] = useState(false);
   const [renameModal, setRenameModal] = useState<{
     open: boolean;
     sectionId: string | null;
@@ -484,9 +504,8 @@ export function IntegratedSectionsEditor({
     sectionId: null,
     title: "",
   });
-  const highlightedTargetRef = useRef<HTMLElement | null>(null);
-  const highlightTimerRef = useRef<number | null>(null);
   const tabTrackShellRef = useRef<HTMLDivElement | null>(null);
+  const lastHandledFocusRequestIdRef = useRef<number>(0);
   const [showTabsLeftMask, setShowTabsLeftMask] = useState(false);
   const [showTabsRightMask, setShowTabsRightMask] = useState(false);
   const tabSortSensors = useEditorTabSortSensors();
@@ -512,6 +531,43 @@ export function IntegratedSectionsEditor({
     setShowTabsLeftMask(leftVisible);
     setShowTabsRightMask(rightVisible);
   }, []);
+
+  const scrollTabToAnchor = useCallback(
+    (sectionId: string, behavior: ScrollBehavior = "smooth") => {
+      const shell = tabTrackShellRef.current;
+      if (!shell) return;
+
+      const selector = `[data-editor-tab-id="${escapeAttributeValue(sectionId)}"]`;
+      const tabButton = shell.querySelector<HTMLElement>(selector);
+      if (!tabButton) return;
+
+      const shellRect = shell.getBoundingClientRect();
+      const tabRect = tabButton.getBoundingClientRect();
+      const relativeTabLeft = tabRect.left - shellRect.left + shell.scrollLeft;
+      const desiredLeft = relativeTabLeft - shell.clientWidth * 0.34;
+      const maxScrollLeft = Math.max(0, shell.scrollWidth - shell.clientWidth);
+      const nextScrollLeft = Math.max(0, Math.min(maxScrollLeft, desiredLeft));
+
+      shell.scrollTo({
+        left: nextScrollLeft,
+        behavior,
+      });
+    },
+    [],
+  );
+
+  const handleTabSelect = useCallback(
+    (sectionId: string) => {
+      if (sectionId === activeSectionId) {
+        scrollTabToAnchor(sectionId);
+      } else {
+        setActiveSectionId(sectionId);
+      }
+      setSortMenuOpen(false);
+      setAddMenuOpen(false);
+    },
+    [activeSectionId, scrollTabToAnchor],
+  );
 
   const layoutSectionIds = useMemo(() => {
     const firstPage = data.metadata.layout.pages[0];
@@ -580,12 +636,6 @@ export function IntegratedSectionsEditor({
   }, [activeSectionId, tabs]);
 
   useEffect(() => {
-    if (!openTabMenuId) return;
-    if (tabs.some((tab) => tab.id === openTabMenuId)) return;
-    setOpenTabMenuId(null);
-  }, [openTabMenuId, tabs]);
-
-  useEffect(() => {
     updateTabsOverflowMask();
   }, [tabs, updateTabsOverflowMask]);
 
@@ -620,22 +670,22 @@ export function IntegratedSectionsEditor({
   }, [updateTabsOverflowMask, tabs.length]);
 
   useEffect(() => {
-    if (!openTabMenuId && !addMenuOpen) return;
+    if (!sortMenuOpen && !addMenuOpen) return;
 
     const onPointerDown = (event: PointerEvent) => {
       if (!(event.target instanceof Element)) return;
       if (
-        event.target.closest(".resume-editor-menu-shell") ||
+        event.target.closest(".resume-editor-sort-shell") ||
         event.target.closest(".resume-editor-add-shell")
       )
         return;
-      setOpenTabMenuId(null);
+      setSortMenuOpen(false);
       setAddMenuOpen(false);
     };
 
     const onEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        setOpenTabMenuId(null);
+        setSortMenuOpen(false);
         setAddMenuOpen(false);
       }
     };
@@ -646,10 +696,12 @@ export function IntegratedSectionsEditor({
       document.removeEventListener("pointerdown", onPointerDown);
       document.removeEventListener("keydown", onEscape);
     };
-  }, [addMenuOpen, openTabMenuId]);
+  }, [addMenuOpen, sortMenuOpen]);
 
   useEffect(() => {
     if (!focusRequest) return;
+    if (lastHandledFocusRequestIdRef.current === focusRequest.requestId) return;
+    lastHandledFocusRequestIdRef.current = focusRequest.requestId;
 
     let cancelled = false;
     let retryTimer: number | null = null;
@@ -660,17 +712,6 @@ export function IntegratedSectionsEditor({
     const normalizedTarget = {
       ...focusRequest,
       sectionId: normalizedSectionId,
-    };
-
-    const clearHighlight = () => {
-      if (highlightedTargetRef.current) {
-        highlightedTargetRef.current.classList.remove("is-preview-focused");
-        highlightedTargetRef.current = null;
-      }
-      if (highlightTimerRef.current) {
-        window.clearTimeout(highlightTimerRef.current);
-        highlightTimerRef.current = null;
-      }
     };
 
     const revealTarget = (attempt = 0) => {
@@ -698,22 +739,7 @@ export function IntegratedSectionsEditor({
       const focusable = targetElement.matches(EDITOR_FOCUSABLE_SELECTOR)
         ? targetElement
         : targetElement.querySelector<HTMLElement>(EDITOR_FOCUSABLE_SELECTOR);
-
       focusable?.focus({ preventScroll: true });
-
-      clearHighlight();
-      // Force the highlight cycle to restart even when the user clicks the same preview target repeatedly.
-      targetElement.classList.remove("is-preview-focused");
-      void targetElement.offsetWidth;
-      targetElement.classList.add("is-preview-focused");
-      highlightedTargetRef.current = targetElement;
-      highlightTimerRef.current = window.setTimeout(() => {
-        targetElement.classList.remove("is-preview-focused");
-        if (highlightedTargetRef.current === targetElement) {
-          highlightedTargetRef.current = null;
-        }
-        highlightTimerRef.current = null;
-      }, 700);
     };
 
     if (tabs.some((tab) => tab.id === normalizedSectionId)) {
@@ -722,6 +748,7 @@ export function IntegratedSectionsEditor({
 
     frameA = requestAnimationFrame(() => {
       frameB = requestAnimationFrame(() => {
+        scrollTabToAnchor(normalizedSectionId, "auto");
         revealTarget();
       });
     });
@@ -734,16 +761,7 @@ export function IntegratedSectionsEditor({
         window.clearTimeout(retryTimer);
       }
     };
-  }, [focusRequest, scrollContainerRef, tabs]);
-
-  useEffect(() => {
-    return () => {
-      if (highlightTimerRef.current) {
-        window.clearTimeout(highlightTimerRef.current);
-      }
-      highlightedTargetRef.current?.classList.remove("is-preview-focused");
-    };
-  }, []);
+  }, [focusRequest, scrollContainerRef, scrollTabToAnchor, tabs]);
 
   const toggleSectionHidden = (sectionId: string, nextHidden: boolean) => {
     if (sectionId === "basics") {
@@ -783,7 +801,7 @@ export function IntegratedSectionsEditor({
       sectionId,
       value: currentTitle,
     });
-    setOpenTabMenuId(null);
+    setSortMenuOpen(false);
   };
 
   const openDeleteDialog = (sectionId: string) => {
@@ -797,7 +815,7 @@ export function IntegratedSectionsEditor({
       sectionId,
       title: getSectionDisplayTitle(data, sectionId),
     });
-    setOpenTabMenuId(null);
+    setSortMenuOpen(false);
   };
 
   const addSectionItem = (sectionId: string) => {
@@ -810,6 +828,10 @@ export function IntegratedSectionsEditor({
 
     if (isStandardSectionId(sectionId)) {
       addStandardSectionItem(sectionId);
+      const latestItemId = resolveLatestStandardSectionItemId(sectionId);
+      if (latestItemId) {
+        setStandardSectionExpandedItem(sectionId, latestItemId);
+      }
       return;
     }
 
@@ -882,7 +904,7 @@ export function IntegratedSectionsEditor({
     }
 
     setActiveSectionId(nextActiveTab);
-    setOpenTabMenuId(null);
+    setSortMenuOpen(false);
     setDeleteModal({ open: false, sectionId: null, title: "" });
   };
 
@@ -912,6 +934,10 @@ export function IntegratedSectionsEditor({
     [presentLayoutSectionIds],
   );
   const addSectionToEditor = (sectionId: string) => {
+    const shouldSeedDefaultItem =
+      isStandardSectionId(sectionId) &&
+      data.sections[sectionId].items.length === 0;
+
     updateResumeData((draft) => {
       const firstPage = draft.metadata.layout.pages[0] || {
         fullWidth: true,
@@ -943,8 +969,17 @@ export function IntegratedSectionsEditor({
       }
     });
 
+    if (shouldSeedDefaultItem) {
+      addStandardSectionItem(sectionId);
+      const latestItemId = resolveLatestStandardSectionItemId(sectionId);
+      if (latestItemId) {
+        setStandardSectionExpandedItem(sectionId, latestItemId);
+      }
+    }
+
     setActiveSectionId(sectionId);
     setAddMenuOpen(false);
+    setSortMenuOpen(false);
   };
 
   const addCustomSectionFromHeader = () => {
@@ -985,6 +1020,7 @@ export function IntegratedSectionsEditor({
 
     setActiveSectionId(sectionId);
     setAddMenuOpen(false);
+    setSortMenuOpen(false);
   };
 
   const activeSectionTab =
@@ -1002,16 +1038,22 @@ export function IntegratedSectionsEditor({
   const showAddItemRow =
     resolvedActiveSectionId !== "summary" &&
     resolvedActiveSectionId !== "basics";
-  const sectionMenuOpen = Boolean(
-    activeSectionTab && openTabMenuId === activeSectionTab.id,
-  );
   const activeHiddenLabel = activeSectionTab?.hidden ? "显示板块" : "隐藏板块";
   const activeCanRename = Boolean(activeSectionTab && !activeSectionTab.locked);
   const activeCanDelete = Boolean(activeSectionTab?.removable);
   const activeCanToggleHidden = Boolean(
     activeSectionTab && !activeSectionTab.locked,
   );
+  const activeCanSort = existingModuleTabs.length > 1;
   const showAddSectionMenu = addMenuOpen;
+  const isAutoFillCompletenessAction = completenessAction === "auto-fill";
+  const completenessActionLabel = isAutoFillCompletenessAction
+    ? "自动填写"
+    : "AI 诊断";
+  const completenessActionHint = isAutoFillCompletenessAction
+    ? "点击使用自动填写，快速补全简历关键信息"
+    : "点击使用 AI 诊断，获得结构与措辞优化建议";
+
   const handleExistingModuleSortEnd = (event: DragEndEvent) => {
     const indexes = resolveItemReorderIndexes(existingModuleSortableIds, event);
     if (!indexes) return;
@@ -1037,56 +1079,6 @@ export function IntegratedSectionsEditor({
       firstPage.fullWidth = true;
     });
   };
-  const activeSectionMenuContent = activeSectionTab ? (
-    <>
-      <button
-        type="button"
-        className={joinClassNames(
-          "resume-item-menu-action",
-          !activeCanToggleHidden && "is-disabled",
-        )}
-        disabled={!activeCanToggleHidden}
-        onClick={(event) => {
-          event.stopPropagation();
-          if (!activeCanToggleHidden) return;
-          toggleSectionHidden(activeSectionTab.id, !activeSectionTab.hidden);
-          setOpenTabMenuId(null);
-        }}
-      >
-        {activeHiddenLabel}
-      </button>
-      <button
-        type="button"
-        className={joinClassNames(
-          "resume-item-menu-action",
-          !activeCanRename && "is-disabled",
-        )}
-        disabled={!activeCanRename}
-        onClick={(event) => {
-          event.stopPropagation();
-          openRenameDialog(activeSectionTab.id);
-        }}
-      >
-        重命名
-      </button>
-      <button
-        type="button"
-        className={joinClassNames(
-          "resume-item-menu-action",
-          "is-danger",
-          !activeCanDelete && "is-disabled",
-        )}
-        disabled={!activeCanDelete}
-        onClick={(event) => {
-          event.stopPropagation();
-          if (!activeCanDelete) return;
-          openDeleteDialog(activeSectionTab.id);
-        }}
-      >
-        删除
-      </button>
-    </>
-  ) : null;
 
   return (
     <div className="resume-editor-tabs-layout">
@@ -1094,16 +1086,16 @@ export function IntegratedSectionsEditor({
         <button
           type="button"
           className={`resume-editor-ai-diagnosis-card is-${completeness.tone}`}
-          aria-label={`内容完善度 ${completeness.score} 分，点击使用 AI 诊断`}
+          aria-label={`内容完善度 ${completeness.score} 分，点击使用${completenessActionLabel}`}
           onClick={onOpenAIDiagnosis}
         >
           <div className="resume-editor-ai-diagnosis-copy">
             <strong>内容完善度 {completeness.score}%</strong>
-            <span>点击使用 AI 诊断，获得结构与措辞优化建议</span>
+            <span>{completenessActionHint}</span>
           </div>
           <div className="resume-editor-ai-diagnosis-cta">
             <Sparkles size={14} aria-hidden="true" />
-            <span>AI 诊断</span>
+            <span>{completenessActionLabel}</span>
             <IconChevronRight />
           </div>
         </button>
@@ -1164,20 +1156,15 @@ export function IntegratedSectionsEditor({
                               role="tab"
                               aria-selected={activeSectionId === tab.id}
                               tabIndex={activeSectionId === tab.id ? 0 : -1}
-                              onClick={() => {
-                                setActiveSectionId(tab.id);
-                                setOpenTabMenuId(null);
-                                setAddMenuOpen(false);
-                              }}
+                              data-editor-tab-id={tab.id}
+                              onClick={() => handleTabSelect(tab.id)}
                               onKeyDown={(event) => {
                                 if (
                                   event.key === "Enter" ||
                                   event.key === " "
                                 ) {
                                   event.preventDefault();
-                                  setActiveSectionId(tab.id);
-                                  setOpenTabMenuId(null);
-                                  setAddMenuOpen(false);
+                                  handleTabSelect(tab.id);
                                 }
                               }}
                             >
@@ -1206,9 +1193,7 @@ export function IntegratedSectionsEditor({
                           hidden={tab.hidden}
                           locked={tab.locked}
                           onSelect={() => {
-                            setActiveSectionId(tab.id);
-                            setOpenTabMenuId(null);
-                            setAddMenuOpen(false);
+                            handleTabSelect(tab.id);
                           }}
                         />
                       );
@@ -1237,7 +1222,7 @@ export function IntegratedSectionsEditor({
                   className="resume-inline-icon-btn"
                   icon={<IconPlus />}
                   onClick={() => {
-                    setOpenTabMenuId(null);
+                    setSortMenuOpen(false);
                     setAddMenuOpen((open) => !open);
                   }}
                   aria-label="添加板块"
@@ -1267,12 +1252,12 @@ export function IntegratedSectionsEditor({
                                   onRename={() => {
                                     openRenameDialog(tab.id);
                                     setAddMenuOpen(false);
-                                    setOpenTabMenuId(null);
+                                    setSortMenuOpen(false);
                                   }}
                                   onDelete={() => {
                                     openDeleteDialog(tab.id);
                                     setAddMenuOpen(false);
-                                    setOpenTabMenuId(null);
+                                    setSortMenuOpen(false);
                                   }}
                                 />
                               ))}
@@ -1297,7 +1282,7 @@ export function IntegratedSectionsEditor({
                             onClick={(event) => {
                               event.stopPropagation();
                               addSectionToEditor(sectionId);
-                              setOpenTabMenuId(null);
+                              setSortMenuOpen(false);
                             }}
                           >
                             <span
@@ -1317,7 +1302,7 @@ export function IntegratedSectionsEditor({
                           onClick={(event) => {
                             event.stopPropagation();
                             addCustomSectionFromHeader();
-                            setOpenTabMenuId(null);
+                            setSortMenuOpen(false);
                           }}
                         >
                           <span
@@ -1334,40 +1319,6 @@ export function IntegratedSectionsEditor({
                 ) : null}
               </div>
             </div>
-
-            {activeSectionTab ? (
-              <div
-                className="resume-editor-menu-shell resume-editor-panel-menu-shell"
-                onClick={(event) => event.stopPropagation()}
-              >
-                <div
-                  className={joinClassNames(
-                    "resume-item-menu",
-                    "resume-editor-panel-menu",
-                    sectionMenuOpen && "is-open",
-                  )}
-                >
-                  <Button
-                    type="text"
-                    size="mini"
-                    className="resume-inline-icon-btn"
-                    icon={<IconMoreHorizontal />}
-                    onClick={() => {
-                      setOpenTabMenuId(
-                        sectionMenuOpen ? null : activeSectionTab.id,
-                      );
-                      setAddMenuOpen(false);
-                    }}
-                    aria-label={`${activeSectionTab.title}板块操作`}
-                  />
-                  {sectionMenuOpen ? (
-                    <div className="resume-item-menu-popover">
-                      {activeSectionMenuContent}
-                    </div>
-                  ) : null}
-                </div>
-              </div>
-            ) : null}
           </div>
         </div>
       </div>
@@ -1381,6 +1332,107 @@ export function IntegratedSectionsEditor({
             data-editor-section-id={resolvedActiveSectionId}
             className="resume-editor-tab-content resume-focus-target"
           >
+            <div className="resume-editor-content-head">
+              <div className="resume-editor-content-head-main">
+                <h3 className="resume-editor-content-title">
+                  {activeSectionTab?.title || "基本信息"}
+                </h3>
+                {activeCanRename ? (
+                  <EditorActionIconButton
+                    label="重命名"
+                    icon={<Pencil size={14} />}
+                    onClick={() => {
+                      openRenameDialog(resolvedActiveSectionId);
+                    }}
+                  />
+                ) : null}
+              </div>
+              <div className="resume-editor-content-head-actions">
+                {activeCanSort ? (
+                  <div
+                    className="resume-editor-sort-shell"
+                    onClick={(event) => event.stopPropagation()}
+                  >
+                    <div
+                      className={joinClassNames(
+                        "resume-item-menu",
+                        "resume-editor-sort-menu",
+                        sortMenuOpen && "is-open",
+                      )}
+                    >
+                      <EditorActionIconButton
+                        label="排序"
+                        icon={<IconGrip />}
+                        active={sortMenuOpen}
+                        onClick={() => {
+                          setAddMenuOpen(false);
+                          setSortMenuOpen((open) => !open);
+                        }}
+                      />
+                      {sortMenuOpen ? (
+                        <div className="resume-item-menu-popover resume-editor-sort-menu-panel">
+                          <h4 className="resume-editor-sort-menu-title">
+                            拖拽排序
+                          </h4>
+                          <div className="resume-editor-existing-modules-list">
+                            <DndContext
+                              sensors={existingModuleSortSensors}
+                              collisionDetection={closestCenter}
+                              onDragEnd={handleExistingModuleSortEnd}
+                            >
+                              <SortableContext
+                                items={existingModuleSortableIds}
+                                strategy={verticalListSortingStrategy}
+                              >
+                                {existingModuleTabs.map((tab) => (
+                                  <SortableExistingModuleRow
+                                    key={tab.id}
+                                    sectionId={tab.id}
+                                    title={tab.title}
+                                    showActions={false}
+                                  />
+                                ))}
+                              </SortableContext>
+                            </DndContext>
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                ) : null}
+
+                {activeCanToggleHidden && activeSectionTab ? (
+                  <EditorActionIconButton
+                    label={activeHiddenLabel}
+                    icon={
+                      activeSectionTab.hidden ? (
+                        <Eye size={14} />
+                      ) : (
+                        <EyeOff size={14} />
+                      )
+                    }
+                    onClick={() => {
+                      toggleSectionHidden(
+                        activeSectionTab.id,
+                        !activeSectionTab.hidden,
+                      );
+                    }}
+                  />
+                ) : null}
+
+                {activeCanDelete ? (
+                  <EditorActionIconButton
+                    label="删除"
+                    icon={<IconDelete />}
+                    danger
+                    onClick={() => {
+                      openDeleteDialog(resolvedActiveSectionId);
+                    }}
+                  />
+                ) : null}
+              </div>
+            </div>
+
             {resolvedActiveSectionId === "basics" ? (
               renderBasicInfoEditor()
             ) : (

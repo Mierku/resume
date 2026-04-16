@@ -1,9 +1,9 @@
 'use client'
 
 import { Check, FileText, Maximize2 } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { SearchField } from '@/components/ui/SearchField'
-import { getTemplateDefaultPrimaryColor, RESUME_TEMPLATES } from '@/lib/constants'
+import { getTemplateDefaultPrimaryColor } from '@/lib/constants'
 import {
   RESUME_EDITOR_LIMITS,
 } from '@/lib/resume/editor-limits'
@@ -25,6 +25,23 @@ import type { SmartOnePageComputation } from '@/components/resume-reactive-previ
 import type { StyleTool } from '../../../types'
 import sharedStyles from '../shared/PanelControlPrimitives.module.scss'
 import styles from './LayoutAndStylePanel.module.scss'
+
+const THEME_COLOR_PRESET_CANDIDATES = [
+  '#2A2A2A',
+  '#394760',
+  '#B80138',
+  '#8B5AD7',
+  '#2F4C72',
+  '#C45528',
+]
+
+const TEXT_COLOR_PRESETS = [
+  '#2f2f2f',
+  '#1F2937',
+  '#334155',
+  '#475569',
+  '#6B7280',
+]
 
 type StyleBrowserCategory = 'template' | 'header' | 'section' | 'skills'
 type StylePreviewKind =
@@ -402,6 +419,19 @@ export function LayoutAndStylePanel({
   const [hoveredPageGuide, setHoveredPageGuide] = useState<'x' | 'y' | null>(null)
   const primaryColor = data.metadata.design.colors.primary || getTemplateDefaultPrimaryColor(data.metadata.template)
   const textColor = data.metadata.design.colors.text || '#111111'
+  const normalizedPrimaryColor = primaryColor.trim().toLowerCase()
+  const normalizedTextColor = textColor.trim().toLowerCase()
+  const themeColorPresets = useMemo(() => {
+    const ordered = [getTemplateDefaultPrimaryColor(data.metadata.template), ...THEME_COLOR_PRESET_CANDIDATES]
+    const unique: string[] = []
+    ordered.forEach(color => {
+      const normalized = color.toLowerCase()
+      if (!unique.some(item => item.toLowerCase() === normalized)) {
+        unique.push(color)
+      }
+    })
+    return unique.slice(0, 5)
+  }, [data.metadata.template])
   const activeHeaderVariant = resolveHeaderVariantForTemplate(
     data.metadata.template,
     data.metadata.design.headerVariant || null,
@@ -433,7 +463,7 @@ export function LayoutAndStylePanel({
   const pagePreviewInsetX = data.metadata.page.marginX * 0.8
   const pagePreviewInsetY = data.metadata.page.marginY * 0.8
 
-  const setTemplate = (templateId: ReactiveTemplateId) => {
+  const setTemplate = useCallback((templateId: ReactiveTemplateId) => {
     updateResumeData(draft => {
       draft.metadata.template = templateId
       draft.metadata.design.colors.primary = getTemplateDefaultPrimaryColor(templateId)
@@ -441,7 +471,7 @@ export function LayoutAndStylePanel({
       draft.metadata.design.sectionVariant = 'auto'
       draft.metadata.design.skillsVariant = resolveSkillsVariant(draft.metadata.design.skillsVariant)
     })
-  }
+  }, [updateResumeData])
 
   const layoutCards = useMemo<StyleBrowserCard[]>(
     () => [
@@ -506,7 +536,7 @@ export function LayoutAndStylePanel({
         onSelect: () => setTemplate('template-5'),
       },
     ],
-    [data.metadata.template],
+    [data.metadata.template, setTemplate],
   )
 
   const elementCards = useMemo<StyleBrowserCard[]>(
@@ -726,11 +756,40 @@ export function LayoutAndStylePanel({
       <div className={`${styles.panel} ${styles.typography} resume-typography-panel`}>
         <div className="resume-typography-row">
           <span className="resume-typography-row-label">文字颜色</span>
-          <ResumeColorPickerControl
-            value={textColor}
-            onChange={next => updateResumeData(draft => { draft.metadata.design.colors.text = next })}
-            ariaLabel="字体色"
-          />
+          <div className="resume-style-browser-theme-controls">
+            <ResumeColorPickerControl
+              value={textColor}
+              onChange={next => updateResumeData(draft => { draft.metadata.design.colors.text = next })}
+              ariaLabel="字体色"
+            />
+            <div className="resume-style-browser-theme-presets" aria-label="文字颜色预设">
+              {TEXT_COLOR_PRESETS.map(color => {
+                const normalized = color.toLowerCase()
+                const active = normalizedTextColor === normalized
+                return (
+                  <button
+                    key={color}
+                    type="button"
+                    className={joinClassNames('resume-style-browser-theme-swatch', active && 'is-active')}
+                    onClick={() =>
+                      updateResumeData(draft => {
+                        draft.metadata.design.colors.text = color
+                      })
+                    }
+                    aria-label={`选择文字颜色 ${color.toUpperCase()}`}
+                    aria-pressed={active}
+                    title={color.toUpperCase()}
+                  >
+                    <span
+                      className="resume-style-browser-theme-swatch-dot"
+                      style={{ backgroundColor: color }}
+                      aria-hidden="true"
+                    />
+                  </button>
+                )
+              })}
+            </div>
+          </div>
         </div>
         <section className={`resume-typography-collapse${activeTypographySection === 'heading' ? ' is-open' : ''}`}>
           <button
@@ -989,11 +1048,40 @@ export function LayoutAndStylePanel({
 
       <div className="resume-style-browser-theme-row">
         <span className="resume-style-browser-theme-label">主题色</span>
-        <ResumeColorPickerControl
-          value={primaryColor}
-          onChange={next => updateResumeData(draft => { draft.metadata.design.colors.primary = next })}
-          ariaLabel="主题色"
-        />
+        <div className="resume-style-browser-theme-controls">
+          <ResumeColorPickerControl
+            value={primaryColor}
+            onChange={next => updateResumeData(draft => { draft.metadata.design.colors.primary = next })}
+            ariaLabel="主题色"
+          />
+          <div className="resume-style-browser-theme-presets" aria-label="主题色预设">
+            {themeColorPresets.map(color => {
+              const normalized = color.toLowerCase()
+              const active = normalizedPrimaryColor === normalized
+              return (
+                <button
+                  key={color}
+                  type="button"
+                  className={joinClassNames('resume-style-browser-theme-swatch', active && 'is-active')}
+                  onClick={() =>
+                    updateResumeData(draft => {
+                      draft.metadata.design.colors.primary = color
+                    })
+                  }
+                  aria-label={`选择主题色 ${color.toUpperCase()}`}
+                  aria-pressed={active}
+                  title={color.toUpperCase()}
+                >
+                  <span
+                    className="resume-style-browser-theme-swatch-dot"
+                    style={{ backgroundColor: color }}
+                    aria-hidden="true"
+                  />
+                </button>
+              )
+            })}
+          </div>
+        </div>
       </div>
 
       <div className="resume-style-browser-filters" role="tablist" aria-label="简历样式分类筛选">

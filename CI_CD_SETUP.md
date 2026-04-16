@@ -62,6 +62,18 @@
 - `DEPLOY_PORT`：SSH 端口（默认 `22`）
 - `DEPLOY_ENV_B64`：生产 `.env` 的 base64（设置后每次部署会重写远端 `.env`）
 
+可选（推荐用于“本地测试服务号 / 生产正式服务号”分离）：
+
+- `PROD_WECHAT_OA_APP_ID`
+- `PROD_WECHAT_OA_APP_SECRET`
+- `PROD_WECHAT_OA_TOKEN`
+- `PROD_WECHAT_OA_ENCODING_AES_KEY`
+
+说明：
+
+- 上面 4 个 `PROD_WECHAT_OA_*` 要么都配置，要么都不配置。
+- 配置后，CD 会在服务器部署时自动覆盖 `.env` 中的 `WECHAT_OA_*` 为正式值，本地仍可继续使用测试值。
+
 ## 4) 本地一键写 Secrets
 
 新增脚本：
@@ -80,10 +92,14 @@ scripts/deploy/setup-github-secrets.sh \
   --deploy-path /opt/resume \
   --ssh-key-path ~/.ssh/id_ed25519 \
   --deploy-port 22 \
-  --env-file .env
+  --env-file .env \
+  --prod-wechat-app-id <正式服务号appid> \
+  --prod-wechat-app-secret <正式服务号appsecret> \
+  --prod-wechat-token <正式服务号token> \
+  --prod-wechat-aes-key <正式服务号encoding_aes_key>
 ```
 
-执行后会自动写入仓库 secrets（含可选 `DEPLOY_ENV_B64`）。
+执行后会自动写入仓库 secrets（含可选 `DEPLOY_ENV_B64`、`PROD_WECHAT_OA_*`）。
 
 ## 5) 服务器前置条件
 
@@ -125,3 +141,4 @@ Nginx 配置文件位置：
 
 - `DATABASE_URL` 和 `REDIS_URL` 在生产 compose 中会自动指向容器内的 `db` 和 `redis`，不需要你手动改为公网地址。
 - 如果你已经有 CDN / 证书，`SITE_ORIGIN`、`NEXT_PUBLIC_SITE_ORIGIN`、`APP_URL` 建议填正式域名，例如 `https://www.immersiveapply.com`。
+- 如果你配置了 `PROD_WECHAT_OA_*` secrets，部署时会自动覆盖 `.env` 里的 `WECHAT_OA_*`，无需每次重传整份 `.env` 才能切换正式服务号。

@@ -20,11 +20,7 @@ export function renderHeader1({ data, block, marginBottom, onNavigate, helpers }
       key={block.id}
       style={shellStyle}
       data-composed-block-id={block.id}
-      {...helpers.getPreviewActionProps(
-        onNavigate,
-        { sectionId: block.sectionId },
-        helpers.cx(styles.h1Root, styles.h1Interactive),
-      )}
+      className={helpers.cx(styles.h1Root, styles.h1Interactive)}
     >
       <div className={styles.h1Content}>
         <HeaderPhoto data={data} onNavigate={onNavigate} helpers={helpers} />

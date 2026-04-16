@@ -1,2 +1,6 @@
-export { BasicInfoSectionEditor, SectionEditorBody } from './SectionEditorBody'
+export {
+  BasicInfoSectionEditor,
+  SectionEditorBody,
+  setStandardSectionExpandedItem,
+} from './SectionEditorBody'
 export { SectionFormGrid, SectionFormField } from './SectionFormLayout'

@@ -1,18 +1,8 @@
 'use client'
 
-import {
-  closestCenter,
-  DndContext,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-} from '@dnd-kit/core'
-import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
 import dynamic from 'next/dynamic'
 import {
-  type CSSProperties,
+  type ComponentProps,
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
   useEffect,
@@ -48,10 +38,9 @@ import {
   toSingleSelectValue,
   WORK_YEAR_OPTIONS,
 } from '@/components/resume-builder/editor/section-editor-shared'
-import { Button, Checkbox, IconChevronRight, IconDelete, IconEye, IconGrip, Input, Message, Option, Select, Space } from '@/components/resume-builder/primitives'
+import { Button, Checkbox, IconChevronRight, IconDelete, IconEye, Input, Message, Option, Select, Space } from '@/components/resume-builder/primitives'
 import { useResumeBuilderStore } from '@/components/resume-builder/store/useResumeBuilderStore'
 import { SectionFormField, SectionFormGrid } from './SectionFormLayout'
-import './SectionEditorBody.scss'
 
 const RichTextEditor = dynamic(
   () =>
@@ -248,86 +237,24 @@ function EditorAnchor({ sectionId, itemId, fieldKey, className, children }: Edit
   )
 }
 
-const ITEM_SORT_ACTIVATION_CONSTRAINT = {
-  distance: 4,
-} as const
-
-function useEditorItemSortSensors() {
-  return useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: ITEM_SORT_ACTIVATION_CONSTRAINT,
-    }),
-  )
-}
-
 function resolveEditorItemId(rawId: unknown, fallback: string) {
   const normalized = typeof rawId === 'string' ? rawId : String(rawId ?? '')
   return normalized.trim() || fallback
 }
 
-function resolveItemReorderIndexes(itemIds: string[], event: DragEndEvent) {
-  const { active, over } = event
-  if (!over) return null
+const STANDARD_SECTION_EXPANDED_ITEM_STATE: Partial<
+  Record<StandardSectionType, string | null>
+> = {}
 
-  const activeId = String(active.id)
-  const overId = String(over.id)
-  if (!activeId || !overId || activeId === overId) return null
-
-  const fromIndex = itemIds.indexOf(activeId)
-  const toIndex = itemIds.indexOf(overId)
-  if (fromIndex < 0 || toIndex < 0 || fromIndex === toIndex) return null
-
-  return {
-    fromIndex,
-    toIndex,
-  }
+export function setStandardSectionExpandedItem(
+  sectionId: StandardSectionType,
+  expandedItemId: string | null,
+) {
+  STANDARD_SECTION_EXPANDED_ITEM_STATE[sectionId] = expandedItemId
 }
 
-function SortableEditorItemFrame({
-  id,
-  disabled,
-  className,
-  children,
-}: {
-  id: string
-  disabled?: boolean
-  className?: string
-  children: (dragHandle: ReactNode) => ReactNode
-}) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id,
-    disabled,
-  })
-
-  const style: CSSProperties = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  }
-
-  const dragHandle = (
-    <button
-      type="button"
-      className="resume-item-drag-handle"
-      aria-label={disabled ? '当前只有一项，无法拖动排序' : '长按拖动排序'}
-      disabled={disabled}
-      onClick={(event) => event.stopPropagation()}
-      {...(!disabled ? attributes : {})}
-      {...(!disabled ? listeners : {})}
-    >
-      <IconGrip />
-    </button>
-  )
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      data-dragging={isDragging ? 'true' : undefined}
-      className={joinClassNames('resume-editor-sortable-item', className)}
-    >
-      {children(dragHandle)}
-    </div>
-  )
+function getStandardSectionExpandedItem(sectionId: StandardSectionType) {
+  return STANDARD_SECTION_EXPANDED_ITEM_STATE[sectionId] ?? null
 }
 
 interface CollapseMotionProps {
@@ -337,94 +264,54 @@ interface CollapseMotionProps {
 }
 
 function CollapseMotion({ open, className, children }: CollapseMotionProps) {
-  const [animate, setAnimate] = useState(false)
-  const [height, setHeight] = useState<string>(open ? 'auto' : '0px')
-  const contentRef = useRef<HTMLDivElement | null>(null)
-  const firstRenderRef = useRef(true)
-  const firstFrameRef = useRef<number | null>(null)
-  const secondFrameRef = useRef<number | null>(null)
-
-  const cancelScheduledFrames = () => {
-    if (firstFrameRef.current !== null) {
-      cancelAnimationFrame(firstFrameRef.current)
-      firstFrameRef.current = null
-    }
-
-    if (secondFrameRef.current !== null) {
-      cancelAnimationFrame(secondFrameRef.current)
-      secondFrameRef.current = null
-    }
-  }
-
-  const scheduleTransition = (callback: () => void) => {
-    firstFrameRef.current = requestAnimationFrame(() => {
-      firstFrameRef.current = null
-      secondFrameRef.current = requestAnimationFrame(() => {
-        secondFrameRef.current = null
-        callback()
-      })
-    })
-  }
-
-  useEffect(() => {
-    if (firstRenderRef.current) {
-      firstRenderRef.current = false
-      return
-    }
-
-    cancelScheduledFrames()
-
-    if (open) {
-      const nextHeight = contentRef.current?.scrollHeight || 0
-      setAnimate(false)
-      setHeight('0px')
-
-      scheduleTransition(() => {
-        setAnimate(true)
-        setHeight(`${nextHeight}px`)
-      })
-      return
-    }
-
-    const currentHeight = contentRef.current?.scrollHeight || 0
-    setAnimate(false)
-    setHeight(`${currentHeight}px`)
-
-    scheduleTransition(() => {
-      setAnimate(true)
-      setHeight('0px')
-    })
-  }, [open])
-
-  useEffect(() => {
-    return () => {
-      cancelScheduledFrames()
-    }
-  }, [])
-
   return (
     <div
-      className={joinClassNames('resume-collapse-motion', animate && 'is-animating', className)}
-      style={{ height, pointerEvents: open ? 'auto' : 'none' }}
+      className={joinClassNames('resume-collapse-motion', className)}
+      style={{ display: open ? 'block' : 'none' }}
       aria-hidden={!open}
-      onTransitionEnd={(event) => {
-        if (event.target !== event.currentTarget || event.propertyName !== 'height') return
-
-        if (open) {
-          setAnimate(false)
-          setHeight('auto')
-          return
-        }
-
-        setAnimate(false)
-        setHeight('0px')
-      }}
     >
-      <div ref={contentRef} className="resume-collapse-motion-inner">
+      <div className="resume-collapse-motion-inner">
         {children}
       </div>
     </div>
   )
+}
+
+type BasicInfoExtraFieldKey =
+  | 'intentionCity'
+  | 'birthDate'
+  | 'workYears'
+  | 'email'
+  | 'maritalStatus'
+  | 'nativePlace'
+  | 'politicalStatus'
+  | 'heightWeight'
+  | 'location'
+  | 'websiteUrl'
+  | 'websiteLabel'
+
+const BASIC_INFO_EXTRA_FIELDS: Array<{ key: BasicInfoExtraFieldKey; label: string }> = [
+  { key: 'intentionCity', label: '意向城市' },
+  { key: 'birthDate', label: '出生年月' },
+  { key: 'workYears', label: '工作年限' },
+  { key: 'email', label: '邮箱' },
+  { key: 'maritalStatus', label: '婚姻状况' },
+  { key: 'nativePlace', label: '籍贯' },
+  { key: 'politicalStatus', label: '政治面貌' },
+  { key: 'heightWeight', label: '身高 / 体重' },
+  { key: 'location', label: '当前所在地' },
+  { key: 'websiteUrl', label: '网站链接' },
+  { key: 'websiteLabel', label: '网站显示文本' },
+]
+
+function hasNonEmptyText(value: unknown) {
+  return typeof value === 'string' && value.trim().length > 0
+}
+
+type PanelInputProps = ComponentProps<typeof Input>
+
+function PanelInput(props: PanelInputProps) {
+  return <Input {...props} allowClear />
 }
 
 export function BasicInfoSectionEditor() {
@@ -435,6 +322,7 @@ export function BasicInfoSectionEditor() {
   const photoFloatingRef = useRef<HTMLDivElement | null>(null)
   const [photoUploading, setPhotoUploading] = useState(false)
   const [photoExpanded, setPhotoExpanded] = useState(false)
+  const [enabledExtraFields, setEnabledExtraFields] = useState<BasicInfoExtraFieldKey[]>([])
 
   const updateField = (field: keyof ResumeData['basics'], value: string) => {
     updateResumeData((draft) => {
@@ -492,6 +380,12 @@ export function BasicInfoSectionEditor() {
     Message.success('已删除证件照')
   }
 
+  const setPictureVisible = (visible: boolean) => {
+    updateResumeData((draft) => {
+      draft.picture.hidden = !visible
+    })
+  }
+
   useEffect(() => {
     if (!photoExpanded) return
 
@@ -517,19 +411,58 @@ export function BasicInfoSectionEditor() {
     }
   }, [photoExpanded])
 
+  const extraFieldHasValue = useMemo<Record<BasicInfoExtraFieldKey, boolean>>(
+    () => ({
+      intentionCity: hasNonEmptyText(basics.intentionCity),
+      birthDate: hasNonEmptyText(basics.birthDate),
+      workYears: hasNonEmptyText(basics.workYears),
+      email: hasNonEmptyText(basics.email),
+      maritalStatus: hasNonEmptyText(basics.maritalStatus),
+      nativePlace: hasNonEmptyText(basics.nativePlace),
+      politicalStatus: hasNonEmptyText(basics.politicalStatus),
+      heightWeight: hasNonEmptyText(basics.heightCm) || hasNonEmptyText(basics.weightKg),
+      location: hasNonEmptyText(basics.location),
+      websiteUrl: hasNonEmptyText(basics.website.url),
+      websiteLabel: hasNonEmptyText(basics.website.label),
+    }),
+    [
+      basics.birthDate,
+      basics.email,
+      basics.heightCm,
+      basics.intentionCity,
+      basics.location,
+      basics.maritalStatus,
+      basics.nativePlace,
+      basics.politicalStatus,
+      basics.website.label,
+      basics.website.url,
+      basics.weightKg,
+      basics.workYears,
+    ],
+  )
+
+  const isExtraFieldVisible = (fieldKey: BasicInfoExtraFieldKey) =>
+    enabledExtraFields.includes(fieldKey) || extraFieldHasValue[fieldKey]
+
+  const hiddenExtraFields = BASIC_INFO_EXTRA_FIELDS.filter((field) => !isExtraFieldVisible(field.key))
+
+  const showExtraField = (fieldKey: BasicInfoExtraFieldKey) => {
+    setEnabledExtraFields((prev) => (prev.includes(fieldKey) ? prev : [...prev, fieldKey]))
+  }
+
   return (
     <div className="space-y-4">
       <SectionFormGrid className="resume-basics-grid">
         <SectionFormField>
           <EditorAnchor sectionId="basics" fieldKey="name">
-            <label className="text-xs text-muted-foreground block mb-1">您的姓名</label>
-            <Input value={basics.name} onChange={(value) => updateField('name', value)} placeholder="请输入姓名" />
+            <label className="text-xs text-muted-foreground block mb-2">姓名</label>
+            <PanelInput value={basics.name} onChange={(value) => updateField('name', value)} placeholder="请输入姓名" />
           </EditorAnchor>
         </SectionFormField>
 
         <SectionFormField className="resume-basics-photo-field">
           <EditorAnchor sectionId="basics" fieldKey="picture">
-            <label className="text-xs text-muted-foreground block mb-1">证件照</label>
+            <label className="text-xs text-muted-foreground block mb-2">证件照</label>
 
             <input
               ref={photoInputRef}
@@ -572,17 +505,23 @@ export function BasicInfoSectionEditor() {
 
                 <div className="resume-basics-photo-expand-panel">
                   <div className="resume-basics-photo-head">
-                    <label className="resume-basics-inline-checkbox">
+                    <div className="resume-basics-inline-checkbox">
                       <Checkbox
                         checked={!picture.hidden}
-                        onChange={(checked) =>
-                          updateResumeData((draft) => {
-                            draft.picture.hidden = !Boolean(checked)
-                          })
-                        }
+                        onChange={(checked) => setPictureVisible(Boolean(checked))}
                       />
-                      展示照片
-                    </label>
+                      <button
+                        type="button"
+                        className="resume-basics-inline-checkbox-button"
+                        onClick={(event) => {
+                          event.preventDefault()
+                          event.stopPropagation()
+                          setPictureVisible(picture.hidden)
+                        }}
+                      >
+                        展示照片
+                      </button>
+                    </div>
                   </div>
 
                   <div
@@ -660,8 +599,8 @@ export function BasicInfoSectionEditor() {
 
         <SectionFormField>
           <EditorAnchor sectionId="basics" fieldKey="intentionPosition headline">
-            <label className="text-xs text-muted-foreground block mb-1">求职岗位</label>
-            <Input
+            <label className="text-xs text-muted-foreground block mb-2">求职意向</label>
+            <PanelInput
               value={basics.intentionPosition || basics.headline}
               onChange={(value) =>
                 updateResumeData((draft) => {
@@ -675,22 +614,39 @@ export function BasicInfoSectionEditor() {
         </SectionFormField>
 
         <SectionFormField>
-          <EditorAnchor sectionId="basics" fieldKey="intentionCity">
-            <label className="text-xs text-muted-foreground block mb-1">意向城市</label>
-            <Input value={basics.intentionCity} onChange={(value) => updateField('intentionCity', value)} placeholder="例如：上海" />
+          <EditorAnchor sectionId="basics" fieldKey="gender">
+            <label className="text-xs text-muted-foreground block mb-2">性别</label>
+            <Select
+              value={basics.gender}
+              onChange={(value) => updateField('gender', Array.isArray(value) ? value[0] || '' : value)}
+              style={{ width: '100%' }}
+            >
+              {GENDER_OPTIONS.map((option) => (
+                <Option key={option.value || 'empty-gender'} value={option.value}>
+                  {option.label}
+                </Option>
+              ))}
+            </Select>
           </EditorAnchor>
         </SectionFormField>
 
         <SectionFormField>
-          <EditorAnchor sectionId="basics" fieldKey="intentionSalary">
-            <label className="text-xs text-muted-foreground block mb-1">期望薪资</label>
-            <Input value={basics.intentionSalary} onChange={(value) => updateField('intentionSalary', value)} placeholder="例如：25k-35k" />
+          <EditorAnchor sectionId="basics" fieldKey="ethnicity">
+            <label className="text-xs text-muted-foreground block mb-2">民族</label>
+            <PanelInput value={basics.ethnicity} onChange={(value) => updateField('ethnicity', value)} placeholder="请输入民族" />
+          </EditorAnchor>
+        </SectionFormField>
+
+        <SectionFormField>
+          <EditorAnchor sectionId="basics" fieldKey="phone">
+            <label className="text-xs text-muted-foreground block mb-2">电话</label>
+            <PanelInput value={basics.phone} onChange={(value) => updateField('phone', value)} placeholder="请输入电话" />
           </EditorAnchor>
         </SectionFormField>
 
         <SectionFormField>
           <EditorAnchor sectionId="basics" fieldKey="intentionAvailability">
-            <label className="text-xs text-muted-foreground block mb-1">到岗时间</label>
+            <label className="text-xs text-muted-foreground block mb-2">当前状态</label>
             <Select
               value={basics.intentionAvailability}
               onChange={(value) => updateField('intentionAvailability', toSingleSelectValue(value))}
@@ -707,187 +663,214 @@ export function BasicInfoSectionEditor() {
         </SectionFormField>
 
         <SectionFormField>
-          <EditorAnchor sectionId="basics" fieldKey="gender">
-            <label className="text-xs text-muted-foreground block mb-1">性别</label>
-            <Select
-              value={basics.gender}
-              onChange={(value) => updateField('gender', Array.isArray(value) ? value[0] || '' : value)}
-              style={{ width: '100%' }}
-            >
-              {GENDER_OPTIONS.map((option) => (
-                <Option key={option.value || 'empty-gender'} value={option.value}>
-                  {option.label}
-                </Option>
-              ))}
-            </Select>
+          <EditorAnchor sectionId="basics" fieldKey="intentionSalary">
+            <label className="text-xs text-muted-foreground block mb-2">期望薪资</label>
+            <PanelInput value={basics.intentionSalary} onChange={(value) => updateField('intentionSalary', value)} placeholder="例如：25k-35k" />
           </EditorAnchor>
         </SectionFormField>
 
-        <SectionFormField>
-          <EditorAnchor sectionId="basics" fieldKey="birthDate convertBirthToAge">
-            <div className="resume-basics-label-row">
-              <label className="text-xs text-muted-foreground block">出生年月</label>
-              <label className="resume-basics-inline-checkbox">
-                <Checkbox
-                  checked={basics.convertBirthToAge}
-                  onChange={(checked) =>
-                    updateResumeData((draft) => {
-                      draft.basics.convertBirthToAge = checked
-                    })
-                  }
+        {isExtraFieldVisible('intentionCity') ? (
+          <SectionFormField>
+            <EditorAnchor sectionId="basics" fieldKey="intentionCity">
+              <label className="text-xs text-muted-foreground block mb-2">意向城市</label>
+              <PanelInput value={basics.intentionCity} onChange={(value) => updateField('intentionCity', value)} placeholder="例如：上海" />
+            </EditorAnchor>
+          </SectionFormField>
+        ) : null}
+
+        {isExtraFieldVisible('birthDate') ? (
+          <SectionFormField>
+            <EditorAnchor sectionId="basics" fieldKey="birthDate convertBirthToAge">
+              <div className="resume-basics-label-row">
+                <label className="text-xs text-muted-foreground block">出生年月</label>
+                <label className="resume-basics-inline-checkbox">
+                  <Checkbox
+                    checked={basics.convertBirthToAge}
+                    onChange={(checked) =>
+                      updateResumeData((draft) => {
+                        draft.basics.convertBirthToAge = checked
+                      })
+                    }
+                  />
+                  显示年龄
+                </label>
+              </div>
+              <MonthPickerField
+                label="出生年月"
+                value={basics.birthDate}
+                placeholder="不填"
+                maxValue={dateToYearMonth(new Date())}
+                showLabel={false}
+                showTriggerIcon={false}
+                onChange={(nextValue) => updateField('birthDate', nextValue)}
+              />
+            </EditorAnchor>
+          </SectionFormField>
+        ) : null}
+
+        {isExtraFieldVisible('workYears') ? (
+          <SectionFormField>
+            <EditorAnchor sectionId="basics" fieldKey="workYears">
+              <label className="text-xs text-muted-foreground block mb-2">工作年限</label>
+              <Select
+                value={basics.workYears}
+                onChange={(value) => updateField('workYears', Array.isArray(value) ? value[0] || '' : value)}
+                style={{ width: '100%' }}
+              >
+                {WORK_YEAR_OPTIONS.map((option) => (
+                  <Option key={option.value || 'empty-work-years'} value={option.value}>
+                    {option.label}
+                  </Option>
+                ))}
+              </Select>
+            </EditorAnchor>
+          </SectionFormField>
+        ) : null}
+
+        {isExtraFieldVisible('email') ? (
+          <SectionFormField>
+            <EditorAnchor sectionId="basics" fieldKey="email">
+              <label className="text-xs text-muted-foreground block mb-2">联系邮箱</label>
+              <PanelInput value={basics.email} onChange={(value) => updateField('email', value)} placeholder="请输入邮箱" />
+            </EditorAnchor>
+          </SectionFormField>
+        ) : null}
+
+        {isExtraFieldVisible('maritalStatus') ? (
+          <SectionFormField>
+            <EditorAnchor sectionId="basics" fieldKey="maritalStatus">
+              <label className="text-xs text-muted-foreground block mb-2">婚姻状况</label>
+              <Select
+                value={basics.maritalStatus}
+                onChange={(value) => updateField('maritalStatus', Array.isArray(value) ? value[0] || '' : value)}
+                style={{ width: '100%' }}
+              >
+                {MARITAL_STATUS_OPTIONS.map((option) => (
+                  <Option key={option.value || 'empty-marital'} value={option.value}>
+                    {option.label}
+                  </Option>
+                ))}
+              </Select>
+            </EditorAnchor>
+          </SectionFormField>
+        ) : null}
+
+        {isExtraFieldVisible('nativePlace') ? (
+          <SectionFormField>
+            <EditorAnchor sectionId="basics" fieldKey="nativePlace">
+              <label className="text-xs text-muted-foreground block mb-2">籍贯</label>
+              <PanelInput value={basics.nativePlace} onChange={(value) => updateField('nativePlace', value)} placeholder="请输入籍贯" />
+            </EditorAnchor>
+          </SectionFormField>
+        ) : null}
+
+        {isExtraFieldVisible('politicalStatus') ? (
+          <SectionFormField>
+            <EditorAnchor sectionId="basics" fieldKey="politicalStatus">
+              <label className="text-xs text-muted-foreground block mb-2">政治面貌</label>
+              <Select
+                value={basics.politicalStatus}
+                onChange={(value) => updateField('politicalStatus', Array.isArray(value) ? value[0] || '' : value)}
+                style={{ width: '100%' }}
+              >
+                {POLITICAL_STATUS_OPTIONS.map((option) => (
+                  <Option key={option.value || 'empty-politics'} value={option.value}>
+                    {option.label}
+                  </Option>
+                ))}
+              </Select>
+            </EditorAnchor>
+          </SectionFormField>
+        ) : null}
+
+        {isExtraFieldVisible('heightWeight') ? (
+          <SectionFormField>
+            <EditorAnchor sectionId="basics" fieldKey="heightCm weightKg">
+              <label className="text-xs text-muted-foreground block mb-2">身高 / 体重</label>
+              <div className="grid grid-cols-2 gap-2">
+                <ScrubbableNumberInput
+                  value={basics.heightCm}
+                  placeholder="身高"
+                  suffix="cm"
+                  config={BASICS_HEIGHT_LIMIT}
+                  onChange={(nextValue) => updateField('heightCm', nextValue)}
                 />
-                显示年龄
-              </label>
-            </div>
-            <MonthPickerField
-              label="出生年月"
-              value={basics.birthDate}
-              placeholder="不填"
-              maxValue={dateToYearMonth(new Date())}
-              showLabel={false}
-              showTriggerIcon={false}
-              onChange={(nextValue) => updateField('birthDate', nextValue)}
-            />
-          </EditorAnchor>
-        </SectionFormField>
+                <ScrubbableNumberInput
+                  value={basics.weightKg}
+                  placeholder="体重"
+                  suffix="kg"
+                  config={BASICS_WEIGHT_LIMIT}
+                  onChange={(nextValue) => updateField('weightKg', nextValue)}
+                />
+              </div>
+            </EditorAnchor>
+          </SectionFormField>
+        ) : null}
 
-        <SectionFormField>
-          <EditorAnchor sectionId="basics" fieldKey="workYears">
-            <label className="text-xs text-muted-foreground block mb-1">工作年限</label>
-            <Select
-              value={basics.workYears}
-              onChange={(value) => updateField('workYears', Array.isArray(value) ? value[0] || '' : value)}
-              style={{ width: '100%' }}
-            >
-              {WORK_YEAR_OPTIONS.map((option) => (
-                <Option key={option.value || 'empty-work-years'} value={option.value}>
-                  {option.label}
-                </Option>
-              ))}
-            </Select>
-          </EditorAnchor>
-        </SectionFormField>
+        {isExtraFieldVisible('location') ? (
+          <SectionFormField>
+            <EditorAnchor sectionId="basics" fieldKey="location">
+              <label className="text-xs text-muted-foreground block mb-2">当前所在地</label>
+              <PanelInput value={basics.location} onChange={(value) => updateField('location', value)} placeholder="请输入当前城市" />
+            </EditorAnchor>
+          </SectionFormField>
+        ) : null}
 
-        <SectionFormField>
-          <EditorAnchor sectionId="basics" fieldKey="phone">
-            <label className="text-xs text-muted-foreground block mb-1">联系电话</label>
-            <Input value={basics.phone} onChange={(value) => updateField('phone', value)} placeholder="请输入电话" />
-          </EditorAnchor>
-        </SectionFormField>
-
-        <SectionFormField>
-          <EditorAnchor sectionId="basics" fieldKey="email">
-            <label className="text-xs text-muted-foreground block mb-1">联系邮箱</label>
-            <Input value={basics.email} onChange={(value) => updateField('email', value)} placeholder="请输入邮箱" />
-          </EditorAnchor>
-        </SectionFormField>
-
-        <SectionFormField>
-          <EditorAnchor sectionId="basics" fieldKey="maritalStatus">
-            <label className="text-xs text-muted-foreground block mb-1">婚姻状况</label>
-            <Select
-              value={basics.maritalStatus}
-              onChange={(value) => updateField('maritalStatus', Array.isArray(value) ? value[0] || '' : value)}
-              style={{ width: '100%' }}
-            >
-              {MARITAL_STATUS_OPTIONS.map((option) => (
-                <Option key={option.value || 'empty-marital'} value={option.value}>
-                  {option.label}
-                </Option>
-              ))}
-            </Select>
-          </EditorAnchor>
-        </SectionFormField>
-
-        <SectionFormField>
-          <EditorAnchor sectionId="basics" fieldKey="ethnicity">
-            <label className="text-xs text-muted-foreground block mb-1">民族</label>
-            <Input value={basics.ethnicity} onChange={(value) => updateField('ethnicity', value)} placeholder="请输入民族" />
-          </EditorAnchor>
-        </SectionFormField>
-
-        <SectionFormField>
-          <EditorAnchor sectionId="basics" fieldKey="nativePlace">
-            <label className="text-xs text-muted-foreground block mb-1">籍贯</label>
-            <Input value={basics.nativePlace} onChange={(value) => updateField('nativePlace', value)} placeholder="请输入籍贯" />
-          </EditorAnchor>
-        </SectionFormField>
-
-        <SectionFormField>
-          <EditorAnchor sectionId="basics" fieldKey="politicalStatus">
-            <label className="text-xs text-muted-foreground block mb-1">政治面貌</label>
-            <Select
-              value={basics.politicalStatus}
-              onChange={(value) => updateField('politicalStatus', Array.isArray(value) ? value[0] || '' : value)}
-              style={{ width: '100%' }}
-            >
-              {POLITICAL_STATUS_OPTIONS.map((option) => (
-                <Option key={option.value || 'empty-politics'} value={option.value}>
-                  {option.label}
-                </Option>
-              ))}
-            </Select>
-          </EditorAnchor>
-        </SectionFormField>
-
-        <SectionFormField>
-          <EditorAnchor sectionId="basics" fieldKey="heightCm weightKg">
-            <label className="text-xs text-muted-foreground block mb-1">身高 / 体重</label>
-            <div className="grid grid-cols-2 gap-2">
-              <ScrubbableNumberInput
-                value={basics.heightCm}
-                placeholder="身高"
-                suffix="cm"
-                config={BASICS_HEIGHT_LIMIT}
-                onChange={(nextValue) => updateField('heightCm', nextValue)}
+        {isExtraFieldVisible('websiteUrl') ? (
+          <SectionFormField>
+            <EditorAnchor sectionId="basics" fieldKey="website.url">
+              <label className="text-xs text-muted-foreground block mb-2">个人网站链接</label>
+              <PanelInput
+                value={basics.website.url}
+                onChange={(value) =>
+                  updateResumeData((draft) => {
+                    draft.basics.website.url = value
+                  })
+                }
+                placeholder="https://example.com"
               />
-              <ScrubbableNumberInput
-                value={basics.weightKg}
-                placeholder="体重"
-                suffix="kg"
-                config={BASICS_WEIGHT_LIMIT}
-                onChange={(nextValue) => updateField('weightKg', nextValue)}
+            </EditorAnchor>
+          </SectionFormField>
+        ) : null}
+
+        {isExtraFieldVisible('websiteLabel') ? (
+          <SectionFormField>
+            <EditorAnchor sectionId="basics" fieldKey="website.label">
+              <label className="text-xs text-muted-foreground block mb-2">网站显示文本</label>
+              <PanelInput
+                value={basics.website.label}
+                onChange={(value) =>
+                  updateResumeData((draft) => {
+                    draft.basics.website.label = value
+                  })
+                }
+                placeholder="个人主页"
               />
-            </div>
-          </EditorAnchor>
-        </SectionFormField>
+            </EditorAnchor>
+          </SectionFormField>
+        ) : null}
 
-        <SectionFormField>
-          <EditorAnchor sectionId="basics" fieldKey="location">
-            <label className="text-xs text-muted-foreground block mb-1">当前所在地</label>
-            <Input value={basics.location} onChange={(value) => updateField('location', value)} placeholder="请输入当前城市" />
-          </EditorAnchor>
-        </SectionFormField>
-
-        <SectionFormField>
-          <EditorAnchor sectionId="basics" fieldKey="website.url">
-            <label className="text-xs text-muted-foreground block mb-1">个人网站链接</label>
-            <Input
-              value={basics.website.url}
-              onChange={(value) =>
-                updateResumeData((draft) => {
-                  draft.basics.website.url = value
-                })
-              }
-              placeholder="https://example.com"
-            />
-          </EditorAnchor>
-        </SectionFormField>
-
-        <SectionFormField>
-          <EditorAnchor sectionId="basics" fieldKey="website.label">
-            <label className="text-xs text-muted-foreground block mb-1">网站显示文本</label>
-            <Input
-              value={basics.website.label}
-              onChange={(value) =>
-                updateResumeData((draft) => {
-                  draft.basics.website.label = value
-                })
-              }
-              placeholder="个人主页"
-            />
-          </EditorAnchor>
-        </SectionFormField>
+        {hiddenExtraFields.length > 0 ? (
+          <SectionFormField wide className="resume-basics-extra-field">
+            <section className="resume-basics-extra-section" aria-label="其他信息">
+              <div className="resume-basics-extra">
+                <p className="resume-basics-extra-title">其他信息</p>
+                <div className="resume-basics-extra-tags">
+                  {hiddenExtraFields.map((field) => (
+                    <button
+                      key={field.key}
+                      type="button"
+                      className="resume-basics-extra-tag"
+                      onClick={() => showExtraField(field.key)}
+                    >
+                      + {field.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </section>
+          </SectionFormField>
+        ) : null}
       </SectionFormGrid>
     </div>
   )
@@ -917,21 +900,9 @@ function SummaryEditor() {
 
 function SkillsSectionEditor() {
   const section = useResumeBuilderStore((state) => state.data.sections.skills)
-  const reorderItem = useResumeBuilderStore((state) => state.reorderStandardSectionItem)
   const updateResumeData = useResumeBuilderStore((state) => state.updateResumeData)
   const updateItem = useResumeBuilderStore((state) => state.updateStandardSectionItem)
   const removeItem = useResumeBuilderStore((state) => state.removeStandardSectionItem)
-  const sortSensors = useEditorItemSortSensors()
-  const sortableItemIds = useMemo(
-    () => section.items.map((item, index) => resolveEditorItemId(item.id, `skills-${index}`)),
-    [section.items],
-  )
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    const indexes = resolveItemReorderIndexes(sortableItemIds, event)
-    if (!indexes) return
-    reorderItem('skills', indexes.fromIndex, indexes.toIndex)
-  }
 
   return (
     <div className="space-y-3">
@@ -949,74 +920,64 @@ function SkillsSectionEditor() {
       </EditorAnchor>
 
       {section.items.length > 0 ? (
-        <DndContext sensors={sortSensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <SortableContext items={sortableItemIds} strategy={verticalListSortingStrategy}>
-            <div className="resume-skill-inline-list">
-              {section.items.map((item, index) => {
-                const itemId = resolveEditorItemId(item.id, `skills-${index}`)
+        <div className="resume-skill-inline-list">
+          {section.items.map((item, index) => {
+            const itemId = resolveEditorItemId(item.id, `skills-${index}`)
 
-                return (
-                  <SortableEditorItemFrame key={itemId} id={itemId} disabled={section.items.length < 2}>
-                    {(dragHandle) => (
-                      <div className="resume-soft-card resume-skill-inline-card">
-                        <div className="resume-skill-inline-content">
-                          <div className="resume-skill-inline-drag">{dragHandle}</div>
+            return (
+              <div key={itemId} className="resume-soft-card resume-skill-inline-card">
+                <div className="resume-skill-inline-content">
+                  <EditorAnchor
+                    sectionId="skills"
+                    itemId={itemId}
+                    fieldKey="name"
+                    className="resume-skill-inline-field is-name"
+                  >
+                    <PanelInput
+                      value={item.name}
+                      onChange={(value) => updateItem('skills', index, { name: value })}
+                      placeholder="技能名称"
+                    />
+                  </EditorAnchor>
 
-                          <EditorAnchor
-                            sectionId="skills"
-                            itemId={itemId}
-                            fieldKey="name"
-                            className="resume-skill-inline-field is-name"
-                          >
-                            <Input
-                              value={item.name}
-                              onChange={(value) => updateItem('skills', index, { name: value })}
-                              placeholder="技能名称"
-                            />
-                          </EditorAnchor>
+                  <EditorAnchor
+                    sectionId="skills"
+                    itemId={itemId}
+                    fieldKey="proficiency"
+                    className="resume-skill-inline-field is-proficiency"
+                  >
+                    <Select
+                      value={item.proficiency || DEFAULT_SKILL_PROFICIENCY}
+                      onChange={(value) =>
+                        updateItem('skills', index, {
+                          proficiency: toSingleSelectValue(value) || DEFAULT_SKILL_PROFICIENCY,
+                        })
+                      }
+                      placeholder="选择熟练度"
+                      style={{ width: '100%' }}
+                    >
+                      {SKILL_PROFICIENCY_OPTIONS.map((option) => (
+                        <Option key={option.value} value={option.value}>
+                          {option.label}
+                        </Option>
+                      ))}
+                    </Select>
+                  </EditorAnchor>
 
-                          <EditorAnchor
-                            sectionId="skills"
-                            itemId={itemId}
-                            fieldKey="proficiency"
-                            className="resume-skill-inline-field is-proficiency"
-                          >
-                            <Select
-                              value={item.proficiency || DEFAULT_SKILL_PROFICIENCY}
-                              onChange={(value) =>
-                                updateItem('skills', index, {
-                                  proficiency: toSingleSelectValue(value) || DEFAULT_SKILL_PROFICIENCY,
-                                })
-                              }
-                              placeholder="选择熟练度"
-                              style={{ width: '100%' }}
-                            >
-                              {SKILL_PROFICIENCY_OPTIONS.map((option) => (
-                                <Option key={option.value} value={option.value}>
-                                  {option.label}
-                                </Option>
-                              ))}
-                            </Select>
-                          </EditorAnchor>
-
-                          <div className="resume-skill-inline-actions">
-                            <Button
-                              type="text"
-                              size="mini"
-                              status="danger"
-                              icon={<IconDelete />}
-                              onClick={() => removeItem('skills', index)}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </SortableEditorItemFrame>
-                )
-              })}
-            </div>
-          </SortableContext>
-        </DndContext>
+                  <div className="resume-skill-inline-actions">
+                    <Button
+                      type="text"
+                      size="mini"
+                      status="danger"
+                      icon={<IconDelete />}
+                      onClick={() => removeItem('skills', index)}
+                    />
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
       ) : (
         <div className="resume-skill-inline-empty text-xs text-muted-foreground">点击下方“新增条目”添加技能词条</div>
       )}
@@ -1026,101 +987,99 @@ function SkillsSectionEditor() {
 
 function StandardSectionEditor({ sectionId }: { sectionId: StandardSectionType }) {
   const section = useResumeBuilderStore((state) => state.data.sections[sectionId])
-  const reorderItem = useResumeBuilderStore((state) => state.reorderStandardSectionItem)
   const updateItem = useResumeBuilderStore((state) => state.updateStandardSectionItem)
   const removeItem = useResumeBuilderStore((state) => state.removeStandardSectionItem)
-  const [collapsedItemIds, setCollapsedItemIds] = useState<string[]>([])
+  const [, forceCollapseStateVersion] = useState(0)
   const collapseEnabled = supportsStandardSectionItemSummary(sectionId)
-  const sortSensors = useEditorItemSortSensors()
-  const sortableItemIds = useMemo(
-    () => section.items.map((item, index) => resolveEditorItemId(item.id, `${sectionId}-${index}`)),
+  const itemIds = useMemo(
+    () =>
+      section.items.map((item, index) =>
+        resolveEditorItemId(item.id, `${sectionId}-${index}`),
+      ),
     [section.items, sectionId],
   )
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    const indexes = resolveItemReorderIndexes(sortableItemIds, event)
-    if (!indexes) return
-    reorderItem(sectionId, indexes.fromIndex, indexes.toIndex)
-  }
+  const rememberedExpandedItemId = getStandardSectionExpandedItem(sectionId)
+  const expandedItemId =
+    rememberedExpandedItemId && itemIds.includes(rememberedExpandedItemId)
+      ? rememberedExpandedItemId
+      : null
 
   return (
     <div className="space-y-3">
-      <DndContext sensors={sortSensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <SortableContext items={sortableItemIds} strategy={verticalListSortingStrategy}>
-          <div className="space-y-3">
-            {section.items.map((item, index) => {
-              const record = item as unknown as Record<string, unknown>
-              const fields = SECTION_FIELD_CONFIG[sectionId]
-              const itemId = resolveEditorItemId(item.id, `${sectionId}-${index}`)
-              const summary = resolveStandardSectionItemSummary(sectionId, record)
-              const collapsed = collapseEnabled && collapsedItemIds.includes(itemId)
-              const toggleCollapsed = () => {
-                if (!collapseEnabled) return
-                setCollapsedItemIds((prev) =>
-                  prev.includes(itemId) ? prev.filter((id) => id !== itemId) : [...prev, itemId],
-                )
-              }
+      <div className="space-y-3">
+        {section.items.map((item, index) => {
+          const record = item as unknown as Record<string, unknown>
+          const fields = SECTION_FIELD_CONFIG[sectionId]
+          const itemId = resolveEditorItemId(item.id, `${sectionId}-${index}`)
+          const summary = resolveStandardSectionItemSummary(sectionId, record)
+          const collapsed = collapseEnabled ? expandedItemId !== itemId : false
+          const toggleCollapsed = () => {
+            if (!collapseEnabled) return
+            setStandardSectionExpandedItem(
+              sectionId,
+              expandedItemId === itemId ? null : itemId,
+            )
+            forceCollapseStateVersion((version) => version + 1)
+          }
 
-              return (
-                <SortableEditorItemFrame key={itemId} id={itemId} disabled={section.items.length < 2}>
-                  {(dragHandle) => (
-                    <EditorAnchor
-                      sectionId={sectionId}
-                      itemId={itemId}
-                      className={`resume-soft-card resume-standard-item-card p-3 ${collapsed ? 'is-collapsed' : 'is-expanded'}`}
+          return (
+            <EditorAnchor
+              key={itemId}
+              sectionId={sectionId}
+              itemId={itemId}
+              className={`resume-soft-card resume-standard-item-card p-3 ${collapsed ? 'is-collapsed' : 'is-expanded'}`}
+            >
+              <div
+                className={`resume-standard-item-head ${collapseEnabled ? 'is-collapsible' : ''}`}
+                role={collapseEnabled ? 'button' : undefined}
+                tabIndex={collapseEnabled ? 0 : undefined}
+                aria-expanded={collapseEnabled ? !collapsed : undefined}
+                onClick={toggleCollapsed}
+                onKeyDown={(event) => {
+                  if (!collapseEnabled) return
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault()
+                    toggleCollapsed()
+                  }
+                }}
+              >
+                <div className="resume-standard-item-head-main">
+                  {collapseEnabled ? (
+                    <span
+                      className={joinClassNames('resume-standard-item-head-toggle', !collapsed && 'is-expanded')}
                     >
-                      <div
-                        className={`resume-standard-item-head ${collapseEnabled ? 'is-collapsible' : ''}`}
-                        role={collapseEnabled ? 'button' : undefined}
-                        tabIndex={collapseEnabled ? 0 : undefined}
-                        aria-expanded={collapseEnabled ? !collapsed : undefined}
-                        onClick={toggleCollapsed}
-                        onKeyDown={(event) => {
-                          if (!collapseEnabled) return
-                          if (event.key === 'Enter' || event.key === ' ') {
-                            event.preventDefault()
-                            toggleCollapsed()
-                          }
-                        }}
-                      >
-                        <div className="resume-standard-item-head-main">
-                          {dragHandle}
-                          {collapseEnabled ? (
-                            <span
-                              className={joinClassNames('resume-standard-item-head-toggle', !collapsed && 'is-expanded')}
-                            >
-                              <IconChevronRight />
-                            </span>
-                          ) : null}
-                          {summary ? (
-                            <div
-                              className="resume-standard-item-summary"
-                              title={`${summary.primary} / ${summary.secondary}`}
-                            >
-                              <span className="resume-standard-item-summary-primary">{summary.primary}</span>
-                              <span className="resume-standard-item-summary-sep">/</span>
-                              <span className="resume-standard-item-summary-secondary">{summary.secondary}</span>
-                            </div>
-                          ) : null}
-                        </div>
-                        <div className="resume-standard-item-head-actions">
-                          <Space>
-                            <Button
-                              type="text"
-                              size="mini"
-                              status="danger"
-                              icon={<IconDelete />}
-                              onClick={(event) => {
-                                event.stopPropagation()
-                                removeItem(sectionId, index)
-                              }}
-                            />
-                          </Space>
-                        </div>
-                      </div>
+                      <IconChevronRight />
+                    </span>
+                  ) : null}
+                  {summary ? (
+                    <div
+                      className="resume-standard-item-summary"
+                      title={`${summary.primary} / ${summary.secondary}`}
+                    >
+                      <span className="resume-standard-item-summary-primary">{summary.primary}</span>
+                      <span className="resume-standard-item-summary-sep">/</span>
+                      <span className="resume-standard-item-summary-secondary">{summary.secondary}</span>
+                    </div>
+                  ) : null}
+                </div>
+                <div className="resume-standard-item-head-actions">
+                  <Space>
+                    <Button
+                      type="text"
+                      size="mini"
+                      status="danger"
+                      icon={<IconDelete />}
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        removeItem(sectionId, index)
+                      }}
+                    />
+                  </Space>
+                </div>
+              </div>
 
-                      <CollapseMotion open={!collapsed} className="resume-standard-item-collapse">
-                        <SectionFormGrid className="resume-standard-item-content">
+              <CollapseMotion open={!collapsed} className="resume-standard-item-collapse">
+                <SectionFormGrid className="resume-standard-item-content">
                           {fields.map((field) => {
                             const currentValue = getNestedValue(record, field.key)
                             const isWideField = field.type === 'rich' || field.type === 'keywords'
@@ -1129,7 +1088,7 @@ function StandardSectionEditor({ sectionId }: { sectionId: StandardSectionType }
                               return (
                                 <SectionFormField key={field.key} className="resume-standard-item-field" wide={isWideField}>
                                   <EditorAnchor sectionId={sectionId} itemId={itemId} fieldKey={field.key}>
-                                    <label className="text-xs text-muted-foreground block mb-1">{field.label}</label>
+                                    <label className="text-xs text-muted-foreground block mb-2">{field.label}</label>
                                     <RichTextEditor
                                       value={String(currentValue || '')}
                                       onChange={(value) =>
@@ -1146,8 +1105,8 @@ function StandardSectionEditor({ sectionId }: { sectionId: StandardSectionType }
                               return (
                                 <SectionFormField key={field.key} className="resume-standard-item-field" wide={isWideField}>
                                   <EditorAnchor sectionId={sectionId} itemId={itemId} fieldKey={field.key}>
-                                    <label className="text-xs text-muted-foreground block mb-1">{field.label}</label>
-                                    <Input
+                                    <label className="text-xs text-muted-foreground block mb-2">{field.label}</label>
+                                    <PanelInput
                                       value={Array.isArray(currentValue) ? currentValue.join(', ') : ''}
                                       onChange={(value) => {
                                         const keywords = value
@@ -1167,8 +1126,8 @@ function StandardSectionEditor({ sectionId }: { sectionId: StandardSectionType }
                               return (
                                 <SectionFormField key={field.key} className="resume-standard-item-field" wide={isWideField}>
                                   <EditorAnchor sectionId={sectionId} itemId={itemId} fieldKey={field.key}>
-                                    <label className="text-xs text-muted-foreground block mb-1">{field.label}</label>
-                                    <Input
+                                    <label className="text-xs text-muted-foreground block mb-2">{field.label}</label>
+                                    <PanelInput
                                       type="number"
                                       value={String(currentValue || '')}
                                       onChange={(value) =>
@@ -1227,8 +1186,8 @@ function StandardSectionEditor({ sectionId }: { sectionId: StandardSectionType }
                             return (
                               <SectionFormField key={field.key} className="resume-standard-item-field" wide={isWideField}>
                                 <EditorAnchor sectionId={sectionId} itemId={itemId} fieldKey={field.key}>
-                                  <label className="text-xs text-muted-foreground block mb-1">{field.label}</label>
-                                  <Input
+                                  <label className="text-xs text-muted-foreground block mb-2">{field.label}</label>
+                                  <PanelInput
                                     value={String(currentValue || '')}
                                     onChange={(value) =>
                                       updateItem(sectionId, index, createNestedPatch(record, field.key, value))
@@ -1241,13 +1200,9 @@ function StandardSectionEditor({ sectionId }: { sectionId: StandardSectionType }
                         </SectionFormGrid>
                       </CollapseMotion>
                     </EditorAnchor>
-                  )}
-                </SortableEditorItemFrame>
-              )
-            })}
-          </div>
-        </SortableContext>
-      </DndContext>
+                  )
+                })}
+      </div>
     </div>
   )
 }
@@ -1257,20 +1212,11 @@ function CustomSectionInlineEditor({ sectionId }: { sectionId: string }) {
     state.data.customSections.find((item) => item.id === sectionId),
   )
   const updateCustomSection = useResumeBuilderStore((state) => state.updateCustomSection)
-  const reorderCustomItem = useResumeBuilderStore((state) => state.reorderCustomSectionItem)
   const updateCustomItem = useResumeBuilderStore((state) => state.updateCustomSectionItem)
   const removeCustomItem = useResumeBuilderStore((state) => state.removeCustomSectionItem)
-  const sortSensors = useEditorItemSortSensors()
 
   if (!section) {
     return <div className="text-xs text-muted-foreground">该自定义板块不存在</div>
-  }
-
-  const sortableItemIds = section.items.map((item, index) => resolveEditorItemId(item.id, `${section.id}-${index}`))
-  const handleDragEnd = (event: DragEndEvent) => {
-    const indexes = resolveItemReorderIndexes(sortableItemIds, event)
-    if (!indexes) return
-    reorderCustomItem(section.id, indexes.fromIndex, indexes.toIndex)
   }
 
   return (
@@ -1295,78 +1241,69 @@ function CustomSectionInlineEditor({ sectionId }: { sectionId: string }) {
         </Select>
       </EditorAnchor>
 
-      <DndContext sensors={sortSensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <SortableContext items={sortableItemIds} strategy={verticalListSortingStrategy}>
-          <div className="space-y-3">
-            {section.items.map((item, index) => {
-              const itemId = resolveEditorItemId(item.id, `${section.id}-${index}`)
+      <div className="space-y-3">
+        {section.items.map((item, index) => {
+          const itemId = resolveEditorItemId(item.id, `${section.id}-${index}`)
 
-              return (
-                <SortableEditorItemFrame key={itemId} id={itemId} disabled={section.items.length < 2}>
-                  {(dragHandle) => (
-                    <EditorAnchor sectionId={section.id} itemId={itemId} className="resume-soft-card p-2">
-                      <div className="resume-custom-inline-item-head">
-                        <div className="resume-custom-inline-item-drag">{dragHandle}</div>
-                        <Space>
-                          <Button
-                            type="text"
-                            size="mini"
-                            status="danger"
-                            icon={<IconDelete />}
-                            onClick={() => removeCustomItem(section.id, index)}
-                          />
-                        </Space>
-                      </div>
+          return (
+            <EditorAnchor key={itemId} sectionId={section.id} itemId={itemId} className="resume-soft-card p-2">
+              <div className="resume-custom-inline-item-head">
+                <Space>
+                  <Button
+                    type="text"
+                    size="mini"
+                    status="danger"
+                    icon={<IconDelete />}
+                    onClick={() => removeCustomItem(section.id, index)}
+                  />
+                </Space>
+              </div>
 
-                      {section.type === 'cover-letter' ? (
-                        <div className="space-y-2">
-                          <EditorAnchor sectionId={section.id} itemId={itemId} fieldKey="recipient">
-                            <label className="block text-xs text-muted-foreground">收件人信息</label>
-                            <RichTextEditor
-                              value={String((item as unknown as { recipient?: string }).recipient || '')}
-                              onChange={(value) =>
-                                updateCustomItem(section.id, index, {
-                                  recipient: value,
-                                })
-                              }
-                              minHeight={80}
-                            />
-                          </EditorAnchor>
+              {section.type === 'cover-letter' ? (
+                <div className="space-y-2">
+                  <EditorAnchor sectionId={section.id} itemId={itemId} fieldKey="recipient">
+                    <label className="block text-xs text-muted-foreground">收件人信息</label>
+                    <RichTextEditor
+                      value={String((item as unknown as { recipient?: string }).recipient || '')}
+                      onChange={(value) =>
+                        updateCustomItem(section.id, index, {
+                          recipient: value,
+                        })
+                      }
+                      minHeight={80}
+                    />
+                  </EditorAnchor>
 
-                          <EditorAnchor sectionId={section.id} itemId={itemId} fieldKey="content">
-                            <label className="block text-xs text-muted-foreground">正文</label>
-                            <RichTextEditor
-                              value={String((item as unknown as { content?: string }).content || '')}
-                              onChange={(value) =>
-                                updateCustomItem(section.id, index, {
-                                  content: value,
-                                })
-                              }
-                              minHeight={120}
-                            />
-                          </EditorAnchor>
-                        </div>
-                      ) : (
-                        <EditorAnchor sectionId={section.id} itemId={itemId} fieldKey="content">
-                          <RichTextEditor
-                            value={String((item as unknown as { content?: string }).content || '')}
-                            onChange={(value) =>
-                              updateCustomItem(section.id, index, {
-                                content: value,
-                              })
-                            }
-                            minHeight={120}
-                          />
-                        </EditorAnchor>
-                      )}
-                    </EditorAnchor>
-                  )}
-                </SortableEditorItemFrame>
-              )
-            })}
-          </div>
-        </SortableContext>
-      </DndContext>
+                  <EditorAnchor sectionId={section.id} itemId={itemId} fieldKey="content">
+                    <label className="block text-xs text-muted-foreground">正文</label>
+                    <RichTextEditor
+                      value={String((item as unknown as { content?: string }).content || '')}
+                      onChange={(value) =>
+                        updateCustomItem(section.id, index, {
+                          content: value,
+                        })
+                      }
+                      minHeight={120}
+                    />
+                  </EditorAnchor>
+                </div>
+              ) : (
+                <EditorAnchor sectionId={section.id} itemId={itemId} fieldKey="content">
+                  <RichTextEditor
+                    value={String((item as unknown as { content?: string }).content || '')}
+                    onChange={(value) =>
+                      updateCustomItem(section.id, index, {
+                        content: value,
+                      })
+                    }
+                    minHeight={120}
+                  />
+                </EditorAnchor>
+              )}
+            </EditorAnchor>
+          )
+        })}
+      </div>
     </div>
   )
 }
