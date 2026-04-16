@@ -46,7 +46,7 @@ const ACCOUNT_SECTION_ITEM = SECTION_ITEMS.find(item => item.id === 'account')!
 
 function DashboardWorkbenchLoading() {
   return (
-    <div className={styles.app}>
+    <div className={styles.app} data-dashboard-theme="builder-aligned">
       <div className={styles.loadingShell}>
         <div className={styles.loadingSidebar} />
         <div className={styles.loadingMain}>
@@ -140,12 +140,12 @@ function DashboardWorkbenchInner() {
   }
 
   return (
-    <div className={styles.app}>
+    <div className={styles.app} data-dashboard-theme="builder-aligned">
       {mobileNavOpen ? <div className={styles.drawerBackdrop} onClick={() => setMobileNavOpen(false)} /> : null}
 
-      <div className={styles.layout}>
-        <aside className={styles.sidebar}>
-          <div className={styles.brand}>
+      <div className={styles.desktopShell}>
+        <header className={styles.desktopHeader}>
+          <div className={styles.desktopHeaderBrand}>
             <Link href="/" className={styles.brandMark} aria-label="返回首页">
               <span className={styles.brandGlow} aria-hidden />
               <BrandFlowerIcon className={styles.brandIcon} color="var(--dash-brand)" />
@@ -155,7 +155,20 @@ function DashboardWorkbenchInner() {
               <p className={styles.brandMeta}>个人工作台</p>
             </div>
           </div>
+          <div className={styles.desktopHeaderMeta}>
+            <div className={styles.desktopSectionChip}>
+              <ActiveSectionIcon className={styles.desktopSectionChipIcon} />
+              <span>{activeItem.label}</span>
+            </div>
+            <div className={styles.desktopUserSummary}>
+              <p className={styles.desktopUserLabel}>{getUserDisplayName(user)}</p>
+              <p className={styles.desktopUserMeta}>{user.email || '已登录'}</p>
+            </div>
+          </div>
+        </header>
 
+        <div className={styles.desktopBody}>
+          <aside className={styles.desktopSidebar}>
           <nav className={styles.nav} aria-label="个人工作台导航">
             {visiblePrimarySectionItems.map(item => {
               const Icon = item.icon
@@ -187,10 +200,10 @@ function DashboardWorkbenchInner() {
               <span className={styles.navText}>{ACCOUNT_SECTION_ITEM.label}</span>
             </Link>
           </div>
-        </aside>
+          </aside>
 
-        <div className={styles.content}>
-          <div className={styles.mobileTopbar}>
+          <main className={cn(styles.desktopMain, styles.sections)}>
+            <div className={styles.mobileTopbar}>
             <button
               type="button"
               className={styles.mobileMenuButton}
@@ -203,9 +216,8 @@ function DashboardWorkbenchInner() {
               <ActiveSectionIcon size={16} />
               {activeItem.label}
             </div>
-          </div>
+            </div>
 
-          <main className={styles.sections}>
             <div className={cn(styles.sectionFrame, resolvedActiveSection !== 'tracking' && styles.sectionFrameHidden)}>
               {mountedSections.tracking ? (
                 <TrackingSection onRecordsMutated={() => setRecordsVersion(current => current + 1)} />
@@ -242,8 +254,8 @@ function DashboardWorkbenchInner() {
         </div>
       </div>
 
-      <div className={cn(styles.drawer, mobileNavOpen && styles.drawerOpen)}>
-        <aside className={styles.sidebar}>
+      <div className={cn(styles.drawerShell, mobileNavOpen && styles.drawerOpen)}>
+        <aside className={styles.drawerSidebar}>
           <div className={cn(styles.brand, styles.drawerBrand)}>
             <div className={styles.drawerBrandIdentity}>
               <Link href="/" className={cn(styles.brandMark, styles.drawerBrandMark)} aria-label="返回首页">
