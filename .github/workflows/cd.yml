@@ -394,7 +394,9 @@ jobs:
 
             # Build artifacts are still published to ghcr.io.
             # Deploy uses the ghcr.nju.edu.cn mirror for faster pulls in mainland China.
-            export IMAGE_NAME="${{ steps.deploy_image.outputs.name }}"
+            export PRIMARY_IMAGE_NAME="${{ steps.deploy_image.outputs.name }}"
+            export FALLBACK_IMAGE_NAME="${{ steps.image.outputs.name }}"
+            export IMAGE_NAME="${PRIMARY_IMAGE_NAME}"
             export IMAGE_TAG="sha-${{ github.sha }}"
 
             CURRENT_STAGE="validate_image_ref"
@@ -412,14 +414,40 @@ jobs:
               exit 1
             fi
 
+            run_with_timeout() {
+              timeout_seconds="$1"
+              shift
+
+              if timeout "${timeout_seconds}" "$@"; then
+                return 0
+              fi
+
+              status="$?"
+              if [ "$status" -eq 127 ]; then
+                if "$@"; then
+                  return 0
+                fi
+                return "$?"
+              fi
+
+              return "$status"
+            }
+
             CURRENT_STAGE="compose_up_dependencies"
             compose_cmd up -d db redis
             CURRENT_STAGE="wait_db_healthy"
             wait_healthy resume-db
             CURRENT_STAGE="wait_redis_healthy"
             wait_healthy resume-redis
-            CURRENT_STAGE="compose_pull_runtime_images"
-            compose_cmd pull app nginx
+            CURRENT_STAGE="compose_pull_app_primary"
+            if ! run_with_timeout 900 compose_cmd pull app; then
+              echo "Primary app image pull failed or timed out after 900s: ${PRIMARY_IMAGE_NAME}:${IMAGE_TAG}"
+              echo "Falling back to GHCR origin: ${FALLBACK_IMAGE_NAME}:${IMAGE_TAG}"
+              export IMAGE_NAME="${FALLBACK_IMAGE_NAME}"
+
+              CURRENT_STAGE="compose_pull_app_fallback"
+              run_with_timeout 900 compose_cmd pull app
+            fi
             CURRENT_STAGE="run_prisma_migrate"
             compose_cmd run --rm app pnpm exec prisma migrate deploy
             CURRENT_STAGE="compose_up_app_nginx"
