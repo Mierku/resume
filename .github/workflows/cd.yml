@@ -448,6 +448,16 @@ jobs:
               CURRENT_STAGE="compose_pull_app_fallback"
               run_with_timeout 900 compose_cmd pull app
             fi
+
+            CURRENT_STAGE="sync_db_password"
+            desired_pg_password="$(awk -F= '/^POSTGRES_PASSWORD=/{print substr($0, index($0, "=") + 1); exit}' .env || true)"
+            if [ -z "$desired_pg_password" ]; then
+              desired_pg_password="postgres"
+            fi
+            desired_pg_password="$(printf '%s' "$desired_pg_password" | sed -e 's/^"//' -e 's/"$//')"
+            escaped_pg_password="$(printf '%s' "$desired_pg_password" | sed "s/'/''/g")"
+            docker_cmd exec -u postgres resume-db psql -d postgres -v ON_ERROR_STOP=1 -c "ALTER USER postgres WITH PASSWORD '${escaped_pg_password}';" >/dev/null
+
             CURRENT_STAGE="run_prisma_migrate"
             compose_cmd run --rm app pnpm exec prisma migrate deploy
             CURRENT_STAGE="compose_up_app_nginx"
