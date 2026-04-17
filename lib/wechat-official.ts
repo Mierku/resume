@@ -305,6 +305,26 @@ async function createTemporaryQrCode(scene: string) {
   }
 }
 
+async function sendWechatOfficialTextMessage(openId: string, content: string) {
+  const accessToken = await getWechatAccessToken()
+  const url = new URL('https://api.weixin.qq.com/cgi-bin/message/custom/send')
+  url.searchParams.set('access_token', accessToken)
+
+  await readWechatJson<Record<string, unknown>>(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      touser: openId,
+      msgtype: 'text',
+      text: {
+        content,
+      },
+    }),
+  })
+}
+
 async function saveAttempt(attempt: WechatOfficialLoginAttempt) {
   await redis.set(
     getAttemptRedisKey(attempt.attemptId),
@@ -659,6 +679,15 @@ export async function handleWechatOfficialLoginEvent(payload: Record<string, str
 
     await saveAttempt(updatedAttempt)
 
+    try {
+      await sendWechatOfficialTextMessage(
+        openId,
+        `登录成功，您已完成网页端微信登录。请返回浏览器继续操作：${updatedAttempt.nextPath}`,
+      )
+    } catch (notifyError) {
+      console.error('Send WeChat Official Account login success message failed:', notifyError)
+    }
+
     return {
       handled: true as const,
       ignored: false as const,
@@ -707,6 +736,14 @@ async function handleWechatOfficialBindingEvent(payload: Record<string, string>,
     }
 
     await saveBindingAttempt(updatedAttempt)
+
+    if (updatedAttempt.status === 'bound') {
+      try {
+        await sendWechatOfficialTextMessage(openId, '绑定成功，您的微信已关联当前账号。')
+      } catch (notifyError) {
+        console.error('Send WeChat Official Account binding success message failed:', notifyError)
+      }
+    }
 
     return {
       handled: true as const,
