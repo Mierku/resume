@@ -268,25 +268,25 @@ jobs:
 
             CURRENT_STAGE="docker_preflight"
             echo "Preflight: checking docker runtime..."
-            if ! command -v docker >/dev/null 2>&1; then
+            if ! docker info >/dev/null 2>&1 && ! sudo -n docker info >/dev/null 2>&1; then
               echo "Preflight: docker not found, attempting auto-install..."
               if [ "$(id -u)" -eq 0 ]; then
                 curl -fsSL https://get.docker.com | sh
-              elif command -v sudo >/dev/null 2>&1; then
+              elif sudo -n true >/dev/null 2>&1; then
                 curl -fsSL https://get.docker.com | sudo sh
               else
                 echo "docker is not installed and sudo is unavailable"
                 exit 1
               fi
             else
-              echo "Preflight: docker found at $(command -v docker)"
+              echo "Preflight: docker runtime is reachable"
             fi
 
             docker_cmd() {
               if docker info >/dev/null 2>&1; then
                 docker "$@"
-              elif command -v sudo >/dev/null 2>&1 && sudo docker info >/dev/null 2>&1; then
-                sudo --preserve-env=IMAGE_NAME,IMAGE_TAG docker "$@"
+              elif sudo -n docker info >/dev/null 2>&1; then
+                sudo -n --preserve-env=IMAGE_NAME,IMAGE_TAG docker "$@"
               else
                 echo "cannot access docker daemon"
                 exit 1
@@ -296,12 +296,12 @@ jobs:
             compose_cmd() {
               if docker info >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
                 docker compose -f docker-compose.prod.yml "$@"
-              elif command -v sudo >/dev/null 2>&1 && sudo docker info >/dev/null 2>&1 && sudo docker compose version >/dev/null 2>&1; then
-                sudo --preserve-env=IMAGE_NAME,IMAGE_TAG docker compose -f docker-compose.prod.yml "$@"
-              elif command -v docker-compose >/dev/null 2>&1; then
+              elif sudo -n docker info >/dev/null 2>&1 && sudo -n docker compose version >/dev/null 2>&1; then
+                sudo -n --preserve-env=IMAGE_NAME,IMAGE_TAG docker compose -f docker-compose.prod.yml "$@"
+              elif docker-compose version >/dev/null 2>&1; then
                 docker-compose -f docker-compose.prod.yml "$@"
-              elif command -v sudo >/dev/null 2>&1 && sudo docker-compose version >/dev/null 2>&1; then
-                sudo docker-compose -f docker-compose.prod.yml "$@"
+              elif sudo -n docker-compose version >/dev/null 2>&1; then
+                sudo -n docker-compose -f docker-compose.prod.yml "$@"
               else
                 echo "docker compose is unavailable (missing compose plugin/binary)"
                 exit 1
