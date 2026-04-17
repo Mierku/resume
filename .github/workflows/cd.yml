@@ -252,9 +252,11 @@ jobs:
             fi
 
             CURRENT_STAGE="validate_wechat_overlay_secrets"
-            if [ "$wechat_secret_count" -ne 0 ] && [ "$wechat_secret_count" -ne 4 ]; then
-              echo "PROD_WECHAT_OA_* secrets must be configured together (0 or 4 set)."
-              exit 1
+            if [ "$wechat_secret_count" -ne 0 ]; then
+              if [ "$wechat_secret_count" -ne 4 ]; then
+                echo "PROD_WECHAT_OA_* secrets must be configured together (0 or 4 set)."
+                exit 1
+              fi
             fi
 
             CURRENT_STAGE="apply_wechat_overlay_if_present"
@@ -268,7 +270,14 @@ jobs:
 
             CURRENT_STAGE="docker_preflight"
             echo "Preflight: checking docker runtime..."
-            if ! docker info >/dev/null 2>&1 && ! sudo -n docker info >/dev/null 2>&1; then
+            docker_runtime="none"
+            if docker info >/dev/null 2>&1; then
+              docker_runtime="docker"
+            elif sudo -n docker info >/dev/null 2>&1; then
+              docker_runtime="sudo-docker"
+            fi
+
+            if [ "$docker_runtime" = "none" ]; then
               echo "Preflight: docker not found, attempting auto-install..."
               if [ "$(id -u)" -eq 0 ]; then
                 curl -fsSL https://get.docker.com | sh
@@ -278,14 +287,22 @@ jobs:
                 echo "docker is not installed and sudo is unavailable"
                 exit 1
               fi
-            else
-              echo "Preflight: docker runtime is reachable"
+
+              if docker info >/dev/null 2>&1; then
+                docker_runtime="docker"
+              elif sudo -n docker info >/dev/null 2>&1; then
+                docker_runtime="sudo-docker"
+              else
+                echo "docker install attempt finished but daemon is still unreachable"
+                exit 1
+              fi
             fi
+            echo "Preflight: docker runtime is reachable (${docker_runtime})"
 
             docker_cmd() {
-              if docker info >/dev/null 2>&1; then
+              if [ "$docker_runtime" = "docker" ]; then
                 docker "$@"
-              elif sudo -n docker info >/dev/null 2>&1; then
+              elif [ "$docker_runtime" = "sudo-docker" ]; then
                 sudo -n --preserve-env=IMAGE_NAME,IMAGE_TAG docker "$@"
               else
                 echo "cannot access docker daemon"
@@ -293,14 +310,43 @@ jobs:
               fi
             }
 
-            compose_cmd() {
-              if docker info >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
-                docker compose -f docker-compose.prod.yml "$@"
-              elif sudo -n docker info >/dev/null 2>&1 && sudo -n docker compose version >/dev/null 2>&1; then
-                sudo -n --preserve-env=IMAGE_NAME,IMAGE_TAG docker compose -f docker-compose.prod.yml "$@"
-              elif docker-compose version >/dev/null 2>&1; then
-                docker-compose -f docker-compose.prod.yml "$@"
+            compose_mode=""
+            if [ "$docker_runtime" = "docker" ]; then
+              if docker compose version >/dev/null 2>&1; then
+                compose_mode="docker-compose-plugin"
+              fi
+            fi
+
+            if [ -z "$compose_mode" ]; then
+              if [ "$docker_runtime" = "sudo-docker" ]; then
+                if sudo -n docker compose version >/dev/null 2>&1; then
+                  compose_mode="sudo-docker-compose-plugin"
+                fi
+              fi
+            fi
+
+            if [ -z "$compose_mode" ]; then
+              if docker-compose version >/dev/null 2>&1; then
+                compose_mode="docker-compose-bin"
               elif sudo -n docker-compose version >/dev/null 2>&1; then
+                compose_mode="sudo-docker-compose-bin"
+              fi
+            fi
+
+            if [ -z "$compose_mode" ]; then
+              echo "docker compose is unavailable (missing compose plugin/binary)"
+              exit 1
+            fi
+            echo "Preflight: compose mode = ${compose_mode}"
+
+            compose_cmd() {
+              if [ "$compose_mode" = "docker-compose-plugin" ]; then
+                docker compose -f docker-compose.prod.yml "$@"
+              elif [ "$compose_mode" = "sudo-docker-compose-plugin" ]; then
+                sudo -n --preserve-env=IMAGE_NAME,IMAGE_TAG docker compose -f docker-compose.prod.yml "$@"
+              elif [ "$compose_mode" = "docker-compose-bin" ]; then
+                docker-compose -f docker-compose.prod.yml "$@"
+              elif [ "$compose_mode" = "sudo-docker-compose-bin" ]; then
                 sudo -n docker-compose -f docker-compose.prod.yml "$@"
               else
                 echo "docker compose is unavailable (missing compose plugin/binary)"
