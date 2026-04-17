@@ -135,13 +135,26 @@ jobs:
           script_stop: true
           script: |
             set -euo pipefail
+            CURRENT_STAGE="bootstrap"
 
+            on_exit() {
+              status="$?"
+              if [ "$status" -ne 0 ]; then
+                echo "Deploy failed at stage: ${CURRENT_STAGE} (exit=${status})"
+              fi
+            }
+            trap on_exit EXIT
+
+            CURRENT_STAGE="validate_deploy_path_secret"
             if [ -z "${{ secrets.DEPLOY_PATH }}" ]; then
               echo "DEPLOY_PATH is empty"
               exit 1
             fi
 
+            CURRENT_STAGE="enter_deploy_path"
             cd "${{ secrets.DEPLOY_PATH }}"
+
+            CURRENT_STAGE="validate_required_files"
             if [ ! -f "docker-compose.prod.yml" ]; then
               echo "docker-compose.prod.yml not found under DEPLOY_PATH"
               exit 1
@@ -155,6 +168,7 @@ jobs:
             # Supports both:
             # 1) Base64-encoded env content (recommended)
             # 2) Plain-text env content (fallback for misconfigured secret)
+            CURRENT_STAGE="load_env_secret"
             if [ -n "${{ secrets.DEPLOY_ENV_B64 }}" ]; then
               raw_env_secret="${{ secrets.DEPLOY_ENV_B64 }}"
               tmp_env_file="$(mktemp)"
@@ -186,11 +200,13 @@ jobs:
               echo ".env loaded from DEPLOY_ENV_B64 (${env_loaded_mode})"
             fi
 
+            CURRENT_STAGE="validate_env_file"
             if [ ! -f ".env" ]; then
               echo ".env not found under DEPLOY_PATH and DEPLOY_ENV_B64 is empty"
               exit 1
             fi
 
+            CURRENT_STAGE="prepare_upsert_helper"
             upsert_env_var() {
               key="$1"
               value="$2"
@@ -220,17 +236,28 @@ jobs:
               mv "$tmp_file" .env
             }
 
+            CURRENT_STAGE="count_wechat_overlay_secrets"
             wechat_secret_count=0
-            [ -n "${{ secrets.PROD_WECHAT_OA_APP_ID }}" ] && wechat_secret_count=$((wechat_secret_count + 1))
-            [ -n "${{ secrets.PROD_WECHAT_OA_APP_SECRET }}" ] && wechat_secret_count=$((wechat_secret_count + 1))
-            [ -n "${{ secrets.PROD_WECHAT_OA_TOKEN }}" ] && wechat_secret_count=$((wechat_secret_count + 1))
-            [ -n "${{ secrets.PROD_WECHAT_OA_ENCODING_AES_KEY }}" ] && wechat_secret_count=$((wechat_secret_count + 1))
+            if [ -n "${{ secrets.PROD_WECHAT_OA_APP_ID }}" ]; then
+              wechat_secret_count=$((wechat_secret_count + 1))
+            fi
+            if [ -n "${{ secrets.PROD_WECHAT_OA_APP_SECRET }}" ]; then
+              wechat_secret_count=$((wechat_secret_count + 1))
+            fi
+            if [ -n "${{ secrets.PROD_WECHAT_OA_TOKEN }}" ]; then
+              wechat_secret_count=$((wechat_secret_count + 1))
+            fi
+            if [ -n "${{ secrets.PROD_WECHAT_OA_ENCODING_AES_KEY }}" ]; then
+              wechat_secret_count=$((wechat_secret_count + 1))
+            fi
 
+            CURRENT_STAGE="validate_wechat_overlay_secrets"
             if [ "$wechat_secret_count" -ne 0 ] && [ "$wechat_secret_count" -ne 4 ]; then
               echo "PROD_WECHAT_OA_* secrets must be configured together (0 or 4 set)."
               exit 1
             fi
 
+            CURRENT_STAGE="apply_wechat_overlay_if_present"
             if [ "$wechat_secret_count" -eq 4 ]; then
               upsert_env_var WECHAT_OA_APP_ID "${{ secrets.PROD_WECHAT_OA_APP_ID }}"
               upsert_env_var WECHAT_OA_APP_SECRET "${{ secrets.PROD_WECHAT_OA_APP_SECRET }}"
@@ -239,6 +266,7 @@ jobs:
               chmod 600 .env
             fi
 
+            CURRENT_STAGE="docker_preflight"
             echo "Preflight: checking docker runtime..."
             if ! command -v docker >/dev/null 2>&1; then
               echo "Preflight: docker not found, attempting auto-install..."
@@ -323,6 +351,7 @@ jobs:
             export IMAGE_NAME="${{ steps.deploy_image.outputs.name }}"
             export IMAGE_TAG="sha-${{ github.sha }}"
 
+            CURRENT_STAGE="validate_image_ref"
             if [ -z "$IMAGE_NAME" ] || [ -z "$IMAGE_TAG" ]; then
               echo "IMAGE_NAME or IMAGE_TAG is empty"
               exit 1
@@ -330,20 +359,33 @@ jobs:
 
             echo "Deploying app image: ${IMAGE_NAME}:${IMAGE_TAG}"
 
+            CURRENT_STAGE="compose_validate"
             echo "Validating compose configuration..."
             if ! compose_cmd config -q; then
               echo "docker compose config validation failed"
               exit 1
             fi
 
+            CURRENT_STAGE="compose_up_dependencies"
             compose_cmd up -d db redis
+            CURRENT_STAGE="wait_db_healthy"
             wait_healthy resume-db
+            CURRENT_STAGE="wait_redis_healthy"
             wait_healthy resume-redis
+            CURRENT_STAGE="compose_pull_runtime_images"
             compose_cmd pull app nginx
+            CURRENT_STAGE="run_prisma_migrate"
             compose_cmd run --rm app pnpm exec prisma migrate deploy
+            CURRENT_STAGE="compose_up_app_nginx"
             compose_cmd up -d --remove-orphans app nginx
+            CURRENT_STAGE="wait_app_healthy"
             wait_healthy resume-app
+            CURRENT_STAGE="wait_nginx_healthy"
             wait_healthy resume-nginx
 
+            CURRENT_STAGE="cleanup_old_images"
             cleanup_old_release_images "$IMAGE_NAME" "${IMAGE_NAME}:${IMAGE_TAG}"
+            CURRENT_STAGE="prune_docker_images"
             docker_cmd image prune -f
+
+            CURRENT_STAGE="done"
