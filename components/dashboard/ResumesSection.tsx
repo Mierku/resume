@@ -1,8 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useMemo, useState } from 'react'
-import { Copy, FilePlus2, FileText, MoreHorizontal, PenLine, Trash2, WandSparkles } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { Copy, FilePlus2, FileText, FileUp, MoreHorizontal, PenLine, Sparkles, Trash2 } from 'lucide-react'
 import { RESUME_TEMPLATES } from '@/lib/constants'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { toast } from '@/lib/toast'
@@ -20,6 +21,8 @@ interface ResumeLimitPayload {
   max: number | null
   reached: boolean
 }
+
+type ResumeFillEntry = 'upload' | 'ai' | 'template'
 
 const monthDayFormatter = new Intl.DateTimeFormat('zh-CN', {
   month: 'numeric',
@@ -77,6 +80,7 @@ function formatLastEdited(value: string) {
 }
 
 export function ResumesSection() {
+  const router = useRouter()
   const [resumes, setResumes] = useState<ResumeSummary[]>([])
   const [resumeLimit, setResumeLimit] = useState<ResumeLimitPayload>({ max: null, reached: false })
   const [loading, setLoading] = useState(true)
@@ -84,6 +88,7 @@ export function ResumesSection() {
   const [activeMenuResumeId, setActiveMenuResumeId] = useState<string | null>(null)
   const [deletingResumeId, setDeletingResumeId] = useState<string | null>(null)
   const [duplicatingResumeId, setDuplicatingResumeId] = useState<string | null>(null)
+  const [creatingEntry, setCreatingEntry] = useState<ResumeFillEntry | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -156,26 +161,87 @@ export function ResumesSection() {
   }, [activeMenuResumeId])
 
   const creationLimitReached = resumeLimit.reached
-  const summaryCards = useMemo(() => {
-    const lastUpdated = resumes[0]?.updatedAt ? formatLastEdited(resumes[0].updatedAt) : '暂无'
+  const fillEntryCards: Array<{
+    key: ResumeFillEntry
+    title: string
+    description: string
+    icon: typeof FileText
+    buildTitle: () => string
+    entryParams: string
+  }> = [
+    {
+      key: 'upload',
+      title: '上传 PDF / DOCX',
+      description: '从已有简历文件继续完善内容与排版，快速进入编辑流程。',
+      icon: FileUp,
+      buildTitle: () => `上传简历 ${resumes.length + 1}`,
+      entryParams: 'entry=upload',
+    },
+    {
+      key: 'ai',
+      title: 'AI 驱动简历生成',
+      description: '直接进入 AI 面板，让模型先生成结构与措辞，再细调细节。',
+      icon: Sparkles,
+      buildTitle: () => `AI 简历 ${resumes.length + 1}`,
+      entryParams: 'entry=ai&panel=ai',
+    },
+    {
+      key: 'template',
+      title: '默认填充模板',
+      description: '使用默认模板内容骨架进入编辑页，手动补齐岗位信息与经历。',
+      icon: FileText,
+      buildTitle: () => `模板简历 ${resumes.length + 1}`,
+      entryParams: 'entry=template&panel=template',
+    },
+  ]
 
-    return [
-      {
-        key: 'total',
-        label: '已保存简历',
-        value: String(resumes.length).padStart(2, '0'),
-        subtext: '用于不同岗位与不同版本投递',
-        icon: FileText,
-      },
-      {
-        key: 'updated',
-        label: '最近更新',
-        value: lastUpdated,
-        subtext: '最近一次修改发生的时间',
-        icon: WandSparkles,
-      },
-    ]
-  }, [resumes])
+  const handleEnterFillEntry = async (entry: (typeof fillEntryCards)[number]) => {
+    if (creatingEntry) return
+
+    if (creationLimitReached) {
+      toast.error('当前套餐可创建的简历数量已达上限，请升级后继续。')
+      router.push('/pricing')
+      return
+    }
+
+    setCreatingEntry(entry.key)
+    try {
+      const response = await fetch('/api/resumes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: entry.buildTitle(),
+          templateId: RESUME_TEMPLATES[0]?.id || 'template-1',
+          mode: 'form',
+        }),
+      })
+
+      if (response.status === 401) {
+        throw new Error('登录状态已失效，请重新登录。')
+      }
+
+      const payload = await response.json().catch(() => null)
+      if (!response.ok) {
+        throw new Error(payload?.error || '创建简历失败')
+      }
+
+      const resumeId = typeof payload?.resume?.id === 'string' ? payload.resume.id : ''
+      if (!resumeId) {
+        throw new Error('创建简历失败')
+      }
+
+      const loadingToastId = toast.loading('正在进入编辑页...')
+      if (typeof window !== 'undefined') {
+        window.sessionStorage.setItem('resume:just-created-id', resumeId)
+        window.sessionStorage.setItem('resume:editor-loading-toast-id', String(loadingToastId))
+      }
+      router.push(`/builder/editor/${encodeURIComponent(resumeId)}?${entry.entryParams}`)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : '创建简历失败')
+    } finally {
+      setCreatingEntry(null)
+    }
+  }
 
   const handleDeleteResume = async (resumeId: string) => {
     const confirmed = window.confirm('确认删除这份简历吗？删除后不可恢复。')
@@ -302,17 +368,31 @@ export function ResumesSection() {
       </header>
 
       <section className={styles.denseMetricGrid}>
-        {summaryCards.map(card => {
+        {fillEntryCards.map(card => {
           const Icon = card.icon
+          const isPending = creatingEntry === card.key
           return (
-            <article key={card.key} className={cn(styles.panel, styles.denseMetricCard)}>
-              <div className={styles.metricLabel}>
+            <button
+              key={card.key}
+              type="button"
+              className={cn(styles.panel, styles.denseMetricCard, styles.resumeEntryCard, isPending && styles.resumeEntryCardPending)}
+              onClick={() => void handleEnterFillEntry(card)}
+              disabled={Boolean(creatingEntry)}
+            >
+              <div className={styles.resumeEntryLabel}>
                 <Icon className={styles.metricIcon} />
-                {card.label}
+                填充方式
               </div>
-              <p className={styles.denseMetricValue}>{card.value}</p>
-              <p className={styles.metricSubtext}>{card.subtext}</p>
-            </article>
+              <p className={styles.resumeEntryTitle}>{card.title}</p>
+              <p className={styles.metricSubtext}>{card.description}</p>
+              <p className={styles.resumeEntryHint}>
+                {isPending
+                  ? '创建中...'
+                  : creationLimitReached
+                    ? '点击升级后继续'
+                    : '点击直接进入简历编辑页'}
+              </p>
+            </button>
           )
         })}
       </section>

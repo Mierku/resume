@@ -67,8 +67,8 @@ const SECTION_META: Record<
 };
 const SECTION_NAV_ORDER: DashboardSection[] = [
   "workbench",
-  "tracking",
   "resume",
+  "tracking",
   "admin-users",
 ];
 const USER_MENU_ITEMS: Array<{
@@ -240,7 +240,7 @@ function DashboardWorkbenchInner() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [recordsVersion, setRecordsVersion] = useState(0);
   const [theme, setTheme] = useState<ThemeMode>("dark");
-  const [sidebarExpanded, setSidebarExpanded] = useState(false);
+  const [sidebarExpanded, setSidebarExpanded] = useState(true);
   const mainScrollRef = useRef<HTMLElement | null>(null);
 
   const nextPath = useMemo(() => {

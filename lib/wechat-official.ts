@@ -682,7 +682,7 @@ export async function handleWechatOfficialLoginEvent(payload: Record<string, str
     try {
       await sendWechatOfficialTextMessage(
         openId,
-        `登录成功，您已完成网页端微信登录。请返回浏览器继续操作：${updatedAttempt.nextPath}`,
+        '登录成功，您已完成网页端微信登录。请返回浏览器继续操作。',
       )
     } catch (notifyError) {
       console.error('Send WeChat Official Account login success message failed:', notifyError)

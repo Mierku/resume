@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { normalizeResumeContent } from "@/lib/resume/mappers";
 import { AuthRequiredModal } from "@/components/ui/Modal";
 import { toast } from "@/lib/toast";
@@ -62,10 +62,30 @@ interface ResumeBuilderClientProps {
   };
 }
 
+function resolveInitialToolFromQuery(search: string): ActiveBuilderTool {
+  if (!search) return "typesetting";
+
+  const params = new URLSearchParams(search);
+  const panel = params.get("panel");
+  const entry = params.get("entry");
+
+  if (panel === "ai" || entry === "ai") return "ai";
+  if (panel === "template" || entry === "template") return "template";
+  if (panel === "typography") return "typography";
+  if (panel === "height-debug") return "height-debug";
+  return "typesetting";
+}
+
 export function ResumeBuilderClient({
   initialResume,
 }: ResumeBuilderClientProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const search = useMemo(() => searchParams.toString(), [searchParams]);
+  const initialTool = useMemo(
+    () => resolveInitialToolFromQuery(search),
+    [search],
+  );
   const { auth, ensureAuthenticated } = useAuthSnapshot({ eager: true });
   const builderScopeRef = useRef<HTMLDivElement | null>(null);
   const previewContentRef = useRef<HTMLDivElement>(null);
@@ -81,8 +101,7 @@ export function ResumeBuilderClient({
   );
   const saveState = useResumeBuilderStore((state) => state.save);
 
-  const [activeTool, setActiveTool] =
-    useState<ActiveBuilderTool>("typesetting");
+  const [activeTool, setActiveTool] = useState<ActiveBuilderTool>(initialTool);
   const [sidePanelScrolling, setSidePanelScrolling] = useState(false);
   const [heightDebugSnapshotState, setHeightDebugSnapshotState] = useState<{
     resumeId: string;
@@ -286,6 +305,10 @@ export function ResumeBuilderClient({
     resetAIPreview();
     resetPreviewReady();
   }, [initialResume.id, resetAIPreview, resetPreviewReady]);
+
+  useEffect(() => {
+    setActiveTool(initialTool);
+  }, [initialResume.id, initialTool]);
 
   useEffect(() => {
     setShareVisibility(initialResume.shareVisibility || "private");

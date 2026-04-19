@@ -370,8 +370,7 @@
   display: grid;
   grid-template-columns: var(--dash-sidebar-width) minmax(0, 1fr);
   background: var(--builder-panel-bg-soft);
-  transition:
-    grid-template-columns var(--dash-sidebar-motion-duration)
+  transition: grid-template-columns var(--dash-sidebar-motion-duration)
     var(--dash-sidebar-motion-ease);
   overflow: hidden;
   will-change: grid-template-columns;
@@ -397,7 +396,7 @@
   transition:
     width var(--dash-sidebar-motion-duration) var(--dash-sidebar-motion-ease),
     min-width var(--dash-sidebar-motion-duration)
-    var(--dash-sidebar-motion-ease);
+      var(--dash-sidebar-motion-ease);
   overflow: visible;
   will-change: width, min-width;
 }
@@ -585,9 +584,9 @@
   transform: translate3d(var(--dash-sidebar-text-hidden-shift), -50%, 0);
   transition:
     opacity var(--dash-sidebar-text-duration) var(--dash-sidebar-text-ease)
-    var(--dash-sidebar-text-delay),
+      var(--dash-sidebar-text-delay),
     transform var(--dash-sidebar-text-duration) var(--dash-sidebar-text-ease)
-    var(--dash-sidebar-text-delay);
+      var(--dash-sidebar-text-delay);
   will-change: opacity, transform;
 }
 
@@ -1446,11 +1445,94 @@
   line-height: 1;
 }
 
+.resumeEntryCard {
+  width: 100%;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.resumeEntryCard:hover:not(:disabled),
+.resumeEntryCard:focus-visible {
+  transform: translateY(-2px);
+  border-color: color-mix(
+    in srgb,
+    var(--builder-button-primary-hover) 52%,
+    var(--builder-panel-border)
+  );
+  box-shadow:
+    0 10px 22px rgba(15, 23, 42, 0.12),
+    0 2px 4px rgba(15, 23, 42, 0.06);
+}
+
+.resumeEntryCard:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--builder-button-primary-hover) 58%, transparent);
+  outline-offset: 2px;
+}
+
+.resumeEntryCard:disabled {
+  cursor: default;
+}
+
+.resumeEntryCardPending {
+  opacity: 0.76;
+}
+
+.resumeEntryLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 12px;
+  color: var(--builder-panel-text-muted);
+}
+
+.resumeEntryTitle {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: var(--builder-panel-text);
+}
+
+.resumeEntryHint {
+  margin: 0;
+  font-size: 11px;
+  color: color-mix(in srgb, var(--builder-button-primary-hover) 62%, var(--builder-panel-text-muted));
+}
+
 .resumeGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 16px;
   align-items: start;
+}
+
+/* sectionFrame 最大宽度为 1280px，按 5/4/3/2 分档 */
+@media (max-width: 1400px) {
+  .resumeGrid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1020px) {
+  .resumeGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 820px) {
+  .resumeGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .resumeCard {
@@ -2116,6 +2198,7 @@
 
   .metricGrid,
   .denseMetricGrid,
+  .resumeGrid,
   .loadingCards,
   .formGrid {
     grid-template-columns: minmax(0, 1fr);
