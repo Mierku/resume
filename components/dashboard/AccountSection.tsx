@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
-import { ArrowRight, CreditCard, FileText, FolderKanban } from 'lucide-react'
+import { ArrowRight, FileText, FolderKanban } from 'lucide-react'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { formatAuthProviderLabels } from '@/lib/auth-provider-labels'
 import { getUserDisplayName, isAdminRole, type SessionUser } from '@/lib/user'
@@ -11,17 +11,9 @@ import { getDashboardSectionHref } from '@/components/dashboard/types'
 import { AccountBindingPanel } from '@/components/dashboard/AccountBindingPanel'
 import styles from './dashboard-workbench.module.scss'
 
-interface DataSourceSummary {
-  id: string
-  name: string
-  updatedAt: string
-}
-
 interface AccountSectionPayload {
-  defaultDataSource: DataSourceSummary | null
   recordsTotal: number
   resumesTotal: number
-  dataSourcesTotal: number
 }
 
 const dateFormatter = new Intl.DateTimeFormat('zh-CN', {
@@ -63,20 +55,14 @@ function getMembershipAccessLabel(value: string | null | undefined, role: Sessio
 
 export function AccountSection({
   user,
-  defaultDataSourceId,
   recordsVersion,
-  dataSourcesVersion,
 }: {
   user: SessionUser
-  defaultDataSourceId: string | null
   recordsVersion: number
-  dataSourcesVersion: number
 }) {
   const [payload, setPayload] = useState<AccountSectionPayload>({
-    defaultDataSource: null,
     recordsTotal: 0,
     resumesTotal: 0,
-    dataSourcesTotal: 0,
   })
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
@@ -89,40 +75,29 @@ export function AccountSection({
       setLoadError('')
 
       try {
-        const [dataSourcesRes, recordsStatsRes, resumesRes] = await Promise.all([
-          fetch('/api/data-sources', { cache: 'no-store' }),
+        const [recordsStatsRes, resumesRes] = await Promise.all([
           fetch('/api/records/stats', { cache: 'no-store' }),
           fetch('/api/resumes', { cache: 'no-store' }),
         ])
 
-        if (dataSourcesRes.status === 401 || recordsStatsRes.status === 401 || resumesRes.status === 401) {
+        if (recordsStatsRes.status === 401 || resumesRes.status === 401) {
           throw new Error('登录状态已失效，请重新登录。')
         }
 
-        if (!dataSourcesRes.ok || !recordsStatsRes.ok || !resumesRes.ok) {
+        if (!recordsStatsRes.ok || !resumesRes.ok) {
           throw new Error('账户信息加载失败')
         }
 
-        const [dataSourcesPayload, recordsPayload, resumesPayload] = await Promise.all([
-          dataSourcesRes.json().catch(() => null),
+        const [recordsPayload, resumesPayload] = await Promise.all([
           recordsStatsRes.json().catch(() => null),
           resumesRes.json().catch(() => null),
         ])
 
         if (cancelled) return
 
-        const dataSources = Array.isArray(dataSourcesPayload?.dataSources)
-          ? (dataSourcesPayload.dataSources as DataSourceSummary[])
-          : []
-        const pickedDefaultDataSource = defaultDataSourceId
-          ? dataSources.find(dataSource => dataSource.id === defaultDataSourceId) || null
-          : null
-
         setPayload({
-          defaultDataSource: pickedDefaultDataSource,
           recordsTotal: typeof recordsPayload?.total === 'number' ? recordsPayload.total : 0,
           resumesTotal: Array.isArray(resumesPayload?.resumes) ? resumesPayload.resumes.length : 0,
-          dataSourcesTotal: dataSources.length,
         })
       } catch (error) {
         if (cancelled) return
@@ -140,7 +115,7 @@ export function AccountSection({
     return () => {
       cancelled = true
     }
-  }, [dataSourcesVersion, defaultDataSourceId, recordsVersion])
+  }, [recordsVersion])
 
   const summaryCards = useMemo(() => {
     return [
@@ -158,15 +133,8 @@ export function AccountSection({
         subtext: '已保存的模板与岗位变体',
         icon: FileText,
       },
-      {
-        key: 'data-sources',
-        label: '数据源',
-        value: String(payload.dataSourcesTotal).padStart(2, '0'),
-        subtext: '结构化个人资料与经历库',
-        icon: CreditCard,
-      },
     ]
-  }, [payload.dataSourcesTotal, payload.recordsTotal, payload.resumesTotal])
+  }, [payload.recordsTotal, payload.resumesTotal])
 
   return (
     <div className={styles.sectionShell}>
@@ -178,7 +146,7 @@ export function AccountSection({
             <span className={styles.sectionPill}>{getMembershipLabel(user.planType, user.role)}</span>
           </div>
           <p className={styles.sectionDescription}>
-            账户中心汇总你的会员状态、登录方式、默认数据源和核心资产规模。现在也支持在这里补绑邮箱或微信，并在冲突时处理旧账号资产。
+            账户中心汇总你的会员状态、登录方式与核心资产规模。现在也支持在这里补绑邮箱或微信，并在冲突时处理旧账号资产。
           </p>
         </div>
       </header>
@@ -217,10 +185,6 @@ export function AccountSection({
                   <span className={styles.profileMetaValue}>{getMembershipAccessLabel(user.planExpiresAt, user.role)}</span>
                 </div>
                 <div className={styles.profileMetaItem}>
-                  <span className={styles.profileMetaLabel}>默认数据源</span>
-                  <span className={styles.profileMetaValue}>{payload.defaultDataSource?.name || '未设置'}</span>
-                </div>
-                <div className={styles.profileMetaItem}>
                   <span className={styles.profileMetaLabel}>账号状态</span>
                   <span className={styles.profileMetaValue}>{user.onboardingCompleted ? '资料完整' : '待完善'}</span>
                 </div>
@@ -247,10 +211,6 @@ export function AccountSection({
               </Link>
               <Link href={getDashboardSectionHref('resume')} className={styles.quickActionLink}>
                 查看我的简历
-                <ArrowRight size={16} />
-              </Link>
-              <Link href={getDashboardSectionHref('tracking')} className={styles.quickActionLink}>
-                管理数据源（求职跟踪）
                 <ArrowRight size={16} />
               </Link>
               <Link href="/onboarding" className={styles.quickActionLink}>

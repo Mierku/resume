@@ -6,7 +6,6 @@ import { getResume, updateResume, deleteResume } from '@/server/resumes'
 const updateSchema = z.object({
   title: z.string().min(1).optional(),
   templateId: z.string().optional(),
-  dataSourceId: z.string().nullable().optional(),
   mode: z.enum(['form', 'markdown']).optional(),
   shareVisibility: z.enum(['private', 'public']).optional(),
   shareWithRecruiters: z.boolean().optional(),

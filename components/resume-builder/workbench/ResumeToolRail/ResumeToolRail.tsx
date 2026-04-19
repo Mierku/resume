@@ -1,6 +1,6 @@
 'use client'
 
-import { FileText, LayoutTemplate, MessageSquare, MoonStar, PenLine, Ruler, Sun, Type } from 'lucide-react'
+import { FileText, LayoutTemplate, MessageSquare, MoonStar, Ruler, Sun, Type } from 'lucide-react'
 import { type FocusEvent as ReactFocusEvent, type ReactNode, useCallback, useEffect, useState } from 'react'
 import type { ActiveBuilderTool, BuilderTool } from '../types'
 import styles from './ResumeToolRail.module.scss'
@@ -113,9 +113,6 @@ export function ResumeToolRail({ activeTool, onSelectTool }: ResumeToolRailProps
     >
       <div className={styles.railShell}>
         <div className={styles.toolGroup}>
-          <ToolButton label="自动填充" active={activeTool === 'fill'} onSelect={() => handleToolSelect('fill')}>
-            <PenLine size={14} />
-          </ToolButton>
           <ToolButton
             label="AI对话"
             active={activeTool === 'ai'}

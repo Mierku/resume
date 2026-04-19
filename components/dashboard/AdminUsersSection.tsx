@@ -43,7 +43,6 @@ interface AdminUserUsageRow {
   metrics: {
     recordsTotal: number
     resumesTotal: number
-    dataSourcesTotal: number
     aiConversationsTotal: number
     jobSitesTotal: number
     sessionsTotal: number
@@ -414,7 +413,6 @@ export function AdminUsersSection() {
                           <div className={adminStyles.metricsCompact}>
                             <span>投递 {user.metrics.recordsTotal}</span>
                             <span>简历 {user.metrics.resumesTotal}</span>
-                            <span>数据源 {user.metrics.dataSourcesTotal}</span>
                           </div>
                           <p className={adminStyles.metaText}>
                             AI {user.metrics.aiConversationsTotal} / 站点 {user.metrics.jobSitesTotal} / 会话 {user.metrics.sessionsTotal}

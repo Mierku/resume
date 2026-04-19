@@ -1,12 +1,10 @@
 "use client";
 
 import {
-  ChevronDown,
   FileDown,
   History,
   MessageSquare,
   Minimize2,
-  Plus,
   SendHorizontal,
   Sparkles,
   Target,
@@ -235,6 +233,7 @@ const emptyStateActions = [
     id: "fit-one-page",
     title: "压缩到一页",
     command: "/fit",
+    keywords: ["fit", "压缩", "一页", "精简", "精炼", "缩短"],
     prompt: "请帮我把当前简历优化到一页内，优先保留最重要的内容。",
     icon: Minimize2,
     tone: "is-blue",
@@ -243,6 +242,7 @@ const emptyStateActions = [
     id: "tailor-to-job",
     title: "岗位定制",
     command: "/tailor",
+    keywords: ["tailor", "岗位", "定制", "匹配", "jd", "职位", "求职", "应聘"],
     prompt: "请根据我接下来提供的岗位描述，量身定制这份简历。",
     icon: Target,
     tone: "is-violet",
@@ -251,6 +251,7 @@ const emptyStateActions = [
     id: "export-to-pdf",
     title: "导出 PDF",
     command: "/export",
+    keywords: ["export", "导出", "pdf", "下载", "文件", "打印"],
     prompt: "请告诉我如何把当前简历导出为 PDF。",
     icon: FileDown,
     tone: "is-emerald",
@@ -311,6 +312,7 @@ export function AIChatPanel({
   onCardPreviewRequest,
 }: AIChatPanelProps) {
   const [input, setInput] = useState("");
+  const [activeSlashActionIndex, setActiveSlashActionIndex] = useState(0);
   const [messages, setMessages] = useState<PanelMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingStage, setLoadingStage] = useState<string | null>(null);
@@ -340,6 +342,26 @@ export function AIChatPanel({
     loading ||
     !historyLoaded ||
     switchingConversation;
+  const isSlashCommandInput = input.startsWith("/");
+  const slashCommandQuery = useMemo(
+    () => (isSlashCommandInput ? input.slice(1).trim().toLowerCase() : ""),
+    [input, isSlashCommandInput],
+  );
+  const slashCommandActions = useMemo(() => {
+    if (!isSlashCommandInput) return [] as (typeof emptyStateActions)[number][];
+    if (!slashCommandQuery) return [...emptyStateActions];
+    return emptyStateActions.filter((action) => {
+      const searchable = [
+        action.command.replace("/", ""),
+        action.title,
+        ...action.keywords,
+      ];
+      return searchable.some((token) =>
+        token.toLowerCase().includes(slashCommandQuery),
+      );
+    });
+  }, [isSlashCommandInput, slashCommandQuery]);
+  const slashMenuOpen = isSlashCommandInput && slashCommandActions.length > 0;
   const showEmptyState = historyLoaded && messages.length === 0;
 
   const apiMessages = useMemo(
@@ -945,6 +967,29 @@ export function AIChatPanel({
     }
   };
 
+  const handleSelectSlashAction = (
+    action: (typeof emptyStateActions)[number],
+  ) => {
+    if (disabled) return;
+    setInput("");
+    setActiveSlashActionIndex(0);
+    void handleSend(action.prompt);
+  };
+
+  useEffect(() => {
+    setActiveSlashActionIndex(0);
+  }, [slashCommandQuery]);
+
+  useEffect(() => {
+    if (!slashMenuOpen) {
+      setActiveSlashActionIndex(0);
+      return;
+    }
+    if (activeSlashActionIndex >= slashCommandActions.length) {
+      setActiveSlashActionIndex(Math.max(slashCommandActions.length - 1, 0));
+    }
+  }, [activeSlashActionIndex, slashCommandActions.length, slashMenuOpen]);
+
   useEffect(() => {
     const viewport = messageViewportRef.current;
     if (!viewport) return;
@@ -1203,8 +1248,37 @@ export function AIChatPanel({
             value={input}
             onChange={(event) => setInput(event.target.value)}
             onKeyDown={(event) => {
+              if (
+                slashMenuOpen &&
+                (event.key === "ArrowDown" || event.key === "ArrowUp")
+              ) {
+                event.preventDefault();
+                const total = slashCommandActions.length;
+                if (!total) return;
+                setActiveSlashActionIndex((previous) =>
+                  event.key === "ArrowDown"
+                    ? (previous + 1) % total
+                    : (previous - 1 + total) % total,
+                );
+                return;
+              }
+              if (slashMenuOpen && event.key === "Escape") {
+                event.preventDefault();
+                setInput("");
+                setActiveSlashActionIndex(0);
+                return;
+              }
               if (event.key === "Enter" && !event.shiftKey) {
                 event.preventDefault();
+                if (slashMenuOpen) {
+                  const action =
+                    slashCommandActions[activeSlashActionIndex] ??
+                    slashCommandActions[0];
+                  if (action) {
+                    handleSelectSlashAction(action);
+                  }
+                  return;
+                }
                 void handleSend();
               }
             }}
@@ -1218,20 +1292,32 @@ export function AIChatPanel({
             className="resume-ai-composer"
             rows={3}
           />
-          <div className="resume-ai-input-footer">
-            <div className="resume-ai-input-actions" aria-hidden="true">
-              <span className="resume-ai-input-action is-plus">
-                <Plus size={16} />
-              </span>
-              <span className="resume-ai-input-action">
-                AI对话
-                <ChevronDown size={13} />
-              </span>
-              <span className="resume-ai-input-action">
-                意图识别
-                <ChevronDown size={13} />
-              </span>
+          {slashMenuOpen ? (
+            <div className="resume-ai-slash-menu" role="listbox" aria-label="快捷指令">
+              {slashCommandActions.map((action, index) => (
+                <button
+                  key={action.id}
+                  type="button"
+                  className={`resume-ai-slash-action ${index === activeSlashActionIndex ? "is-active" : ""}`}
+                  role="option"
+                  aria-selected={index === activeSlashActionIndex}
+                  onMouseDown={(event) => {
+                    event.preventDefault();
+                  }}
+                  onClick={() => handleSelectSlashAction(action)}
+                  disabled={disabled}
+                >
+                  <span className="resume-ai-slash-action-command">
+                    {action.command}
+                  </span>
+                  <span className="resume-ai-slash-action-title">
+                    {action.title}
+                  </span>
+                </button>
+              ))}
             </div>
+          ) : null}
+          <div className="resume-ai-input-footer">
             <button
               type="button"
               className="resume-ai-send-btn"

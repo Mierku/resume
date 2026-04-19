@@ -10,7 +10,6 @@ import {
 } from '@dnd-kit/core'
 import {
   arrayMove,
-  horizontalListSortingStrategy,
   SortableContext,
   useSortable,
   verticalListSortingStrategy,
@@ -20,6 +19,7 @@ import {
   Award,
   BadgeCheck,
   BookOpen,
+  CircleHelp,
   Eye,
   EyeOff,
   Briefcase,
@@ -48,6 +48,7 @@ import {
   useState,
 } from 'react'
 import { Modal } from '@/components/ui/Modal'
+import { Tip } from '@/components/ui/Tip'
 import type { PreviewNavigationTarget } from '@/components/resume-reactive-preview'
 import { STANDARD_SECTION_IDS, type ResumeData, type StandardSectionType } from '@/lib/resume/types'
 import {
@@ -80,14 +81,16 @@ const ADDABLE_EDITOR_SECTION_ORDER: string[] = [
   'references',
 ]
 
-const RESUME_EDITOR_TAB_CHROME_PATH =
-  'M 0,36 C 10,36 13.5,34 14,24 L 14,10 C 14.5,2 18,0 30,0 L 130,0 C 142,0 145.5,2 146,10 L 146,24 C 146.5,34 150,36 160,36 Z'
-const RESUME_EDITOR_TAB_CHROME_STYLE: CSSProperties = {
+const RESUME_EDITOR_NAV_TAB_CHROME_PATH =
+  'M0 0C0 4.41822 3.5818 7.99991 8 8H126C130.418 8 134 11.5817 134 16V40C134 44.4183 130.418 48 126 48H8C3.5818 48.0001 0 51.5818 0 56V0Z'
+const RESUME_EDITOR_NAV_TAB_CHROME_STYLE: CSSProperties = {
   position: 'absolute',
-  top: 0,
+  top: '50%',
   left: 0,
   width: '100%',
-  height: '100%',
+  height: '56px',
+  transform: 'translateY(-50%) scaleX(-1)',
+  transformOrigin: 'center center',
   pointerEvents: 'none',
   zIndex: 0,
 }
@@ -160,18 +163,100 @@ function hasMeaningfulStandardSectionContent(data: ResumeData, sectionId: Standa
   return section.items.some(item => hasMeaningfulSectionValue(item))
 }
 
-function EditorSectionTabChromeBg() {
+function EditorSectionNavTabChromeBg() {
   return (
     <svg
-      className="resume-editor-tab-bg"
-      viewBox="0 0 160 36"
+      className="resume-editor-section-nav-bg"
+      viewBox="0 0 134 56"
       preserveAspectRatio="none"
       aria-hidden="true"
-      style={RESUME_EDITOR_TAB_CHROME_STYLE}
+      style={RESUME_EDITOR_NAV_TAB_CHROME_STYLE}
       focusable="false"
     >
-      <path d={RESUME_EDITOR_TAB_CHROME_PATH} />
+      <path d={RESUME_EDITOR_NAV_TAB_CHROME_PATH} />
     </svg>
+  )
+}
+
+function renderSectionNavItemInner(sectionId: string, title: string, hidden: boolean) {
+  return (
+    <>
+      <EditorSectionNavTabChromeBg />
+      <span
+        className="resume-editor-section-nav-hover-bg"
+        aria-hidden="true"
+      />
+      <span className="resume-editor-section-nav-icon-wrap">
+        {renderEditorTabIcon(sectionId)}
+      </span>
+      <span className="resume-editor-section-nav-copy">
+        <span className="resume-editor-section-nav-title-text">
+          {title}
+        </span>
+      </span>
+    </>
+  )
+}
+
+interface EditorSectionNavButtonProps {
+  sectionId: string
+  title: string
+  active: boolean
+  hidden: boolean
+  locked?: boolean
+  sortable?: boolean
+  dragging?: boolean
+  style?: CSSProperties
+  setNodeRef?: (node: HTMLButtonElement | null) => void
+  attributes?: Record<string, any>
+  listeners?: Record<string, any>
+  onSelect: () => void
+}
+
+function EditorSectionNavButton({
+  sectionId,
+  title,
+  active,
+  hidden,
+  locked = false,
+  sortable = false,
+  dragging = false,
+  style,
+  setNodeRef,
+  attributes,
+  listeners,
+  onSelect,
+}: EditorSectionNavButtonProps) {
+  return (
+    <button
+      ref={setNodeRef}
+      type="button"
+      style={style}
+      className={joinClassNames(
+        'resume-editor-section-nav-item',
+        sortable && 'is-sortable',
+        active && 'is-active',
+        hidden && 'is-hidden',
+        locked && 'is-locked',
+        dragging && 'is-dragging',
+      )}
+      {...attributes}
+      role="tab"
+      aria-selected={active}
+      tabIndex={active ? 0 : -1}
+      data-editor-nav-id={sectionId}
+      data-dragging={dragging ? 'true' : undefined}
+      onClick={onSelect}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          onSelect()
+        }
+      }}
+      {...listeners}
+    >
+      {renderSectionNavItemInner(sectionId, title, hidden)}
+    </button>
   )
 }
 
@@ -278,23 +363,23 @@ interface IntegratedSectionsEditorProps {
   renderSectionEditorBody: (sectionId: string) => ReactNode
 }
 
-interface SortableEditorSectionTabProps {
-  sectionId: string;
-  title: string;
-  active: boolean;
-  hidden: boolean;
-  locked?: boolean;
-  onSelect: () => void;
+interface SortableEditorSectionNavItemProps {
+  sectionId: string
+  title: string
+  active: boolean
+  hidden: boolean
+  locked?: boolean
+  onSelect: () => void
 }
 
-function SortableEditorSectionTab({
+function SortableEditorSectionNavItem({
   sectionId,
   title,
   active,
   hidden,
   locked = false,
   onSelect,
-}: SortableEditorSectionTabProps) {
+}: SortableEditorSectionNavItemProps) {
   const {
     attributes,
     listeners,
@@ -305,61 +390,35 @@ function SortableEditorSectionTab({
   } = useSortable({
     id: sectionId,
     transition: {
-      duration: 250,
-      easing: "cubic-bezier(0.2, 0, 0, 1)",
+      duration: 180,
+      easing: 'cubic-bezier(0.2, 0, 0, 1)',
     },
-  });
-  const horizontalTransform = transform ? { ...transform, y: 0 } : null;
-  const resolvedTransition = isDragging
-    ? "none"
-    : transition
-      ? `${transition}, background-color 200ms ease, border-color 200ms ease, color 200ms ease, opacity 200ms ease`
-      : undefined;
+  })
+
+  const verticalTransform = transform ? { ...transform, x: 0 } : null
   const style: CSSProperties = {
-    transform: CSS.Transform.toString(horizontalTransform),
-    transition: resolvedTransition,
-  };
+    transform: verticalTransform
+      ? CSS.Transform.toString(verticalTransform)
+      : undefined,
+    transition: isDragging ? 'none' : transition,
+  }
 
   return (
-    <div
-      ref={setNodeRef}
+    <EditorSectionNavButton
+      sectionId={sectionId}
+      title={title}
+      active={active}
+      hidden={hidden}
+      locked={locked}
+      sortable
+      dragging={isDragging}
       style={style}
-      className={joinClassNames(
-        "resume-editor-tab",
-        active && "is-active",
-        hidden && "is-hidden",
-        locked && "is-locked",
-        isDragging && "is-dragging",
-      )}
-      role="presentation"
-      data-dragging={isDragging ? "true" : undefined}
-    >
-      <EditorSectionTabChromeBg />
-      <span className="resume-editor-tab-hover-bg" aria-hidden="true" />
-      <button
-        type="button"
-        className="resume-editor-tab-select"
-        data-editor-tab-id={sectionId}
-        onClick={onSelect}
-        onKeyDown={(event) => {
-          if (event.key === "Enter" || event.key === " ") {
-            event.preventDefault();
-            onSelect();
-          }
-        }}
-        {...attributes}
-        {...listeners}
-      >
-        <span className="resume-editor-tab-label-row">
-          {renderEditorTabIcon(sectionId)}
-          <span className="resume-editor-tab-title">{title}</span>
-          {hidden ? (
-            <span className="resume-editor-tab-meta">已隐藏</span>
-          ) : null}
-        </span>
-      </button>
-    </div>
-  );
+      setNodeRef={setNodeRef}
+      attributes={attributes}
+      listeners={listeners}
+      onSelect={onSelect}
+    />
+  )
 }
 
 interface SortableExistingModuleRowProps {
@@ -461,6 +520,89 @@ function SortableExistingModuleRow({
   );
 }
 
+interface EditorSectionNavGroupProps {
+  label?: string
+  tabs: Array<{
+    id: string
+    title: string
+    hidden: boolean
+    locked?: boolean
+    sortable?: boolean
+    removable?: boolean
+  }>
+  sortableIds: string[]
+  activeSectionId: string
+  sensors: ReturnType<typeof useEditorTabSortSensors>
+  onSelect: (sectionId: string) => void
+  onDragEnd: (event: DragEndEvent) => void
+  emptyMessage?: string
+}
+
+function EditorSectionNavGroup({
+  label,
+  tabs,
+  sortableIds,
+  activeSectionId,
+  sensors,
+  onSelect,
+  onDragEnd,
+  emptyMessage,
+}: EditorSectionNavGroupProps) {
+  if (tabs.length === 0 && !emptyMessage) {
+    return null
+  }
+
+  return (
+    <div className="resume-editor-section-nav-group">
+      {label ? (
+        <div className="resume-editor-section-nav-group-label">
+          {label}
+        </div>
+      ) : null}
+      {tabs.length > 0 ? (
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={onDragEnd}
+        >
+          <SortableContext
+            items={sortableIds}
+            strategy={verticalListSortingStrategy}
+          >
+            {tabs.map((tab) => (
+              sortableIds.includes(tab.id) ? (
+                <SortableEditorSectionNavItem
+                  key={tab.id}
+                  sectionId={tab.id}
+                  title={tab.title}
+                  active={activeSectionId === tab.id}
+                  hidden={tab.hidden}
+                  locked={tab.locked}
+                  onSelect={() => onSelect(tab.id)}
+                />
+              ) : (
+                <EditorSectionNavButton
+                  key={tab.id}
+                  sectionId={tab.id}
+                  title={tab.title}
+                  active={activeSectionId === tab.id}
+                  hidden={tab.hidden}
+                  locked={tab.locked}
+                  onSelect={() => onSelect(tab.id)}
+                />
+              )
+            ))}
+          </SortableContext>
+        </DndContext>
+      ) : (
+        <div className="resume-editor-section-nav-empty">
+          {emptyMessage}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function IntegratedSectionsEditor({
   focusRequest,
   completeness,
@@ -504,52 +646,21 @@ export function IntegratedSectionsEditor({
     sectionId: null,
     title: "",
   });
-  const tabTrackShellRef = useRef<HTMLDivElement | null>(null);
+  const [onlineApplyInfoOpen, setOnlineApplyInfoOpen] = useState(false);
+  const sectionNavListRef = useRef<HTMLDivElement | null>(null);
   const lastHandledFocusRequestIdRef = useRef<number>(0);
-  const [showTabsLeftMask, setShowTabsLeftMask] = useState(false);
-  const [showTabsRightMask, setShowTabsRightMask] = useState(false);
-  const tabSortSensors = useEditorTabSortSensors();
 
-  const updateTabsOverflowMask = useCallback(() => {
-    const shell = tabTrackShellRef.current;
-    if (!shell) {
-      setShowTabsLeftMask(false);
-      setShowTabsRightMask(false);
-      return;
-    }
-
-    const maxScrollLeft = shell.scrollWidth - shell.clientWidth;
-    if (maxScrollLeft <= 1) {
-      setShowTabsLeftMask(false);
-      setShowTabsRightMask(false);
-      return;
-    }
-
-    const leftVisible = shell.scrollLeft > 5;
-    const rightVisible =
-      shell.scrollLeft + shell.clientWidth < shell.scrollWidth - 5;
-    setShowTabsLeftMask(leftVisible);
-    setShowTabsRightMask(rightVisible);
-  }, []);
-
-  const scrollTabToAnchor = useCallback(
+  const scrollSectionNavToAnchor = useCallback(
     (sectionId: string, behavior: ScrollBehavior = "smooth") => {
-      const shell = tabTrackShellRef.current;
+      const shell = sectionNavListRef.current;
       if (!shell) return;
 
-      const selector = `[data-editor-tab-id="${escapeAttributeValue(sectionId)}"]`;
-      const tabButton = shell.querySelector<HTMLElement>(selector);
-      if (!tabButton) return;
+      const selector = `[data-editor-nav-id="${escapeAttributeValue(sectionId)}"]`;
+      const navItem = shell.querySelector<HTMLElement>(selector);
+      if (!navItem) return;
 
-      const shellRect = shell.getBoundingClientRect();
-      const tabRect = tabButton.getBoundingClientRect();
-      const relativeTabLeft = tabRect.left - shellRect.left + shell.scrollLeft;
-      const desiredLeft = relativeTabLeft - shell.clientWidth * 0.34;
-      const maxScrollLeft = Math.max(0, shell.scrollWidth - shell.clientWidth);
-      const nextScrollLeft = Math.max(0, Math.min(maxScrollLeft, desiredLeft));
-
-      shell.scrollTo({
-        left: nextScrollLeft,
+      navItem.scrollIntoView({
+        block: "nearest",
         behavior,
       });
     },
@@ -559,14 +670,14 @@ export function IntegratedSectionsEditor({
   const handleTabSelect = useCallback(
     (sectionId: string) => {
       if (sectionId === activeSectionId) {
-        scrollTabToAnchor(sectionId);
+        scrollSectionNavToAnchor(sectionId);
       } else {
         setActiveSectionId(sectionId);
       }
       setSortMenuOpen(false);
       setAddMenuOpen(false);
     },
-    [activeSectionId, scrollTabToAnchor],
+    [activeSectionId, scrollSectionNavToAnchor],
   );
 
   const layoutSectionIds = useMemo(() => {
@@ -624,50 +735,37 @@ export function IntegratedSectionsEditor({
       ...dynamicTabs,
     ];
   }, [data, layoutSectionIds]);
-
-  const sortableTabIds = useMemo(
-    () => tabs.filter((tab) => tab.sortable).map((tab) => tab.id),
+  const presentEditorSectionIds = useMemo(
+    () => new Set(tabs.filter((tab) => tab.id !== "basics").map((tab) => tab.id)),
     [tabs],
+  );
+  const latentHiddenTabs = useMemo(
+    () =>
+      ADDABLE_EDITOR_SECTION_ORDER.filter(
+        (sectionId) => !presentEditorSectionIds.has(sectionId),
+      ).map((sectionId) => ({
+        id: sectionId,
+        title: getSectionDisplayTitle(data, sectionId),
+        hidden: true,
+        locked: false,
+        removable: false,
+        sortable: false,
+      })),
+    [data, presentEditorSectionIds],
+  );
+  const navTabs = useMemo(
+    () => [...tabs, ...latentHiddenTabs],
+    [tabs, latentHiddenTabs],
   );
 
   useEffect(() => {
-    if (tabs.some((tab) => tab.id === activeSectionId)) return;
-    setActiveSectionId(tabs[0]?.id || "basics");
-  }, [activeSectionId, tabs]);
+    if (navTabs.some((tab) => tab.id === activeSectionId)) return;
+    setActiveSectionId(navTabs[0]?.id || "basics");
+  }, [activeSectionId, navTabs]);
 
   useEffect(() => {
-    updateTabsOverflowMask();
-  }, [tabs, updateTabsOverflowMask]);
-
-  useEffect(() => {
-    const shell = tabTrackShellRef.current;
-    if (!shell) return;
-
-    const onScroll = () => {
-      updateTabsOverflowMask();
-    };
-
-    shell.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", updateTabsOverflowMask);
-
-    let resizeObserver: ResizeObserver | null = null;
-    if (typeof ResizeObserver !== "undefined") {
-      resizeObserver = new ResizeObserver(() => {
-        updateTabsOverflowMask();
-      });
-      resizeObserver.observe(shell);
-      const track = shell.querySelector(".resume-editor-tabs-track");
-      if (track instanceof HTMLElement) {
-        resizeObserver.observe(track);
-      }
-    }
-
-    return () => {
-      shell.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", updateTabsOverflowMask);
-      resizeObserver?.disconnect();
-    };
-  }, [updateTabsOverflowMask, tabs.length]);
+    scrollSectionNavToAnchor(activeSectionId, "auto");
+  }, [activeSectionId, scrollSectionNavToAnchor, tabs.length]);
 
   useEffect(() => {
     if (!sortMenuOpen && !addMenuOpen) return;
@@ -742,13 +840,13 @@ export function IntegratedSectionsEditor({
       focusable?.focus({ preventScroll: true });
     };
 
-    if (tabs.some((tab) => tab.id === normalizedSectionId)) {
+    if (navTabs.some((tab) => tab.id === normalizedSectionId)) {
       setActiveSectionId(normalizedSectionId);
     }
 
     frameA = requestAnimationFrame(() => {
       frameB = requestAnimationFrame(() => {
-        scrollTabToAnchor(normalizedSectionId, "auto");
+        scrollSectionNavToAnchor(normalizedSectionId, "auto");
         revealTarget();
       });
     });
@@ -761,7 +859,7 @@ export function IntegratedSectionsEditor({
         window.clearTimeout(retryTimer);
       }
     };
-  }, [focusRequest, scrollContainerRef, scrollTabToAnchor, tabs]);
+  }, [focusRequest, navTabs, scrollContainerRef, scrollSectionNavToAnchor]);
 
   const toggleSectionHidden = (sectionId: string, nextHidden: boolean) => {
     if (sectionId === "basics") {
@@ -772,11 +870,49 @@ export function IntegratedSectionsEditor({
     updateResumeData((draft) => {
       if (sectionId === "summary") {
         draft.summary.hidden = nextHidden;
+        if (!nextHidden) {
+          const firstPage = draft.metadata.layout.pages[0] || {
+            fullWidth: true,
+            main: [],
+            sidebar: [],
+          };
+          if (!draft.metadata.layout.pages[0]) {
+            draft.metadata.layout.pages = [firstPage];
+          }
+          firstPage.main = dedupeSectionIds([
+            ...(firstPage.main || []),
+            ...(firstPage.sidebar || []),
+            sectionId,
+          ]);
+          firstPage.sidebar = [];
+          firstPage.fullWidth = true;
+        }
         return;
       }
 
       if (isStandardSectionId(sectionId)) {
         draft.sections[sectionId].hidden = nextHidden;
+        if (!nextHidden) {
+          if (!draft.sections[sectionId].title.trim()) {
+            draft.sections[sectionId].title = STANDARD_SECTION_LABELS[sectionId];
+          }
+
+          const firstPage = draft.metadata.layout.pages[0] || {
+            fullWidth: true,
+            main: [],
+            sidebar: [],
+          };
+          if (!draft.metadata.layout.pages[0]) {
+            draft.metadata.layout.pages = [firstPage];
+          }
+          firstPage.main = dedupeSectionIds([
+            ...(firstPage.main || []),
+            ...(firstPage.sidebar || []),
+            sectionId,
+          ]);
+          firstPage.sidebar = [];
+          firstPage.fullWidth = true;
+        }
         return;
       }
 
@@ -787,6 +923,7 @@ export function IntegratedSectionsEditor({
         custom.hidden = nextHidden;
       }
     });
+
   };
 
   const openRenameDialog = (sectionId: string) => {
@@ -908,36 +1045,14 @@ export function IntegratedSectionsEditor({
     setDeleteModal({ open: false, sectionId: null, title: "" });
   };
 
-  const handleTabDragEnd = (event: DragEndEvent) => {
-    const indexes = resolveItemReorderIndexes(sortableTabIds, event);
-    if (!indexes) return;
-
-    const moved = arrayMove(sortableTabIds, indexes.fromIndex, indexes.toIndex);
-    updateResumeData((draft) => {
-      const firstPage = draft.metadata.layout.pages[0];
-      if (!firstPage) return;
-      firstPage.main = moved;
-      firstPage.sidebar = [];
-      firstPage.fullWidth = true;
-    });
-  };
-
-  const presentLayoutSectionIds = useMemo(
-    () => new Set(layoutSectionIds),
-    [layoutSectionIds],
-  );
   const addableSectionIds = useMemo(
     () =>
       ADDABLE_EDITOR_SECTION_ORDER.filter(
-        (sectionId) => !presentLayoutSectionIds.has(sectionId),
+        (sectionId) => !presentEditorSectionIds.has(sectionId),
       ),
-    [presentLayoutSectionIds],
+    [presentEditorSectionIds],
   );
   const addSectionToEditor = (sectionId: string) => {
-    const shouldSeedDefaultItem =
-      isStandardSectionId(sectionId) &&
-      data.sections[sectionId].items.length === 0;
-
     updateResumeData((draft) => {
       const firstPage = draft.metadata.layout.pages[0] || {
         fullWidth: true,
@@ -968,14 +1083,6 @@ export function IntegratedSectionsEditor({
         draft.sections[sectionId].hidden = false;
       }
     });
-
-    if (shouldSeedDefaultItem) {
-      addStandardSectionItem(sectionId);
-      const latestItemId = resolveLatestStandardSectionItemId(sectionId);
-      if (latestItemId) {
-        setStandardSectionExpandedItem(sectionId, latestItemId);
-      }
-    }
 
     setActiveSectionId(sectionId);
     setAddMenuOpen(false);
@@ -1024,7 +1131,7 @@ export function IntegratedSectionsEditor({
   };
 
   const activeSectionTab =
-    tabs.find((tab) => tab.id === activeSectionId) || tabs[0];
+    navTabs.find((tab) => tab.id === activeSectionId) || navTabs[0];
   const existingModuleTabs = useMemo(
     () => tabs.filter((tab) => tab.id !== "basics"),
     [tabs],
@@ -1033,8 +1140,30 @@ export function IntegratedSectionsEditor({
     () => existingModuleTabs.map((tab) => tab.id),
     [existingModuleTabs],
   );
+  const visibleModuleTabs = useMemo(
+    () => existingModuleTabs.filter((tab) => !tab.hidden),
+    [existingModuleTabs],
+  );
+  const hiddenModuleTabs = useMemo(
+    () => existingModuleTabs.filter((tab) => tab.hidden),
+    [existingModuleTabs],
+  );
+  const applyOnlyHiddenTabs = useMemo(
+    () => [...hiddenModuleTabs, ...latentHiddenTabs],
+    [hiddenModuleTabs, latentHiddenTabs],
+  );
+  const visibleModuleSortableIds = useMemo(
+    () => visibleModuleTabs.map((tab) => tab.id),
+    [visibleModuleTabs],
+  );
+  const hiddenModuleSortableIds = useMemo(
+    () => hiddenModuleTabs.map((tab) => tab.id),
+    [hiddenModuleTabs],
+  );
+  const navSectionSortSensors = useEditorTabSortSensors();
   const existingModuleSortSensors = useEditorTabSortSensors();
   const resolvedActiveSectionId = activeSectionTab?.id || "basics";
+  const onlineApplyEnabled = Boolean(data.metadata.onlineApply?.enabled);
   const showAddItemRow =
     resolvedActiveSectionId !== "summary" &&
     resolvedActiveSectionId !== "basics";
@@ -1054,330 +1183,171 @@ export function IntegratedSectionsEditor({
     ? "点击使用自动填写，快速补全简历关键信息"
     : "点击使用 AI 诊断，获得结构与措辞优化建议";
 
-  const handleExistingModuleSortEnd = (event: DragEndEvent) => {
-    const indexes = resolveItemReorderIndexes(existingModuleSortableIds, event);
-    if (!indexes) return;
+  const reorderSectionGroup = useCallback(
+    (groupIds: string[], event: DragEndEvent) => {
+      const indexes = resolveItemReorderIndexes(groupIds, event);
+      if (!indexes) return;
 
-    const moved = arrayMove(
-      existingModuleSortableIds,
-      indexes.fromIndex,
-      indexes.toIndex,
-    );
-    updateResumeData((draft) => {
-      const firstPage = draft.metadata.layout.pages[0];
-      if (!firstPage) return;
+      const moved = arrayMove(groupIds, indexes.fromIndex, indexes.toIndex);
+      updateResumeData((draft) => {
+        const firstPage = draft.metadata.layout.pages[0];
+        if (!firstPage) return;
 
-      const merged = dedupeSectionIds([
-        ...(firstPage.main || []),
-        ...(firstPage.sidebar || []),
-      ]);
-      const rest = merged.filter(
-        (sectionId) => !existingModuleSortableIds.includes(sectionId),
-      );
-      firstPage.main = [...moved, ...rest];
-      firstPage.sidebar = [];
-      firstPage.fullWidth = true;
-    });
-  };
+        const merged = dedupeSectionIds([
+          ...(firstPage.main || []),
+          ...(firstPage.sidebar || []),
+        ]);
+        const groupSet = new Set(groupIds);
+        const groupOrderLookup = new Map(
+          moved.map((sectionId, index) => [sectionId, index]),
+        );
+
+        const sorted = [...merged].sort((left, right) => {
+          const leftInGroup = groupSet.has(left);
+          const rightInGroup = groupSet.has(right);
+          if (leftInGroup && rightInGroup) {
+            return (
+              (groupOrderLookup.get(left) ?? 0) -
+              (groupOrderLookup.get(right) ?? 0)
+            );
+          }
+          return 0;
+        });
+
+        firstPage.main = sorted;
+        firstPage.sidebar = [];
+        firstPage.fullWidth = true;
+      });
+    },
+    [updateResumeData],
+  );
+
+  const handleExistingModuleSortEnd = useCallback(
+    (event: DragEndEvent) => {
+      reorderSectionGroup(existingModuleSortableIds, event);
+    },
+    [existingModuleSortableIds, reorderSectionGroup],
+  );
+
+  const handleVisibleSectionNavSortEnd = useCallback(
+    (event: DragEndEvent) => {
+      reorderSectionGroup(visibleModuleSortableIds, event);
+    },
+    [reorderSectionGroup, visibleModuleSortableIds],
+  );
+
+  const handleHiddenSectionNavSortEnd = useCallback(
+    (event: DragEndEvent) => {
+      reorderSectionGroup(hiddenModuleSortableIds, event);
+    },
+    [hiddenModuleSortableIds, reorderSectionGroup],
+  );
 
   return (
     <div className="resume-editor-tabs-layout">
       <div className="resume-editor-tabs-head">
-        <button
-          type="button"
-          className={`resume-editor-ai-diagnosis-card is-${completeness.tone}`}
-          aria-label={`内容完善度 ${completeness.score} 分，点击使用${completenessActionLabel}`}
-          onClick={onOpenAIDiagnosis}
-        >
-          <div className="resume-editor-ai-diagnosis-copy">
-            <strong>内容完善度 {completeness.score}%</strong>
-            <span>{completenessActionHint}</span>
-          </div>
-          <div className="resume-editor-ai-diagnosis-cta">
-            <Sparkles size={14} aria-hidden="true" />
-            <span>{completenessActionLabel}</span>
-            <IconChevronRight />
-          </div>
-        </button>
-
-        <div className="resume-editor-tabs-head-main">
+        <div className="resume-editor-ai-diagnosis-row">
           <div
-            className="resume-editor-tabs-track-wrap"
-            data-left-mask={showTabsLeftMask ? "true" : "false"}
-            data-right-mask={showTabsRightMask ? "true" : "false"}
+            className={`resume-editor-ai-diagnosis-card is-${completeness.tone}`}
           >
-            <span
-              className="resume-editor-tabs-scroll-mask is-left"
-              aria-hidden="true"
-            />
-            <span
-              className="resume-editor-tabs-scroll-mask is-right"
-              aria-hidden="true"
-            />
-            <div
-              ref={tabTrackShellRef}
-              className="resume-editor-tabs-track-shell"
-            >
-              <DndContext
-                sensors={tabSortSensors}
-                collisionDetection={closestCenter}
-                onDragEnd={handleTabDragEnd}
-              >
-                <SortableContext
-                  items={sortableTabIds}
-                  strategy={horizontalListSortingStrategy}
-                >
-                  <div
-                    className="resume-editor-tabs-track"
-                    role="tablist"
-                    aria-label="属性编辑器板块标签"
-                  >
-                    {tabs.map((tab) => {
-                      if (!tab.sortable) {
-                        return (
-                          <div
-                            key={tab.id}
-                            className={joinClassNames(
-                              "resume-editor-tab",
-                              activeSectionId === tab.id && "is-active",
-                              tab.hidden && "is-hidden",
-                              tab.locked && "is-locked",
-                            )}
-                            role="presentation"
-                          >
-                            <EditorSectionTabChromeBg />
-                            <span
-                              className="resume-editor-tab-hover-bg"
-                              aria-hidden="true"
-                            />
-                            <button
-                              type="button"
-                              className="resume-editor-tab-select"
-                              role="tab"
-                              aria-selected={activeSectionId === tab.id}
-                              tabIndex={activeSectionId === tab.id ? 0 : -1}
-                              data-editor-tab-id={tab.id}
-                              onClick={() => handleTabSelect(tab.id)}
-                              onKeyDown={(event) => {
-                                if (
-                                  event.key === "Enter" ||
-                                  event.key === " "
-                                ) {
-                                  event.preventDefault();
-                                  handleTabSelect(tab.id);
-                                }
-                              }}
-                            >
-                              <span className="resume-editor-tab-label-row">
-                                {renderEditorTabIcon(tab.id)}
-                                <span className="resume-editor-tab-title">
-                                  {tab.title}
-                                </span>
-                                {tab.hidden ? (
-                                  <span className="resume-editor-tab-meta">
-                                    已隐藏
-                                  </span>
-                                ) : null}
-                              </span>
-                            </button>
-                          </div>
-                        );
-                      }
-
-                      return (
-                        <SortableEditorSectionTab
-                          key={tab.id}
-                          sectionId={tab.id}
-                          title={tab.title}
-                          active={activeSectionId === tab.id}
-                          hidden={tab.hidden}
-                          locked={tab.locked}
-                          onSelect={() => {
-                            handleTabSelect(tab.id);
-                          }}
-                        />
-                      );
-                    })}
-                  </div>
-                </SortableContext>
-              </DndContext>
+            <div className="resume-editor-ai-diagnosis-copy">
+              <strong>内容完善度 {completeness.score}%</strong>
+              <span>{completenessActionHint}</span>
             </div>
+            <button
+              type="button"
+              className="resume-editor-ai-diagnosis-cta"
+              aria-label={`点击使用${completenessActionLabel}`}
+              onClick={onOpenAIDiagnosis}
+            >
+              <Sparkles size={14} aria-hidden="true" />
+              <span>{completenessActionLabel}</span>
+              <IconChevronRight />
+            </button>
           </div>
-
-          <div className="resume-editor-tabs-head-actions">
-            <div
-              className="resume-editor-add-shell"
-              onClick={(event) => event.stopPropagation()}
+          <div className="resume-editor-apply-switch-controls">
+            <button
+              type="button"
+              className="resume-typesetting-switch-row resume-editor-apply-switch-row"
+              role="switch"
+              aria-checked={onlineApplyEnabled}
+              onClick={() =>
+                updateResumeData((draft) => {
+                  draft.metadata.onlineApply.enabled =
+                    !draft.metadata.onlineApply.enabled;
+                })
+              }
             >
-              <div
-                className={joinClassNames(
-                  "resume-item-menu",
-                  "resume-editor-add-menu",
-                  showAddSectionMenu && "is-open",
-                )}
+              <span
+                className={`resume-typesetting-switch${onlineApplyEnabled ? " is-on" : ""}`}
+                aria-hidden="true"
               >
-                <Button
-                  type="text"
-                  size="mini"
-                  className="resume-inline-icon-btn"
-                  icon={<IconPlus />}
-                  onClick={() => {
-                    setSortMenuOpen(false);
-                    setAddMenuOpen((open) => !open);
-                  }}
-                  aria-label="添加板块"
-                />
-                {showAddSectionMenu ? (
-                  <div className="resume-item-menu-popover resume-editor-add-menu-panel">
-                    <section className="resume-editor-add-menu-section">
-                      <h4 className="resume-editor-add-menu-title">已有模块</h4>
-                      <div className="resume-editor-existing-modules-list">
-                        {existingModuleTabs.length > 0 ? (
-                          <DndContext
-                            sensors={existingModuleSortSensors}
-                            collisionDetection={closestCenter}
-                            onDragEnd={handleExistingModuleSortEnd}
-                          >
-                            <SortableContext
-                              items={existingModuleSortableIds}
-                              strategy={verticalListSortingStrategy}
-                            >
-                              {existingModuleTabs.map((tab) => (
-                                <SortableExistingModuleRow
-                                  key={tab.id}
-                                  sectionId={tab.id}
-                                  title={tab.title}
-                                  canRename={!tab.locked}
-                                  canDelete={tab.removable}
-                                  onRename={() => {
-                                    openRenameDialog(tab.id);
-                                    setAddMenuOpen(false);
-                                    setSortMenuOpen(false);
-                                  }}
-                                  onDelete={() => {
-                                    openDeleteDialog(tab.id);
-                                    setAddMenuOpen(false);
-                                    setSortMenuOpen(false);
-                                  }}
-                                />
-                              ))}
-                            </SortableContext>
-                          </DndContext>
-                        ) : (
-                          <div className="resume-editor-existing-module-empty">
-                            暂无模块
-                          </div>
-                        )}
-                      </div>
-                    </section>
-
-                    <section className="resume-editor-add-menu-section">
-                      <h4 className="resume-editor-add-menu-title">添加模块</h4>
-                      <div className="resume-editor-add-modules-list">
-                        {addableSectionIds.map((sectionId) => (
-                          <button
-                            key={sectionId}
-                            type="button"
-                            className="resume-editor-add-module-row"
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              addSectionToEditor(sectionId);
-                              setSortMenuOpen(false);
-                            }}
-                          >
-                            <span
-                              className="resume-editor-add-module-plus"
-                              aria-hidden="true"
-                            >
-                              <IconPlus />
-                            </span>
-                            <span>
-                              {getSectionDisplayTitle(data, sectionId)}
-                            </span>
-                          </button>
-                        ))}
-                        <button
-                          type="button"
-                          className="resume-editor-add-module-row"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            addCustomSectionFromHeader();
-                            setSortMenuOpen(false);
-                          }}
-                        >
-                          <span
-                            className="resume-editor-add-module-plus"
-                            aria-hidden="true"
-                          >
-                            <IconPlus />
-                          </span>
-                          <span>自定义</span>
-                        </button>
-                      </div>
-                    </section>
-                  </div>
-                ) : null}
-              </div>
-            </div>
+                <span className="resume-typesetting-switch-thumb" />
+              </span>
+              <span
+                className={`resume-typesetting-switch-label${onlineApplyEnabled ? " is-on" : ""}`}
+              >
+                允许网申
+              </span>
+            </button>
+            <Tip
+              content="查看允许网申说明"
+              placement="bottom"
+              triggerClassName="resume-editor-apply-switch-tip-trigger"
+            >
+              <button
+                type="button"
+                className="resume-editor-apply-switch-info"
+                aria-label="查看允许网申说明"
+                onClick={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  setOnlineApplyInfoOpen(true);
+                }}
+              >
+                <CircleHelp size={14} />
+              </button>
+            </Tip>
           </div>
         </div>
+
       </div>
 
-      <div
-        ref={scrollContainerRef}
-        className="scroll-shell resume-scroll-shell resume-editor-tab-content-scroll"
-        data-scroll-tone="panel"
-        data-scroll-reveal="always"
-        data-scroll-axis="y"
-      >
-        <div className="resume-side-panel-body resume-workbench-panel-body resume-editor-panel-body resume-editor-tab-content-body">
-          <div
-            data-editor-section-id={resolvedActiveSectionId}
-            className="resume-editor-tab-content resume-focus-target"
-          >
-            <div className="resume-editor-content-head">
-              <div className="resume-editor-content-head-main">
-                <h3 className="resume-editor-content-title">
-                  {activeSectionTab?.title || "基本信息"}
-                </h3>
-                {activeCanRename ? (
-                  <EditorActionIconButton
-                    label="重命名"
-                    icon={<Pencil size={14} />}
+      <div className="resume-editor-split-layout">
+        <aside className="resume-editor-sections-nav">
+          <div className="resume-editor-sections-nav-head">
+            <h4 className="resume-editor-sections-nav-title">板块</h4>
+            <div className="resume-editor-sections-nav-head-actions">
+              <div
+                className="resume-editor-add-shell"
+                onClick={(event) => event.stopPropagation()}
+              >
+                <div
+                  className={joinClassNames(
+                    "resume-item-menu",
+                    "resume-editor-add-menu",
+                    showAddSectionMenu && "is-open",
+                  )}
+                >
+                  <Button
+                    type="text"
+                    size="mini"
+                    className="resume-inline-icon-btn"
+                    icon={<IconPlus />}
+                    tip="添加与布局"
+                    tipPlacement="bottom"
                     onClick={() => {
-                      openRenameDialog(resolvedActiveSectionId);
+                      setSortMenuOpen(false);
+                      setAddMenuOpen((open) => !open);
                     }}
+                    aria-label="添加与布局"
                   />
-                ) : null}
-              </div>
-              <div className="resume-editor-content-head-actions">
-                {activeCanSort ? (
-                  <div
-                    className="resume-editor-sort-shell"
-                    onClick={(event) => event.stopPropagation()}
-                  >
-                    <div
-                      className={joinClassNames(
-                        "resume-item-menu",
-                        "resume-editor-sort-menu",
-                        sortMenuOpen && "is-open",
-                      )}
-                    >
-                      <EditorActionIconButton
-                        label="排序"
-                        icon={<IconGrip />}
-                        active={sortMenuOpen}
-                        onClick={() => {
-                          setAddMenuOpen(false);
-                          setSortMenuOpen((open) => !open);
-                        }}
-                      />
-                      {sortMenuOpen ? (
-                        <div className="resume-item-menu-popover resume-editor-sort-menu-panel">
-                          <h4 className="resume-editor-sort-menu-title">
-                            拖拽排序
-                          </h4>
-                          <div className="resume-editor-existing-modules-list">
+                  {showAddSectionMenu ? (
+                    <div className="resume-item-menu-popover resume-editor-add-menu-panel">
+                      <section className="resume-editor-add-menu-section">
+                        <h4 className="resume-editor-add-menu-title">已有模块</h4>
+                        <div className="resume-editor-existing-modules-list">
+                          {existingModuleTabs.length > 0 ? (
                             <DndContext
                               sensors={existingModuleSortSensors}
                               collisionDetection={closestCenter}
@@ -1392,64 +1362,262 @@ export function IntegratedSectionsEditor({
                                     key={tab.id}
                                     sectionId={tab.id}
                                     title={tab.title}
-                                    showActions={false}
+                                    canRename={!tab.locked}
+                                    canDelete={tab.removable}
+                                    onRename={() => {
+                                      openRenameDialog(tab.id);
+                                      setAddMenuOpen(false);
+                                      setSortMenuOpen(false);
+                                    }}
+                                    onDelete={() => {
+                                      openDeleteDialog(tab.id);
+                                      setAddMenuOpen(false);
+                                      setSortMenuOpen(false);
+                                    }}
                                   />
                                 ))}
                               </SortableContext>
                             </DndContext>
-                          </div>
+                          ) : (
+                            <div className="resume-editor-existing-module-empty">
+                              暂无模块
+                            </div>
+                          )}
                         </div>
-                      ) : null}
+                      </section>
+
+                      <section className="resume-editor-add-menu-section">
+                        <h4 className="resume-editor-add-menu-title">添加模块</h4>
+                        <div className="resume-editor-add-modules-list">
+                          {addableSectionIds.map((sectionId) => (
+                            <button
+                              key={sectionId}
+                              type="button"
+                              className="resume-editor-add-module-row"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                addSectionToEditor(sectionId);
+                                setSortMenuOpen(false);
+                              }}
+                            >
+                              <span
+                                className="resume-editor-add-module-plus"
+                                aria-hidden="true"
+                              >
+                                <IconPlus />
+                              </span>
+                              <span>
+                                {getSectionDisplayTitle(data, sectionId)}
+                              </span>
+                            </button>
+                          ))}
+                          <button
+                            type="button"
+                            className="resume-editor-add-module-row"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              addCustomSectionFromHeader();
+                              setSortMenuOpen(false);
+                            }}
+                          >
+                            <span
+                              className="resume-editor-add-module-plus"
+                              aria-hidden="true"
+                            >
+                              <IconPlus />
+                            </span>
+                            <span>自定义</span>
+                          </button>
+                        </div>
+                      </section>
                     </div>
-                  </div>
-                ) : null}
-
-                {activeCanToggleHidden && activeSectionTab ? (
-                  <EditorActionIconButton
-                    label={activeHiddenLabel}
-                    icon={
-                      activeSectionTab.hidden ? (
-                        <Eye size={14} />
-                      ) : (
-                        <EyeOff size={14} />
-                      )
-                    }
-                    onClick={() => {
-                      toggleSectionHidden(
-                        activeSectionTab.id,
-                        !activeSectionTab.hidden,
-                      );
-                    }}
-                  />
-                ) : null}
-
-                {activeCanDelete ? (
-                  <EditorActionIconButton
-                    label="删除"
-                    icon={<IconDelete />}
-                    danger
-                    onClick={() => {
-                      openDeleteDialog(resolvedActiveSectionId);
-                    }}
-                  />
-                ) : null}
+                  ) : null}
+                </div>
               </div>
             </div>
+          </div>
 
-            {resolvedActiveSectionId === "basics" ? (
-              renderBasicInfoEditor()
-            ) : (
-              renderSectionEditorBody(resolvedActiveSectionId)
-            )}
-
-            {showAddItemRow ? (
-              <div className="resume-editor-tab-add-row">
-                <AddRowButton
-                  label="新增条目"
-                  onClick={() => addSectionItem(resolvedActiveSectionId)}
-                />
-              </div>
+          <div
+            ref={sectionNavListRef}
+            className="resume-editor-sections-nav-list"
+            role="tablist"
+            aria-label="属性编辑器板块列表"
+            aria-orientation="vertical"
+          >
+            {tabs[0] ? (
+              <EditorSectionNavButton
+                sectionId={tabs[0].id}
+                title={tabs[0].title}
+                active={activeSectionId === tabs[0].id}
+                hidden={tabs[0].hidden}
+                locked={tabs[0].locked}
+                onSelect={() => handleTabSelect(tabs[0].id)}
+              />
             ) : null}
+
+            {onlineApplyEnabled ? (
+              <>
+                <EditorSectionNavGroup
+                  label="简历显示"
+                  tabs={visibleModuleTabs}
+                  sortableIds={visibleModuleSortableIds}
+                  activeSectionId={activeSectionId}
+                  sensors={navSectionSortSensors}
+                  onSelect={handleTabSelect}
+                  onDragEnd={handleVisibleSectionNavSortEnd}
+                />
+                <EditorSectionNavGroup
+                  label="仅网申隐藏"
+                  tabs={applyOnlyHiddenTabs}
+                  sortableIds={hiddenModuleSortableIds}
+                  activeSectionId={activeSectionId}
+                  sensors={navSectionSortSensors}
+                  onSelect={handleTabSelect}
+                  onDragEnd={handleHiddenSectionNavSortEnd}
+                  emptyMessage="暂无隐藏板块"
+                />
+              </>
+            ) : (
+              <EditorSectionNavGroup
+                tabs={existingModuleTabs}
+                sortableIds={existingModuleSortableIds}
+                activeSectionId={activeSectionId}
+                sensors={navSectionSortSensors}
+                onSelect={handleTabSelect}
+                onDragEnd={handleExistingModuleSortEnd}
+              />
+            )}
+          </div>
+        </aside>
+
+        <div
+          ref={scrollContainerRef}
+          className="scroll-shell resume-scroll-shell resume-editor-tab-content-scroll"
+          data-scroll-tone="panel"
+          data-scroll-reveal="always"
+          data-scroll-axis="y"
+        >
+          <div className="resume-side-panel-body resume-workbench-panel-body resume-editor-panel-body resume-editor-tab-content-body">
+            <div
+              data-editor-section-id={resolvedActiveSectionId}
+              className="resume-editor-tab-content resume-focus-target"
+            >
+              <div className="resume-editor-content-head">
+                <div className="resume-editor-content-head-main">
+                  <h3 className="resume-editor-content-title">
+                    {activeSectionTab?.title || "基本信息"}
+                  </h3>
+                  {activeCanRename ? (
+                    <EditorActionIconButton
+                      label="重命名"
+                      icon={<Pencil size={14} />}
+                      onClick={() => {
+                        openRenameDialog(resolvedActiveSectionId);
+                      }}
+                    />
+                  ) : null}
+                </div>
+                <div className="resume-editor-content-head-actions">
+                  {activeCanSort ? (
+                    <div
+                      className="resume-editor-sort-shell"
+                      onClick={(event) => event.stopPropagation()}
+                    >
+                      <div
+                        className={joinClassNames(
+                          "resume-item-menu",
+                          "resume-editor-sort-menu",
+                          sortMenuOpen && "is-open",
+                        )}
+                      >
+                        <EditorActionIconButton
+                          label="排序"
+                          icon={<IconGrip />}
+                          active={sortMenuOpen}
+                          onClick={() => {
+                            setAddMenuOpen(false);
+                            setSortMenuOpen((open) => !open);
+                          }}
+                        />
+                        {sortMenuOpen ? (
+                          <div className="resume-item-menu-popover resume-editor-sort-menu-panel">
+                            <h4 className="resume-editor-sort-menu-title">
+                              拖拽排序
+                            </h4>
+                            <div className="resume-editor-existing-modules-list">
+                              <DndContext
+                                sensors={existingModuleSortSensors}
+                                collisionDetection={closestCenter}
+                                onDragEnd={handleExistingModuleSortEnd}
+                              >
+                                <SortableContext
+                                  items={existingModuleSortableIds}
+                                  strategy={verticalListSortingStrategy}
+                                >
+                                  {existingModuleTabs.map((tab) => (
+                                    <SortableExistingModuleRow
+                                      key={tab.id}
+                                      sectionId={tab.id}
+                                      title={tab.title}
+                                      showActions={false}
+                                    />
+                                  ))}
+                                </SortableContext>
+                              </DndContext>
+                            </div>
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {activeCanToggleHidden && activeSectionTab ? (
+                    <EditorActionIconButton
+                      label={activeHiddenLabel}
+                      icon={
+                        activeSectionTab.hidden ? (
+                          <Eye size={14} />
+                        ) : (
+                          <EyeOff size={14} />
+                        )
+                      }
+                      onClick={() => {
+                        toggleSectionHidden(
+                          activeSectionTab.id,
+                          !activeSectionTab.hidden,
+                        );
+                      }}
+                    />
+                  ) : null}
+
+                  {activeCanDelete ? (
+                    <EditorActionIconButton
+                      label="删除"
+                      icon={<IconDelete />}
+                      danger
+                      onClick={() => {
+                        openDeleteDialog(resolvedActiveSectionId);
+                      }}
+                    />
+                  ) : null}
+                </div>
+              </div>
+
+              {resolvedActiveSectionId === "basics" ? (
+                renderBasicInfoEditor()
+              ) : (
+                renderSectionEditorBody(resolvedActiveSectionId)
+              )}
+
+              {showAddItemRow ? (
+                <div className="resume-editor-tab-add-row">
+                  <AddRowButton
+                    label="新增条目"
+                    onClick={() => addSectionItem(resolvedActiveSectionId)}
+                  />
+                </div>
+              ) : null}
+            </div>
           </div>
         </div>
       </div>
@@ -1484,6 +1652,27 @@ export function IntegratedSectionsEditor({
             value={renameModal.value}
             onChange={(value) => setRenameModal((prev) => ({ ...prev, value }))}
           />
+        </div>
+      </Modal>
+
+      <Modal
+        open={onlineApplyInfoOpen}
+        onClose={() => setOnlineApplyInfoOpen(false)}
+        title="允许网申说明"
+        footer={
+          <Button
+            type="secondary"
+            onClick={() => setOnlineApplyInfoOpen(false)}
+          >
+            知道了
+          </Button>
+        }
+      >
+        <div className="space-y-3 text-sm text-muted-foreground">
+          <p>开启后，左侧板块会拆分为“简历显示”和“仅网申隐藏”两组。</p>
+          <p>两组内容都可以正常填写、维护，也都可以在后续网申填写时被使用。</p>
+          <p>区别只在于：放到“仅网申隐藏”的内容不会出现在简历预览里，但会继续作为网申资料保留。</p>
+          <p>这样你只需要维护这一套简历数据，不再需要单独维护一份独立的数据源。</p>
         </div>
       </Modal>
 

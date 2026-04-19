@@ -8,6 +8,7 @@ import {
   useState,
 } from "react";
 import { Button, IconLeft, IconSave, Input, Space } from "../../primitives";
+import { Download, Share2 } from "lucide-react";
 
 function ToolbarSpinnerIcon() {
   return (
@@ -271,7 +272,10 @@ export function ResumeBuilderToolbar({
               aria-expanded={shareMenuOpen}
               disabled={shareSaving}
             >
-              分享
+              <span className="resume-toolbar-share-trigger-label">分享</span>
+              <span className="resume-toolbar-share-trigger-icon" aria-hidden="true">
+                <Share2 size={14} />
+              </span>
             </button>
             <div
               className="resume-toolbar-share-panel"
@@ -340,27 +344,16 @@ export function ResumeBuilderToolbar({
               aria-expanded={downloadMenuOpen}
               disabled={downloadLoading}
             >
+              <span className="resume-toolbar-download-trigger-label">导出</span>
               {downloadLoading ? (
                 <span className="resume-toolbar-download-trigger-icon">
                   <ToolbarSpinnerIcon />
                 </span>
-              ) : null}
-              <span className="resume-toolbar-download-trigger-label">
-                快速下载
-                <span>
-                  <svg
-                    height="18"
-                    width="18"
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      fill="#ffffff"
-                      d="M5 20h14v-2H5v2zM19 9h-4V3H9v6H5l7 7 7-7z"
-                    ></path>
-                  </svg>
+              ) : (
+                <span className="resume-toolbar-download-trigger-icon" aria-hidden="true">
+                  <Download size={14} />
                 </span>
-              </span>
+              )}
             </button>
             <div
               className="resume-toolbar-download-panel"

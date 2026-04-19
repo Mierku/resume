@@ -149,7 +149,7 @@ function ResumePreviewDock({
 
 interface ResumePreviewWorkspaceProps extends ResumePreviewCanvasProps {
   editorPanelWidth: number
-  previewLeftPadding: number
+  previewRightPadding: number
   aiPreviewVisible: boolean
   aiPreviewActionLoading: 'new_version' | 'overwrite' | 'discard' | null
   onRunPreviewDraftAction: (action: 'new_version' | 'overwrite' | 'discard') => void
@@ -164,7 +164,7 @@ interface ResumePreviewWorkspaceProps extends ResumePreviewCanvasProps {
 
 export function ResumePreviewWorkspace({
   editorPanelWidth,
-  previewLeftPadding,
+  previewRightPadding,
   aiPreviewVisible,
   aiPreviewActionLoading,
   onRunPreviewDraftAction,
@@ -178,7 +178,7 @@ export function ResumePreviewWorkspace({
   ...canvasProps
 }: ResumePreviewWorkspaceProps) {
   const viewportPaddingStyle = {
-    padding: `20px calc(var(--resume-editor-panel-width, ${editorPanelWidth}px) + 6px) 28px ${previewLeftPadding}px`,
+    padding: `20px ${previewRightPadding}px 28px calc(var(--resume-editor-panel-width, ${editorPanelWidth}px) + 6px)`,
   } satisfies CSSProperties
 
   return (

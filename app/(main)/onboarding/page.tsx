@@ -5,12 +5,9 @@ import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Check, Chrome, Globe } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
-import { Input, Button, Message } from '@/components/ui/radix-adapter'
+import { Button, Message } from '@/components/ui/radix-adapter'
 import { Skeleton } from '@/components/ui/Skeleton'
-
-const TextArea = Input.TextArea
-
-type Step = 'data-source' | 'install' | 'tutorial'
+type Step = 'install' | 'tutorial'
 
 export default function OnboardingPage() {
   return <OnboardingContent />
@@ -19,18 +16,9 @@ export default function OnboardingPage() {
 function OnboardingContent() {
   const router = useRouter()
   const pathname = usePathname()
-  const [step, setStep] = useState<Step>('data-source')
+  const [step, setStep] = useState<Step>('install')
   const [loading, setLoading] = useState(false)
   const [bootstrapping, setBootstrapping] = useState(true)
-  const [dataSourceForm, setDataSourceForm] = useState({
-    name: '我的数据源',
-    nameZh: '',
-    nameEn: '',
-    email: '',
-    phone: '',
-    skills: '',
-    summaryZh: '',
-  })
 
   useEffect(() => {
     const checkStatus = async () => {
@@ -43,7 +31,6 @@ function OnboardingContent() {
 
         if (res.ok) {
           const data = await res.json()
-          if (data.hasDataSource) setStep('install')
           if (data.completed) router.push('/dashboard')
         }
       } catch (error) {
@@ -68,45 +55,6 @@ function OnboardingContent() {
     )
   }
 
-  const handleCreateDataSource = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!dataSourceForm.name || !dataSourceForm.nameZh) {
-      Message.error('请填写必填项')
-      return
-    }
-
-    setLoading(true)
-    try {
-      const res = await fetch('/api/data-sources', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: dataSourceForm.name,
-          basics: {
-            nameZh: dataSourceForm.nameZh,
-            nameEn: dataSourceForm.nameEn,
-            email: dataSourceForm.email,
-            phone: dataSourceForm.phone,
-          },
-          skills: dataSourceForm.skills.split(/[,，]/).map(s => s.trim()).filter(Boolean),
-          summaryZh: dataSourceForm.summaryZh,
-        }),
-      })
-
-      if (res.ok) {
-        Message.success('数据源创建成功')
-        setStep('install')
-      } else {
-        const data = await res.json()
-        Message.error(data.error || '创建失败')
-      }
-    } catch {
-      Message.error('创建失败')
-    } finally {
-      setLoading(false)
-    }
-  }
-
   const handleComplete = async () => {
     setLoading(true)
     try {
@@ -125,9 +73,8 @@ function OnboardingContent() {
   }
 
   const steps = [
-    { id: 'data-source', label: '创建数据源', number: 1 },
-    { id: 'install', label: '安装插件', number: 2 },
-    { id: 'tutorial', label: '填报教程', number: 3 },
+    { id: 'install', label: '安装插件', number: 1 },
+    { id: 'tutorial', label: '填报教程', number: 2 },
   ]
 
   return (
@@ -172,90 +119,6 @@ function OnboardingContent() {
 
         {/* Step content */}
         <Card className="p-6">
-          {step === 'data-source' && (
-            <form onSubmit={handleCreateDataSource} className="space-y-6">
-              <div>
-                <h2 className="text-lg font-semibold text-foreground mb-1">创建数据源</h2>
-                <p className="text-sm text-muted-foreground">
-                  数据源存储您的个人信息，用于一键填充表单
-                </p>
-              </div>
-
-              <div>
-                <label className="form-label">数据源名称 *</label>
-                <Input
-                  value={dataSourceForm.name}
-                  onChange={v => setDataSourceForm(prev => ({ ...prev, name: v }))}
-                  placeholder="例如：前端开发、产品经理"
-                />
-              </div>
-
-              <div className="grid gap-4 grid-cols-2">
-                <div>
-                  <label className="form-label">中文姓名 *</label>
-                  <Input
-                    value={dataSourceForm.nameZh}
-                    onChange={v => setDataSourceForm(prev => ({ ...prev, nameZh: v }))}
-                    placeholder="张三"
-                  />
-                </div>
-                <div>
-                  <label className="form-label">英文名</label>
-                  <Input
-                    value={dataSourceForm.nameEn}
-                    onChange={v => setDataSourceForm(prev => ({ ...prev, nameEn: v }))}
-                    placeholder="San Zhang"
-                  />
-                </div>
-              </div>
-
-              <div className="grid gap-4 grid-cols-2">
-                <div>
-                  <label className="form-label">邮箱</label>
-                  <Input
-                    type="email"
-                    value={dataSourceForm.email}
-                    onChange={v => setDataSourceForm(prev => ({ ...prev, email: v }))}
-                    placeholder="your@email.com"
-                  />
-                </div>
-                <div>
-                  <label className="form-label">手机号</label>
-                  <Input
-                    value={dataSourceForm.phone}
-                    onChange={v => setDataSourceForm(prev => ({ ...prev, phone: v }))}
-                    placeholder="13800138000"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="form-label">技能（逗号分隔）</label>
-                <Input
-                  value={dataSourceForm.skills}
-                  onChange={v => setDataSourceForm(prev => ({ ...prev, skills: v }))}
-                  placeholder="JavaScript, React, Node.js"
-                />
-              </div>
-
-              <div>
-                <label className="form-label">个人简介</label>
-                <TextArea
-                  value={dataSourceForm.summaryZh}
-                  onChange={v => setDataSourceForm(prev => ({ ...prev, summaryZh: v }))}
-                  placeholder="简单介绍一下自己..."
-                  autoSize={{ minRows: 3 }}
-                />
-              </div>
-
-              <div className="flex justify-end">
-                <Button type="primary" htmlType="submit" loading={loading}>
-                  创建并继续
-                </Button>
-              </div>
-            </form>
-          )}
-
           {step === 'install' && (
             <div className="space-y-6">
               <div>
@@ -293,7 +156,7 @@ function OnboardingContent() {
               </div>
 
               <div className="flex justify-between">
-                <Button onClick={() => setStep('data-source')}>上一步</Button>
+                <span />
                 <Button type="primary" onClick={() => setStep('tutorial')}>继续</Button>
               </div>
             </div>

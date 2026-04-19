@@ -277,6 +277,9 @@ const metadataSchema = z.object({
       lineHeight: z.number().min(0.5).max(4),
     }),
   }),
+  onlineApply: z.object({
+    enabled: z.boolean().default(false),
+  }),
   notes: z.string(),
 })
 

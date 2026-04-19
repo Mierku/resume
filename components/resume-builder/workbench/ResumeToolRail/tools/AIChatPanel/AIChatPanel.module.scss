@@ -533,6 +533,7 @@
   -webkit-backdrop-filter: blur(8px) saturate(105%);
 }
 .panel :global(.resume-ai-input-shell) {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -571,35 +572,72 @@
 .panel :global(.resume-ai-input-shell .resume-ai-composer::placeholder) {
   color: color-mix(in srgb, var(--builder-panel-text-muted) 86%, transparent);
 }
-.panel :global(.resume-ai-input-footer) {
+.panel :global(.resume-ai-slash-menu) {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(100% + 4px);
   display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 10px;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--builder-panel-text) 10%, transparent);
+  background: color-mix(in srgb, var(--builder-panel-bg) 84%, rgba(0, 0, 0, 0.16));
+  box-shadow:
+    0 16px 34px rgba(0, 0, 0, 0.32),
+    inset 0 0 0 1px color-mix(in srgb, #ffffff 8%, transparent);
+  backdrop-filter: blur(14px) saturate(105%);
+  -webkit-backdrop-filter: blur(14px) saturate(105%);
+  z-index: 6;
 }
-.panel :global(.resume-ai-input-actions) {
+.panel :global(.resume-ai-slash-action) {
+  width: 100%;
+  border: 0;
+  border-radius: 10px;
+  padding: 8px 10px;
   display: flex;
   align-items: center;
   gap: 8px;
-  min-width: 0;
-}
-.panel :global(.resume-ai-input-action) {
-  height: 30px;
-  border-radius: 999px;
-  padding: 0 12px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
+  text-align: left;
+  background: transparent;
   color: color-mix(in srgb, var(--builder-panel-text-muted) 94%, transparent);
-  background: color-mix(in srgb, #ffffff 5%, transparent);
-  font-size: 11px;
-  line-height: 1;
-  white-space: nowrap;
+  transition:
+    background-color 120ms ease,
+    color 120ms ease;
 }
-.panel :global(.resume-ai-input-action.is-plus) {
-  width: 30px;
-  padding: 0;
+.panel :global(.resume-ai-slash-action:hover:not(:disabled)),
+.panel :global(.resume-ai-slash-action:focus-visible),
+.panel :global(.resume-ai-slash-action.is-active) {
+  background: color-mix(in srgb, var(--builder-panel-text) 12%, transparent);
+  color: var(--builder-panel-text);
+  outline: none;
+}
+.panel :global(.resume-ai-slash-action:disabled) {
+  opacity: 0.52;
+  cursor: not-allowed;
+}
+.panel :global(.resume-ai-slash-action-command) {
+  min-width: 56px;
+  font-size: 11px;
+  line-height: 1.25;
+  font-weight: 700;
+  color: color-mix(in srgb, var(--builder-panel-text) 84%, transparent);
+}
+.panel :global(.resume-ai-slash-action-title) {
+  min-width: 0;
+  font-size: 11px;
+  line-height: 1.25;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.panel :global(.resume-ai-input-footer) {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: 10px;
 }
 .panel :global(.resume-ai-send-btn) {
   width: 46px;

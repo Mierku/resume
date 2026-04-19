@@ -7,12 +7,10 @@ import {
 import { RESUME_TEMPLATES } from '@/lib/constants'
 import { getResumeStorageLimit } from '@/lib/membership'
 import {
-  createMockResumeDataSource,
   createFreshResumeContent,
   isResumeContentV2,
   normalizeResumeContent,
   normalizeTemplateId,
-  type ResumeDataSource,
 } from '@/lib/resume/mappers'
 import type { ResumeContentV2, ResumeData, StandardSectionType } from '@/lib/resume/types'
 
@@ -21,7 +19,6 @@ type ResumeContent = ResumeContentV2
 interface CreateResumeInput {
   title: string
   templateId: string
-  dataSourceId?: string
   themeColor?: string
   mode?: ResumeMode
   content?: unknown
@@ -32,7 +29,6 @@ interface CreateResumeInput {
 interface UpdateResumeInput {
   title?: string
   templateId?: string
-  dataSourceId?: string | null
   mode?: ResumeMode
   content?: unknown
   shareVisibility?: ResumeShareVisibility
@@ -88,11 +84,6 @@ function toInputJsonValue(value: unknown): Prisma.InputJsonValue {
 }
 
 type ResumeLimitClient = Pick<typeof prisma, 'user' | 'resume'>
-
-function toResumeDataSource(dataSource: unknown): ResumeDataSource | undefined {
-  if (!dataSource || typeof dataSource !== 'object') return undefined
-  return dataSource as ResumeDataSource
-}
 
 function stripHtml(text: string): string {
   return text.replace(/<[^>]*>/g, '').trim()
@@ -373,17 +364,14 @@ async function migrateResumeIfNeeded(resume: {
   userId: string
   title: string
   templateId: string
-  dataSourceId: string | null
   mode: ResumeMode
   shareVisibility: ResumeShareVisibility
   shareWithRecruiters: boolean
   content: unknown
   createdAt: Date
   updatedAt: Date
-  dataSource?: unknown
 }) {
   const normalized = normalizeResumeContent(resume.content, {
-    dataSource: toResumeDataSource(resume.dataSource),
     templateId: resume.templateId,
     withBackup: true,
   })
@@ -412,9 +400,6 @@ async function migrateResumeIfNeeded(resume: {
       mode: 'form',
       content: toInputJsonValue(normalized),
     },
-    include: {
-      dataSource: true,
-    },
   })
 }
 
@@ -422,20 +407,12 @@ export async function getResumes(userId: string) {
   return prisma.resume.findMany({
     where: { userId },
     orderBy: { updatedAt: 'desc' },
-    include: {
-      dataSource: {
-        select: { id: true, name: true },
-      },
-    },
   })
 }
 
 export async function getResume(id: string, userId: string) {
   const resume = await prisma.resume.findFirst({
     where: { id, userId },
-    include: {
-      dataSource: true,
-    },
   })
 
   if (!resume) {
@@ -455,31 +432,12 @@ export async function createResume(userId: string, input: CreateResumeInput) {
   return prisma.$transaction(async tx => {
     await assertCanCreateResume(tx, userId)
 
-    const dataSource = input.dataSourceId
-      ? await tx.dataSource.findFirst({ where: { id: input.dataSourceId, userId } })
-      : null
-
-    let fallbackDataSource: ResumeDataSource | undefined
-    if (!dataSource && input.content === undefined) {
-      const [dataSourceCount, resumeCount] = await Promise.all([
-        tx.dataSource.count({ where: { userId } }),
-        tx.resume.count({ where: { userId } }),
-      ])
-
-      if (dataSourceCount === 0 && resumeCount === 0) {
-        fallbackDataSource = createMockResumeDataSource()
-      }
-    }
-
-    const effectiveDataSource = toResumeDataSource(dataSource) || fallbackDataSource
-
     const content = input.content
       ? normalizeResumeContent(input.content, {
-          dataSource: effectiveDataSource,
           templateId: input.templateId,
           withBackup: true,
         })
-      : createFreshResumeContent(input.templateId, effectiveDataSource)
+      : createFreshResumeContent(input.templateId)
 
     const templateId = normalizedInputTemplate
     content.data.metadata.template = templateId
@@ -497,7 +455,6 @@ export async function createResume(userId: string, input: CreateResumeInput) {
         userId,
         title: input.title,
         templateId,
-        dataSourceId: input.dataSourceId,
         mode: 'form',
         shareVisibility: shareSettings.shareVisibility,
         shareWithRecruiters: shareSettings.shareWithRecruiters,
@@ -510,7 +467,6 @@ export async function createResume(userId: string, input: CreateResumeInput) {
 export async function updateResume(id: string, userId: string, input: UpdateResumeInput) {
   const existing = await prisma.resume.findFirst({
     where: { id, userId },
-    include: { dataSource: true },
   })
 
   if (!existing) {
@@ -537,24 +493,16 @@ export async function updateResume(id: string, userId: string, input: UpdateResu
     },
   )
 
-  const dataSource = input.dataSourceId
-    ? await prisma.dataSource.findFirst({ where: { id: input.dataSourceId, userId } })
-    : input.dataSourceId === null
-      ? null
-      : existing.dataSource
-
   let content: ResumeContentV2 | undefined
 
   if (input.content !== undefined) {
     content = normalizeResumeContent(input.content, {
-      dataSource: toResumeDataSource(dataSource),
       templateId,
       withBackup: true,
     })
     content.data.metadata.template = templateId
   } else if (input.templateId !== undefined) {
     content = normalizeResumeContent(existing.content, {
-      dataSource: toResumeDataSource(existing.dataSource),
       templateId,
       withBackup: true,
     })
@@ -566,7 +514,6 @@ export async function updateResume(id: string, userId: string, input: UpdateResu
     data: {
       ...(input.title !== undefined && { title: input.title }),
       ...(input.templateId !== undefined && { templateId }),
-      ...(input.dataSourceId !== undefined && { dataSourceId: input.dataSourceId }),
       ...(input.mode !== undefined && { mode: 'form' }),
       ...((input.shareVisibility !== undefined || input.shareWithRecruiters !== undefined)
         ? {
@@ -583,7 +530,6 @@ export async function duplicateResume(id: string, userId: string) {
   return prisma.$transaction(async tx => {
     const existing = await tx.resume.findFirst({
       where: { id, userId },
-      include: { dataSource: true },
     })
 
     if (!existing) {
@@ -593,7 +539,6 @@ export async function duplicateResume(id: string, userId: string) {
     await assertCanCreateResume(tx, userId)
 
     const normalized = normalizeResumeContent(existing.content, {
-      dataSource: toResumeDataSource(existing.dataSource),
       templateId: existing.templateId,
       withBackup: true,
     })
@@ -603,7 +548,6 @@ export async function duplicateResume(id: string, userId: string) {
         userId,
         title: `${existing.title} - 副本`,
         templateId: normalizeTemplateId(existing.templateId),
-        dataSourceId: existing.dataSourceId,
         mode: 'form',
         shareVisibility: RESUME_SHARE_VISIBILITY_PRIVATE,
         shareWithRecruiters: false,
@@ -632,7 +576,6 @@ export async function exportResume(
 ): Promise<{ data: string; mimeType: string; filename: string }> {
   const resume = await prisma.resume.findFirst({
     where: { id, userId },
-    include: { dataSource: true },
   })
 
   if (!resume) {
@@ -641,7 +584,6 @@ export async function exportResume(
 
   const normalized = await migrateResumeIfNeeded(resume)
   const content = normalizeResumeContent(normalized.content, {
-    dataSource: toResumeDataSource(normalized.dataSource),
     templateId: normalized.templateId,
     withBackup: true,
   })
@@ -681,9 +623,6 @@ export async function exportResume(
 export async function getPublicResumeView(id: string): Promise<PublicResumeViewResult> {
   const resume = await prisma.resume.findFirst({
     where: { id },
-    include: {
-      dataSource: true,
-    },
   })
 
   if (!resume) {

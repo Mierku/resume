@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
-import { Copy, FilePlus2, FileText, Layers3, MoreHorizontal, PenLine, Trash2, WandSparkles } from 'lucide-react'
+import { Copy, FilePlus2, FileText, MoreHorizontal, PenLine, Trash2, WandSparkles } from 'lucide-react'
 import { RESUME_TEMPLATES } from '@/lib/constants'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { toast } from '@/lib/toast'
@@ -14,11 +14,6 @@ interface ResumeSummary {
   title: string
   templateId: string
   updatedAt: string
-  dataSourceId?: string | null
-  dataSource?: {
-    id: string
-    name: string
-  } | null
 }
 
 interface ResumeLimitPayload {
@@ -162,7 +157,6 @@ export function ResumesSection() {
 
   const creationLimitReached = resumeLimit.reached
   const summaryCards = useMemo(() => {
-    const linkedDataSourceCount = new Set(resumes.map(resume => resume.dataSource?.id).filter(Boolean)).size
     const lastUpdated = resumes[0]?.updatedAt ? formatLastEdited(resumes[0].updatedAt) : '暂无'
 
     return [
@@ -172,13 +166,6 @@ export function ResumesSection() {
         value: String(resumes.length).padStart(2, '0'),
         subtext: '用于不同岗位与不同版本投递',
         icon: FileText,
-      },
-      {
-        key: 'linked',
-        label: '已关联数据源',
-        value: String(linkedDataSourceCount).padStart(2, '0'),
-        subtext: '可直接复用资料生成简历',
-        icon: Layers3,
       },
       {
         key: 'updated',
@@ -260,8 +247,6 @@ export function ResumesSection() {
         templateId: typeof duplicatedResume.templateId === 'string' ? duplicatedResume.templateId : resume.templateId,
         updatedAt:
           typeof duplicatedResume.updatedAt === 'string' ? duplicatedResume.updatedAt : new Date().toISOString(),
-        dataSourceId: resume.dataSourceId ?? null,
-        dataSource: resume.dataSource ?? null,
       }
 
       setResumes(current => {
@@ -295,7 +280,7 @@ export function ResumesSection() {
             <span className={styles.sectionPill}>{resumes.length} 份</span>
           </div>
           <p className={styles.sectionDescription}>
-            这里集中管理你保存过的简历版本、模板预览和关联数据源。工作台保留总览与跳转，编辑仍进入原有简历编辑器。
+            这里集中管理你保存过的简历版本和模板预览。工作台保留总览与跳转，编辑仍进入原有简历编辑器。
             {creationLimitReached && resumeLimit.max !== null
               ? ` 当前基础版已达到 ${resumeLimit.max} 份简历上限，升级后可继续创建更多版本。`
               : ''}

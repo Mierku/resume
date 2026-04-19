@@ -6,7 +6,7 @@
 }
 .field :global(.resume-tool-slider-label) {
   font-size: 12px;
-  color: var(--control-field-placeholder, rgba(255, 255, 255, 0.44));
+  color: var(--control-field-label, rgba(255, 255, 255, 0.44));
 }
 .field :global(.resume-tool-slider-row) {
   display: grid;

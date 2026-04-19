@@ -300,6 +300,10 @@ export interface TypographyData {
   heading: TypographyItem
 }
 
+export interface OnlineApplySettings {
+  enabled: boolean
+}
+
 export interface MetadataData {
   template: ReactiveTemplateId
   layout: LayoutData
@@ -312,6 +316,7 @@ export interface MetadataData {
     colors: ColorDesign
   }
   typography: TypographyData
+  onlineApply: OnlineApplySettings
   notes: string
 }
 
@@ -462,6 +467,9 @@ export function createDefaultResumeData(template: ReactiveTemplateId = 'template
           fontSize: 14,
           lineHeight: 1.5,
         },
+      },
+      onlineApply: {
+        enabled: false,
       },
       notes: '',
     },

@@ -7,9 +7,7 @@ import { Skeleton } from '@/components/ui/Skeleton'
 import { ResumeBuilderClient } from '@/components/resume-builder/ResumeBuilderClient'
 import {
   createFreshResumeContent,
-  createMockResumeDataSource,
   normalizeTemplateId,
-  type ResumeDataSource,
 } from '@/lib/resume/mappers'
 
 const HEX_COLOR_PATTERN = /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/
@@ -19,12 +17,10 @@ type EditorPayload = {
     id: string
     title: string
     templateId: string
-    dataSourceId?: string | null
     shareVisibility?: 'private' | 'public'
     shareWithRecruiters?: boolean
     content: unknown
   }
-  dataSources: ResumeDataSource[]
 }
 
 type EditorLoadState =
@@ -40,31 +36,6 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value && typeof value === 'object')
 }
 
-function mapDataSourceToBuilderInput(value: unknown): ResumeDataSource | null {
-  if (!isRecord(value)) return null
-
-  const id = typeof value.id === 'string' ? value.id : ''
-  const name = typeof value.name === 'string' ? value.name : ''
-  if (!id || !name) return null
-
-  const skills = Array.isArray(value.skills)
-    ? value.skills.filter(item => typeof item === 'string')
-    : []
-
-  return {
-    id,
-    name,
-    basics: isRecord(value.basics) ? value.basics : {},
-    intention: isRecord(value.intention) ? value.intention : null,
-    summaryZh: typeof value.summaryZh === 'string' ? value.summaryZh : null,
-    summaryEn: typeof value.summaryEn === 'string' ? value.summaryEn : null,
-    education: Array.isArray(value.education) ? (value.education as Array<Record<string, unknown>>) : [],
-    work: Array.isArray(value.work) ? (value.work as Array<Record<string, unknown>>) : [],
-    projects: Array.isArray(value.projects) ? (value.projects as Array<Record<string, unknown>>) : [],
-    skills: skills as string[],
-  }
-}
-
 function buildLoginRedirect(pathname: string, search: string) {
   const next = search ? `${pathname}?${search}` : pathname
   return `/login?next=${encodeURIComponent(next)}`
@@ -73,7 +44,7 @@ function buildLoginRedirect(pathname: string, search: string) {
 function buildGuestPayload(searchParams: URLSearchParams): EditorPayload {
   const template = normalizeTemplateId(searchParams.get('template'))
   const title = String(searchParams.get('title') || '').trim() || '未命名简历'
-  const guestContent = createFreshResumeContent(template, createMockResumeDataSource())
+  const guestContent = createFreshResumeContent(template)
   const theme = searchParams.get('theme')
 
   if (theme && HEX_COLOR_PATTERN.test(theme)) {
@@ -85,10 +56,8 @@ function buildGuestPayload(searchParams: URLSearchParams): EditorPayload {
       id: 'guest-new',
       title,
       templateId: template,
-      dataSourceId: null,
       content: guestContent,
     },
-    dataSources: [],
   }
 }
 
@@ -131,7 +100,6 @@ async function resolveEditorPayload({
     id: typeof resume.id === 'string' ? resume.id : '',
     title: typeof resume.title === 'string' ? resume.title : '未命名简历',
     templateId: typeof resume.templateId === 'string' ? resume.templateId : 'template-1',
-    dataSourceId: typeof resume.dataSourceId === 'string' ? resume.dataSourceId : null,
     shareVisibility: resume.shareVisibility === 'public' ? 'public' : 'private',
     shareWithRecruiters: Boolean(resume.shareWithRecruiters),
     content: resume.content,
@@ -141,28 +109,10 @@ async function resolveEditorPayload({
     throw new Error('简历数据缺少标识')
   }
 
-  let dataSources: ResumeDataSource[] = []
-  const dataSourcesRes = await fetch('/api/data-sources', { cache: 'no-store', signal })
-  if (dataSourcesRes.status === 401) {
-    return { kind: 'redirect', to: buildLoginRedirect(pathname, search) }
-  }
-
-  if (dataSourcesRes.ok) {
-    const dataSourcePayload = await dataSourcesRes.json()
-    const rawList = isRecord(dataSourcePayload) && Array.isArray(dataSourcePayload.dataSources)
-      ? dataSourcePayload.dataSources
-      : []
-
-    dataSources = rawList
-      .map(mapDataSourceToBuilderInput)
-      .filter((item): item is ResumeDataSource => Boolean(item))
-  }
-
   return {
     kind: 'ready',
     payload: {
       initialResume: resumeRecord,
-      dataSources,
     },
   }
 }
@@ -274,9 +224,8 @@ export function ResumeEditorPageClient() {
   }
 
   return (
-    <ResumeBuilderClient
-      initialResume={state.payload.initialResume}
-      dataSources={state.payload.dataSources}
-    />
+      <ResumeBuilderClient
+        initialResume={state.payload.initialResume}
+      />
   )
 }

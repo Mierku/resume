@@ -1,7 +1,6 @@
 'use client'
 
 import { useCallback, useState } from 'react'
-import type { ResumeDataSource } from '@/lib/resume/mappers'
 import { normalizeResumeContent } from '@/lib/resume/mappers'
 import type { ResumeData } from '@/lib/resume/types'
 import { Message } from '@/components/resume-builder/primitives'
@@ -33,11 +32,10 @@ interface CardPreviewPayload {
 }
 
 interface UseAIPreviewDraftOptions {
-  dataSources: ResumeDataSource[]
   initialTemplateId: string
 }
 
-export function useAIPreviewDraft({ dataSources, initialTemplateId }: UseAIPreviewDraftOptions) {
+export function useAIPreviewDraft({ initialTemplateId }: UseAIPreviewDraftOptions) {
   const [aiPreviewState, setAiPreviewState] = useState<AIPreviewState | null>(null)
   const [aiPreviewActionLoading, setAiPreviewActionLoading] = useState<
     'new_version' | 'overwrite' | 'discard' | null
@@ -68,7 +66,6 @@ export function useAIPreviewDraft({ dataSources, initialTemplateId }: UseAIPrevi
             id: string
             title?: string
             templateId?: string
-            dataSourceId?: string | null
             content?: unknown
           }
         } | null
@@ -80,7 +77,6 @@ export function useAIPreviewDraft({ dataSources, initialTemplateId }: UseAIPrevi
 
         const draftResume = result.resume
         const normalized = normalizeResumeContent(draftResume.content, {
-          dataSource: dataSources.find((item) => item.id === draftResume.dataSourceId) || null,
           templateId: draftResume.templateId || initialTemplateId,
           withBackup: true,
         })
@@ -98,7 +94,7 @@ export function useAIPreviewDraft({ dataSources, initialTemplateId }: UseAIPrevi
         Message.error('加载草稿预览失败')
       }
     },
-    [dataSources, initialTemplateId],
+    [initialTemplateId],
   )
 
   const runPreviewDraftAction = useCallback(

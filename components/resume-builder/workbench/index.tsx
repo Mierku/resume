@@ -70,7 +70,7 @@ export function ResumeWorkbench({
   onFit,
 }: ResumeWorkbenchProps) {
   const activeToolMeta = activeTool ? BUILDER_TOOL_META[activeTool] : null
-  const previewLeftPadding = activeTool ? 430 : 112
+  const previewRightPadding = activeTool ? 430 : 112
 
   return (
     <div className="resume-builder-workbench flex-1 overflow-hidden">
@@ -118,7 +118,7 @@ export function ResumeWorkbench({
 
       <ResumePreviewWorkspace
         editorPanelWidth={editorPanelWidth}
-        previewLeftPadding={previewLeftPadding}
+        previewRightPadding={previewRightPadding}
         content={previewContent}
         previewContentRef={previewContentRef}
         previewViewportRef={previewViewportRef}
@@ -140,7 +140,7 @@ export function ResumeWorkbench({
 
       <div
         className={`${styles.editorResizer} no-print`}
-        style={{ right: `calc(var(--resume-editor-panel-width, ${editorPanelWidth}px) + 2px)` }}
+        style={{ left: `calc(var(--resume-editor-panel-width, ${editorPanelWidth}px) + 2px)` }}
         role="separator"
         aria-orientation="vertical"
         aria-label="调整属性编辑器宽度"

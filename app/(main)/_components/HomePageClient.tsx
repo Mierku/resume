@@ -124,7 +124,6 @@ export function HomePageClient() {
         body: JSON.stringify({
           title: DEFAULT_RESUME_TITLE,
           templateId: DEFAULT_RESUME_TEMPLATE_ID,
-          dataSourceId: null,
           mode: 'form',
         }),
       })

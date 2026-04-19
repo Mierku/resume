@@ -399,48 +399,6 @@
 }
 .typesetting :global(.resume-typesetting-switch-row) {
   width: 100%;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.typesetting :global(.resume-typesetting-switch-label) {
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.44);
-  transition: color 140ms ease;
-}
-.typesetting :global(.resume-typesetting-switch-label.is-on) {
-  color: rgba(255, 255, 255, 0.88);
-}
-.typesetting :global(.resume-typesetting-switch) {
-  width: 34px;
-  height: 19px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.12);
-  position: relative;
-  transition:
-    background-color 180ms ease,
-    box-shadow 180ms ease;
-}
-.typesetting :global(.resume-typesetting-switch.is-on) {
-  background: #505050;
-  box-shadow: 0 0 10px rgba(53, 53, 53, 0.32);
-}
-.typesetting :global(.resume-typesetting-switch-thumb) {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 15px;
-  height: 15px;
-  border-radius: 50%;
-  background: #fff;
-  transition: transform 180ms ease;
-}
-.typesetting
-  :global(.resume-typesetting-switch.is-on .resume-typesetting-switch-thumb) {
-  transform: translateX(15px);
 }
 .styleBrowser {
   min-height: 100%;

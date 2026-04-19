@@ -76,7 +76,6 @@ export async function GET() {
         displayName: user.name,
         avatarUrl,
         onboardingCompleted: user.onboardingCompleted,
-        defaultDataSourceId: user.defaultDataSourceId,
         providers,
         role,
         isAdmin: isAdminRole(role),

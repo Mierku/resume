@@ -44,7 +44,6 @@ export async function POST(request: NextRequest) {
         id: true,
         title: true,
         templateId: true,
-        dataSourceId: true,
         content: true,
       },
     })
@@ -66,7 +65,6 @@ export async function POST(request: NextRequest) {
         userId: user.id,
         title: buildAIDraftTitle(sourceResume.title, intent as AIDraftIntent),
         templateId: sourceResume.templateId,
-        dataSourceId: sourceResume.dataSourceId,
         mode: 'form',
         content: draftContent as unknown as Prisma.InputJsonValue,
       },

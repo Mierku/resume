@@ -2,12 +2,8 @@
 
 import { useSyncExternalStore } from 'react'
 import {
-  applyDataSourceToResume,
-  type FillStrategy,
-  type ResumeDataSource,
-} from '@/lib/resume/mappers'
-import {
   createDefaultResumeData,
+  STANDARD_SECTION_IDS,
   type CustomSection,
   type CustomSectionType,
   type ResumeData,
@@ -27,8 +23,6 @@ interface BuilderState {
   data: ResumeData
   initialized: boolean
   dirty: boolean
-  selectedDataSourceId: string
-  dataSources: ResumeDataSource[]
   save: SaveState
 }
 
@@ -36,12 +30,8 @@ interface BuilderActions {
   initialize: (payload: {
     resumeId: string
     data: ResumeData
-    dataSources: ResumeDataSource[]
-    selectedDataSourceId?: string
   }) => void
   updateResumeData: (fn: (draft: ResumeData) => void) => void
-  setSelectedDataSourceId: (id: string) => void
-  applyDataSource: (strategy?: FillStrategy, dataSourceId?: string) => void
   setTemplate: (templateId: ResumeData['metadata']['template']) => void
   setSidebarWidth: (value: number) => void
   setPageFullWidth: (pageIndex: number, fullWidth: boolean) => void
@@ -113,11 +103,7 @@ function buildSectionOrder(data: ResumeData) {
   return ['summary', ...Object.keys(data.sections), ...data.customSections.map(section => section.id)]
 }
 
-const SEEDED_STANDARD_SECTIONS_ON_INIT: StandardSectionType[] = [
-  'experience',
-  'projects',
-  'education',
-]
+const SEEDED_STANDARD_SECTIONS_ON_INIT: StandardSectionType[] = STANDARD_SECTION_IDS
 
 function normalizeDataForSingleColumnLayout(input: ResumeData): ResumeData {
   const data = cloneData(input)
@@ -274,7 +260,6 @@ function setState(mutator: (state: BuilderStore) => void, options?: { trackHisto
   const nextState: BuilderStore = {
     ...store.state,
     data: cloneData(store.state.data),
-    dataSources: [...store.state.dataSources],
     save: { ...store.state.save },
   }
 
@@ -316,7 +301,6 @@ async function saveNowInternal() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         ...buildPatchPayload(state.data),
-        dataSourceId: state.selectedDataSourceId || null,
       }),
       signal: saveController.signal,
     })
@@ -354,8 +338,6 @@ const actions: BuilderActions = {
       draft.data = normalizeDataForSingleColumnLayout(payload.data)
       draft.initialized = true
       draft.dirty = false
-      draft.dataSources = [...payload.dataSources]
-      draft.selectedDataSourceId = payload.selectedDataSourceId || ''
       draft.save = { status: 'idle' }
     }, { trackHistory: false })
 
@@ -366,30 +348,6 @@ const actions: BuilderActions = {
   updateResumeData: fn => {
     setState(draft => {
       fn(draft.data)
-      draft.dirty = true
-      if (draft.save.status === 'saved') {
-        draft.save.status = 'idle'
-      }
-    })
-  },
-
-  setSelectedDataSourceId: id => {
-    setState(draft => {
-      draft.selectedDataSourceId = id
-    }, { trackHistory: false })
-  },
-
-  applyDataSource: (strategy = 'overwrite', dataSourceId) => {
-    const state = getState()
-    const targetId = dataSourceId || state.selectedDataSourceId
-    if (!targetId) return
-
-    const dataSource = state.dataSources.find(source => source.id === targetId)
-    if (!dataSource) return
-
-    setState(draft => {
-      draft.data = applyDataSourceToResume(draft.data, dataSource, strategy)
-      draft.selectedDataSourceId = targetId
       draft.dirty = true
       if (draft.save.status === 'saved') {
         draft.save.status = 'idle'
@@ -662,8 +620,6 @@ store.state = {
   data: createDefaultResumeData(),
   initialized: false,
   dirty: false,
-  selectedDataSourceId: '',
-  dataSources: [],
   save: { status: 'idle' },
   ...actions,
 }

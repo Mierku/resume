@@ -154,7 +154,7 @@
 }
 
 :global(.resume-advanced-color-picker-stat-label) {
-  color: var(--control-field-placeholder, #555);
+  color: var(--control-field-label, #555);
   font-size: 9px;
   line-height: 1;
   letter-spacing: 0.12em;

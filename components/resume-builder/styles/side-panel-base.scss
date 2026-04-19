@@ -55,7 +55,10 @@
 
   .resume-side-panel input::placeholder,
   .resume-side-panel textarea::placeholder {
-    color: var(--builder-input-placeholder);
+    color: var(
+      --control-field-placeholder,
+      var(--builder-input-placeholder)
+    );
   }
   .resume-side-panel .resume-select-panel.control-panel {
     background: var(--control-field-bg, var(--control-panel-surface));
@@ -101,6 +104,6 @@
   .resume-side-panel label.text-xs,
   .resume-side-panel .resume-anchor-label,
   .resume-side-panel .text-xs.text-muted-foreground {
-    color: color-mix(in srgb, var(--builder-panel-text-muted) 94%, transparent);
+    color: var(--control-field-label, color-mix(in srgb, var(--builder-panel-text-muted) 94%, transparent));
   }
 }

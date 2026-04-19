@@ -1,22 +1,16 @@
 'use client'
 
-import { useCallback, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from '@/lib/toast'
 import { RESUME_TEMPLATES } from '@/lib/constants'
 import { Modal } from '@/components/ui/Modal'
 import { Input } from '@/components/ui/Input'
 import { SearchField } from '@/components/ui/SearchField'
-import { Select } from '@/components/ui/Select'
 import { Button } from '@/components/ui/Button'
 import { useAuthSnapshot } from '@/lib/hooks/useAuthSnapshot'
 import { cn } from '@/lib/utils'
 import s from './templates.module.scss'
-
-interface DataSource {
-  id: string
-  name: string
-}
 
 interface TemplateMeta {
   id: string
@@ -63,10 +57,6 @@ export default function TemplatesPage() {
   const router = useRouter()
   const { auth, checked, refresh } = useAuthSnapshot({ eager: true })
 
-  const [dataSources, setDataSources] = useState<DataSource[]>([])
-  const [dataSourcesLoaded, setDataSourcesLoaded] = useState(false)
-  const [dataSourcesLoading, setDataSourcesLoading] = useState(false)
-  const [dataSourceAccess, setDataSourceAccess] = useState<'unknown' | 'authed' | 'guest'>('unknown')
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateMeta | null>(null)
   const [creating, setCreating] = useState(false)
@@ -75,7 +65,6 @@ export default function TemplatesPage() {
   const [activeCategory, setActiveCategory] = useState<TemplateCategory>('all')
   const [newResume, setNewResume] = useState({
     title: '',
-    dataSourceId: '',
     themeColor: '',
   })
 
@@ -134,48 +123,6 @@ export default function TemplatesPage() {
   const selectedTemplateName = selectedTemplate?.name || '模板'
   const selectedTemplatePreview = selectedTemplate?.preview || ''
 
-  const loadDataSources = useCallback(async () => {
-    if (dataSourcesLoading || dataSourceAccess === 'guest') return
-
-    setDataSourcesLoading(true)
-    try {
-      const response = await fetch('/api/data-sources', { cache: 'no-store' })
-      if (response.status === 401) {
-        setDataSources([])
-        setDataSourcesLoaded(true)
-        setDataSourceAccess('guest')
-        return
-      }
-
-      if (!response.ok) {
-        throw new Error('数据源加载失败')
-      }
-
-      const payload = await response.json().catch(() => null)
-      if (!payload || typeof payload !== 'object') {
-        setDataSources([])
-        setDataSourcesLoaded(true)
-        return
-      }
-
-      const nextDataSources = (payload as { dataSources?: unknown[] }).dataSources
-      setDataSources(Array.isArray(nextDataSources) ? (nextDataSources as DataSource[]) : [])
-      setDataSourcesLoaded(true)
-      setDataSourceAccess('authed')
-    } catch (error) {
-      console.error('Failed to fetch data sources:', error)
-      setDataSources([])
-      setDataSourcesLoaded(false)
-    } finally {
-      setDataSourcesLoading(false)
-    }
-  }, [dataSourceAccess, dataSourcesLoading])
-
-  const handleDataSourceFieldFocus = useCallback(async () => {
-    if (dataSourcesLoading || dataSourcesLoaded || dataSourceAccess === 'guest') return
-    void loadDataSources()
-  }, [dataSourceAccess, dataSourcesLoaded, dataSourcesLoading, loadDataSources])
-
   const enterGuestEditor = () => {
     if (!selectedTemplate) return
     const params = new URLSearchParams({
@@ -200,7 +147,6 @@ export default function TemplatesPage() {
     setSelectedTemplate(template)
     setNewResume({
       title: `${template.name} 简历`,
-      dataSourceId: '',
       themeColor: template.defaultPrimaryColor || '#2f74ba',
     })
     setShowCreateModal(true)
@@ -230,7 +176,6 @@ export default function TemplatesPage() {
         body: JSON.stringify({
           title: newResume.title,
           templateId: selectedTemplate.id,
-          dataSourceId: newResume.dataSourceId || null,
           themeColor: newResume.themeColor || null,
           mode: 'form',
         }),
@@ -470,27 +415,7 @@ export default function TemplatesPage() {
               </div>
 
               <div>
-                <label className="mb-1 block text-sm font-medium text-foreground">2. 数据源选择</label>
-                <Select
-                  value={newResume.dataSourceId}
-                  onChange={e => setNewResume(prev => ({ ...prev, dataSourceId: e.target.value }))}
-                  onFocus={() => {
-                    void handleDataSourceFieldFocus()
-                  }}
-                  disabled={dataSourcesLoading || dataSourceAccess === 'guest'}
-                  options={[
-                    { value: '', label: dataSourcesLoading ? '正在加载数据源...' : dataSourceAccess === 'guest' ? '游客模式不可选' : '不选择数据源' },
-                    ...dataSources.map(ds => ({ value: ds.id, label: ds.name })),
-                  ]}
-                />
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {dataSourceAccess === 'authed' ? '可先不选，进入编辑器后再执行一键填充。' : '游客模式可直接编辑，登录后可绑定数据源并填充。'}
-                  {dataSources.length === 0 ? '首次创建且无数据源时，将自动填充一套示例内容。' : ''}
-                </p>
-              </div>
-
-              <div>
-                <label className="mb-1 block text-sm font-medium text-foreground">3. 简历标题 *</label>
+                <label className="mb-1 block text-sm font-medium text-foreground">2. 简历标题 *</label>
                 <Input value={newResume.title} onChange={e => setNewResume(prev => ({ ...prev, title: e.target.value }))} placeholder="例如：前端工程师简历" />
               </div>
             </div>

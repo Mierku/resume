@@ -1,26 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import type { LangMode } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { sanitizeNextPath } from '@/lib/auth-redirect'
 import { createAuthSession, setAuthSessionCookie } from '@/lib/auth-session'
-import devTestDataSourceFixture from '@/lib/dev-test-data-source.json'
 const DEFAULT_TEST_EMAIL = process.env.DEV_TEST_USER_EMAIL || 'dev@immersive.local'
 const DEFAULT_TEST_NAME = process.env.DEV_TEST_USER_NAME || '开发测试账号'
-
-function getFixtureLangMode(mode: unknown): LangMode {
-  return mode === 'en' ? 'en' : 'zh'
-}
-
-function buildDevTestDataSource(email: string) {
-  return {
-    ...devTestDataSourceFixture,
-    langMode: getFixtureLangMode(devTestDataSourceFixture.langMode),
-    basics: {
-      ...devTestDataSourceFixture.basics,
-      email,
-    },
-  }
-}
 
 export async function POST(request: NextRequest) {
   if (process.env.NODE_ENV === 'production') {
@@ -34,7 +17,6 @@ export async function POST(request: NextRequest) {
 
   try {
     const userId = await prisma.$transaction(async tx => {
-      const testDataSource = buildDevTestDataSource(DEFAULT_TEST_EMAIL)
       const user = await tx.user.upsert({
         where: { email: DEFAULT_TEST_EMAIL },
         update: {
@@ -46,53 +28,6 @@ export async function POST(request: NextRequest) {
           email: DEFAULT_TEST_EMAIL,
           name: DEFAULT_TEST_NAME,
           emailVerified: new Date(),
-          onboardingCompleted: true,
-        },
-      })
-
-      const existingDataSource = await tx.dataSource.findFirst({
-        where: {
-          userId: user.id,
-          name: testDataSource.name,
-        },
-      })
-
-      const dataSource = existingDataSource
-        ? await tx.dataSource.update({
-            where: { id: existingDataSource.id },
-            data: {
-              name: testDataSource.name,
-              langMode: testDataSource.langMode,
-              basics: testDataSource.basics,
-              intention: testDataSource.intention,
-              education: testDataSource.education,
-              work: testDataSource.work,
-              projects: testDataSource.projects,
-              skills: testDataSource.skills,
-              summaryZh: testDataSource.summaryZh,
-              summaryEn: testDataSource.summaryEn,
-            },
-          })
-        : await tx.dataSource.create({
-            data: {
-              userId: user.id,
-              name: testDataSource.name,
-              langMode: testDataSource.langMode,
-              basics: testDataSource.basics,
-              intention: testDataSource.intention,
-              education: testDataSource.education,
-              work: testDataSource.work,
-              projects: testDataSource.projects,
-              skills: testDataSource.skills,
-              summaryZh: testDataSource.summaryZh,
-              summaryEn: testDataSource.summaryEn,
-            },
-          })
-
-      await tx.user.update({
-        where: { id: user.id },
-        data: {
-          defaultDataSourceId: dataSource.id,
           onboardingCompleted: true,
         },
       })

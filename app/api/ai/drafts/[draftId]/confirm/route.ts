@@ -94,7 +94,6 @@ export async function POST(
         data: {
           content: draft.content as unknown as Prisma.InputJsonValue,
           templateId: draft.templateId,
-          dataSourceId: draft.dataSourceId,
           mode: 'form',
         },
         select: {

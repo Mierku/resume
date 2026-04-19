@@ -27,7 +27,6 @@ interface AdminUserUsageRow {
   metrics: {
     recordsTotal: number
     resumesTotal: number
-    dataSourcesTotal: number
     aiConversationsTotal: number
     jobSitesTotal: number
     sessionsTotal: number
@@ -129,7 +128,6 @@ export async function getAdminUsersDashboardData(rawQuery: string | undefined): 
           select: {
             records: true,
             resumes: true,
-            dataSources: true,
             aiConversations: true,
             jobSites: true,
             sessions: true,
@@ -180,7 +178,6 @@ export async function getAdminUsersDashboardData(rawQuery: string | undefined): 
       metrics: {
         recordsTotal: user._count.records,
         resumesTotal: user._count.resumes,
-        dataSourcesTotal: user._count.dataSources,
         aiConversationsTotal: user._count.aiConversations,
         jobSitesTotal: user._count.jobSites,
         sessionsTotal: user._count.sessions,

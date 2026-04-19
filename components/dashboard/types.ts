@@ -13,9 +13,6 @@ function isDashboardSection(value: string | null | undefined): value is Dashboar
 }
 
 export function parseDashboardSection(value: string | null | undefined): DashboardSection {
-  if (value === 'data-source') {
-    return 'tracking'
-  }
   return isDashboardSection(value) ? value : 'workbench'
 }
 

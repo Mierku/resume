@@ -25,7 +25,6 @@ interface BindingConflictUserSummary {
   assetCounts: {
     records: number
     resumes: number
-    dataSources: number
     aiConversations: number
     jobSites: number
     total: number
@@ -642,10 +641,6 @@ export function AccountBindingPanel({ user }: { user: SessionUser }) {
               <div className={styles.assetTile}>
                 <span>{conflictState.otherUser.assetCounts.resumes}</span>
                 <small>简历</small>
-              </div>
-              <div className={styles.assetTile}>
-                <span>{conflictState.otherUser.assetCounts.dataSources}</span>
-                <small>数据源</small>
               </div>
               <div className={styles.assetTile}>
                 <span>{conflictState.otherUser.assetCounts.aiConversations}</span>

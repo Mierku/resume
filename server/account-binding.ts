@@ -41,7 +41,6 @@ export interface BindingConflictUserSummary {
   assetCounts: {
     records: number
     resumes: number
-    dataSources: number
     aiConversations: number
     jobSites: number
     total: number
@@ -101,7 +100,6 @@ async function getConflictUserSummary(
         select: {
           records: true,
           resumes: true,
-          dataSources: true,
           aiConversations: true,
           jobSites: true,
         },
@@ -116,13 +114,11 @@ async function getConflictUserSummary(
   const assetCounts = {
     records: user._count.records,
     resumes: user._count.resumes,
-    dataSources: user._count.dataSources,
     aiConversations: user._count.aiConversations,
     jobSites: user._count.jobSites,
     total:
       user._count.records +
       user._count.resumes +
-      user._count.dataSources +
       user._count.aiConversations +
       user._count.jobSites,
   }
@@ -351,17 +347,9 @@ async function deleteProductAssets(tx: Prisma.TransactionClient, userId: string)
   await Promise.all([
     tx.aiConversation.deleteMany({ where: { userId } }),
     tx.resume.deleteMany({ where: { userId } }),
-    tx.dataSource.deleteMany({ where: { userId } }),
     tx.record.deleteMany({ where: { userId } }),
     tx.jobSite.deleteMany({ where: { userId } }),
   ])
-
-  await tx.user.update({
-    where: { id: userId },
-    data: {
-      defaultDataSourceId: null,
-    },
-  })
 }
 
 async function moveAllAccounts(
@@ -411,11 +399,9 @@ async function deleteOrphanedSourceUserIfNeeded(
       role: true,
       membershipPlan: true,
       membershipExpiresAt: true,
-      defaultDataSourceId: true,
       _count: {
         select: {
           accounts: true,
-          dataSources: true,
           resumes: true,
           records: true,
           aiConversations: true,
@@ -432,7 +418,6 @@ async function deleteOrphanedSourceUserIfNeeded(
 
   const isOrphaned =
     sourceUser._count.accounts === 0 &&
-    sourceUser._count.dataSources === 0 &&
     sourceUser._count.resumes === 0 &&
     sourceUser._count.records === 0 &&
     sourceUser._count.aiConversations === 0 &&
@@ -451,7 +436,6 @@ async function deleteOrphanedSourceUserIfNeeded(
         role: true,
         membershipPlan: true,
         membershipExpiresAt: true,
-        defaultDataSourceId: true,
       },
     })
 
@@ -747,7 +731,6 @@ export async function confirmBindingConflict(
         where: { id: targetUserId },
         select: {
           id: true,
-          defaultDataSourceId: true,
         },
       }),
       tx.user.findUnique({
@@ -756,7 +739,6 @@ export async function confirmBindingConflict(
           id: true,
           email: true,
           emailVerified: true,
-          defaultDataSourceId: true,
         },
       }),
     ])
@@ -793,24 +775,11 @@ export async function confirmBindingConflict(
           where: { userId: sourceUser.id },
           data: { userId: targetUser.id },
         }),
-        tx.dataSource.updateMany({
-          where: { userId: sourceUser.id },
-          data: { userId: targetUser.id },
-        }),
         tx.jobSite.updateMany({
           where: { userId: sourceUser.id },
           data: { userId: targetUser.id },
         }),
       ])
-
-      if (!targetUser.defaultDataSourceId && sourceUser.defaultDataSourceId) {
-        await tx.user.update({
-          where: { id: targetUser.id },
-          data: {
-            defaultDataSourceId: sourceUser.defaultDataSourceId,
-          },
-        })
-      }
 
       await moveAllAccounts(tx, sourceUser.id, targetUser.id)
       await tx.session.deleteMany({

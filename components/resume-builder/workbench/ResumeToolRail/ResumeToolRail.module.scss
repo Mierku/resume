@@ -1,7 +1,7 @@
 .rail {
   position: absolute;
   top: 12px;
-  left: 5px;
+  right: 5px;
   width: 48px;
   z-index: 12;
   transition: width 180ms cubic-bezier(0.22, 1, 0.36, 1);
@@ -101,12 +101,12 @@
 @media (max-width: 1120px) {
   .rail {
     top: 14px;
-    left: 8px;
+    right: 8px;
   }
 }
 @media (max-width: 820px) {
   .rail {
     top: 12px;
-    left: 8px;
+    right: 8px;
   }
 }

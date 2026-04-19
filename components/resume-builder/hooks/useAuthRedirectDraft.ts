@@ -14,7 +14,6 @@ interface AuthRedirectDraftCachePayload {
   path: string
   savedAt: number
   resumeTitle: string
-  selectedDataSourceId: string
   data: ResumeData
 }
 
@@ -29,7 +28,6 @@ interface UseAuthRedirectDraftOptions {
   resumeTitleRef: MutableRefObject<string>
   setResumeTitle: (value: string) => void
   initialized: boolean
-  setSelectedDataSourceId: (value: string) => void
   updateResumeData: (updater: (draft: ResumeData) => void) => void
 }
 
@@ -39,7 +37,6 @@ export function useAuthRedirectDraft({
   resumeTitleRef,
   setResumeTitle,
   initialized,
-  setSelectedDataSourceId,
   updateResumeData,
 }: UseAuthRedirectDraftOptions) {
   const restoredAuthDraftRef = useRef(false)
@@ -78,7 +75,6 @@ export function useAuthRedirectDraft({
         path: `${window.location.pathname}${window.location.search}`,
         savedAt: Date.now(),
         resumeTitle,
-        selectedDataSourceId: state.selectedDataSourceId || '',
         data: state.data,
       }
 
@@ -160,9 +156,6 @@ export function useAuthRedirectDraft({
       Object.assign(draft, restoredData)
     })
 
-    if (typeof payload.selectedDataSourceId === 'string') {
-      setSelectedDataSourceId(payload.selectedDataSourceId)
-    }
     if (resolvedResumeTitle.trim()) {
       setResumeTitle(resolvedResumeTitle)
       resumeTitleRef.current = resolvedResumeTitle
@@ -177,8 +170,6 @@ export function useAuthRedirectDraft({
           path: typeof payload.path === 'string' && payload.path ? payload.path : currentPath,
           savedAt: typeof payload.savedAt === 'number' ? payload.savedAt : now,
           resumeTitle: resolvedResumeTitle,
-          selectedDataSourceId:
-            typeof payload.selectedDataSourceId === 'string' ? payload.selectedDataSourceId : '',
           data: restoredData,
         },
         cachedAt: now,
@@ -191,7 +182,6 @@ export function useAuthRedirectDraft({
     resumeId,
     resumeTitleRef,
     setResumeTitle,
-    setSelectedDataSourceId,
     updateResumeData,
   ])
 

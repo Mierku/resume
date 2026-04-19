@@ -57,7 +57,30 @@
     var(--builder-workspace-bg)
   );
   --control-field-text: var(--builder-panel-text);
-  --control-field-placeholder: var(--builder-panel-text-muted);
+  --control-field-label: var(--builder-panel-text-muted);
+  --control-field-placeholder: var(--builder-input-placeholder);
+  --control-switch-track-bg: color-mix(
+    in srgb,
+    var(--builder-panel-text-muted) 24%,
+    transparent
+  );
+  --control-switch-track-border: color-mix(
+    in srgb,
+    var(--builder-panel-text-muted) 32%,
+    transparent
+  );
+  --control-switch-track-on-bg: color-mix(
+    in srgb,
+    var(--builder-button-primary-hover) 82%,
+    var(--builder-panel-border)
+  );
+  --control-switch-track-on-shadow: 0 0 10px
+    color-mix(in srgb, var(--builder-button-primary-hover) 26%, transparent);
+  --control-switch-thumb-bg: color-mix(
+    in srgb,
+    var(--builder-panel-text) 98%,
+    white 2%
+  );
   --control-field-border-color: var(--builder-panel-border);
   --control-field-border-hover: var(--builder-panel-border-strong);
   --control-field-focus-color: var(--builder-button-primary-hover);

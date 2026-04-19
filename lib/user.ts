@@ -4,7 +4,6 @@ export interface SessionUser {
   displayName: string | null
   avatarUrl: string | null
   onboardingCompleted: boolean
-  defaultDataSourceId?: string | null
   providers?: string[]
   role?: 'user' | 'admin' | 'super_admin'
   isAdmin?: boolean

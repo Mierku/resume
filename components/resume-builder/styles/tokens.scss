@@ -54,7 +54,13 @@
   --control-field-bg-focus: #ffffff;
 
   --control-field-text: #111111;
-  --control-field-placeholder: #71717a;
+  --control-field-label: #52525b;
+  --control-field-placeholder: #8b8b96;
+  --control-switch-track-bg: rgba(17, 17, 17, 0.14);
+  --control-switch-track-border: rgba(17, 17, 17, 0.16);
+  --control-switch-track-on-bg: #505050;
+  --control-switch-track-on-shadow: 0 0 10px rgba(53, 53, 53, 0.18);
+  --control-switch-thumb-bg: #ffffff;
   --control-field-border-color: transparent;
   --control-field-border-hover: rgba(255, 77, 77);
   --control-field-focus-color: #fac460;
@@ -132,7 +138,13 @@
   --control-field-bg-hover: #2b2b2b;
   --control-field-bg-focus: #323232;
   --control-field-text: #d4d4d8;
+  --control-field-label: #c7c7cf;
   --control-field-placeholder: #a1a1aa;
+  --control-switch-track-bg: rgba(255, 255, 255, 0.12);
+  --control-switch-track-border: rgba(255, 255, 255, 0.12);
+  --control-switch-track-on-bg: #505050;
+  --control-switch-track-on-shadow: 0 0 10px rgba(53, 53, 53, 0.32);
+  --control-switch-thumb-bg: #ffffff;
   --control-field-border-color: transparent;
   --control-field-border-hover: rgba(255, 77, 77);
   --control-field-focus-color: #2274b8;

@@ -49,7 +49,6 @@ import {
 } from "@/components/dashboard/types";
 import { TrackingSection } from "@/components/dashboard/TrackingSection";
 import { ResumesSection } from "@/components/dashboard/ResumesSection";
-import { DataSourcesSection } from "@/components/dashboard/DataSourcesSection";
 import { AccountSection } from "@/components/dashboard/AccountSection";
 import { AdminUsersSection } from "@/components/dashboard/AdminUsersSection";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
@@ -239,10 +238,7 @@ function DashboardWorkbenchInner() {
   const { auth, checked } = useAuthSnapshot<SessionUser>({ eager: true });
   const activeSection = parseDashboardSection(searchParams.get("section"));
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const [defaultDataSourceIdOverride, setDefaultDataSourceIdOverride] =
-    useState<string | null | undefined>(undefined);
   const [recordsVersion, setRecordsVersion] = useState(0);
-  const [dataSourcesVersion, setDataSourcesVersion] = useState(0);
   const [theme, setTheme] = useState<ThemeMode>("dark");
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const mainScrollRef = useRef<HTMLElement | null>(null);
@@ -274,10 +270,6 @@ function DashboardWorkbenchInner() {
   }));
   const activeSectionMeta = SECTION_META[resolvedActiveSection];
   const ActiveSectionIcon = activeSectionMeta.icon;
-  const defaultDataSourceId =
-    defaultDataSourceIdOverride === undefined
-      ? user?.defaultDataSourceId || null
-      : defaultDataSourceIdOverride;
   const loginHref = `/login?next=${encodeURIComponent(nextPath)}`;
 
   useEffect(() => {
@@ -517,13 +509,6 @@ function DashboardWorkbenchInner() {
 
       {user && resolvedActiveSection === "tracking" ? (
         <div className={styles.trackingSectionStack}>
-          <DataSourcesSection
-            initialDefaultDataSourceId={defaultDataSourceId}
-            onDefaultDataSourceChange={(nextDefaultId) => {
-              setDefaultDataSourceIdOverride(nextDefaultId);
-              setDataSourcesVersion((current) => current + 1);
-            }}
-          />
           <TrackingSection
             onRecordsMutated={() => setRecordsVersion((current) => current + 1)}
           />
@@ -541,9 +526,7 @@ function DashboardWorkbenchInner() {
       {user && resolvedActiveSection === "account" ? (
         <AccountSection
           user={user}
-          defaultDataSourceId={defaultDataSourceId}
           recordsVersion={recordsVersion}
-          dataSourcesVersion={dataSourcesVersion}
         />
       ) : null}
     </div>

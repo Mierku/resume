@@ -39,7 +39,6 @@ export function useManualSave({
           body: JSON.stringify({
             title,
             templateId: state.data.metadata.template,
-            dataSourceId: state.selectedDataSourceId || null,
             mode: 'form',
             content: {
               version: 2,

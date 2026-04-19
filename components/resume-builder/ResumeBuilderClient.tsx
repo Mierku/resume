@@ -3,15 +3,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import {
-  normalizeResumeContent,
-  type ResumeDataSource,
-} from "@/lib/resume/mappers";
+import { normalizeResumeContent } from "@/lib/resume/mappers";
 import { AuthRequiredModal } from "@/components/ui/Modal";
 import { toast } from "@/lib/toast";
 import type { PreviewNavigationTarget } from "@/components/resume-reactive-preview";
 import { useResumeBuilderStore } from "./store/useResumeBuilderStore";
-import { FillToolPanel } from "./workbench/ResumeToolRail/tools/FillToolPanel/FillToolPanel";
 import { AIChatPanel } from "./workbench/ResumeToolRail/tools/AIChatPanel/AIChatPanel";
 import { HeightDebugPanel } from "./workbench/ResumeToolRail/tools/HeightDebugPanel/HeightDebugPanel";
 import { LayoutAndStylePanel } from "./workbench/ResumeToolRail/tools/LayoutAndStylePanel/LayoutAndStylePanel";
@@ -38,13 +34,12 @@ import { useResumeTitleSave } from "./hooks/useResumeTitleSave";
 import { useAuthRedirectDraft } from "./hooks/useAuthRedirectDraft";
 import { useAIPreviewDraft } from "./hooks/useAIPreviewDraft";
 import { useManualSave } from "./hooks/useManualSave";
-import { useDataSourceFill } from "./hooks/useDataSourceFill";
 // Global style layers: foundation -> workbench override -> feature globals.
 import "./builder.scss";
 import "./workbench/workbench-layout.scss";
 import "./ResumeBuilderClient.scss";
+import "./styles/typesetting-switch.scss";
 import "./workbench/ResumeBuilderToolbar/ResumeBuilderToolbar.scss";
-import "./workbench/ResumeToolRail/tools/FillToolPanel/FillToolPanel.scss";
 import "./workbench/IntegratedSectionsEditor/IntegratedSectionsEditor.scss";
 import "./workbench/IntegratedSectionsEditor/section/SectionEditorBody.scss";
 
@@ -61,17 +56,14 @@ interface ResumeBuilderClientProps {
     id: string;
     title: string;
     templateId: string;
-    dataSourceId?: string | null;
     shareVisibility?: "private" | "public";
     shareWithRecruiters?: boolean;
     content: unknown;
   };
-  dataSources: ResumeDataSource[];
 }
 
 export function ResumeBuilderClient({
   initialResume,
-  dataSources,
 }: ResumeBuilderClientProps) {
   const router = useRouter();
   const { auth, ensureAuthenticated } = useAuthSnapshot({ eager: true });
@@ -87,22 +79,10 @@ export function ResumeBuilderClient({
   const updateResumeData = useResumeBuilderStore(
     (state) => state.updateResumeData,
   );
-  const selectedDataSourceId = useResumeBuilderStore(
-    (state) => state.selectedDataSourceId,
-  );
-  const setSelectedDataSourceId = useResumeBuilderStore(
-    (state) => state.setSelectedDataSourceId,
-  );
-  const applyDataSource = useResumeBuilderStore(
-    (state) => state.applyDataSource,
-  );
   const saveState = useResumeBuilderStore((state) => state.save);
 
   const [activeTool, setActiveTool] =
     useState<ActiveBuilderTool>("typesetting");
-  const [fillStrategy, setFillStrategy] = useState<"overwrite" | "preserve">(
-    "overwrite",
-  );
   const [sidePanelScrolling, setSidePanelScrolling] = useState(false);
   const [heightDebugSnapshotState, setHeightDebugSnapshotState] = useState<{
     resumeId: string;
@@ -148,7 +128,6 @@ export function ResumeBuilderClient({
     clearAIPreviewOverlay,
     resetAIPreview,
   } = useAIPreviewDraft({
-    dataSources,
     initialTemplateId: initialResume.templateId,
   });
 
@@ -374,7 +353,6 @@ export function ResumeBuilderClient({
     resumeTitleRef,
     setResumeTitle,
     initialized,
-    setSelectedDataSourceId,
     updateResumeData,
   });
 
@@ -484,36 +462,21 @@ export function ResumeBuilderClient({
     onGuestResumeCreated: handleGuestResumeCreated,
   });
 
-  const { handleFill } = useDataSourceFill({
-    ensureAuthForAction,
-    selectedDataSourceId,
-    applyDataSource,
-  });
-
   useEffect(() => {
     if (initialized && storeResumeId === initialResume.id) {
       return;
     }
 
     const normalized = normalizeResumeContent(initialResume.content, {
-      dataSource:
-        dataSources.find(
-          (source) => source.id === initialResume.dataSourceId,
-        ) || null,
       templateId: initialResume.templateId,
       withBackup: true,
     });
     initialize({
       resumeId: initialResume.id,
       data: normalized.data,
-      dataSources,
-      selectedDataSourceId:
-        initialResume.dataSourceId || dataSources[0]?.id || "",
     });
   }, [
-    dataSources,
     initialResume.content,
-    initialResume.dataSourceId,
     initialResume.id,
     initialResume.templateId,
     initialize,
@@ -549,20 +512,7 @@ export function ResumeBuilderClient({
   );
 
   const toolPanelContent =
-    activeTool === null ? null : activeTool === "fill" ? (
-      <div className="resume-workbench-stack">
-        <FillToolPanel
-          dataSources={dataSources}
-          selectedDataSourceId={selectedDataSourceId}
-          fillStrategy={fillStrategy}
-          onDataSourceChange={setSelectedDataSourceId}
-          onFillStrategyChange={setFillStrategy}
-          onFill={(strategy) => {
-            void handleFill(strategy);
-          }}
-        />
-      </div>
-    ) : activeTool === "ai" ? (
+    activeTool === null ? null : activeTool === "ai" ? (
       <AIChatPanel
         resumeId={initialResume.id}
         resumeTitle={resumeTitle}
@@ -601,9 +551,7 @@ export function ResumeBuilderClient({
       completeness={resumeCompleteness}
       scrollContainerRef={sidePanelScrollRef}
       completenessAction={isAutoFillCompletenessBand ? "auto-fill" : "ai-diagnosis"}
-      onOpenAIDiagnosis={() =>
-        handleSelectTool(isAutoFillCompletenessBand ? "fill" : "ai")
-      }
+      onOpenAIDiagnosis={() => handleSelectTool("ai")}
       renderBasicInfoEditor={() => <BasicInfoSectionEditor />}
       renderSectionEditorBody={(sectionId) => (
         <SectionEditorBody sectionId={sectionId} />
