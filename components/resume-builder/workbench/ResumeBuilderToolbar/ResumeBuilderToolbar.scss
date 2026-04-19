@@ -16,9 +16,12 @@
     --color-muted-foreground: var(--builder-panel-text-muted);
     min-height: 58px;
     position: relative;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 12px;
     z-index: 12;
     overflow: visible;
-    background: var(--builder-panel-bg);
+    background: var(--builder-panel-bg-soft);
     border-color: var(--builder-toolbar-border-color);
     box-shadow: var(--builder-toolbar-shadow);
     backdrop-filter: blur(10px);
@@ -104,13 +107,13 @@
   }
 
   .resume-toolbar .resume-toolbar-action-save {
-    border-color: var(--builder-toolbar-save-border);
-    background: var(--builder-toolbar-save-bg);
+    border-color: transparent;
+    background: transparent !important;
     color: var(--builder-toolbar-save-color);
   }
 
   .resume-toolbar .resume-toolbar-action-save:hover {
-    background: var(--builder-toolbar-save-hover-bg);
+    background: transparent !important;
   }
 }
 
@@ -127,6 +130,128 @@
 
   .resume-toolbar-download-menu {
     position: relative;
+  }
+
+  .resume-toolbar-share-menu {
+    position: relative;
+  }
+
+  .resume-toolbar-share-trigger {
+    min-height: 35px;
+    border: 1px solid var(--builder-panel-border);
+    border-radius: 999px;
+    padding: 0 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    color: var(--builder-panel-text);
+    font-size: 13px;
+    font-weight: 600;
+    transition:
+      border-color 180ms ease,
+      color 180ms ease;
+    cursor: pointer;
+  }
+
+  .resume-toolbar-share-trigger:hover:not(:disabled),
+  .resume-toolbar-share-trigger:focus-visible {
+    border-color: var(--builder-panel-border-strong);
+    color: var(--builder-panel-text);
+    outline: none;
+  }
+
+  .resume-toolbar-share-trigger:disabled {
+    opacity: 0.64;
+    cursor: wait;
+  }
+
+  .resume-toolbar-share-panel {
+    position: absolute;
+    top: calc(100% + 12px);
+    right: 0;
+    width: min(260px, calc(100vw - 28px));
+    z-index: 60;
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--builder-panel-bg) 92%, transparent);
+    border: 1px solid var(--builder-panel-border);
+    box-shadow: var(--builder-toolbar-shadow);
+    opacity: 0;
+    transform: translateY(-6px);
+    pointer-events: none;
+    transition:
+      opacity 160ms ease,
+      transform 160ms ease;
+  }
+
+  .resume-toolbar-share-menu.is-open .resume-toolbar-share-panel {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+
+  .resume-toolbar-share-panel-body {
+    display: grid;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .resume-toolbar-share-visibility-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .resume-toolbar-share-option,
+  .resume-toolbar-share-recruiter-toggle,
+  .resume-toolbar-share-copy-button {
+    min-height: 34px;
+    border-radius: 10px;
+    border: 1px solid var(--builder-panel-border);
+    background: transparent;
+    color: var(--builder-panel-text);
+    font-size: 13px;
+    font-weight: 500;
+    transition:
+      border-color 140ms ease,
+      background-color 140ms ease;
+    cursor: pointer;
+  }
+
+  .resume-toolbar-share-option:hover:not(:disabled),
+  .resume-toolbar-share-option:focus-visible,
+  .resume-toolbar-share-recruiter-toggle:hover:not(:disabled),
+  .resume-toolbar-share-recruiter-toggle:focus-visible,
+  .resume-toolbar-share-copy-button:hover:not(:disabled),
+  .resume-toolbar-share-copy-button:focus-visible {
+    border-color: var(--builder-panel-border-strong);
+    outline: none;
+  }
+
+  .resume-toolbar-share-option.is-active,
+  .resume-toolbar-share-recruiter-toggle.is-active {
+    border-color: color-mix(
+      in srgb,
+      var(--builder-button-primary-hover) 65%,
+      var(--builder-panel-border)
+    );
+    background: color-mix(
+      in srgb,
+      var(--builder-button-primary-hover) 14%,
+      transparent
+    );
+  }
+
+  .resume-toolbar-share-recruiter-toggle,
+  .resume-toolbar-share-copy-button {
+    width: 100%;
+  }
+
+  .resume-toolbar-share-option:disabled,
+  .resume-toolbar-share-recruiter-toggle:disabled,
+  .resume-toolbar-share-copy-button:disabled {
+    opacity: 0.58;
+    cursor: not-allowed;
   }
 
   .resume-toolbar-download-trigger {
@@ -334,5 +459,4 @@
   .resume-save-status.is-error {
     color: #d4d4d4;
   }
-
 }

@@ -4,16 +4,14 @@ import { type PointerEvent as ReactPointerEvent, type RefObject, useCallback, us
 
 interface UseEditorPanelWidthOptions {
   builderScopeRef: RefObject<HTMLDivElement | null>
-  storageKey?: string
   defaultWidth?: number
   minWidth?: number
   maxWidth?: number
 }
 
-const DEFAULT_STORAGE_KEY = 'resume:editor-panel-width'
-const DEFAULT_WIDTH = 412
-const DEFAULT_MIN_WIDTH = 340
-const DEFAULT_MAX_WIDTH = 720
+const DEFAULT_WIDTH = 448
+const DEFAULT_MIN_WIDTH = 360
+const DEFAULT_MAX_WIDTH = 760
 
 function resolveEditorPanelWidthMax(maxWidth: number) {
   if (typeof window === 'undefined') return maxWidth
@@ -34,36 +32,21 @@ function preventDefaultIfCancelable(event: ReactPointerEvent<HTMLDivElement>) {
 }
 
 function resolveInitialEditorPanelWidth(
-  storageKey: string,
   defaultWidth: number,
   minWidth: number,
   maxWidth: number,
 ) {
-  if (typeof window === 'undefined') {
-    return clampEditorPanelWidth(defaultWidth, minWidth, maxWidth)
-  }
-
-  const stored = window.localStorage.getItem(storageKey)
-  if (!stored) {
-    return clampEditorPanelWidth(defaultWidth, minWidth, maxWidth)
-  }
-
-  const parsed = Number.parseInt(stored, 10)
-  if (!Number.isFinite(parsed)) {
-    return clampEditorPanelWidth(defaultWidth, minWidth, maxWidth)
-  }
-  return clampEditorPanelWidth(parsed, minWidth, maxWidth)
+  return clampEditorPanelWidth(defaultWidth, minWidth, maxWidth)
 }
 
 export function useEditorPanelWidth({
   builderScopeRef,
-  storageKey = DEFAULT_STORAGE_KEY,
   defaultWidth = DEFAULT_WIDTH,
   minWidth = DEFAULT_MIN_WIDTH,
   maxWidth = DEFAULT_MAX_WIDTH,
 }: UseEditorPanelWidthOptions) {
   const [editorPanelWidth, setEditorPanelWidth] = useState(() =>
-    resolveInitialEditorPanelWidth(storageKey, defaultWidth, minWidth, maxWidth),
+    resolveInitialEditorPanelWidth(defaultWidth, minWidth, maxWidth),
   )
   const editorPanelResizeRef = useRef<{
     pointerId: number
@@ -84,9 +67,7 @@ export function useEditorPanelWidth({
   useEffect(() => {
     editorPanelWidthLiveRef.current = editorPanelWidth
     applyEditorPanelWidthVar(editorPanelWidth)
-    if (typeof window === 'undefined') return
-    window.localStorage.setItem(storageKey, String(editorPanelWidth))
-  }, [applyEditorPanelWidthVar, editorPanelWidth, storageKey])
+  }, [applyEditorPanelWidthVar, editorPanelWidth])
 
   useEffect(() => {
     if (typeof window === 'undefined') return

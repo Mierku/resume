@@ -1,5 +1,9 @@
 import { prisma } from '@/lib/prisma'
-import { ResumeMode, type Prisma } from '@prisma/client'
+import {
+  ResumeMode,
+  type Prisma,
+  type ResumeShareVisibility,
+} from '@prisma/client'
 import { RESUME_TEMPLATES } from '@/lib/constants'
 import { getResumeStorageLimit } from '@/lib/membership'
 import {
@@ -21,6 +25,8 @@ interface CreateResumeInput {
   themeColor?: string
   mode?: ResumeMode
   content?: unknown
+  shareVisibility?: ResumeShareVisibility
+  shareWithRecruiters?: boolean
 }
 
 interface UpdateResumeInput {
@@ -29,7 +35,38 @@ interface UpdateResumeInput {
   dataSourceId?: string | null
   mode?: ResumeMode
   content?: unknown
+  shareVisibility?: ResumeShareVisibility
+  shareWithRecruiters?: boolean
 }
+
+interface ResumeShareSettings {
+  shareVisibility: ResumeShareVisibility
+  shareWithRecruiters: boolean
+}
+
+interface PublicResumeHiddenResult {
+  status: 'hidden'
+  resumeId: string
+  title: string
+}
+
+interface PublicResumeVisibleResult {
+  status: 'visible'
+  canDownload: boolean
+  resume: {
+    id: string
+    title: string
+    templateId: string
+    content: unknown
+  }
+}
+
+export type PublicResumeViewResult =
+  | PublicResumeHiddenResult
+  | PublicResumeVisibleResult
+
+const RESUME_SHARE_VISIBILITY_PRIVATE: ResumeShareVisibility = 'private'
+const RESUME_SHARE_VISIBILITY_PUBLIC: ResumeShareVisibility = 'public'
 
 export class ResumeCreationLimitError extends Error {
   constructor(limit: number) {
@@ -63,6 +100,41 @@ function stripHtml(text: string): string {
 
 function isHexColor(value: string | undefined): value is string {
   return Boolean(value && /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/.test(value))
+}
+
+function normalizeShareSettings(
+  input: {
+    shareVisibility?: ResumeShareVisibility
+    shareWithRecruiters?: boolean
+  },
+  fallback?: ResumeShareSettings,
+): ResumeShareSettings {
+  const shareVisibility =
+    input.shareVisibility || fallback?.shareVisibility || RESUME_SHARE_VISIBILITY_PRIVATE
+
+  const desiredRecruiterVisibility =
+    input.shareWithRecruiters ??
+    fallback?.shareWithRecruiters ??
+    false
+
+  return {
+    shareVisibility,
+    shareWithRecruiters:
+      shareVisibility === RESUME_SHARE_VISIBILITY_PUBLIC
+        ? Boolean(desiredRecruiterVisibility)
+        : false,
+  }
+}
+
+export function canPublicResumeBeViewed(settings: ResumeShareSettings): boolean {
+  return settings.shareVisibility === RESUME_SHARE_VISIBILITY_PUBLIC
+}
+
+export function canPublicResumeBeDownloaded(settings: ResumeShareSettings): boolean {
+  return (
+    settings.shareVisibility === RESUME_SHARE_VISIBILITY_PUBLIC &&
+    settings.shareWithRecruiters
+  )
 }
 
 async function assertCanCreateResume(client: ResumeLimitClient, userId: string) {
@@ -303,6 +375,8 @@ async function migrateResumeIfNeeded(resume: {
   templateId: string
   dataSourceId: string | null
   mode: ResumeMode
+  shareVisibility: ResumeShareVisibility
+  shareWithRecruiters: boolean
   content: unknown
   createdAt: Date
   updatedAt: Date
@@ -413,6 +487,11 @@ export async function createResume(userId: string, input: CreateResumeInput) {
       content.data.metadata.design.colors.primary = input.themeColor
     }
 
+    const shareSettings = normalizeShareSettings({
+      shareVisibility: input.shareVisibility,
+      shareWithRecruiters: input.shareWithRecruiters,
+    })
+
     return tx.resume.create({
       data: {
         userId,
@@ -420,6 +499,8 @@ export async function createResume(userId: string, input: CreateResumeInput) {
         templateId,
         dataSourceId: input.dataSourceId,
         mode: 'form',
+        shareVisibility: shareSettings.shareVisibility,
+        shareWithRecruiters: shareSettings.shareWithRecruiters,
         content: toInputJsonValue(content),
       },
     })
@@ -444,6 +525,17 @@ export async function updateResume(id: string, userId: string, input: UpdateResu
   }
 
   const templateId = normalizeTemplateId(input.templateId || existing.templateId)
+
+  const shareSettings = normalizeShareSettings(
+    {
+      shareVisibility: input.shareVisibility,
+      shareWithRecruiters: input.shareWithRecruiters,
+    },
+    {
+      shareVisibility: existing.shareVisibility,
+      shareWithRecruiters: existing.shareWithRecruiters,
+    },
+  )
 
   const dataSource = input.dataSourceId
     ? await prisma.dataSource.findFirst({ where: { id: input.dataSourceId, userId } })
@@ -476,6 +568,12 @@ export async function updateResume(id: string, userId: string, input: UpdateResu
       ...(input.templateId !== undefined && { templateId }),
       ...(input.dataSourceId !== undefined && { dataSourceId: input.dataSourceId }),
       ...(input.mode !== undefined && { mode: 'form' }),
+      ...((input.shareVisibility !== undefined || input.shareWithRecruiters !== undefined)
+        ? {
+            shareVisibility: shareSettings.shareVisibility,
+            shareWithRecruiters: shareSettings.shareWithRecruiters,
+          }
+        : {}),
       ...(content !== undefined && { content: toInputJsonValue(content) }),
     },
   })
@@ -507,6 +605,8 @@ export async function duplicateResume(id: string, userId: string) {
         templateId: normalizeTemplateId(existing.templateId),
         dataSourceId: existing.dataSourceId,
         mode: 'form',
+        shareVisibility: RESUME_SHARE_VISIBILITY_PRIVATE,
+        shareWithRecruiters: false,
         content: toInputJsonValue(normalized),
       },
     })
@@ -575,5 +675,50 @@ export async function exportResume(
       }
     default:
       throw new Error('Unsupported format')
+  }
+}
+
+export async function getPublicResumeView(id: string): Promise<PublicResumeViewResult> {
+  const resume = await prisma.resume.findFirst({
+    where: { id },
+    include: {
+      dataSource: true,
+    },
+  })
+
+  if (!resume) {
+    return {
+      status: 'hidden',
+      resumeId: id,
+      title: '未知简历',
+    }
+  }
+
+  const shareSettings = normalizeShareSettings(
+    {},
+    {
+      shareVisibility: resume.shareVisibility,
+      shareWithRecruiters: resume.shareWithRecruiters,
+    },
+  )
+
+  if (!canPublicResumeBeViewed(shareSettings)) {
+    return {
+      status: 'hidden',
+      resumeId: resume.id,
+      title: resume.title,
+    }
+  }
+
+  const normalizedResume = await migrateResumeIfNeeded(resume)
+  return {
+    status: 'visible',
+    canDownload: canPublicResumeBeDownloaded(shareSettings),
+    resume: {
+      id: normalizedResume.id,
+      title: normalizedResume.title,
+      templateId: normalizedResume.templateId,
+      content: normalizedResume.content,
+    },
   }
 }

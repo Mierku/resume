@@ -2,10 +2,6 @@
 .resume-builder-scope {
   /* 编辑器 Tabs 与模块管理菜单 */
   .resume-editor-tabs-layout {
-    --resume-editor-tab-active-bg: var(--builder-panel-bg);
-    --resume-editor-tab-text: #969696;
-    --resume-editor-tab-active-text: #ffffff;
-    --resume-editor-tab-divider: #383838;
     min-height: 0;
     height: 100%;
     display: flex;
@@ -195,7 +191,7 @@
     max-width: 160px;
     height: 36px;
     background: transparent;
-    color: var(--resume-editor-tab-text);
+    color: var(--builder-panel-text);
     box-shadow: none;
     z-index: 1;
     isolation: isolate;
@@ -216,7 +212,7 @@
   }
 
   .resume-editor-tab-bg path {
-    fill: var(--resume-editor-tab-active-bg);
+    fill: var(--builder-panel-bg-soft);
     shape-rendering: geometricPrecision;
   }
 
@@ -232,7 +228,7 @@
     right: 18px;
     height: 28px;
     transform: translateY(-50%) translateY(-1.5px) scale(0.96);
-    background-color: rgba(255, 255, 255, 0.08);
+    background-color: var(--builder-button-hover);
     border-radius: 6px;
     z-index: 1;
     opacity: 0;
@@ -250,27 +246,23 @@
     transform: translateY(-50%) translateY(-1.5px) scale(1);
   }
 
-  .resume-editor-tab::after {
-    content: "";
-    position: absolute;
-    right: 14px;
-    top: 11px;
-    bottom: 11px;
-    width: 1px;
-    background-color: var(--resume-editor-tab-divider);
-    opacity: 1;
-    transition: opacity 180ms ease;
-    pointer-events: none;
-    z-index: 2;
-  }
-
-  .resume-editor-tab:hover {
-    color: var(--resume-editor-tab-active-text);
-  }
-
-  .resume-editor-tab.is-active {
-    color: var(--resume-editor-tab-active-text);
-    z-index: 10;
+  .resume-editor-tab {
+    &:hover,
+    &.is-active {
+      color: var(--builder-panel-text);
+    }
+    &::after {
+      content: "";
+      position: absolute;
+      right: 14px;
+      top: 11px;
+      bottom: 11px;
+      width: 1px;
+      opacity: 1;
+      transition: opacity 180ms ease;
+      pointer-events: none;
+      z-index: 2;
+    }
   }
 
   .resume-editor-tab.is-active::after,
@@ -281,7 +273,7 @@
   }
 
   .resume-editor-tab.is-hidden .resume-editor-tab-title {
-    color: var(--resume-editor-tab-text);
+    color: var(--builder-panel-text);
   }
 
   .resume-editor-tab.is-dragging {
@@ -340,11 +332,6 @@
     flex-shrink: 0;
     font-size: 9px;
     line-height: 1;
-    color: color-mix(
-      in srgb,
-      var(--resume-editor-tab-active-text) 56%,
-      transparent
-    );
   }
 
   .resume-editor-tab-icon {
@@ -370,17 +357,12 @@
     min-width: 22px;
     height: 22px;
     border-radius: 4px;
-    color: color-mix(
-      in srgb,
-      var(--resume-editor-tab-active-text) 72%,
-      transparent
-    );
   }
 
   .resume-editor-add-menu .resume-inline-icon-btn:hover,
   .resume-editor-add-menu .resume-inline-icon-btn:focus-visible {
-    color: var(--resume-editor-tab-active-text);
     background: rgba(255, 255, 255, 0.1);
+    color: var(--builder-button-text-hover);
   }
 
   .resume-editor-add-menu .resume-item-menu-popover,

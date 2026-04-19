@@ -1,4 +1,10 @@
-export const DASHBOARD_SECTION_IDS = ['tracking', 'resume', 'data-source', 'admin-users', 'account'] as const
+export const DASHBOARD_SECTION_IDS = [
+  'workbench',
+  'tracking',
+  'resume',
+  'admin-users',
+  'account',
+] as const
 
 export type DashboardSection = (typeof DASHBOARD_SECTION_IDS)[number]
 
@@ -7,7 +13,10 @@ function isDashboardSection(value: string | null | undefined): value is Dashboar
 }
 
 export function parseDashboardSection(value: string | null | undefined): DashboardSection {
-  return isDashboardSection(value) ? value : 'tracking'
+  if (value === 'data-source') {
+    return 'tracking'
+  }
+  return isDashboardSection(value) ? value : 'workbench'
 }
 
 export function getDashboardSectionHref(section: DashboardSection) {

@@ -118,7 +118,7 @@ function buildResponsePayload({
         type: 'draft_preview',
         title: '即将生成草稿',
         description: `目标简历：${resumeTitle || resumeId}。生成完成后会返回可点击的预览地址。`,
-        href: `/resume/editor/${encodeURIComponent(resumeId || '')}?panel=ai&intent=${intent}`,
+        href: `/builder/editor/${encodeURIComponent(resumeId || '')}?panel=ai&intent=${intent}`,
         ctaLabel: '打开编辑器',
       }
       nextAction = {
@@ -148,7 +148,7 @@ function buildResponsePayload({
         type: 'draft_preview',
         title: '草稿预览地址',
         description: '点击后跳转到编辑器继续查看草稿内容。',
-        href: `/resume/editor/${encodeURIComponent(draftId)}?panel=ai&previewDraft=1`,
+        href: `/builder/editor/${encodeURIComponent(draftId)}?panel=ai&previewDraft=1`,
         ctaLabel: '去预览',
       }
       nextAction = { type: 'open_preview', draftId }

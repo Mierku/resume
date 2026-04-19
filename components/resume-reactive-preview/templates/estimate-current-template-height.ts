@@ -160,6 +160,7 @@ const MM_TO_PX = 96 / 25.4
 const ASIDE_COLUMN_GAP_MULTIPLIER = 2.4
 const TEMPLATE_PAGE_DIMENSIONS: Record<ResumePageFormat, { width: string; height: string }> = {
   a4: { width: '210mm', height: '297mm' },
+  letter: { width: '216mm', height: '279mm' },
   'free-form': { width: '210mm', height: '297mm' },
 }
 

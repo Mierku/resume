@@ -6,7 +6,7 @@
 }
 .field :global(.resume-tool-slider-label) {
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.44);
+  color: var(--control-field-placeholder, rgba(255, 255, 255, 0.44));
 }
 .field :global(.resume-tool-slider-row) {
   display: grid;
@@ -16,7 +16,58 @@
 }
 .field :global(.resume-tool-slider-control) {
   width: 100%;
+}
+.field :global(.resume-tool-slider-rail) {
+  position: relative;
+  height: var(--control-slider-thumb-size, 24px);
   margin: 0;
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+  outline: none;
+}
+.field :global(.resume-tool-slider-track),
+.field :global(.resume-tool-slider-track-fill) {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  height: var(--control-slider-track-height, 6px);
+  transform: translateY(-50%);
+  border-radius: 999px;
+  pointer-events: none;
+}
+.field :global(.resume-tool-slider-track) {
+  right: 0;
+  background: var(--control-slider-track-bg, #b8b8bc);
+}
+.field :global(.resume-tool-slider-track-fill) {
+  background: var(--control-slider-fill-bg, #d9d9dd);
+}
+.field :global(.resume-tool-slider-thumb) {
+  position: absolute;
+  top: 50%;
+  width: var(--control-slider-thumb-size, 24px);
+  height: var(--control-slider-thumb-size, 24px);
+  border-radius: 999px;
+  transform: translate(-50%, -50%);
+  background: var(--control-slider-thumb-bg, #1a1a1d);
+  box-shadow:
+    var(--control-slider-thumb-shadow, 0 6px 12px rgba(0, 0, 0, 0.26)),
+    inset 0 0 0 1px var(--control-slider-thumb-ring, rgba(255, 255, 255, 0.08));
+  transition:
+    transform 120ms ease,
+    box-shadow 120ms ease;
+  pointer-events: none;
+}
+.field :global(.resume-tool-slider-rail:hover .resume-tool-slider-thumb),
+.field :global(.resume-tool-slider-rail:focus-visible .resume-tool-slider-thumb) {
+  transform: translate(-50%, -50%) scale(1.03);
+}
+.field :global(.resume-tool-slider-rail.is-dragging .resume-tool-slider-thumb) {
+  transform: translate(-50%, -50%) scale(1.06);
+  box-shadow:
+    var(--control-slider-thumb-shadow, 0 6px 12px rgba(0, 0, 0, 0.26)),
+    inset 0 0 0 1px var(--control-slider-thumb-ring, rgba(255, 255, 255, 0.12));
 }
 .field :global(.resume-tool-slider-input) {
   min-height: 34px !important;
@@ -24,9 +75,10 @@
   text-align: center;
   font-size: 13px;
   line-height: 1;
-  color: rgba(255, 255, 255, 0.94);
+  color: var(--control-field-text, rgba(255, 255, 255, 0.94));
   font-variant-numeric: tabular-nums;
-  background: rgba(255, 255, 255, 0.05) !important;
+  background: var(--control-field-bg, rgba(255, 255, 255, 0.05)) !important;
+  border-color: var(--control-field-border-color, transparent) !important;
 }
 .field :global(.resume-typography-slider-input),
 .field :global(.resume-typesetting-slider-input) {

@@ -13,7 +13,7 @@ export const BUILDER_TOOL_META: Record<
     title: '自动填充',
   },
   ai: {
-    title: 'AI 助手',
+    title: 'AI对话',
   },
   template: {
     title: '简历样式',

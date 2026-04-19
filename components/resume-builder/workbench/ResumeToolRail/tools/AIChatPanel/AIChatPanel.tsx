@@ -1,300 +1,305 @@
-'use client'
+"use client";
 
 import {
-  Bot,
-  BriefcaseBusiness,
-  CheckCircle2,
   ChevronDown,
-  FileText,
+  FileDown,
   History,
-  Languages,
+  MessageSquare,
+  Minimize2,
   Plus,
   SendHorizontal,
   Sparkles,
+  Target,
   Trash2,
   X,
-} from 'lucide-react'
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { Tip } from '@/components/ui/Tip'
-import type { ResumeData } from '@/lib/resume/types'
-import styles from './AIChatPanel.module.scss'
+} from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ScrollShell } from "@/components/ui/ScrollShell";
+import { Tip } from "@/components/ui/Tip";
+import type { ResumeData } from "@/lib/resume/types";
+import styles from "./AIChatPanel.module.scss";
 
-type ChatRole = 'user' | 'assistant'
+type ChatRole = "user" | "assistant";
 
 interface PanelCard {
-  title: string
-  description: string
-  href?: string
-  ctaLabel?: string
-  openInNewTab?: boolean
-  draftId?: string
-  sourceResumeId?: string
-  badge?: string
-  status?: string
-  intent?: 'translate_resume' | 'polish_resume' | 'adapt_to_jd'
+  title: string;
+  description: string;
+  href?: string;
+  ctaLabel?: string;
+  openInNewTab?: boolean;
+  draftId?: string;
+  sourceResumeId?: string;
+  badge?: string;
+  status?: string;
+  intent?: "translate_resume" | "polish_resume" | "adapt_to_jd";
 }
 
 interface PanelMessage {
-  id: string
-  role: ChatRole
-  content: string
-  time: string
-  card?: PanelCard
+  id: string;
+  role: ChatRole;
+  content: string;
+  time: string;
+  card?: PanelCard;
 }
 
 interface AIChatPanelProps {
-  resumeId: string
-  resumeTitle: string
-  isGuestDraft: boolean
-  resolvedDraftId?: string | null
-  onClose?: () => void
+  resumeId: string;
+  resumeTitle: string;
+  isGuestDraft: boolean;
+  resolvedDraftId?: string | null;
+  onClose?: () => void;
   onPreviewDraftInCanvas?: (payload: {
-    draftId: string
-    sourceResumeId: string
-    title: string
-    previewUrl: string
-    draftData: ResumeData
-    intent: 'translate_resume' | 'polish_resume' | 'adapt_to_jd'
-  }) => void
+    draftId: string;
+    sourceResumeId: string;
+    title: string;
+    previewUrl: string;
+    draftData: ResumeData;
+    intent: "translate_resume" | "polish_resume" | "adapt_to_jd";
+  }) => void;
   onCardPreviewRequest?: (payload: {
-    draftId: string
-    sourceResumeId?: string
-    intent?: 'translate_resume' | 'polish_resume' | 'adapt_to_jd'
-  }) => void
+    draftId: string;
+    sourceResumeId?: string;
+    intent?: "translate_resume" | "polish_resume" | "adapt_to_jd";
+  }) => void;
 }
 
 interface ChatRouteActionGenerate {
-  type: 'generate_draft'
-  intent: 'translate_resume' | 'polish_resume' | 'adapt_to_jd'
-  endpoint: '/api/ai/drafts/generate'
+  type: "generate_draft";
+  intent: "translate_resume" | "polish_resume" | "adapt_to_jd";
+  endpoint: "/api/ai/drafts/generate";
   payload: {
-    resumeId: string
-    intent: 'translate_resume' | 'polish_resume' | 'adapt_to_jd'
-    targetLanguage?: 'zh' | 'en'
-  }
+    resumeId: string;
+    intent: "translate_resume" | "polish_resume" | "adapt_to_jd";
+    targetLanguage?: "zh" | "en";
+  };
 }
 
 interface ChatRouteActionConfirm {
-  type: 'confirm_save'
-  draftId: string
-  saveMode: 'new_version' | 'overwrite'
-  endpoint: string
+  type: "confirm_save";
+  draftId: string;
+  saveMode: "new_version" | "overwrite";
+  endpoint: string;
   payload: {
-    sourceResumeId?: string
-    saveMode: 'new_version' | 'overwrite'
-  }
+    sourceResumeId?: string;
+    saveMode: "new_version" | "overwrite";
+  };
 }
 
 interface ChatRouteActionDiscard {
-  type: 'discard_draft'
-  draftId: string
-  endpoint: string
+  type: "discard_draft";
+  draftId: string;
+  endpoint: string;
 }
 
 type ChatRouteAction =
   | ChatRouteActionGenerate
   | ChatRouteActionConfirm
   | ChatRouteActionDiscard
-  | { type: 'open_preview'; draftId: string }
-  | { type: 'none' }
+  | { type: "open_preview"; draftId: string }
+  | { type: "none" };
 
 interface ChatRouteResponse {
-  success: boolean
-  error?: string
+  success: boolean;
+  error?: string;
   data?: {
-    reply: string
+    reply: string;
     card: {
-      title: string
-      description: string
-      href?: string
-      ctaLabel?: string
-    } | null
-    nextAction: ChatRouteAction
-    conversationId?: string | null
-  }
+      title: string;
+      description: string;
+      href?: string;
+      ctaLabel?: string;
+    } | null;
+    nextAction: ChatRouteAction;
+    conversationId?: string | null;
+  };
 }
 
 interface ConversationHistoryResponse {
-  success: boolean
-  error?: string
+  success: boolean;
+  error?: string;
   data?: {
-    conversationId: string
-    resumeId?: string | null
-    title?: string | null
-    createdAt?: string
-    updatedAt?: string
+    conversationId: string;
+    resumeId?: string | null;
+    title?: string | null;
+    createdAt?: string;
+    updatedAt?: string;
     messages: Array<{
-      id: string
-      role: string
-      content: string
-      card?: unknown
-      meta?: unknown
-      createdAt: string
-    }>
-  } | null
+      id: string;
+      role: string;
+      content: string;
+      card?: unknown;
+      meta?: unknown;
+      createdAt: string;
+    }>;
+  } | null;
 }
 
 interface ConversationCreateResponse {
-  success: boolean
-  error?: string
+  success: boolean;
+  error?: string;
   data?: {
-    conversationId: string
-  }
+    conversationId: string;
+  };
 }
 
 interface ConversationSummary {
-  conversationId: string
-  resumeId?: string | null
-  title?: string | null
-  createdAt?: string
-  updatedAt?: string
-  messageCount?: number
+  conversationId: string;
+  resumeId?: string | null;
+  title?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+  messageCount?: number;
 }
 
 interface ConversationListResponse {
-  success: boolean
-  error?: string
+  success: boolean;
+  error?: string;
   data?: {
-    conversations: ConversationSummary[]
-  }
+    conversations: ConversationSummary[];
+  };
 }
 
 interface ConversationDeleteResponse {
-  success: boolean
-  error?: string
+  success: boolean;
+  error?: string;
   data?: {
-    conversationId: string
-  }
+    conversationId: string;
+  };
 }
 
 function extractLikelyJdText(input: string): string | undefined {
-  const value = input.trim()
-  if (!value) return undefined
+  const value = input.trim();
+  if (!value) return undefined;
 
   const hasKeyword =
     /jd|岗位描述|职位描述|任职要求|岗位职责|工作内容|任职资格|qualification|responsibilit|job description/i.test(
       value,
-    )
-  const hasMultiLine = value.includes('\n')
-  const looksLongEnough = value.length >= 120
+    );
+  const hasMultiLine = value.includes("\n");
+  const looksLongEnough = value.length >= 120;
 
-  if ((hasKeyword && (hasMultiLine || looksLongEnough)) || value.length >= 220) {
-    return value
+  if (
+    (hasKeyword && (hasMultiLine || looksLongEnough)) ||
+    value.length >= 220
+  ) {
+    return value;
   }
 
-  return undefined
+  return undefined;
 }
 
-const timeFormatter = new Intl.DateTimeFormat('zh-CN', {
-  hour: '2-digit',
-  minute: '2-digit',
+const timeFormatter = new Intl.DateTimeFormat("zh-CN", {
+  hour: "2-digit",
+  minute: "2-digit",
   hour12: false,
-})
+});
 
-const conversationTimeFormatter = new Intl.DateTimeFormat('zh-CN', {
-  month: '2-digit',
-  day: '2-digit',
-  hour: '2-digit',
-  minute: '2-digit',
+const conversationTimeFormatter = new Intl.DateTimeFormat("zh-CN", {
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
   hour12: false,
-})
+});
 
 function formatMessageTime(value?: Date | string) {
-  if (!value) return timeFormatter.format(new Date())
-  const date = value instanceof Date ? value : new Date(value)
-  if (Number.isNaN(date.getTime())) return timeFormatter.format(new Date())
-  return timeFormatter.format(date)
+  if (!value) return timeFormatter.format(new Date());
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return timeFormatter.format(new Date());
+  return timeFormatter.format(date);
 }
 
 function formatConversationTime(value?: Date | string) {
-  if (!value) return '--'
-  const date = value instanceof Date ? value : new Date(value)
-  if (Number.isNaN(date.getTime())) return '--'
-  return conversationTimeFormatter.format(date)
+  if (!value) return "--";
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return "--";
+  return conversationTimeFormatter.format(date);
 }
 
-function createMessage(role: ChatRole, content: string, card?: PanelCard): PanelMessage {
+function createMessage(
+  role: ChatRole,
+  content: string,
+  card?: PanelCard,
+): PanelMessage {
   return {
     id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     role,
     content,
     time: formatMessageTime(),
     card,
-  }
+  };
 }
 
 const emptyStateActions = [
   {
-    id: 'generate-english',
-    label: '生成英文简历草稿',
-    prompt: '请基于当前简历生成英文简历草稿。',
-    icon: Languages,
-    tone: 'is-blue',
+    id: "fit-one-page",
+    title: "压缩到一页",
+    command: "/fit",
+    prompt: "请帮我把当前简历优化到一页内，优先保留最重要的内容。",
+    icon: Minimize2,
+    tone: "is-blue",
   },
   {
-    id: 'polish-experience',
-    label: '润色项目经验描述',
-    prompt: '请先润色我的项目经验描述，并保持量化结果导向。',
-    icon: Sparkles,
-    tone: 'is-violet',
+    id: "tailor-to-job",
+    title: "岗位定制",
+    command: "/tailor",
+    prompt: "请根据我接下来提供的岗位描述，量身定制这份简历。",
+    icon: Target,
+    tone: "is-violet",
   },
   {
-    id: 'adapt-jd',
-    label: '针对特定 JD 适配简历',
-    prompt: '请根据我接下来提供的 JD 进行简历适配。',
-    icon: BriefcaseBusiness,
-    tone: 'is-amber',
+    id: "export-to-pdf",
+    title: "导出 PDF",
+    command: "/export",
+    prompt: "请告诉我如何把当前简历导出为 PDF。",
+    icon: FileDown,
+    tone: "is-emerald",
   },
-  {
-    id: 'translate-zh-resume',
-    label: '翻译现有的中文简历',
-    prompt: '请把当前中文简历翻译成英文，并保持专业语气。',
-    icon: FileText,
-    tone: 'is-emerald',
-  },
-] as const
+] as const;
 
-function resolveProgressLabel(intent?: ChatRouteActionGenerate['intent']) {
-  if (intent === 'translate_resume') return '翻译中...'
-  if (intent === 'polish_resume') return '润色中...'
-  if (intent === 'adapt_to_jd') return '匹配 JD 中...'
-  return '处理中...'
+function resolveProgressLabel(intent?: ChatRouteActionGenerate["intent"]) {
+  if (intent === "translate_resume") return "翻译中...";
+  if (intent === "polish_resume") return "润色中...";
+  if (intent === "adapt_to_jd") return "匹配 JD 中...";
+  return "处理中...";
 }
 
 function mergeReply(primary: string, secondary: string) {
-  const first = primary.trim()
-  const second = secondary.trim()
-  if (!first) return second
-  if (!second) return first
-  if (first.includes(second)) return first
-  if (second.includes(first)) return second
-  return `${first}\n\n${second}`
+  const first = primary.trim();
+  const second = secondary.trim();
+  if (!first) return second;
+  if (!second) return first;
+  if (first.includes(second)) return first;
+  if (second.includes(first)) return second;
+  return `${first}\n\n${second}`;
 }
 
-function resolveDraftCardMeta(intent: ChatRouteActionGenerate['intent']) {
-  if (intent === 'translate_resume') {
-    return { title: '翻译草稿已生成', badge: '翻译', status: '已完成' }
+function resolveDraftCardMeta(intent: ChatRouteActionGenerate["intent"]) {
+  if (intent === "translate_resume") {
+    return { title: "翻译草稿已生成", badge: "翻译", status: "已完成" };
   }
-  if (intent === 'polish_resume') {
-    return { title: '润色草稿已生成', badge: '润色', status: '已完成' }
+  if (intent === "polish_resume") {
+    return { title: "润色草稿已生成", badge: "润色", status: "已完成" };
   }
-  return { title: 'JD 适配草稿已生成', badge: 'JD 适配', status: '已完成' }
+  return { title: "JD 适配草稿已生成", badge: "JD 适配", status: "已完成" };
 }
 
-function resolveCardIntent(card: PanelCard): 'translate_resume' | 'polish_resume' | 'adapt_to_jd' | undefined {
-  if (card.intent) return card.intent
-  if (card.badge === '翻译') return 'translate_resume'
-  if (card.badge === '润色') return 'polish_resume'
-  if (card.badge === 'JD 适配') return 'adapt_to_jd'
-  return undefined
+function resolveCardIntent(
+  card: PanelCard,
+): "translate_resume" | "polish_resume" | "adapt_to_jd" | undefined {
+  if (card.intent) return card.intent;
+  if (card.badge === "翻译") return "translate_resume";
+  if (card.badge === "润色") return "polish_resume";
+  if (card.badge === "JD 适配") return "adapt_to_jd";
+  return undefined;
 }
 
 function resolveCardLayerCode(card: PanelCard) {
-  const intent = resolveCardIntent(card)
-  if (intent === 'translate_resume') return 'DOC.EN'
-  if (intent === 'polish_resume') return 'DOC.PO'
-  if (intent === 'adapt_to_jd') return 'DOC.JD'
-  return 'DOC.AI'
+  const intent = resolveCardIntent(card);
+  if (intent === "translate_resume") return "DOC.EN";
+  if (intent === "polish_resume") return "DOC.PO";
+  if (intent === "adapt_to_jd") return "DOC.JD";
+  return "DOC.AI";
 }
 
 export function AIChatPanel({
@@ -305,363 +310,421 @@ export function AIChatPanel({
   onPreviewDraftInCanvas,
   onCardPreviewRequest,
 }: AIChatPanelProps) {
-  const [input, setInput] = useState('')
-  const [messages, setMessages] = useState<PanelMessage[]>([])
-  const [loading, setLoading] = useState(false)
-  const [loadingStage, setLoadingStage] = useState<string | null>(null)
-  const [conversationId, setConversationId] = useState<string | null>(null)
-  const [conversationHistory, setConversationHistory] = useState<ConversationSummary[]>([])
-  const [historyPanelOpen, setHistoryPanelOpen] = useState(false)
-  const [historyMenuLoading, setHistoryMenuLoading] = useState(false)
-  const [historyMenuError, setHistoryMenuError] = useState<string | null>(null)
-  const [switchingConversation, setSwitchingConversation] = useState(false)
-  const [historyLoaded, setHistoryLoaded] = useState(false)
-  const [draftContext, setDraftContext] = useState<{ draftId?: string; sourceResumeId?: string }>({})
-  const latestJdTextRef = useRef<string | undefined>(undefined)
-  const conversationIdRef = useRef<string | null>(null)
-  const creatingConversationRef = useRef<Promise<string | null> | null>(null)
-  const messageViewportRef = useRef<HTMLDivElement | null>(null)
-  const composerRef = useRef<HTMLTextAreaElement | null>(null)
-  const historyPanelRef = useRef<HTMLDivElement | null>(null)
+  const [input, setInput] = useState("");
+  const [messages, setMessages] = useState<PanelMessage[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [loadingStage, setLoadingStage] = useState<string | null>(null);
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [conversationHistory, setConversationHistory] = useState<
+    ConversationSummary[]
+  >([]);
+  const [historyPanelOpen, setHistoryPanelOpen] = useState(false);
+  const [historyMenuLoading, setHistoryMenuLoading] = useState(false);
+  const [historyMenuError, setHistoryMenuError] = useState<string | null>(null);
+  const [switchingConversation, setSwitchingConversation] = useState(false);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
+  const [draftContext, setDraftContext] = useState<{
+    draftId?: string;
+    sourceResumeId?: string;
+  }>({});
+  const latestJdTextRef = useRef<string | undefined>(undefined);
+  const conversationIdRef = useRef<string | null>(null);
+  const creatingConversationRef = useRef<Promise<string | null> | null>(null);
+  const messageViewportRef = useRef<HTMLDivElement | null>(null);
+  const composerRef = useRef<HTMLTextAreaElement | null>(null);
+  const historyPanelRef = useRef<HTMLDivElement | null>(null);
 
-  const disabled = isGuestDraft || !resumeId || loading || !historyLoaded || switchingConversation
-  const showEmptyState = historyLoaded && messages.length === 0
+  const disabled =
+    isGuestDraft ||
+    !resumeId ||
+    loading ||
+    !historyLoaded ||
+    switchingConversation;
+  const showEmptyState = historyLoaded && messages.length === 0;
 
   const apiMessages = useMemo(
     () =>
-      messages.map(message => ({
+      messages.map((message) => ({
         role: message.role,
         content: message.content,
       })),
     [messages],
-  )
+  );
 
-  const parseStoredCard = (value: unknown): PanelCard | undefined => {
-    if (!value || typeof value !== 'object') return undefined
-    const raw = value as Record<string, unknown>
-    const title = typeof raw.title === 'string' ? raw.title : ''
-    const description = typeof raw.description === 'string' ? raw.description : ''
-    if (!title || !description) return undefined
+  const parseStoredCard = useCallback(
+    (value: unknown): PanelCard | undefined => {
+      if (!value || typeof value !== "object") return undefined;
+      const raw = value as Record<string, unknown>;
+      const title = typeof raw.title === "string" ? raw.title : "";
+      const description =
+        typeof raw.description === "string" ? raw.description : "";
+      if (!title || !description) return undefined;
 
-    return {
-      title,
-      description,
-      href: typeof raw.href === 'string' ? raw.href : undefined,
-      ctaLabel: typeof raw.ctaLabel === 'string' ? raw.ctaLabel : undefined,
-      openInNewTab: Boolean(raw.openInNewTab),
-      draftId: typeof raw.draftId === 'string' ? raw.draftId : undefined,
-      sourceResumeId: typeof raw.sourceResumeId === 'string' ? raw.sourceResumeId : undefined,
-      badge: typeof raw.badge === 'string' ? raw.badge : undefined,
-      status: typeof raw.status === 'string' ? raw.status : undefined,
-      intent:
-        raw.intent === 'translate_resume' || raw.intent === 'polish_resume' || raw.intent === 'adapt_to_jd'
-          ? raw.intent
-          : undefined,
-    }
-  }
+      return {
+        title,
+        description,
+        href: typeof raw.href === "string" ? raw.href : undefined,
+        ctaLabel: typeof raw.ctaLabel === "string" ? raw.ctaLabel : undefined,
+        openInNewTab: Boolean(raw.openInNewTab),
+        draftId: typeof raw.draftId === "string" ? raw.draftId : undefined,
+        sourceResumeId:
+          typeof raw.sourceResumeId === "string"
+            ? raw.sourceResumeId
+            : undefined,
+        badge: typeof raw.badge === "string" ? raw.badge : undefined,
+        status: typeof raw.status === "string" ? raw.status : undefined,
+        intent:
+          raw.intent === "translate_resume" ||
+          raw.intent === "polish_resume" ||
+          raw.intent === "adapt_to_jd"
+            ? raw.intent
+            : undefined,
+      };
+    },
+    [],
+  );
 
   const getOrCreateConversationId = async () => {
-    if (conversationIdRef.current) return conversationIdRef.current
-    if (creatingConversationRef.current) return creatingConversationRef.current
+    if (conversationIdRef.current) return conversationIdRef.current;
+    if (creatingConversationRef.current) return creatingConversationRef.current;
 
     creatingConversationRef.current = (async () => {
-      const response = await fetch('/api/ai/conversations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/ai/conversations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ resumeId }),
-      })
-      const result = (await response.json().catch(() => null)) as ConversationCreateResponse | null
+      });
+      const result = (await response
+        .json()
+        .catch(() => null)) as ConversationCreateResponse | null;
       if (!response.ok || !result?.success || !result.data?.conversationId) {
-        return null
+        return null;
       }
-      const nextId = result.data.conversationId
-      conversationIdRef.current = nextId
-      setConversationId(nextId)
-      return nextId
+      const nextId = result.data.conversationId;
+      conversationIdRef.current = nextId;
+      setConversationId(nextId);
+      return nextId;
     })().finally(() => {
-      creatingConversationRef.current = null
-    })
+      creatingConversationRef.current = null;
+    });
 
-    return creatingConversationRef.current
-  }
+    return creatingConversationRef.current;
+  };
 
-  const persistMessage = async (role: ChatRole, content: string, card?: PanelCard) => {
+  const persistMessage = async (
+    role: ChatRole,
+    content: string,
+    card?: PanelCard,
+  ) => {
     try {
-      const id = await getOrCreateConversationId()
-      if (!id) return
+      const id = await getOrCreateConversationId();
+      if (!id) return;
       await fetch(`/api/ai/conversations/${encodeURIComponent(id)}/messages`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           role,
           content,
           ...(card ? { card } : {}),
         }),
-      })
+      });
     } catch {
       // 历史持久化失败不影响当前对话
     }
-  }
+  };
 
   const appendAssistantMessage = (content: string, card?: PanelCard) => {
-    setMessages(previous => [...previous, createMessage('assistant', content, card)])
-    void persistMessage('assistant', content, card)
-  }
+    setMessages((previous) => [
+      ...previous,
+      createMessage("assistant", content, card),
+    ]);
+    void persistMessage("assistant", content, card);
+  };
 
   const appendUserMessage = (content: string) => {
-    setMessages(previous => [...previous, createMessage('user', content)])
-    void persistMessage('user', content)
-  }
+    setMessages((previous) => [...previous, createMessage("user", content)]);
+    void persistMessage("user", content);
+  };
 
   const resizeComposer = () => {
-    const composer = composerRef.current
-    if (!composer) return
-    composer.style.height = 'auto'
-    const nextHeight = Math.min(composer.scrollHeight, 150)
-    composer.style.height = `${nextHeight}px`
-  }
+    const composer = composerRef.current;
+    if (!composer) return;
+    composer.style.height = "auto";
+    const nextHeight = Math.min(composer.scrollHeight, 150);
+    composer.style.height = `${nextHeight}px`;
+  };
 
-  const applyConversationSnapshot = (data: NonNullable<ConversationHistoryResponse['data']>) => {
-    const nextConversationId = data.conversationId
-    const mappedMessages = (data.messages || [])
-      .filter(message => message.role === 'user' || message.role === 'assistant')
-      .map(message => ({
-        id: message.id,
-        role: message.role as ChatRole,
-        content: message.content,
-        time: formatMessageTime(new Date(message.createdAt)),
-        card: parseStoredCard(message.card),
-      }))
+  const applyConversationSnapshot = useCallback(
+    (data: NonNullable<ConversationHistoryResponse["data"]>) => {
+      const nextConversationId = data.conversationId;
+      const mappedMessages = (data.messages || [])
+        .filter(
+          (message) => message.role === "user" || message.role === "assistant",
+        )
+        .map((message) => ({
+          id: message.id,
+          role: message.role as ChatRole,
+          content: message.content,
+          time: formatMessageTime(new Date(message.createdAt)),
+          card: parseStoredCard(message.card),
+        }));
 
-    const latestDraftCard = [...mappedMessages]
-      .reverse()
-      .map(message => message.card)
-      .find(card => card?.draftId)
+      const latestDraftCard = [...mappedMessages]
+        .reverse()
+        .map((message) => message.card)
+        .find((card) => card?.draftId);
 
-    setConversationId(nextConversationId)
-    conversationIdRef.current = nextConversationId
-    setDraftContext(
-      latestDraftCard?.draftId
-        ? {
-            draftId: latestDraftCard.draftId,
-            sourceResumeId: latestDraftCard.sourceResumeId,
-          }
-        : {},
-    )
-    setMessages(mappedMessages)
-  }
+      setConversationId(nextConversationId);
+      conversationIdRef.current = nextConversationId;
+      setDraftContext(
+        latestDraftCard?.draftId
+          ? {
+              draftId: latestDraftCard.draftId,
+              sourceResumeId: latestDraftCard.sourceResumeId,
+            }
+          : {},
+      );
+      setMessages(mappedMessages);
+    },
+    [parseStoredCard],
+  );
 
   const clearCurrentConversation = () => {
-    setConversationId(null)
-    conversationIdRef.current = null
-    setDraftContext({})
-    setMessages([])
-  }
+    setConversationId(null);
+    conversationIdRef.current = null;
+    setDraftContext({});
+    setMessages([]);
+  };
 
   const loadConversationMenu = async () => {
     if (isGuestDraft || !resumeId) {
-      setConversationHistory([])
-      setHistoryMenuError(null)
-      return
+      setConversationHistory([]);
+      setHistoryMenuError(null);
+      return;
     }
 
-    setHistoryMenuLoading(true)
-    setHistoryMenuError(null)
+    setHistoryMenuLoading(true);
+    setHistoryMenuError(null);
     try {
-      const query = new URLSearchParams({ mode: 'list', resumeId })
-      const response = await fetch(`/api/ai/conversations?${query.toString()}`)
-      const result = (await response.json().catch(() => null)) as ConversationListResponse | null
+      const query = new URLSearchParams({ mode: "list", resumeId });
+      const response = await fetch(`/api/ai/conversations?${query.toString()}`);
+      const result = (await response
+        .json()
+        .catch(() => null)) as ConversationListResponse | null;
       if (!response.ok || !result?.success || !result.data?.conversations) {
-        setHistoryMenuError(result?.error || '读取历史会话失败。')
-        return
+        setHistoryMenuError(result?.error || "读取历史会话失败。");
+        return;
       }
-      setConversationHistory(result.data.conversations)
+      setConversationHistory(result.data.conversations);
     } catch {
-      setHistoryMenuError('读取历史会话失败。')
+      setHistoryMenuError("读取历史会话失败。");
     } finally {
-      setHistoryMenuLoading(false)
+      setHistoryMenuLoading(false);
     }
-  }
+  };
 
   const handleToggleHistoryPanel = async () => {
-    if (disabled) return
+    if (disabled) return;
     if (historyPanelOpen) {
-      setHistoryPanelOpen(false)
-      return
+      setHistoryPanelOpen(false);
+      return;
     }
-    setHistoryPanelOpen(true)
-    await loadConversationMenu()
-  }
+    setHistoryPanelOpen(true);
+    await loadConversationMenu();
+  };
 
   const handleSelectConversation = async (targetConversationId: string) => {
-    if (!targetConversationId || targetConversationId === conversationId || switchingConversation) {
-      setHistoryPanelOpen(false)
-      return
+    if (
+      !targetConversationId ||
+      targetConversationId === conversationId ||
+      switchingConversation
+    ) {
+      setHistoryPanelOpen(false);
+      return;
     }
 
-    setSwitchingConversation(true)
-    setHistoryPanelOpen(false)
-    setHistoryMenuError(null)
+    setSwitchingConversation(true);
+    setHistoryPanelOpen(false);
+    setHistoryMenuError(null);
     try {
-      const response = await fetch(`/api/ai/conversations?conversationId=${encodeURIComponent(targetConversationId)}`)
-      const result = (await response.json().catch(() => null)) as ConversationHistoryResponse | null
+      const response = await fetch(
+        `/api/ai/conversations?conversationId=${encodeURIComponent(targetConversationId)}`,
+      );
+      const result = (await response
+        .json()
+        .catch(() => null)) as ConversationHistoryResponse | null;
       if (!response.ok || !result?.success || !result.data) {
-        setHistoryMenuError(result?.error || '加载会话失败，请稍后重试。')
-        return
+        setHistoryMenuError(result?.error || "加载会话失败，请稍后重试。");
+        return;
       }
-      applyConversationSnapshot(result.data)
+      applyConversationSnapshot(result.data);
     } catch {
-      setHistoryMenuError('加载会话失败，请稍后重试。')
+      setHistoryMenuError("加载会话失败，请稍后重试。");
     } finally {
-      setSwitchingConversation(false)
+      setSwitchingConversation(false);
     }
-  }
+  };
 
   const handleDeleteConversation = async () => {
-    if (!conversationId || disabled) return
-    const confirmed = window.confirm('确认删除当前会话？删除后无法恢复。')
-    if (!confirmed) return
+    if (!conversationId || disabled) return;
+    const confirmed = window.confirm("确认删除当前会话？删除后无法恢复。");
+    if (!confirmed) return;
 
-    setSwitchingConversation(true)
-    setHistoryMenuError(null)
-    setHistoryPanelOpen(false)
+    setSwitchingConversation(true);
+    setHistoryMenuError(null);
+    setHistoryPanelOpen(false);
     try {
-      const targetConversationId = conversationId
-      const response = await fetch(`/api/ai/conversations/${encodeURIComponent(targetConversationId)}`, {
-        method: 'DELETE',
-      })
-      const result = (await response.json().catch(() => null)) as ConversationDeleteResponse | null
+      const targetConversationId = conversationId;
+      const response = await fetch(
+        `/api/ai/conversations/${encodeURIComponent(targetConversationId)}`,
+        {
+          method: "DELETE",
+        },
+      );
+      const result = (await response
+        .json()
+        .catch(() => null)) as ConversationDeleteResponse | null;
       if (!response.ok || !result?.success) {
-        appendAssistantMessage(result?.error || '删除会话失败，请稍后重试。')
-        return
+        appendAssistantMessage(result?.error || "删除会话失败，请稍后重试。");
+        return;
       }
-      clearCurrentConversation()
-      setConversationHistory(previous => previous.filter(item => item.conversationId !== targetConversationId))
+      clearCurrentConversation();
+      setConversationHistory((previous) =>
+        previous.filter((item) => item.conversationId !== targetConversationId),
+      );
     } catch {
-      appendAssistantMessage('删除会话失败，请稍后重试。')
+      appendAssistantMessage("删除会话失败，请稍后重试。");
     } finally {
-      setSwitchingConversation(false)
+      setSwitchingConversation(false);
     }
-  }
+  };
 
   useEffect(() => {
-    conversationIdRef.current = conversationId
-  }, [conversationId])
+    conversationIdRef.current = conversationId;
+  }, [conversationId]);
 
   useEffect(() => {
-    if (!resolvedDraftId) return
-    setDraftContext(previous => (previous.draftId === resolvedDraftId ? {} : previous))
-  }, [resolvedDraftId])
+    if (!resolvedDraftId) return;
+    setDraftContext((previous) =>
+      previous.draftId === resolvedDraftId ? {} : previous,
+    );
+  }, [resolvedDraftId]);
 
   useEffect(() => {
-    let cancelled = false
-    creatingConversationRef.current = null
-    clearCurrentConversation()
-    setConversationHistory([])
-    setHistoryMenuError(null)
-    setHistoryPanelOpen(false)
-    setHistoryLoaded(false)
+    let cancelled = false;
+    creatingConversationRef.current = null;
+    clearCurrentConversation();
+    setConversationHistory([]);
+    setHistoryMenuError(null);
+    setHistoryPanelOpen(false);
+    setHistoryLoaded(false);
 
     const loadHistory = async () => {
       if (isGuestDraft || !resumeId) {
         if (!cancelled) {
-          clearCurrentConversation()
-          setHistoryLoaded(true)
+          clearCurrentConversation();
+          setHistoryLoaded(true);
         }
-        return
+        return;
       }
 
       try {
-        const response = await fetch(`/api/ai/conversations?resumeId=${encodeURIComponent(resumeId)}`)
-        const result = (await response.json().catch(() => null)) as ConversationHistoryResponse | null
+        const response = await fetch(
+          `/api/ai/conversations?resumeId=${encodeURIComponent(resumeId)}`,
+        );
+        const result = (await response
+          .json()
+          .catch(() => null)) as ConversationHistoryResponse | null;
 
         if (!response.ok || !result?.success || !result.data) {
           if (!cancelled) {
-            clearCurrentConversation()
-            setHistoryLoaded(true)
+            clearCurrentConversation();
+            setHistoryLoaded(true);
           }
-          return
+          return;
         }
 
-        if (cancelled) return
-        applyConversationSnapshot(result.data)
-        setHistoryLoaded(true)
+        if (cancelled) return;
+        applyConversationSnapshot(result.data);
+        setHistoryLoaded(true);
       } catch {
         if (!cancelled) {
-          clearCurrentConversation()
-          setHistoryLoaded(true)
+          clearCurrentConversation();
+          setHistoryLoaded(true);
         }
       }
-    }
+    };
 
-    void loadHistory()
+    void loadHistory();
 
     return () => {
-      cancelled = true
-    }
-  }, [isGuestDraft, resumeId])
+      cancelled = true;
+    };
+  }, [applyConversationSnapshot, isGuestDraft, resumeId]);
 
   useEffect(() => {
-    if (!historyPanelOpen) return
+    if (!historyPanelOpen) return;
 
     const onPointerDown = (event: PointerEvent) => {
-      const node = historyPanelRef.current
-      if (!node) return
+      const node = historyPanelRef.current;
+      if (!node) return;
       if (event.target instanceof Node && !node.contains(event.target)) {
-        setHistoryPanelOpen(false)
+        setHistoryPanelOpen(false);
       }
-    }
+    };
 
-    document.addEventListener('pointerdown', onPointerDown)
+    document.addEventListener("pointerdown", onPointerDown);
     return () => {
-      document.removeEventListener('pointerdown', onPointerDown)
-    }
-  }, [historyPanelOpen])
+      document.removeEventListener("pointerdown", onPointerDown);
+    };
+  }, [historyPanelOpen]);
 
-  const runGenerateDraft = async (action: ChatRouteActionGenerate, options?: { silent?: boolean }) => {
+  const runGenerateDraft = async (
+    action: ChatRouteActionGenerate,
+    options?: { silent?: boolean },
+  ) => {
     const payload: {
-      resumeId: string
-      intent: 'translate_resume' | 'polish_resume' | 'adapt_to_jd'
-      targetLanguage?: 'zh' | 'en'
-      jdText?: string
+      resumeId: string;
+      intent: "translate_resume" | "polish_resume" | "adapt_to_jd";
+      targetLanguage?: "zh" | "en";
+      jdText?: string;
     } = {
       ...action.payload,
       resumeId,
-    }
+    };
 
-    if (action.intent === 'adapt_to_jd' && latestJdTextRef.current) {
-      payload.jdText = latestJdTextRef.current
+    if (action.intent === "adapt_to_jd" && latestJdTextRef.current) {
+      payload.jdText = latestJdTextRef.current;
     }
 
     const response = await fetch(action.endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
-    })
-    const result = (await response.json().catch(() => null)) as
-      | {
-          success?: boolean
-          error?: string
-          data?: {
-            draftId: string
-            sourceResumeId: string
-            previewUrl: string
-            title: string
-            draftData?: ResumeData
-          }
-        }
-      | null
+    });
+    const result = (await response.json().catch(() => null)) as {
+      success?: boolean;
+      error?: string;
+      data?: {
+        draftId: string;
+        sourceResumeId: string;
+        previewUrl: string;
+        title: string;
+        draftData?: ResumeData;
+      };
+    } | null;
 
     if (!response.ok || !result?.success || !result.data) {
-      const errorMessage = result?.error || '生成草稿失败，请稍后重试。'
+      const errorMessage = result?.error || "生成草稿失败，请稍后重试。";
       if (!options?.silent) {
-        appendAssistantMessage(errorMessage)
+        appendAssistantMessage(errorMessage);
       }
-      return { success: false as const, error: errorMessage }
+      return { success: false as const, error: errorMessage };
     }
 
-    const { draftId, sourceResumeId, previewUrl, title, draftData } = result.data
-    setDraftContext({ draftId, sourceResumeId })
+    const { draftId, sourceResumeId, previewUrl, title, draftData } =
+      result.data;
+    setDraftContext({ draftId, sourceResumeId });
     if (draftData) {
       onPreviewDraftInCanvas?.({
         draftId,
@@ -670,157 +733,165 @@ export function AIChatPanel({
         previewUrl,
         draftData,
         intent: action.intent,
-      })
+      });
     }
-    const meta = resolveDraftCardMeta(action.intent)
+    const meta = resolveDraftCardMeta(action.intent);
     const card: PanelCard = {
       title: meta.title,
       description: `${title}\n已在当前画布加载预览，可直接对比查看。`,
       href: previewUrl,
-      ctaLabel: '去编辑页',
+      ctaLabel: "去编辑页",
       openInNewTab: true,
       draftId,
       sourceResumeId,
       badge: meta.badge,
       status: meta.status,
       intent: action.intent,
-    }
+    };
 
-    const reply = '草稿已生成，并已加载到当前画布预览，请先确认再保存。'
+    const reply = "草稿已生成，并已加载到当前画布预览，请先确认再保存。";
     if (!options?.silent) {
-      appendAssistantMessage(reply, card)
+      appendAssistantMessage(reply, card);
     }
-    return { success: true as const, reply, card }
-  }
+    return { success: true as const, reply, card };
+  };
 
-  const runConfirmSave = async (saveMode: 'new_version' | 'overwrite', options?: { silent?: boolean }) => {
+  const runConfirmSave = async (
+    saveMode: "new_version" | "overwrite",
+    options?: { silent?: boolean },
+  ) => {
     if (!draftContext.draftId) {
-      const errorMessage = '当前没有可确认的草稿。'
+      const errorMessage = "当前没有可确认的草稿。";
       if (!options?.silent) {
-        appendAssistantMessage(errorMessage)
+        appendAssistantMessage(errorMessage);
       }
-      return { success: false as const, error: errorMessage }
+      return { success: false as const, error: errorMessage };
     }
 
-    const endpoint = `/api/ai/drafts/${encodeURIComponent(draftContext.draftId)}/confirm`
+    const endpoint = `/api/ai/drafts/${encodeURIComponent(draftContext.draftId)}/confirm`;
     const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         saveMode,
         sourceResumeId: draftContext.sourceResumeId,
       }),
-    })
+    });
 
-    const result = (await response.json().catch(() => null)) as
-      | {
-          success?: boolean
-          error?: string
-          data?: {
-            resumeId: string
-            previewUrl: string
-          }
-        }
-      | null
+    const result = (await response.json().catch(() => null)) as {
+      success?: boolean;
+      error?: string;
+      data?: {
+        resumeId: string;
+        previewUrl: string;
+      };
+    } | null;
 
     if (!response.ok || !result?.success || !result.data) {
-      const errorMessage = result?.error || '确认保存失败，请稍后重试。'
+      const errorMessage = result?.error || "确认保存失败，请稍后重试。";
       if (!options?.silent) {
-        appendAssistantMessage(errorMessage)
+        appendAssistantMessage(errorMessage);
       }
-      return { success: false as const, error: errorMessage }
+      return { success: false as const, error: errorMessage };
     }
 
-    const reply = saveMode === 'overwrite' ? '已覆盖原简历。' : '已保存为新版本。'
+    const reply =
+      saveMode === "overwrite" ? "已覆盖原简历。" : "已保存为新版本。";
     const card: PanelCard = {
-      title: '保存完成',
-      description: '点击继续编辑最新版本。',
+      title: "保存完成",
+      description: "点击继续编辑最新版本。",
       href: result.data.previewUrl,
-      ctaLabel: '打开简历',
-      status: '已保存',
-    }
+      ctaLabel: "打开简历",
+      status: "已保存",
+    };
 
     if (!options?.silent) {
-      appendAssistantMessage(reply, card)
+      appendAssistantMessage(reply, card);
     }
-    setDraftContext({})
-    return { success: true as const, reply, card }
-  }
+    setDraftContext({});
+    return { success: true as const, reply, card };
+  };
 
   const runDiscardDraft = async (options?: { silent?: boolean }) => {
     if (!draftContext.draftId) {
-      const errorMessage = '当前没有可放弃的草稿。'
+      const errorMessage = "当前没有可放弃的草稿。";
       if (!options?.silent) {
-        appendAssistantMessage(errorMessage)
+        appendAssistantMessage(errorMessage);
       }
-      return { success: false as const, error: errorMessage }
+      return { success: false as const, error: errorMessage };
     }
 
-    const endpoint = `/api/ai/drafts/${encodeURIComponent(draftContext.draftId)}/discard`
-    const response = await fetch(endpoint, { method: 'POST' })
-    const result = (await response.json().catch(() => null)) as
-      | {
-          success?: boolean
-          error?: string
-        }
-      | null
+    const endpoint = `/api/ai/drafts/${encodeURIComponent(draftContext.draftId)}/discard`;
+    const response = await fetch(endpoint, { method: "POST" });
+    const result = (await response.json().catch(() => null)) as {
+      success?: boolean;
+      error?: string;
+    } | null;
 
     if (!response.ok || !result?.success) {
-      const errorMessage = result?.error || '放弃草稿失败，请稍后重试。'
+      const errorMessage = result?.error || "放弃草稿失败，请稍后重试。";
       if (!options?.silent) {
-        appendAssistantMessage(errorMessage)
+        appendAssistantMessage(errorMessage);
       }
-      return { success: false as const, error: errorMessage }
+      return { success: false as const, error: errorMessage };
     }
 
-    const reply = '草稿已放弃，不会影响原简历。'
+    const reply = "草稿已放弃，不会影响原简历。";
     if (!options?.silent) {
-      appendAssistantMessage(reply)
+      appendAssistantMessage(reply);
     }
-    setDraftContext({})
-    return { success: true as const, reply }
-  }
+    setDraftContext({});
+    return { success: true as const, reply };
+  };
 
   const handleSend = async (overrideInput?: string) => {
-    const value = (overrideInput ?? input).trim()
-    if (!value || disabled) return
+    const value = (overrideInput ?? input).trim();
+    if (!value || disabled) return;
 
-    const maybeJdText = extractLikelyJdText(value)
+    const maybeJdText = extractLikelyJdText(value);
     if (maybeJdText) {
-      latestJdTextRef.current = maybeJdText
+      latestJdTextRef.current = maybeJdText;
     }
-    appendUserMessage(value)
-    setInput('')
-    setLoading(true)
-    setLoadingStage('思考中...')
+    appendUserMessage(value);
+    setInput("");
+    setLoading(true);
+    setLoadingStage("思考中...");
 
     try {
-      const activeConversationId = (await getOrCreateConversationId()) || conversationIdRef.current
-      const response = await fetch('/api/ai/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const activeConversationId =
+        (await getOrCreateConversationId()) || conversationIdRef.current;
+      const response = await fetch("/api/ai/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          messages: [...apiMessages, { role: 'user', content: value }],
+          messages: [...apiMessages, { role: "user", content: value }],
           resumeId,
           conversationId: activeConversationId || undefined,
           draftId: draftContext.draftId,
           sourceResumeId: draftContext.sourceResumeId,
           jdText: latestJdTextRef.current,
         }),
-      })
+      });
 
-      const result = (await response.json().catch(() => null)) as ChatRouteResponse | null
+      const result = (await response
+        .json()
+        .catch(() => null)) as ChatRouteResponse | null;
       if (!response.ok || !result?.success || !result.data) {
-        appendAssistantMessage(result?.error || 'AI 助手暂时不可用，请稍后重试。')
-        return
+        appendAssistantMessage(
+          result?.error || "AI对话暂时不可用，请稍后重试。",
+        );
+        return;
       }
 
-      if (result.data.conversationId && result.data.conversationId !== conversationIdRef.current) {
-        conversationIdRef.current = result.data.conversationId
-        setConversationId(result.data.conversationId)
+      if (
+        result.data.conversationId &&
+        result.data.conversationId !== conversationIdRef.current
+      ) {
+        conversationIdRef.current = result.data.conversationId;
+        setConversationId(result.data.conversationId);
       }
 
-      let finalReply = result.data.reply
+      let finalReply = result.data.reply;
       let finalCard: PanelCard | undefined = result.data.card
         ? {
             title: result.data.card.title,
@@ -831,66 +902,68 @@ export function AIChatPanel({
             draftId: draftContext.draftId,
             sourceResumeId: draftContext.sourceResumeId,
           }
-        : undefined
-      const action = result.data.nextAction
+        : undefined;
+      const action = result.data.nextAction;
 
-      if (action.type === 'generate_draft') {
-        setLoadingStage(resolveProgressLabel(action.intent))
-        const generation = await runGenerateDraft(action, { silent: true })
+      if (action.type === "generate_draft") {
+        setLoadingStage(resolveProgressLabel(action.intent));
+        const generation = await runGenerateDraft(action, { silent: true });
         if (!generation.success) {
-          appendAssistantMessage(generation.error)
-          return
+          appendAssistantMessage(generation.error);
+          return;
         }
-        finalReply = mergeReply(result.data.reply, generation.reply)
-        finalCard = generation.card
-      } else if (action.type === 'confirm_save') {
-        setLoadingStage('保存中...')
-        const confirmation = await runConfirmSave(action.payload.saveMode, { silent: true })
+        finalReply = mergeReply(result.data.reply, generation.reply);
+        finalCard = generation.card;
+      } else if (action.type === "confirm_save") {
+        setLoadingStage("保存中...");
+        const confirmation = await runConfirmSave(action.payload.saveMode, {
+          silent: true,
+        });
         if (!confirmation.success) {
-          appendAssistantMessage(confirmation.error)
-          return
+          appendAssistantMessage(confirmation.error);
+          return;
         }
-        finalReply = confirmation.reply
-        finalCard = confirmation.card
-      } else if (action.type === 'discard_draft') {
-        setLoadingStage('处理中...')
-        const discard = await runDiscardDraft({ silent: true })
+        finalReply = confirmation.reply;
+        finalCard = confirmation.card;
+      } else if (action.type === "discard_draft") {
+        setLoadingStage("处理中...");
+        const discard = await runDiscardDraft({ silent: true });
         if (!discard.success) {
-          appendAssistantMessage(discard.error)
-          return
+          appendAssistantMessage(discard.error);
+          return;
         }
-        finalReply = discard.reply
-        finalCard = undefined
+        finalReply = discard.reply;
+        finalCard = undefined;
       }
 
-      appendAssistantMessage(finalReply, finalCard)
+      appendAssistantMessage(finalReply, finalCard);
     } catch {
-      appendAssistantMessage('请求失败，请检查网络后重试。')
+      appendAssistantMessage("请求失败，请检查网络后重试。");
     } finally {
-      setLoadingStage(null)
-      setLoading(false)
+      setLoadingStage(null);
+      setLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
-    const viewport = messageViewportRef.current
-    if (!viewport) return
-    viewport.scrollTop = viewport.scrollHeight
-  }, [messages, loading, loadingStage])
+    const viewport = messageViewportRef.current;
+    if (!viewport) return;
+    viewport.scrollTop = viewport.scrollHeight;
+  }, [messages, loading, loadingStage]);
 
   useEffect(() => {
-    resizeComposer()
-  }, [input])
+    resizeComposer();
+  }, [input]);
 
   return (
     <div className={`${styles.panel} resume-ai-chat`}>
       <div className="resume-ai-header">
         <div className="resume-ai-title-wrap">
           <div className="resume-ai-avatar">
-            <Bot size={15} />
+            <MessageSquare size={15} />
           </div>
           <div className="min-w-0">
-            <h3 className="resume-ai-title">简历 AI 助手</h3>
+            <h3 className="resume-ai-title">AI对话</h3>
             {conversationId ? (
               <div className="resume-ai-conversation-id" title={conversationId}>
                 会话ID: {conversationId}
@@ -926,7 +999,7 @@ export function AIChatPanel({
               <button
                 type="button"
                 className="resume-ai-icon-btn"
-                aria-label="关闭 AI 面板"
+                aria-label="关闭 AI对话面板"
                 onClick={onClose}
               >
                 <X size={15} />
@@ -934,59 +1007,65 @@ export function AIChatPanel({
             </Tip>
           ) : null}
           {historyPanelOpen ? (
-            <div className="resume-ai-history-menu" role="menu" aria-label="历史会话">
+            <div
+              className="resume-ai-history-menu"
+              role="menu"
+              aria-label="历史会话"
+            >
               <div className="resume-ai-history-menu-title">历史会话</div>
               {historyMenuLoading ? (
                 <div className="resume-ai-history-menu-state">加载中...</div>
               ) : historyMenuError ? (
-                <div className="resume-ai-history-menu-state is-error">{historyMenuError}</div>
+                <div className="resume-ai-history-menu-state is-error">
+                  {historyMenuError}
+                </div>
               ) : conversationHistory.length === 0 ? (
                 <div className="resume-ai-history-menu-state">暂无历史会话</div>
               ) : (
-                <div className="resume-ai-history-list">
-                  {conversationHistory.map(item => (
+                <ScrollShell className="resume-ai-history-list" tone="panel" reveal="hover" axis="y">
+                  {conversationHistory.map((item) => (
                     <button
                       key={item.conversationId}
                       type="button"
-                      className={`resume-ai-history-item ${item.conversationId === conversationId ? 'is-active' : ''}`}
-                      onClick={() => void handleSelectConversation(item.conversationId)}
+                      className={`resume-ai-history-item ${item.conversationId === conversationId ? "is-active" : ""}`}
+                      onClick={() =>
+                        void handleSelectConversation(item.conversationId)
+                      }
                       disabled={switchingConversation}
                     >
-                      <span className="resume-ai-history-item-title">{item.title || '未命名会话'}</span>
+                      <span className="resume-ai-history-item-title">
+                        {item.title || "未命名会话"}
+                      </span>
                       <span className="resume-ai-history-item-meta">
-                        {formatConversationTime(item.updatedAt)} · {item.messageCount ?? 0} 条消息
+                        {formatConversationTime(item.updatedAt)} ·{" "}
+                        {item.messageCount ?? 0} 条消息
                       </span>
                     </button>
                   ))}
-                </div>
+                </ScrollShell>
               )}
             </div>
           ) : null}
         </div>
       </div>
 
-      <div className={`resume-ai-messages ${showEmptyState ? 'is-empty' : ''}`} ref={messageViewportRef}>
+      <ScrollShell
+        className={`resume-ai-messages ${showEmptyState ? "is-empty" : ""}`}
+        ref={messageViewportRef}
+        tone="panel"
+        reveal="hover"
+        axis="y"
+      >
         {showEmptyState ? (
           <div className="resume-ai-empty-state">
-            <div className="resume-ai-empty-hero" aria-hidden="true">
-              <div className="resume-ai-empty-hero-icon">
-                <Sparkles size={36} />
-              </div>
-              <span className="resume-ai-empty-hero-check">
-                <CheckCircle2 size={16} />
-              </span>
-            </div>
             <div className="resume-ai-empty-copy">
-              <h4 className="resume-ai-empty-title">你好，我是你的简历专家</h4>
-              <p className="resume-ai-empty-desc">
-                {isGuestDraft
-                  ? '登录后可使用：简历翻译、润色、JD 适配。默认先生成草稿，再确认保存。'
-                  : '可以帮你做：简历翻译、润色、JD 适配。默认先生成草稿，再确认保存。'}
+              <p className="resume-ai-empty-lead">
+                告诉我如何优化你的简历，或输入 / 快速执行。
               </p>
             </div>
             <div className="resume-ai-empty-actions">
-              {emptyStateActions.map(action => {
-                const ActionIcon = action.icon
+              {emptyStateActions.map((action) => {
+                const ActionIcon = action.icon;
                 return (
                   <button
                     key={action.id}
@@ -995,67 +1074,106 @@ export function AIChatPanel({
                     onClick={() => void handleSend(action.prompt)}
                     disabled={disabled}
                   >
-                    <span className={`resume-ai-empty-action-icon ${action.tone}`} aria-hidden="true">
-                      <ActionIcon size={20} />
+                    <span
+                      className={`resume-ai-empty-action-icon ${action.tone}`}
+                      aria-hidden="true"
+                    >
+                      <ActionIcon size={18} />
                     </span>
-                    <span className="resume-ai-empty-action-label">{action.label}</span>
+                    <span className="resume-ai-empty-action-copy">
+                      <span className="resume-ai-empty-action-title">
+                        {action.title}
+                      </span>
+                      <span className="resume-ai-empty-action-meta">
+                        {action.command}
+                      </span>
+                    </span>
                   </button>
-                )
+                );
               })}
+            </div>
+            <div className="resume-ai-empty-hero" aria-hidden="true">
+              <div className="resume-ai-empty-hero-icon">
+                <MessageSquare size={38} />
+              </div>
             </div>
           </div>
         ) : (
           <div className="space-y-4">
-            {messages.map(message => (
+            {messages.map((message) => (
               <div
                 key={message.id}
-                className={`resume-ai-message ${message.role === 'user' ? 'is-user' : 'is-ai'}`}
+                className={`resume-ai-message ${message.role === "user" ? "is-user" : "is-ai"}`}
               >
-                <div className={`resume-ai-bubble ${message.role === 'user' ? 'is-user' : 'is-ai'}`}>
+                <div
+                  className={`resume-ai-bubble ${message.role === "user" ? "is-user" : "is-ai"}`}
+                >
                   <p className="resume-ai-bubble-text">{message.content}</p>
                   {message.card ? (
                     <div
-                      className={`resume-ai-card ${message.card.draftId ? 'is-clickable' : ''}`}
-                      role={message.card.draftId ? 'button' : undefined}
+                      className={`resume-ai-card ${message.card.draftId ? "is-clickable" : ""}`}
+                      role={message.card.draftId ? "button" : undefined}
                       tabIndex={message.card.draftId ? 0 : undefined}
                       onClick={() => {
-                        if (!message.card?.draftId) return
+                        if (!message.card?.draftId) return;
                         setDraftContext({
                           draftId: message.card.draftId,
                           sourceResumeId: message.card.sourceResumeId,
-                        })
+                        });
                         onCardPreviewRequest?.({
                           draftId: message.card.draftId,
                           sourceResumeId: message.card.sourceResumeId,
                           intent: resolveCardIntent(message.card),
-                        })
+                        });
                       }}
-                      onKeyDown={event => {
-                        if (!message.card?.draftId) return
-                        if (event.key !== 'Enter' && event.key !== ' ') return
-                        event.preventDefault()
+                      onKeyDown={(event) => {
+                        if (!message.card?.draftId) return;
+                        if (event.key !== "Enter" && event.key !== " ") return;
+                        event.preventDefault();
                         setDraftContext({
                           draftId: message.card.draftId,
                           sourceResumeId: message.card.sourceResumeId,
-                        })
+                        });
                         onCardPreviewRequest?.({
                           draftId: message.card.draftId,
                           sourceResumeId: message.card.sourceResumeId,
                           intent: resolveCardIntent(message.card),
-                        })
+                        });
                       }}
                     >
-                      <div className="resume-ai-card-abstract" aria-hidden="true" />
+                      <div
+                        className="resume-ai-card-abstract"
+                        aria-hidden="true"
+                      />
                       <div className="resume-ai-card-content">
                         <div className="resume-ai-card-meta">
-                          <span className="resume-ai-card-dot" aria-hidden="true" />
-                          <span className="resume-ai-card-kicker">Draft Generated</span>
-                          {message.card.badge ? <span className="resume-ai-card-badge">{message.card.badge}</span> : null}
-                          {message.card.status ? <span className="resume-ai-card-status">{message.card.status}</span> : null}
+                          <span
+                            className="resume-ai-card-dot"
+                            aria-hidden="true"
+                          />
+                          <span className="resume-ai-card-kicker">
+                            Draft Generated
+                          </span>
+                          {message.card.badge ? (
+                            <span className="resume-ai-card-badge">
+                              {message.card.badge}
+                            </span>
+                          ) : null}
+                          {message.card.status ? (
+                            <span className="resume-ai-card-status">
+                              {message.card.status}
+                            </span>
+                          ) : null}
                         </div>
-                        <div className="resume-ai-card-title">{message.card.title}</div>
-                        <div className="resume-ai-card-desc">{message.card.description}</div>
-                        {message.card.draftId ? <div className="resume-ai-card-hint">即刻预览</div> : null}
+                        <div className="resume-ai-card-title">
+                          {message.card.title}
+                        </div>
+                        <div className="resume-ai-card-desc">
+                          {message.card.description}
+                        </div>
+                        {message.card.draftId ? (
+                          <div className="resume-ai-card-hint">即刻预览</div>
+                        ) : null}
                       </div>
                       <div className="resume-ai-card-layer" aria-hidden="true">
                         {resolveCardLayerCode(message.card)}
@@ -1076,26 +1194,26 @@ export function AIChatPanel({
             ) : null}
           </div>
         )}
-      </div>
+      </ScrollShell>
 
       <div className="resume-ai-input-area">
         <div className="resume-ai-input-shell">
           <textarea
             ref={composerRef}
             value={input}
-            onChange={event => setInput(event.target.value)}
-            onKeyDown={event => {
-              if (event.key === 'Enter' && !event.shiftKey) {
-                event.preventDefault()
-                void handleSend()
+            onChange={(event) => setInput(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                void handleSend();
               }
             }}
             placeholder={
               !historyLoaded
-                ? '正在加载历史会话...'
+                ? "正在加载历史会话..."
                 : isGuestDraft
-                  ? '请先登录后使用 AI 助手。'
-                  : '输入你的需求，例如：生成英文简历草稿'
+                  ? "请先登录后使用 AI对话。"
+                  : "输入你的需求，例如：生成英文简历草稿"
             }
             className="resume-ai-composer"
             rows={3}
@@ -1106,7 +1224,7 @@ export function AIChatPanel({
                 <Plus size={16} />
               </span>
               <span className="resume-ai-input-action">
-                AI 助手
+                AI对话
                 <ChevronDown size={13} />
               </span>
               <span className="resume-ai-input-action">
@@ -1121,11 +1239,15 @@ export function AIChatPanel({
               disabled={disabled || !input.trim()}
               aria-label="发送消息"
             >
-              {loading ? <Sparkles size={16} className="animate-pulse" /> : <SendHorizontal size={16} />}
+              {loading ? (
+                <Sparkles size={16} className="animate-pulse" />
+              ) : (
+                <SendHorizontal size={16} />
+              )}
             </button>
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }

@@ -66,6 +66,7 @@ type ItemVariant = 'compact' | 'default' | 'timeline'
 
 const PAGE_DIMENSIONS: Record<ResumePageFormat, { width: string; height: string }> = {
   a4: { width: '210mm', height: '297mm' },
+  letter: { width: '216mm', height: '279mm' },
   'free-form': { width: '210mm', height: '297mm' },
 }
 

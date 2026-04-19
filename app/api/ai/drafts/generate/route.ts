@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
         title: draftResume.title,
         intent,
         draftData: draftContent.data,
-        previewUrl: `/resume/editor/${draftResume.id}?panel=ai&previewDraft=1`,
+        previewUrl: `/builder/editor/${draftResume.id}?panel=ai&previewDraft=1`,
       },
     })
   } catch (error) {

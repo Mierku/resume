@@ -145,8 +145,8 @@ export function useAuthRedirectDraft({
       typeof payload.resumeId === 'string' &&
       payload.resumeId.startsWith('guest-') &&
       !resumeId.startsWith('guest-') &&
-      payloadPathname.startsWith('/resume/editor/') &&
-      currentPathname.startsWith('/resume/editor/')
+      payloadPathname.startsWith('/builder/editor/') &&
+      currentPathname.startsWith('/builder/editor/')
 
     if ((!sameResume && !samePath && !samePathname && !guestToAuthedEditorFlow) || !payload.data || typeof payload.data !== 'object') {
       return

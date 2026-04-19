@@ -1,48 +1,94 @@
-'use client'
+"use client";
 
-import Link from 'next/link'
-import { Suspense, useEffect, useMemo, useState } from 'react'
-import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import Link from "next/link";
+import { signOut } from "next-auth/react";
 import {
+  Suspense,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type MouseEvent,
+} from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import {
+  BadgeDollarSign,
   BriefcaseBusiness,
-  Database,
+  ChevronLeft,
+  ChevronRight,
   FileText,
+  House,
+  LogIn,
+  LogOut,
   Menu,
   ShieldCheck,
   UserRound,
   X,
-} from 'lucide-react'
-import { BrandFlowerIcon } from '@/components/BrandFlowerIcon'
-import { Skeleton } from '@/components/ui/Skeleton'
-import { useAuthSnapshot } from '@/lib/hooks/useAuthSnapshot'
-import { getUserDisplayName, type SessionUser } from '@/lib/user'
+  type LucideIcon,
+} from "lucide-react";
+import { BrandFlowerIcon } from "@/components/BrandFlowerIcon";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { Tip } from "@/components/ui/Tip";
+import { ThemeMorphIcon } from "@/components/ui/ThemeMorphIcon";
+import { UserMenuAvatarTrigger } from "@/components/ui/UserMenuAvatarTrigger";
+import avatarStyles from "@/components/ui/user-menu-avatar.module.scss";
+import {
+  clearAuthSessionHint,
+  invalidateAuthSnapshotCache,
+} from "@/lib/auth/client";
+import { useAuthSnapshot } from "@/lib/hooks/useAuthSnapshot";
+import {
+  getUserAvatarUrl,
+  getUserDisplayName,
+  type SessionUser,
+} from "@/lib/user";
 import {
   getDashboardSectionHref,
   parseDashboardSection,
   type DashboardSection,
-} from '@/components/dashboard/types'
-import { TrackingSection } from '@/components/dashboard/TrackingSection'
-import { ResumesSection } from '@/components/dashboard/ResumesSection'
-import { DataSourcesSection } from '@/components/dashboard/DataSourcesSection'
-import { AccountSection } from '@/components/dashboard/AccountSection'
-import { AdminUsersSection } from '@/components/dashboard/AdminUsersSection'
-import { cn } from '@/lib/utils'
-import styles from './dashboard-workbench.module.scss'
+} from "@/components/dashboard/types";
+import { TrackingSection } from "@/components/dashboard/TrackingSection";
+import { ResumesSection } from "@/components/dashboard/ResumesSection";
+import { DataSourcesSection } from "@/components/dashboard/DataSourcesSection";
+import { AccountSection } from "@/components/dashboard/AccountSection";
+import { AdminUsersSection } from "@/components/dashboard/AdminUsersSection";
+import { DashboardShell } from "@/components/dashboard/DashboardShell";
+import { cn } from "@/lib/utils";
+import styles from "./dashboard-workbench.module.scss";
 
-const SECTION_ITEMS: Array<{
-  id: DashboardSection
-  label: string
-  icon: typeof BriefcaseBusiness
+const SECTION_META: Record<
+  DashboardSection,
+  { label: string; icon: LucideIcon }
+> = {
+  workbench: { label: "工作台", icon: House },
+  tracking: { label: "求职跟踪", icon: BriefcaseBusiness },
+  resume: { label: "我的简历", icon: FileText },
+  "admin-users": { label: "管理后台", icon: ShieldCheck },
+  account: { label: "个人主页", icon: UserRound },
+};
+const SECTION_NAV_ORDER: DashboardSection[] = [
+  "workbench",
+  "tracking",
+  "resume",
+  "admin-users",
+];
+const USER_MENU_ITEMS: Array<{
+  href: string;
+  label: string;
+  icon: LucideIcon;
+  section?: DashboardSection;
 }> = [
-  { id: 'tracking', label: '跟踪', icon: BriefcaseBusiness },
-  { id: 'resume', label: '简历', icon: FileText },
-  { id: 'data-source', label: '数据源', icon: Database },
-  { id: 'admin-users', label: '管理后台', icon: ShieldCheck },
-  { id: 'account', label: '用户信息', icon: UserRound },
-]
-
-const PRIMARY_SECTION_ITEMS = SECTION_ITEMS.filter(item => item.id !== 'account')
-const ACCOUNT_SECTION_ITEM = SECTION_ITEMS.find(item => item.id === 'account')!
+  {
+    href: getDashboardSectionHref("account"),
+    label: "个人主页",
+    icon: UserRound,
+    section: "account",
+  },
+  { href: "/pricing", label: "定价", icon: BadgeDollarSign },
+  { href: "/privacy", label: "隐私协议", icon: ShieldCheck },
+];
+const THEME_STORAGE_KEY = "theme";
+type ThemeMode = "light" | "dark";
 
 function DashboardWorkbenchLoading() {
   return (
@@ -60,246 +106,516 @@ function DashboardWorkbenchLoading() {
         </div>
       </div>
     </div>
-  )
+  );
+}
+
+function DashboardUserMenu({
+  user,
+  activeSection,
+  className,
+}: {
+  user: SessionUser;
+  activeSection: DashboardSection;
+  className?: string;
+}) {
+  const [menuPinned, setMenuPinned] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+  const userDisplayName = getUserDisplayName(user);
+  const userAvatarUrl = getUserAvatarUrl(user);
+
+  const handleLogout = async () => {
+    setMenuPinned(false);
+    clearAuthSessionHint();
+    invalidateAuthSnapshotCache();
+    await signOut({ redirectTo: "/" });
+  };
+
+  useEffect(() => {
+    if (!menuPinned) return;
+
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target;
+      if (!(target instanceof Node)) return;
+      if (menuRef.current?.contains(target)) return;
+      setMenuPinned(false);
+    };
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setMenuPinned(false);
+      }
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    window.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      window.removeEventListener("keydown", handleEscape);
+    };
+  }, [menuPinned]);
+
+  return (
+    <div
+      ref={menuRef}
+      className={cn(avatarStyles.userMenu, className)}
+      data-menu-open={menuPinned ? "true" : "false"}
+    >
+      <Tip
+        content="用户导航菜单"
+        placement="bottom"
+        align="end"
+        offset={4}
+        disabled={menuPinned}
+        triggerClassName={styles.userMenuTipTrigger}
+      >
+        <UserMenuAvatarTrigger
+          avatarUrl={userAvatarUrl}
+          displayName={userDisplayName}
+          expanded={menuPinned}
+          onToggle={() => setMenuPinned((current) => !current)}
+          buttonClassName={avatarStyles.userMenuTrigger}
+          avatarOrbitClassName={avatarStyles.userMenuAvatarOrbit}
+          avatarClassName={avatarStyles.userMenuAvatar}
+        />
+      </Tip>
+
+      {menuPinned ? (
+        <div
+          className={styles.userMenuDropdown}
+          role="menu"
+          aria-label="账户菜单"
+        >
+          <div className={styles.userMenuDropdownTop}>
+            <p className={styles.userMenuName}>{userDisplayName}</p>
+            <p className={styles.userMenuEmail}>{user.email || "未绑定邮箱"}</p>
+          </div>
+
+          <div className={styles.userMenuActions}>
+            {USER_MENU_ITEMS.map((item) => {
+              const Icon = item.icon;
+              const isActive = item.section === activeSection;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  role="menuitem"
+                  className={cn(
+                    styles.userMenuLink,
+                    isActive && styles.userMenuLinkActive,
+                  )}
+                  onClick={() => setMenuPinned(false)}
+                >
+                  <span className={styles.userMenuLinkLead}>
+                    <Icon className={styles.userMenuLinkIcon} />
+                    {item.label}
+                  </span>
+                  <ChevronRight className={styles.userMenuLinkArrow} />
+                </Link>
+              );
+            })}
+            <button
+              type="button"
+              role="menuitem"
+              className={cn(styles.userMenuLink, styles.userMenuLogoutButton)}
+              onClick={() => void handleLogout()}
+            >
+              <span className={styles.userMenuLinkLead}>
+                <LogOut className={styles.userMenuLinkIcon} />
+                退出登录
+              </span>
+            </button>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
 function DashboardWorkbenchInner() {
-  const pathname = usePathname()
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const { auth, checked } = useAuthSnapshot<SessionUser>({ eager: true })
-  const activeSection = parseDashboardSection(searchParams.get('section'))
-  const [mobileNavOpen, setMobileNavOpen] = useState(false)
-  const [visitedSections, setVisitedSections] = useState<Record<DashboardSection, boolean>>({
-    tracking: activeSection === 'tracking',
-    resume: activeSection === 'resume',
-    'data-source': activeSection === 'data-source',
-    'admin-users': activeSection === 'admin-users',
-    account: activeSection === 'account',
-  })
-  const [defaultDataSourceIdOverride, setDefaultDataSourceIdOverride] = useState<string | null | undefined>(undefined)
-  const [recordsVersion, setRecordsVersion] = useState(0)
-  const [dataSourcesVersion, setDataSourcesVersion] = useState(0)
+  const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { auth, checked } = useAuthSnapshot<SessionUser>({ eager: true });
+  const activeSection = parseDashboardSection(searchParams.get("section"));
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [defaultDataSourceIdOverride, setDefaultDataSourceIdOverride] =
+    useState<string | null | undefined>(undefined);
+  const [recordsVersion, setRecordsVersion] = useState(0);
+  const [dataSourcesVersion, setDataSourcesVersion] = useState(0);
+  const [theme, setTheme] = useState<ThemeMode>("dark");
+  const [sidebarExpanded, setSidebarExpanded] = useState(false);
+  const mainScrollRef = useRef<HTMLElement | null>(null);
 
   const nextPath = useMemo(() => {
-    const query = searchParams.toString()
-    return query ? `${pathname}?${query}` : pathname
-  }, [pathname, searchParams])
+    const query = searchParams.toString();
+    return query ? `${pathname}?${query}` : pathname;
+  }, [pathname, searchParams]);
 
-  useEffect(() => {
-    if (!checked) return
-    if (auth.authenticated) return
-    router.replace(`/login?next=${encodeURIComponent(nextPath)}`)
-  }, [auth.authenticated, checked, nextPath, router])
-
-  const user = auth.user
-  const canAccessAdminSection = Boolean(user?.isAdmin)
-  const resolvedActiveSection = activeSection === 'admin-users' && !canAccessAdminSection ? 'tracking' : activeSection
-  const visiblePrimarySectionItems = canAccessAdminSection
-    ? PRIMARY_SECTION_ITEMS
-    : PRIMARY_SECTION_ITEMS.filter(item => item.id !== 'admin-users')
-  const visibleMobileSectionItems = canAccessAdminSection
-    ? SECTION_ITEMS
-    : SECTION_ITEMS.filter(item => item.id !== 'admin-users')
-  const activeItem = visibleMobileSectionItems.find(item => item.id === resolvedActiveSection) || visibleMobileSectionItems[0]
-  const ActiveSectionIcon = activeItem.icon
+  const isAuthenticated = auth.authenticated && Boolean(auth.user);
+  const user = isAuthenticated ? auth.user : null;
+  const isGuestMode = checked && !isAuthenticated;
+  const canAccessAdminSection = Boolean(user?.isAdmin);
+  const resolvedActiveSection =
+    isGuestMode
+      ? "workbench"
+      : activeSection === "admin-users" && !canAccessAdminSection
+      ? "tracking"
+      : activeSection;
+  const visibleSectionIds: DashboardSection[] = isGuestMode
+    ? ["workbench"]
+    : canAccessAdminSection
+      ? SECTION_NAV_ORDER
+      : SECTION_NAV_ORDER.filter((item) => item !== "admin-users");
+  const visibleSectionItems = visibleSectionIds.map((id) => ({
+    id,
+    label: SECTION_META[id].label,
+    icon: SECTION_META[id].icon,
+  }));
+  const activeSectionMeta = SECTION_META[resolvedActiveSection];
+  const ActiveSectionIcon = activeSectionMeta.icon;
   const defaultDataSourceId =
-    defaultDataSourceIdOverride === undefined ? auth.user?.defaultDataSourceId || null : defaultDataSourceIdOverride
-  const mountedSections: Record<DashboardSection, boolean> = {
-    tracking: visitedSections.tracking || resolvedActiveSection === 'tracking',
-    resume: visitedSections.resume || resolvedActiveSection === 'resume',
-    'data-source': visitedSections['data-source'] || resolvedActiveSection === 'data-source',
-    'admin-users': canAccessAdminSection && (visitedSections['admin-users'] || resolvedActiveSection === 'admin-users'),
-    account: visitedSections.account || resolvedActiveSection === 'account',
-  }
+    defaultDataSourceIdOverride === undefined
+      ? user?.defaultDataSourceId || null
+      : defaultDataSourceIdOverride;
+  const loginHref = `/login?next=${encodeURIComponent(nextPath)}`;
 
   useEffect(() => {
-    if (!checked || !auth.authenticated || !user) return
-    if (activeSection !== 'admin-users') return
-    if (canAccessAdminSection) return
-    router.replace(getDashboardSectionHref('tracking'))
-  }, [activeSection, auth.authenticated, canAccessAdminSection, checked, router, user])
+    if (!checked || !auth.authenticated || !user) return;
+    if (activeSection !== "admin-users") return;
+    if (canAccessAdminSection) return;
+    router.replace(getDashboardSectionHref("tracking"));
+  }, [
+    activeSection,
+    auth.authenticated,
+    canAccessAdminSection,
+    checked,
+    router,
+    user,
+  ]);
 
-  const handleSectionVisit = (section: DashboardSection) => {
-    setVisitedSections(current => {
-      if (current[section] && current[resolvedActiveSection]) {
-        return current
-      }
+  useEffect(() => {
+    if (!checked || !isGuestMode) return;
+    if (activeSection === "workbench") return;
+    router.replace(getDashboardSectionHref("workbench"));
+  }, [activeSection, checked, isGuestMode, router]);
 
-      return {
-        ...current,
-        [resolvedActiveSection]: true,
-        [section]: true,
-      }
-    })
-    setMobileNavOpen(false)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const resolveTheme = (): ThemeMode => {
+      const current = document.documentElement.getAttribute("data-theme");
+      if (current === "light" || current === "dark") return current;
+
+      const saved = window.localStorage.getItem(THEME_STORAGE_KEY);
+      if (saved === "light" || saved === "dark") return saved;
+
+      return window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light";
+    };
+
+    const syncTheme = () => {
+      setTheme(resolveTheme());
+    };
+
+    syncTheme();
+    const observer = new MutationObserver(syncTheme);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["data-theme"],
+    });
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
+  useEffect(() => {
+    mainScrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
+  }, [resolvedActiveSection]);
+
+  const handleSectionVisit = () => {
+    setMobileNavOpen(false);
+  };
+
+  const handleThemeToggle = (event: MouseEvent<HTMLButtonElement>) => {
+    if (typeof window === "undefined") return;
+
+    const button = event.currentTarget;
+    const rect = button.getBoundingClientRect();
+    const x = rect.left + rect.width / 2;
+    const y = rect.top + rect.height / 2;
+    const nextTheme: ThemeMode = theme === "light" ? "dark" : "light";
+
+    document.documentElement.style.setProperty("--reveal-x", `${x}px`);
+    document.documentElement.style.setProperty("--reveal-y", `${y}px`);
+    document.documentElement.setAttribute("data-transition-to", nextTheme);
+
+    if (document.startViewTransition) {
+      const transition = document.startViewTransition(() => {
+        document.documentElement.setAttribute("data-theme", nextTheme);
+        window.localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
+        setTheme(nextTheme);
+      });
+      transition.finished.finally(() => {
+        document.documentElement.removeAttribute("data-transition-to");
+      });
+      return;
+    }
+
+    document.documentElement.setAttribute("data-theme", nextTheme);
+    window.localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
+    setTheme(nextTheme);
+    document.documentElement.removeAttribute("data-transition-to");
+  };
+
+  if (!checked) {
+    return <DashboardWorkbenchLoading />;
   }
 
-  if (!checked || !auth.authenticated || !user) {
-    return <DashboardWorkbenchLoading />
-  }
-
-  return (
-    <div className={styles.app} data-dashboard-theme="builder-aligned">
-      {mobileNavOpen ? <div className={styles.drawerBackdrop} onClick={() => setMobileNavOpen(false)} /> : null}
-
-      <div className={styles.desktopShell}>
-        <header className={styles.desktopHeader}>
-          <div className={styles.desktopHeaderBrand}>
-            <Link href="/" className={styles.brandMark} aria-label="返回首页">
-              <span className={styles.brandGlow} aria-hidden />
-              <BrandFlowerIcon className={styles.brandIcon} color="var(--dash-brand)" />
-            </Link>
-            <div className={styles.brandCopy}>
-              <p className={styles.brandTitle}>沉浸式网申</p>
-              <p className={styles.brandMeta}>个人工作台</p>
-            </div>
-          </div>
-          <div className={styles.desktopHeaderMeta}>
-            <div className={styles.desktopSectionChip}>
-              <ActiveSectionIcon className={styles.desktopSectionChipIcon} />
-              <span>{activeItem.label}</span>
-            </div>
-            <div className={styles.desktopUserSummary}>
-              <p className={styles.desktopUserLabel}>{getUserDisplayName(user)}</p>
-              <p className={styles.desktopUserMeta}>{user.email || '已登录'}</p>
-            </div>
-          </div>
-        </header>
-
-        <div className={styles.desktopBody}>
-          <aside className={styles.desktopSidebar}>
-          <nav className={styles.nav} aria-label="个人工作台导航">
-            {visiblePrimarySectionItems.map(item => {
-              const Icon = item.icon
-              return (
-                <Link
-                  key={item.id}
-                  href={getDashboardSectionHref(item.id)}
-                  className={cn(styles.navLink, resolvedActiveSection === item.id && styles.navLinkActive)}
-                  scroll={false}
-                  onClick={() => handleSectionVisit(item.id)}
-                >
-                  <Icon className={styles.navIcon} />
-                  <span className={styles.navText}>{item.label}</span>
-                </Link>
-              )
-            })}
-          </nav>
-
-          <div className={styles.sidebarFooter}>
-            <Link
-              href={getDashboardSectionHref(ACCOUNT_SECTION_ITEM.id)}
-              className={cn(styles.navLink, styles.footerNavLink, resolvedActiveSection === ACCOUNT_SECTION_ITEM.id && styles.navLinkActive)}
-              scroll={false}
-              onClick={() => handleSectionVisit(ACCOUNT_SECTION_ITEM.id)}
-              aria-label={ACCOUNT_SECTION_ITEM.label}
-              title={getUserDisplayName(user)}
-            >
-              <ACCOUNT_SECTION_ITEM.icon className={styles.navIcon} />
-              <span className={styles.navText}>{ACCOUNT_SECTION_ITEM.label}</span>
-            </Link>
-          </div>
-          </aside>
-
-          <main className={cn(styles.desktopMain, styles.sections)}>
-            <div className={styles.mobileTopbar}>
-            <button
-              type="button"
-              className={styles.mobileMenuButton}
-              onClick={() => setMobileNavOpen(true)}
-              aria-label="打开导航"
-            >
-              <Menu size={20} />
-            </button>
-            <div className={styles.mobileSectionChip}>
-              <ActiveSectionIcon size={16} />
-              {activeItem.label}
-            </div>
-            </div>
-
-            <div className={cn(styles.sectionFrame, resolvedActiveSection !== 'tracking' && styles.sectionFrameHidden)}>
-              {mountedSections.tracking ? (
-                <TrackingSection onRecordsMutated={() => setRecordsVersion(current => current + 1)} />
-              ) : null}
-            </div>
-            <div className={cn(styles.sectionFrame, resolvedActiveSection !== 'resume' && styles.sectionFrameHidden)}>
-              {mountedSections.resume ? <ResumesSection /> : null}
-            </div>
-            <div className={cn(styles.sectionFrame, resolvedActiveSection !== 'data-source' && styles.sectionFrameHidden)}>
-              {mountedSections['data-source'] ? (
-                <DataSourcesSection
-                  initialDefaultDataSourceId={defaultDataSourceId}
-                  onDefaultDataSourceChange={nextDefaultId => {
-                    setDefaultDataSourceIdOverride(nextDefaultId)
-                    setDataSourcesVersion(current => current + 1)
-                  }}
-                />
-              ) : null}
-            </div>
-            <div className={cn(styles.sectionFrame, resolvedActiveSection !== 'admin-users' && styles.sectionFrameHidden)}>
-              {mountedSections['admin-users'] ? <AdminUsersSection /> : null}
-            </div>
-            <div className={cn(styles.sectionFrame, resolvedActiveSection !== 'account' && styles.sectionFrameHidden)}>
-              {mountedSections.account ? (
-                <AccountSection
-                  user={user}
-                  defaultDataSourceId={defaultDataSourceId}
-                  recordsVersion={recordsVersion}
-                  dataSourcesVersion={dataSourcesVersion}
-                />
-              ) : null}
-            </div>
-          </main>
+  const isThemeDark = theme === "dark";
+  const desktopHeader = (
+    <>
+      <div className={styles.desktopHeaderBrand}>
+        <Link href="/" className={styles.brandMark} aria-label="返回首页">
+          <BrandFlowerIcon />
+        </Link>
+        <div className={styles.brandCopy}>
+          <p className="text-lg font-serif font-extralight tracking-widest">
+            沉浸式网申
+          </p>
         </div>
       </div>
+      <div className={styles.desktopHeaderMeta}>
+        <button
+          type="button"
+          className={styles.themeToggleIconButton}
+          onClick={handleThemeToggle}
+          aria-label={isThemeDark ? "切换到亮色模式" : "切换到暗色模式"}
+          title={isThemeDark ? "切换到亮色模式" : "切换到暗色模式"}
+        >
+          <ThemeMorphIcon isDark={isThemeDark} size={18} sunRadius={4} />
+        </button>
+        {user ? (
+          <DashboardUserMenu
+            user={user}
+            activeSection={resolvedActiveSection}
+            className={styles.desktopUserMenu}
+          />
+        ) : (
+          <Link href={loginHref} className={styles.loginEntryButton}>
+            <LogIn size={14} />
+            登录
+          </Link>
+        )}
+      </div>
+    </>
+  );
 
-      <div className={cn(styles.drawerShell, mobileNavOpen && styles.drawerOpen)}>
-        <aside className={styles.drawerSidebar}>
-          <div className={cn(styles.brand, styles.drawerBrand)}>
-            <div className={styles.drawerBrandIdentity}>
-              <Link href="/" className={cn(styles.brandMark, styles.drawerBrandMark)} aria-label="返回首页">
-                <span className={styles.brandGlow} aria-hidden />
-                <BrandFlowerIcon className={styles.brandIcon} color="var(--dash-brand)" />
+  const desktopSidebar = (
+    <>
+      <nav className={styles.nav} aria-label="个人工作台导航">
+        {visibleSectionItems.map((item) => {
+          const Icon = item.icon;
+          return (
+            <Tip
+              key={item.id}
+              content={item.label}
+              placement="right"
+              disabled={sidebarExpanded}
+              triggerClassName={styles.navTipTrigger}
+            >
+              <Link
+                href={getDashboardSectionHref(item.id)}
+                className={cn(
+                  styles.navLink,
+                  resolvedActiveSection === item.id && styles.navLinkActive,
+                )}
+                scroll={false}
+                onClick={handleSectionVisit}
+              >
+                <Icon className={styles.navIcon} />
+                <span className={styles.navText}>{item.label}</span>
               </Link>
-              <div className={styles.brandCopy}>
-                <p className={styles.brandTitle}>沉浸式网申</p>
-                <p className={styles.drawerBrandText}>个人工作台</p>
-              </div>
-            </div>
-            <button type="button" className={styles.mobileMenuButton} onClick={() => setMobileNavOpen(false)} aria-label="关闭导航">
-              <X size={20} />
-            </button>
-          </div>
+            </Tip>
+          );
+        })}
+      </nav>
+      <div className={styles.desktopSidebarFooter}>
+        <button
+          type="button"
+          className={styles.sidebarToggleButton}
+          onClick={() => setSidebarExpanded((current) => !current)}
+          aria-label={sidebarExpanded ? "收起侧栏" : "展开侧栏"}
+          aria-expanded={sidebarExpanded}
+          title={sidebarExpanded ? "收起侧栏" : "展开侧栏"}
+        >
+          <span className={styles.sidebarToggleIcon}>
+            {sidebarExpanded ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
+          </span>
+        </button>
+      </div>
+    </>
+  );
 
-          <nav className={styles.nav} aria-label="移动端个人工作台导航">
-            {visibleMobileSectionItems.map(item => {
-              const Icon = item.icon
-              return (
-                <Link
-                  key={item.id}
-                  href={getDashboardSectionHref(item.id)}
-                  className={cn(styles.navLink, resolvedActiveSection === item.id && styles.navLinkActive)}
-                  scroll={false}
-                  onClick={() => handleSectionVisit(item.id)}
-                >
-                  <Icon className={styles.navIcon} />
-                  <span className={styles.navText}>{item.label}</span>
-                </Link>
-              )
-            })}
-          </nav>
-
-          <div className={styles.sidebarFooter}>
-            <div className={styles.sidebarUser}>
-              <p className={styles.sidebarUserLabel}>{getUserDisplayName(user)}</p>
-              <p className={styles.sidebarUserMeta}>{user.email || '已登录'}</p>
-            </div>
-          </div>
-        </aside>
+  const mobileTopbar = (
+    <div className={styles.mobileTopbar}>
+      <div className={styles.mobileTopbarLead}>
+        <button
+          type="button"
+          className={styles.mobileMenuButton}
+          onClick={() => setMobileNavOpen(true)}
+          aria-label="打开导航"
+        >
+          <Menu size={20} />
+        </button>
+        <div className={styles.mobileSectionChip}>
+          <ActiveSectionIcon size={16} />
+          {activeSectionMeta.label}
+        </div>
+      </div>
+      <div className={styles.mobileTopbarActions}>
+        <button
+          type="button"
+          className={styles.themeToggleIconButton}
+          onClick={handleThemeToggle}
+          aria-label={isThemeDark ? "切换到亮色模式" : "切换到暗色模式"}
+          title={isThemeDark ? "切换到亮色模式" : "切换到暗色模式"}
+        >
+          <ThemeMorphIcon isDark={isThemeDark} size={18} sunRadius={4} />
+        </button>
+        {user ? (
+          <DashboardUserMenu
+            user={user}
+            activeSection={resolvedActiveSection}
+            className={styles.mobileUserMenu}
+          />
+        ) : (
+          <Link href={loginHref} className={styles.loginEntryButton}>
+            <LogIn size={14} />
+            登录
+          </Link>
+        )}
       </div>
     </div>
-  )
+  );
+
+  const mainContent = (
+    <div
+      className={cn(
+        styles.sectionFrame,
+        resolvedActiveSection === "workbench" && styles.workbenchSectionFrame,
+      )}
+    >
+      {resolvedActiveSection === "workbench" ? (
+        <div
+          className={styles.workbenchBlankCanvas}
+          aria-label="工作台内容预留区域"
+        />
+      ) : null}
+
+      {user && resolvedActiveSection === "tracking" ? (
+        <div className={styles.trackingSectionStack}>
+          <DataSourcesSection
+            initialDefaultDataSourceId={defaultDataSourceId}
+            onDefaultDataSourceChange={(nextDefaultId) => {
+              setDefaultDataSourceIdOverride(nextDefaultId);
+              setDataSourcesVersion((current) => current + 1);
+            }}
+          />
+          <TrackingSection
+            onRecordsMutated={() => setRecordsVersion((current) => current + 1)}
+          />
+        </div>
+      ) : null}
+
+      {user && resolvedActiveSection === "resume" ? <ResumesSection /> : null}
+
+      {user &&
+      resolvedActiveSection === "admin-users" &&
+      canAccessAdminSection ? (
+        <AdminUsersSection />
+      ) : null}
+
+      {user && resolvedActiveSection === "account" ? (
+        <AccountSection
+          user={user}
+          defaultDataSourceId={defaultDataSourceId}
+          recordsVersion={recordsVersion}
+          dataSourcesVersion={dataSourcesVersion}
+        />
+      ) : null}
+    </div>
+  );
+
+  const mobileDrawer = (
+    <>
+      <div className={cn(styles.brand, styles.drawerBrand)}>
+        <div className={styles.drawerBrandIdentity}>
+          <Link
+            href="/"
+            className={cn(styles.brandMark, styles.drawerBrandMark)}
+            aria-label="返回首页"
+          >
+            <span className={styles.brandGlow} aria-hidden />
+            <BrandFlowerIcon
+              className={styles.brandIcon}
+              color="var(--builder-button-primary-hover)"
+            />
+          </Link>
+          <div className={styles.brandCopy}>
+            <p className={styles.brandTitle}>沉浸式网申</p>
+            <p className={styles.drawerBrandText}>个人工作台</p>
+          </div>
+        </div>
+        <button
+          type="button"
+          className={styles.mobileMenuButton}
+          onClick={() => setMobileNavOpen(false)}
+          aria-label="关闭导航"
+        >
+          <X size={20} />
+        </button>
+      </div>
+
+      <nav className={styles.nav} aria-label="移动端个人工作台导航">
+        {visibleSectionItems.map((item) => {
+          const Icon = item.icon;
+          return (
+            <Link
+              key={item.id}
+              href={getDashboardSectionHref(item.id)}
+              className={cn(
+                styles.navLink,
+                resolvedActiveSection === item.id && styles.navLinkActive,
+              )}
+              scroll={false}
+              onClick={handleSectionVisit}
+            >
+              <Icon className={styles.navIcon} />
+              <span className={styles.navText}>{item.label}</span>
+            </Link>
+          );
+        })}
+      </nav>
+    </>
+  );
+
+  return (
+    <DashboardShell
+      showSidebar
+      sidebarExpanded={sidebarExpanded}
+      mobileNavOpen={mobileNavOpen}
+      onRequestCloseMobileNav={() => setMobileNavOpen(false)}
+      mainRef={mainScrollRef}
+      desktopHeader={desktopHeader}
+      desktopSidebar={desktopSidebar}
+      mobileTopbar={mobileTopbar}
+      mainContent={mainContent}
+      mobileDrawer={mobileDrawer}
+    />
+  );
 }
 
 export default function DashboardWorkbench() {
@@ -307,5 +623,5 @@ export default function DashboardWorkbench() {
     <Suspense fallback={<DashboardWorkbenchLoading />}>
       <DashboardWorkbenchInner />
     </Suspense>
-  )
+  );
 }

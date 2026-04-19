@@ -19,7 +19,7 @@
 }
 
 .resultsCount {
-  color: var(--dash-text-muted);
+  color: var(--builder-panel-text-muted);
   font-size: 12px;
 }
 
@@ -36,7 +36,7 @@
 .searchIcon {
   width: 14px;
   height: 14px;
-  color: var(--dash-text-muted);
+  color: var(--builder-panel-text-muted);
 }
 
 .resultsMeta {
@@ -45,7 +45,7 @@
   flex-wrap: wrap;
   justify-content: space-between;
   gap: 12px;
-  color: var(--dash-text-muted);
+  color: var(--builder-panel-text-muted);
   font-size: 12px;
 }
 
@@ -74,7 +74,7 @@
 
 .userMetaLine {
   margin: 4px 0 0;
-  color: var(--dash-text-muted);
+  color: var(--builder-panel-text-muted);
   font-size: 11px;
   font-family: 'IBM Plex Mono', 'SFMono-Regular', 'Consolas', monospace;
 }
@@ -91,9 +91,9 @@
 }
 
 .roleTag {
-  border-color: var(--dash-border);
+  border-color: var(--builder-panel-border);
   background: rgba(255, 255, 255, 0.03);
-  color: var(--dash-text-soft);
+  color: var(--builder-panel-text-soft);
 }
 
 .roleTag[data-role='admin'] {
@@ -115,9 +115,9 @@
 }
 
 .planTag[data-plan='basic'] {
-  border-color: var(--dash-border);
+  border-color: var(--builder-panel-border);
   background: rgba(255, 255, 255, 0.03);
-  color: var(--dash-text-muted);
+  color: var(--builder-panel-text-muted);
 }
 
 .planTag[data-plan='elite'] {
@@ -134,7 +134,7 @@
 
 .metaText {
   margin: 8px 0 0;
-  color: var(--dash-text-muted);
+  color: var(--builder-panel-text-muted);
   font-size: 12px;
   line-height: 1.6;
 }
@@ -152,12 +152,12 @@
   padding: 0 8px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.04);
-  color: var(--dash-text-soft);
+  color: var(--builder-panel-text-soft);
   font-size: 11px;
 }
 
 .providerText {
-  color: var(--dash-text-soft);
+  color: var(--builder-panel-text-soft);
   font-size: 12px;
   text-transform: uppercase;
 }

@@ -6,51 +6,17 @@
   position: fixed;
   z-index: 2147483000;
   max-width: min(280px, calc(100vw - 16px));
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   pointer-events: none;
-  border-radius: 8px;
-  background: color-mix(in srgb, #151515 60%, black);
-  color: #f9fafb;
-  padding: 6px 9px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--builder-panel-bg-soft) 92%, white);
+  color: color-mix(in srgb, var(--builder-panel-text) 92%, transparent);
+  padding: 7px 11px;
   font-size: 12px;
   line-height: 1.25;
-  box-shadow:
-    0 8px 20px rgba(0, 0, 0, 0.34),
-    0 1px 0 rgba(255, 255, 255, 0.08) inset;
+  text-align: center;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
   white-space: nowrap;
-}
-
-.content::after {
-  content: "";
-  position: absolute;
-  width: 0;
-  height: 0;
-  border: 5px solid transparent;
-}
-
-.content[data-placement="top"]::after {
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  border-top-color: color-mix(in srgb, #151515 60%, black);
-}
-
-.content[data-placement="bottom"]::after {
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  border-bottom-color: color-mix(in srgb, #151515 60%, black);
-}
-
-.content[data-placement="left"]::after {
-  left: 100%;
-  top: 50%;
-  transform: translateY(-50%);
-  border-left-color: color-mix(in srgb, #151515 60%, black);
-}
-
-.content[data-placement="right"]::after {
-  right: 100%;
-  top: 50%;
-  transform: translateY(-50%);
-  border-right-color: color-mix(in srgb, #151515 60%, black);
 }

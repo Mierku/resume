@@ -1,0 +1,193 @@
+.themeToggleIconButton {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--builder-panel-text-muted);
+  cursor: pointer;
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.themeToggleIconButton:hover {
+  color: var(--builder-panel-text);
+  background: color-mix(in srgb, var(--builder-panel-text) 4%, transparent);
+}
+
+.themeToggleIconButton:focus-visible {
+  outline: none;
+  color: var(--builder-panel-text);
+  background: color-mix(in srgb, var(--builder-panel-text) 4%, transparent);
+}
+
+.loginEntryButton {
+  min-width: 72px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 12px;
+  border: 1px solid var(--builder-panel-border);
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--builder-panel-bg-soft) 88%, transparent);
+  color: var(--builder-panel-text);
+  font-size: 12px;
+  font-weight: 500;
+  text-decoration: none;
+  transition:
+    background-color 180ms ease,
+    color 180ms ease,
+    border-color 180ms ease,
+    transform 180ms ease;
+}
+
+.loginEntryButton:hover,
+.loginEntryButton:focus-visible {
+  background: var(--builder-button-hover);
+  color: var(--builder-button-text-hover);
+  border-color: color-mix(
+    in srgb,
+    var(--builder-panel-border-strong) 70%,
+    transparent
+  );
+}
+
+.userMenuDropdown {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 20px;
+  width: 224px;
+  display: grid;
+  gap: 10px;
+  padding: 14px 12px 12px;
+  padding-right: 14px;
+  border: 1px solid var(--builder-panel-border);
+  border-radius: 12px;
+  background: var(--builder-panel-bg-soft);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 1;
+  animation: homeHeaderUserMenuIn 160ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.userMenuDropdownTop {
+  min-height: 54px;
+  display: grid;
+  gap: 6px;
+  align-content: flex-start;
+  padding: 8px 10px 10px;
+}
+
+.userMenuName {
+  margin: 0;
+  color: var(--builder-panel-text);
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.08;
+}
+
+.userMenuEmail {
+  margin: 0;
+  color: var(--builder-panel-text-muted);
+  font-size: 12px;
+  line-height: 1.6;
+  word-break: break-all;
+}
+
+.userMenuActions {
+  display: grid;
+  gap: 6px;
+  padding-top: 10px;
+  border-top: 1px solid
+    color-mix(in srgb, var(--builder-panel-border) 88%, #fff);
+}
+
+.userMenuLink {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 36px;
+  padding: 0 13px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--builder-panel-text-muted);
+  text-decoration: none;
+  transition:
+    background-color 180ms ease,
+    color 180ms ease;
+}
+
+.userMenuLinkLead {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.userMenuLinkIcon,
+.userMenuLinkArrow {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+
+.userMenuLinkArrow {
+  color: inherit;
+  transition: color 180ms ease;
+}
+
+.userMenuLink:hover,
+.userMenuLink:focus-visible {
+  background: var(--builder-button-hover);
+  color: var(--builder-button-text-hover);
+}
+
+.userMenuLink:hover .userMenuLinkArrow,
+.userMenuLink:focus-visible .userMenuLinkArrow {
+  color: inherit;
+}
+
+.userMenuLink:focus-visible {
+  outline: none;
+}
+
+.userMenuLogoutButton {
+  width: 100%;
+  justify-content: flex-start;
+  color: color-mix(
+    in srgb,
+    var(--builder-status-danger) 72%,
+    var(--builder-panel-text)
+  );
+}
+
+.userMenuLogoutButton:hover,
+.userMenuLogoutButton:focus-visible {
+  background: color-mix(in srgb, var(--builder-status-danger) 10%, transparent);
+  color: color-mix(
+    in srgb,
+    var(--builder-status-danger) 84%,
+    var(--builder-panel-text)
+  );
+}
+
+@keyframes homeHeaderUserMenuIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}

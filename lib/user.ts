@@ -12,6 +12,8 @@ export interface SessionUser {
   planExpiresAt?: string | null
 }
 
+export const DEFAULT_USER_AVATAR_URL = '/avatar/default.jpg'
+
 export function getUserDisplayName(user: Pick<SessionUser, 'displayName' | 'email'>): string {
   if (user.displayName?.trim()) {
     return user.displayName.trim()
@@ -22,6 +24,11 @@ export function getUserDisplayName(user: Pick<SessionUser, 'displayName' | 'emai
   }
 
   return '已登录用户'
+}
+
+export function getUserAvatarUrl(user: Pick<SessionUser, 'avatarUrl'>): string {
+  const rawAvatarUrl = user.avatarUrl?.trim()
+  return rawAvatarUrl || DEFAULT_USER_AVATAR_URL
 }
 
 export function isAdminRole(role: string | null | undefined): boolean {

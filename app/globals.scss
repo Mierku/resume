@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import "tailwindcss/index.css";
 @import "react-day-picker/style.css";
 @import url("tw-animate-css");
 
@@ -83,19 +83,16 @@
   --header-border: rgba(232, 213, 209, 0.68);
 
   /* Resume Builder token bridge (global) */
-  --builder-workspace-bg: #f3f3f3;
+  --builder-workspace-bg: #a4a4a4;
   --builder-panel-bg: #ffffff;
   --builder-panel-header: #ffffff;
   --builder-panel-bg-soft: #f7f7f7;
   --builder-panel-border: rgba(0, 0, 0, 0.12);
   --builder-panel-border-strong: rgba(0, 0, 0, 0.2);
-  --builder-panel-text: #111111;
+  --builder-panel-text: #252525;
   --builder-panel-text-muted: #666666;
-  --builder-panel-text-soft: color-mix(
-    in srgb,
-    var(--builder-panel-text) 72%,
-    transparent
-  );
+  --builder-panel-text-soft: rgb(205, 205, 205);
+
   --builder-preview-bg: var(--builder-workspace-bg);
   --builder-preview-dock-bg: rgba(255, 255, 255, 0.9);
   --builder-preview-dock-shadow: 0 8px 20px rgba(0, 0, 0, 0.14);
@@ -110,10 +107,6 @@
     var(--builder-panel-border-strong) 76%,
     transparent
   );
-  --builder-input-placeholder: #8f8f8f;
-  --builder-input-inset: inset 0 1px 0 rgba(255, 255, 255, 0.64);
-  --builder-input-bg: #ffffff;
-  --builder-input-bg-hover: #f5f5f5;
   --builder-input-bg2: #f2f2f2;
   --builder-toolbar-border-color: var(--builder-panel-border);
   --builder-toolbar-shadow: none;
@@ -143,7 +136,15 @@
     var(--builder-panel-bg-soft) 84%,
     transparent
   );
-
+  --builder-button-text: rgb(41, 41, 41);
+  --builder-button-hover: #cbcbcb;
+  --builder-button-text-hover: rgb(19, 19, 19);
+  --builder-button-tab-active-bg: #d0d0d0;
+  --builder-button-primary-hover: rgb(237, 102, 98);
+  --builder-status-info: #60a5fa;
+  --builder-status-warning: #fbbf24;
+  --builder-status-success: #34d399;
+  --builder-status-danger: #fb7185;
   /* Landing page variables */
 
   /* Shared non-home page palette */
@@ -187,8 +188,8 @@
   /* Resume Builder token bridge (global) */
   --builder-workspace-bg: #05070b;
   --builder-panel-bg: #191919;
-  --builder-panel-header: #212121;
-  --builder-panel-bg-soft: #1b1b1b;
+  --builder-panel-header: #313131;
+  --builder-panel-bg-soft: #222222;
   --builder-panel-border: rgba(255, 255, 255, 0.1);
   --builder-panel-border-strong: rgba(255, 255, 255, 0.2);
   --builder-panel-text: #f3f3f3;
@@ -211,10 +212,6 @@
   --builder-input-placeholder: rgba(166, 166, 166, 0.9);
   --builder-input-inset:
     inset 0 1px 0 rgba(255, 255, 255, 0.04), inset 0 -1px 0 rgba(0, 0, 0, 0.44);
-  --builder-input-bg: #202020;
-  --builder-input-bg-hover: #2a2a2a;
-  --builder-input-bg2: #1c1c1c;
-  --builder-toolbar-border-color: transparent;
   --builder-toolbar-shadow: 0 14px 32px rgba(0, 0, 0, 0.28);
   --builder-toolbar-title-input-bg: rgba(255, 255, 255, 0.06);
   --builder-toolbar-save-border: transparent;
@@ -226,7 +223,15 @@
     var(--builder-panel-bg-soft) 78%,
     transparent
   );
-
+  --builder-button-text: rgb(208, 208, 208);
+  --builder-button-hover: #353535;
+  --builder-button-text-hover: rgb(231, 231, 231);
+  --builder-button-tab-active-bg: #1d1d1d;
+  --builder-button-primary-hover: rgb(237, 102, 98);
+  --builder-status-info: #60a5fa;
+  --builder-status-warning: #fbbf24;
+  --builder-status-success: #34d399;
+  --builder-status-danger: #fb7185;
   /* Landing page variables - Aura 深色 */
 
   /* Shared non-home page palette */
@@ -401,11 +406,8 @@
 }
 
 .control-panel {
-  border: 1px solid
-    var(--control-panel-border-color, var(--control-panel-border));
-  border-radius: 4px;
-  background: var(--control-panel-bg, var(--control-panel-surface));
-  backdrop-filter: none;
+  border-radius: 6px;
+  background: var(--control-field-bg);
 }
 
 .control-floating-panel {
@@ -499,35 +501,20 @@
   padding: 0;
   overflow: hidden;
   border-color: transparent;
-  background: var(
-    --resume-select-bg,
-    var(--control-field-bg, var(--control-surface))
-  );
-  color: var(
-    --resume-select-text,
-    var(--control-field-text, var(--color-foreground))
-  );
+  background: var(--control-field-bg, var(--control-surface));
+  color: var(--control-field-text, var(--color-foreground));
 }
 
 .resume-select-trigger.control-field:hover {
   border-color: transparent;
-  background: var(
-    --resume-select-bg-hover,
-    var(--control-field-bg-hover, var(--control-hover-surface))
-  );
+  background: var(--control-field-bg-hover, var(--control-hover-surface));
 }
 
 .resume-select-trigger.control-field:focus,
 .resume-select-trigger.control-field:focus-visible,
 .resume-select-trigger.control-field[data-open="true"] {
-  border-color: var(
-    --resume-select-border-focus,
-    var(--control-field-focus-color, var(--control-focus-border))
-  );
-  background: var(
-    --resume-select-bg,
-    var(--control-field-bg, var(--control-surface))
-  );
+  border-color: var(--control-field-focus-color, var(--control-focus-border));
+  background: var(--control-field-bg, var(--control-surface));
 }
 
 .resume-select-trigger-content {
@@ -556,10 +543,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(
-    --resume-select-muted,
-    var(--control-field-placeholder, var(--color-muted-foreground))
-  );
+  color: var(--control-field-placeholder, var(--color-muted-foreground));
   opacity: 0.4;
   transition:
     transform 0.2s ease,
@@ -573,33 +557,18 @@
 
 .resume-select-clear {
   right: 32px;
-  color: var(
-    --resume-select-muted,
-    var(--control-field-placeholder, var(--color-muted-foreground))
-  );
+  color: var(--control-field-placeholder, var(--color-muted-foreground));
 }
 
 .resume-select-clear:hover {
-  background: var(
-    --resume-select-option-hover,
-    var(--control-option-hover-bg, var(--control-active-surface))
-  );
-  color: var(
-    --resume-select-text,
-    var(--control-field-text, var(--color-foreground))
-  );
+  background: var(--control-option-hover-bg, var(--control-active-surface));
+  color: var(--control-field-text, var(--color-foreground));
 }
 
 .resume-select-panel.control-panel {
-  border-color: var(
-    --resume-select-panel-border,
-    var(--control-panel-border-color, var(--control-panel-border))
-  );
-  border-radius: 4px;
-  background: var(
-    --resume-select-panel-bg,
-    var(--control-panel-bg, var(--control-panel-surface))
-  );
+  border-radius: 6px;
+  background: var(--control-field-bg-focus);
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
 }
 
 .resume-select-panel.control-floating-panel {
@@ -623,46 +592,28 @@
   min-height: var(--control-search-height);
   padding: 0 8px;
   border-color: transparent;
-  background: var(
-    --resume-select-bg,
-    var(--control-field-bg, var(--control-surface))
-  );
+  background: var(--control-field-bg, var(--control-surface));
 }
 
 .resume-select-search:hover {
   border-color: transparent;
-  background: var(
-    --resume-select-bg-hover,
-    var(--control-field-bg-hover, var(--control-hover-surface))
-  );
+  background: var(--control-field-bg-hover, var(--control-hover-surface));
 }
 
 .resume-select-search:focus-within {
-  border-color: var(
-    --resume-select-border-focus,
-    var(--control-field-focus-color, var(--control-focus-border))
-  );
-  background: var(
-    --resume-select-bg,
-    var(--control-field-bg, var(--control-surface))
-  );
+  border-color: var(--control-field-focus-color, var(--control-focus-border));
+  background: var(--control-field-bg, var(--control-surface));
 }
 
 .resume-select-search input {
   height: calc(var(--control-search-height) - 2px);
   padding: 0;
   font-size: inherit;
-  color: var(
-    --resume-select-text,
-    var(--control-field-text, var(--color-foreground))
-  );
+  color: var(--control-field-text, var(--color-foreground));
 }
 
 .resume-select-search input::placeholder {
-  color: var(
-    --resume-select-muted,
-    var(--control-field-placeholder, var(--color-muted-foreground))
-  );
+  color: var(--control-field-placeholder, var(--color-muted-foreground));
 }
 
 .resume-select-options {
@@ -672,35 +623,20 @@
 .resume-select-option {
   min-height: 28px;
   padding: 6px 8px;
-  color: var(
-    --resume-select-muted,
-    var(--control-field-placeholder, var(--color-muted-foreground))
-  );
+  color: var(--control-field-placeholder, var(--color-muted-foreground));
   font-size: 11px;
   line-height: 1.35;
 }
 
 .resume-select-option:hover,
 .resume-select-option:focus-visible {
-  background: var(
-    --resume-select-option-hover,
-    var(--control-option-hover-bg, var(--control-active-surface))
-  );
-  color: var(
-    --resume-select-text,
-    var(--control-field-text, var(--color-foreground))
-  );
+  background: var(--control-option-hover-bg, var(--control-active-surface));
+  color: var(--control-field-text, var(--color-foreground));
 }
 
 .resume-select-option[data-selected="true"] {
-  background: var(
-    --resume-select-option-selected-bg,
-    var(--control-option-selected-bg, var(--control-active-surface))
-  );
-  color: var(
-    --resume-select-option-selected-text,
-    var(--control-option-selected-text, var(--control-active-indicator))
-  );
+  background: var(--control-option-selected-bg, var(--control-active-surface));
+  color: var(--control-option-selected-text, var(--control-active-indicator));
 }
 
 .resume-select-option-check {
@@ -708,10 +644,7 @@
 }
 
 .resume-select-empty {
-  color: var(
-    --resume-select-muted,
-    var(--control-field-placeholder, var(--color-muted-foreground))
-  );
+  color: var(--control-field-placeholder, var(--color-muted-foreground));
   font-size: 11px;
 }
 
@@ -1063,110 +996,11 @@
   }
 }
 
-/* 方案 B: 缩放 + 淡入 (最流畅，推荐) */
-/* ::view-transition-old(root) {
-  animation: scaleOut 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
-}
-
-::view-transition-new(root) {
-  animation: scaleIn 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
-}
-
-@keyframes scaleOut {
-  from {
-    opacity: 1;
-    transform: scale(1);
-  }
-  to {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-}
-
-@keyframes scaleIn {
-  from {
-    opacity: 0;
-    transform: scale(1.05);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-} */
-
-/* 方案 C: 分区翻转 (最酷炫) */
-/* ::view-transition-old(root) {
-  animation: flipOut 0.5s cubic-bezier(0.4, 0, 0.2, 1) !important;
-}
-
-::view-transition-new(root) {
-  animation: flipIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) !important;
-}
-
-@keyframes flipOut {
-  from {
-    opacity: 1;
-    transform: perspective(1000px) rotateX(0deg);
-  }
-  to {
-    opacity: 0;
-    transform: perspective(1000px) rotateX(-90deg);
-  }
-}
-
-@keyframes flipIn {
-  from {
-    opacity: 0;
-    transform: perspective(1000px) rotateX(90deg);
-  }
-  to {
-    opacity: 1;
-    transform: perspective(1000px) rotateX(0deg);
-  }
-} */
-
-/* 方案 D: 水墨扩散 - 从按钮位置开始的圆形展开 */
-:root {
-}
-
 ::view-transition-old(root),
 ::view-transition-new(root) {
   animation: none;
   mix-blend-mode: normal;
 }
-
-/* 旧主题：轻微淡出，避免冲突感 */
-/* ::view-transition-old(root) {
-  animation: inkShrink 0.58s ease-out forwards !important;
-  z-index: 1;
-} */
-
-/* 新主题：从按钮位置做圆形柔和扩散 */
-/* ::view-transition-new(root) {
-  will-change: clip-path;
-  animation: inkExpand 0.65s cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
-  z-index: 2999;
-}
-
-@keyframes inkShrink {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
-  }
-}
-
-@keyframes inkExpand {
-  from {
-    clip-path: circle(0px at var(--reveal-x) var(--reveal-y));
-    opacity: 0;
-  }
-  to {
-    clip-path: circle(var(--reveal-radius, 9999px) at var(--reveal-x) var(--reveal-y));
-    opacity: 1;
-  }
-} */
 
 /* Z-index 控制 */
 html[data-transition-to="dark"]::view-transition-old(root),
@@ -1195,31 +1029,6 @@ body {
   line-height: 1.5;
 }
 
-/* Override UnoCSS utilities to use CSS variables */
-/* .bg-background {
-  background-color: var(--color-background) !important;
-}
-
-.text-foreground {
-  color: var(--color-foreground) !important;
-}
-
-.text-muted-foreground {
-  color: var(--color-muted-foreground) !important;
-}
-
-.bg-muted {
-  background-color: var(--color-muted) !important;
-}
-
-.border-border {
-  border-color: var(--color-border) !important;
-}
-
-.border-border-weak {
-  border-color: var(--color-border-weak) !important;
-} */
-
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
@@ -1237,6 +1046,76 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-muted-foreground);
+}
+
+.scroll-shell {
+  --scroll-shell-size: 8px;
+  --scroll-shell-track-color: transparent;
+  --scroll-shell-thumb-idle-color: transparent;
+  --scroll-shell-thumb-active-color: color-mix(
+    in srgb,
+    var(--color-border) 72%,
+    transparent
+  );
+
+  min-height: 0;
+  scrollbar-width: none;
+  scrollbar-gutter: stable;
+}
+
+.scroll-shell[data-scroll-axis="y"] {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.scroll-shell[data-scroll-axis="both"] {
+  overflow: auto;
+}
+
+.scroll-shell[data-scroll-tone="panel"] {
+  --scroll-shell-thumb-active-color: color-mix(
+    in srgb,
+    var(--builder-panel-border-strong, var(--color-border)) 76%,
+    transparent
+  );
+}
+
+.scroll-shell[data-scroll-tone="aura"] {
+  --scroll-shell-thumb-active-color: color-mix(
+    in srgb,
+    var(--aura-text-soft, var(--color-muted-foreground)) 46%,
+    transparent
+  );
+}
+
+.scroll-shell[data-scroll-reveal="always"],
+.scroll-shell.is-scrolling,
+.scroll-shell[data-scrolling="true"] {
+  scrollbar-width: thin;
+}
+
+.scroll-shell::-webkit-scrollbar {
+  width: var(--scroll-shell-size);
+  height: var(--scroll-shell-size);
+}
+
+.scroll-shell::-webkit-scrollbar-track {
+  background: var(--scroll-shell-track-color);
+}
+
+.scroll-shell::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: var(--scroll-shell-thumb-idle-color);
+  transition: background-color 160ms ease;
+}
+
+.scroll-shell[data-scroll-reveal="always"]::-webkit-scrollbar-thumb,
+.scroll-shell[data-scroll-reveal="hover"]:hover::-webkit-scrollbar-thumb,
+.scroll-shell[data-scroll-reveal="hover"]:focus-within::-webkit-scrollbar-thumb,
+.scroll-shell[data-scroll-reveal="hover"]:active::-webkit-scrollbar-thumb,
+.scroll-shell.is-scrolling::-webkit-scrollbar-thumb,
+.scroll-shell[data-scrolling="true"]::-webkit-scrollbar-thumb {
+  background: var(--scroll-shell-thumb-active-color);
 }
 
 /* Focus styles */

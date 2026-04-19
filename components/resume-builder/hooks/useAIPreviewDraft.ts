@@ -92,7 +92,7 @@ export function useAIPreviewDraft({ dataSources, initialTemplateId }: UseAIPrevi
           draftId: payload.draftId,
           sourceResumeId: payload.sourceResumeId,
           title: draftResume.title || 'AI 草稿',
-          previewUrl: `/resume/editor/${payload.draftId}?panel=ai&previewDraft=1`,
+          previewUrl: `/builder/editor/${payload.draftId}?panel=ai&previewDraft=1`,
         })
       } catch {
         Message.error('加载草稿预览失败')

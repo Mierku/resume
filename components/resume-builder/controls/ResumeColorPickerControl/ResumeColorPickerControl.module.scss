@@ -34,29 +34,34 @@
   min-width: 112px;
   height: 38px;
   padding: 4px 4px 4px 12px;
-  border: 0;
+  border: 1px solid var(--control-field-border-color, rgba(255, 255, 255, 0.08));
   border-radius: 999px;
   display: inline-flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  background: rgba(255, 255, 255, 0.05);
-  color: rgba(255, 255, 255, 0.9);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  background: var(--control-field-bg, rgba(255, 255, 255, 0.05));
+  color: var(--control-field-text, rgba(255, 255, 255, 0.9));
+  transition:
+    border-color 140ms ease,
+    background-color 140ms ease,
+    box-shadow 140ms ease,
+    color 140ms ease;
 }
 
 .picker :global(.resume-advanced-color-picker-trigger:hover),
 .picker :global(.resume-advanced-color-picker-trigger:focus-visible),
 .picker:global(.is-open) :global(.resume-advanced-color-picker-trigger) {
-  box-shadow:
-    inset 0 0 0 1px rgba(79, 130, 255, 0.4),
-    0 0 0 2px rgba(79, 130, 255, 0.16);
+  border-color: var(--control-field-focus-color, rgba(79, 130, 255, 0.4));
+  background: var(--control-field-bg-hover, var(--control-field-bg));
+  box-shadow: 0 0 0 2px var(--control-field-focus-ring, rgba(79, 130, 255, 0.16));
 }
 
 .picker :global(.resume-advanced-color-picker-hex) {
   font-size: 12px;
   line-height: 1;
   font-variant-numeric: tabular-nums;
+  color: var(--control-field-text, currentColor);
 }
 
 .picker :global(.resume-advanced-color-picker-swatch) {
@@ -65,7 +70,7 @@
   flex-shrink: 0;
   border-radius: 999px;
   box-shadow:
-    inset 0 0 0 2px rgba(255, 255, 255, 0.14),
+    inset 0 0 0 2px color-mix(in srgb, var(--control-field-border-color, rgba(255, 255, 255, 0.14)) 92%, transparent),
     0 6px 14px rgba(0, 0, 0, 0.22);
 }
 
@@ -81,9 +86,9 @@
   overflow: auto;
   padding: 16px;
   border-radius: 20px;
-  background: #1c1c1e;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.34);
+  background: var(--control-panel-bg, #1c1c1e);
+  border: 1px solid var(--control-panel-border-color, rgba(255, 255, 255, 0.06));
+  box-shadow: var(--control-panel-shadow-value, 0 24px 48px rgba(0, 0, 0, 0.34));
 }
 
 :global(.resume-advanced-color-picker-panel-head) {
@@ -98,7 +103,7 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  color: #fff;
+  color: var(--control-field-text, #fff);
   font-size: 14px;
   font-weight: 500;
 }
@@ -110,9 +115,9 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: #2c2c2e;
-  color: #fff;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  background: var(--control-field-bg, #2c2c2e);
+  color: var(--control-field-text, #fff);
+  box-shadow: inset 0 0 0 1px var(--control-field-border-color, rgba(255, 255, 255, 0.08));
 }
 
 :global(.resume-advanced-color-picker-stats) {
@@ -121,7 +126,7 @@
   gap: 8px;
   padding-top: 12px;
   margin-top: 14px;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-top: 1px solid var(--control-panel-border-color, rgba(255, 255, 255, 0.05));
 }
 
 :global(.resume-advanced-color-picker-stat) {
@@ -139,17 +144,17 @@
   min-height: 26px;
   padding: 6px 4px;
   border-radius: 8px;
-  background: #2c2c2e;
-  color: #fff;
+  background: var(--control-field-bg, #2c2c2e);
+  color: var(--control-field-text, #fff);
   font-size: 10px;
   line-height: 1;
   text-align: center;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, Courier New, monospace;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 0 0 1px var(--control-field-border-color, rgba(255, 255, 255, 0.08));
 }
 
 :global(.resume-advanced-color-picker-stat-label) {
-  color: #555;
+  color: var(--control-field-placeholder, #555);
   font-size: 9px;
   line-height: 1;
   letter-spacing: 0.12em;

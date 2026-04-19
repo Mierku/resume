@@ -14,15 +14,18 @@ import { createPortal } from 'react-dom'
 import styles from './Tip.module.scss'
 
 export type TipPlacement = 'top' | 'bottom' | 'left' | 'right'
+export type TipAlign = 'start' | 'center' | 'end'
 
 interface TipProps {
   content: ReactNode
   children: ReactNode
   placement?: TipPlacement
+  align?: TipAlign
   offset?: number
   delayMs?: number
   disabled?: boolean
   className?: string
+  triggerClassName?: string
 }
 
 interface TipPosition {
@@ -38,10 +41,12 @@ export function Tip({
   content,
   children,
   placement = 'top',
-  offset = 10,
+  align = 'center',
+  offset = 6,
   delayMs = 110,
   disabled = false,
   className,
+  triggerClassName,
 }: TipProps) {
   const tipId = useId()
   const triggerRef = useRef<HTMLSpanElement | null>(null)
@@ -49,6 +54,7 @@ export function Tip({
   const openTimerRef = useRef<number | null>(null)
   const [open, setOpen] = useState(false)
   const [position, setPosition] = useState<TipPosition>({ top: -9999, left: -9999 })
+  const visible = open && !disabled
 
   const clearOpenTimer = useCallback(() => {
     if (openTimerRef.current !== null) {
@@ -71,15 +77,39 @@ export function Tip({
 
     if (placement === 'top') {
       nextTop = triggerRect.top - tipRect.height - offset
-      nextLeft = triggerRect.left + triggerRect.width / 2 - tipRect.width / 2
+      if (align === 'start') {
+        nextLeft = triggerRect.left
+      } else if (align === 'end') {
+        nextLeft = triggerRect.right - tipRect.width
+      } else {
+        nextLeft = triggerRect.left + triggerRect.width / 2 - tipRect.width / 2
+      }
     } else if (placement === 'bottom') {
       nextTop = triggerRect.bottom + offset
-      nextLeft = triggerRect.left + triggerRect.width / 2 - tipRect.width / 2
+      if (align === 'start') {
+        nextLeft = triggerRect.left
+      } else if (align === 'end') {
+        nextLeft = triggerRect.right - tipRect.width
+      } else {
+        nextLeft = triggerRect.left + triggerRect.width / 2 - tipRect.width / 2
+      }
     } else if (placement === 'left') {
-      nextTop = triggerRect.top + triggerRect.height / 2 - tipRect.height / 2
+      if (align === 'start') {
+        nextTop = triggerRect.top
+      } else if (align === 'end') {
+        nextTop = triggerRect.bottom - tipRect.height
+      } else {
+        nextTop = triggerRect.top + triggerRect.height / 2 - tipRect.height / 2
+      }
       nextLeft = triggerRect.left - tipRect.width - offset
     } else {
-      nextTop = triggerRect.top + triggerRect.height / 2 - tipRect.height / 2
+      if (align === 'start') {
+        nextTop = triggerRect.top
+      } else if (align === 'end') {
+        nextTop = triggerRect.bottom - tipRect.height
+      } else {
+        nextTop = triggerRect.top + triggerRect.height / 2 - tipRect.height / 2
+      }
       nextLeft = triggerRect.right + offset
     }
 
@@ -89,7 +119,7 @@ export function Tip({
       top: clamp(nextTop, viewportPadding, maxTop),
       left: clamp(nextLeft, viewportPadding, maxLeft),
     })
-  }, [offset, placement])
+  }, [align, offset, placement])
 
   useEffect(() => {
     return () => {
@@ -97,8 +127,13 @@ export function Tip({
     }
   }, [clearOpenTimer])
 
+  useEffect(() => {
+    if (!disabled) return
+    clearOpenTimer()
+  }, [clearOpenTimer, disabled])
+
   useLayoutEffect(() => {
-    if (!open) return
+    if (!visible) return
 
     updatePosition()
 
@@ -112,7 +147,7 @@ export function Tip({
       window.removeEventListener('resize', onWindowChange)
       window.removeEventListener('scroll', onWindowChange, true)
     }
-  }, [open, updatePosition])
+  }, [updatePosition, visible])
 
   const show = () => {
     if (disabled || !content) return
@@ -136,8 +171,8 @@ export function Tip({
     <>
       <span
         ref={triggerRef}
-        className={styles.trigger}
-        aria-describedby={open ? tipId : undefined}
+        className={[styles.trigger, triggerClassName].filter(Boolean).join(' ')}
+        aria-describedby={visible ? tipId : undefined}
         onMouseEnter={show}
         onMouseLeave={hide}
         onFocus={show}
@@ -150,7 +185,7 @@ export function Tip({
       >
         {children}
       </span>
-      {typeof document !== 'undefined' && open
+      {typeof document !== 'undefined' && visible
         ? createPortal(
             <div
               ref={contentRef}

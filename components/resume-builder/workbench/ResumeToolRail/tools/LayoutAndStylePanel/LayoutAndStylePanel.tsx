@@ -459,7 +459,12 @@ export function LayoutAndStylePanel({
   )
   const unifiedFontPreset = resolveResumeFontPreset(unifiedFontFamily)
   const pagePreviewWidth = 128
-  const pagePreviewHeight = data.metadata.page.format === 'free-form' ? 220 : 176
+  const pagePreviewHeights = {
+    a4: 176,
+    letter: 162,
+    'free-form': 176,
+  } as const
+  const pagePreviewHeight = pagePreviewHeights[data.metadata.page.format]
   const pagePreviewInsetX = data.metadata.page.marginX * 0.8
   const pagePreviewInsetY = data.metadata.page.marginY * 0.8
 
@@ -927,6 +932,7 @@ export function LayoutAndStylePanel({
           <div className="resume-typesetting-mode-switch" role="tablist" aria-label="纸张模式">
             {([
               ['a4', 'A4 模式', <FileText size={12} key="a4-icon" />],
+              ['letter', '信纸模式', <FileText size={12} key="letter-icon" />],
               ['free-form', '自由高度', <Maximize2 size={12} key="free-icon" />],
             ] as const).map(([formatValue, formatLabel, formatIcon]) => (
               <button
@@ -993,7 +999,9 @@ export function LayoutAndStylePanel({
           <div className="resume-typesetting-preview-caption">
             {data.metadata.page.format === 'free-form'
               ? 'Content Adaptive Height'
-              : 'Fixed 210 × 297 mm'}
+              : data.metadata.page.format === 'letter'
+                ? 'Fixed 216 × 279 mm'
+                : 'Fixed 210 × 297 mm'}
           </div>
         </div>
 

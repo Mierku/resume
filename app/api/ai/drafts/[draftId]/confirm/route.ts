@@ -68,7 +68,7 @@ export async function POST(
           resumeId: updatedDraft.id,
           title: updatedDraft.title,
           saveMode,
-          previewUrl: `/resume/editor/${updatedDraft.id}`,
+          previewUrl: `/builder/editor/${updatedDraft.id}`,
         },
       })
     }
@@ -116,7 +116,7 @@ export async function POST(
         resumeId: overwritten.id,
         title: overwritten.title,
         saveMode,
-        previewUrl: `/resume/editor/${overwritten.id}`,
+        previewUrl: `/builder/editor/${overwritten.id}`,
       },
     })
   } catch (error) {

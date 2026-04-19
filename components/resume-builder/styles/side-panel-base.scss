@@ -9,10 +9,11 @@
     --color-muted-foreground: var(--builder-panel-text-muted);
     container-type: inline-size;
     container-name: resume-side-panel;
-    background: var(--builder-panel-bg);
+    background: var(--builder-panel-bg-soft);
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
     border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     color: var(--builder-panel-text);
   }
 
@@ -20,6 +21,7 @@
   .resume-side-panel input:not([type="range"]):not([type="color"]),
   .resume-side-panel textarea,
   .resume-side-panel select {
+    border: 1px solid var(--control-field-border-color, transparent);
     box-sizing: border-box;
     min-height: 40px;
     background: var(--control-field-bg);
@@ -47,14 +49,18 @@
   .resume-side-panel textarea:focus-visible,
   .resume-side-panel select:focus,
   .resume-side-panel select:focus-visible {
-    border-color: transparent;
+    border: 1px solid var(--control-field-border-hover, transparent);
+    background: var(--control-field-bg-focus);
   }
 
   .resume-side-panel input::placeholder,
   .resume-side-panel textarea::placeholder {
     color: var(--builder-input-placeholder);
   }
-
+  .resume-side-panel .resume-select-panel.control-panel {
+    background: var(--control-field-bg, var(--control-panel-surface));
+    border-radius: 4px;
+  }
   /* Keep SearchField as a single-layer control inside side panels. */
   .resume-side-panel
     .control-search

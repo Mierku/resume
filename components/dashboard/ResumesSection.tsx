@@ -2,9 +2,10 @@
 
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
-import { ArrowUpRight, FilePlus2, FileText, Layers3, WandSparkles } from 'lucide-react'
+import { Copy, FilePlus2, FileText, Layers3, MoreHorizontal, PenLine, Trash2, WandSparkles } from 'lucide-react'
 import { RESUME_TEMPLATES } from '@/lib/constants'
 import { Skeleton } from '@/components/ui/Skeleton'
+import { toast } from '@/lib/toast'
 import { cn } from '@/lib/utils'
 import styles from './dashboard-workbench.module.scss'
 
@@ -25,15 +26,59 @@ interface ResumeLimitPayload {
   reached: boolean
 }
 
-const dateFormatter = new Intl.DateTimeFormat('zh-CN', {
-  month: 'short',
+const monthDayFormatter = new Intl.DateTimeFormat('zh-CN', {
+  month: 'numeric',
   day: 'numeric',
+})
+
+const fullDateFormatter = new Intl.DateTimeFormat('zh-CN', {
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
   hour: '2-digit',
   minute: '2-digit',
 })
 
-function formatDate(value: string) {
-  return dateFormatter.format(new Date(value))
+const DAY_MS = 24 * 60 * 60 * 1000
+const WEEK_MS = 7 * DAY_MS
+
+function formatFullDate(value: string) {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) {
+    return '时间未知'
+  }
+  return fullDateFormatter.format(date)
+}
+
+function formatLastEdited(value: string) {
+  const date = new Date(value)
+  const timestamp = date.getTime()
+  if (Number.isNaN(timestamp)) {
+    return '时间未知'
+  }
+
+  const diff = Date.now() - timestamp
+  if (diff < 0) {
+    return formatFullDate(value)
+  }
+
+  if (diff < DAY_MS) {
+    return '今天'
+  }
+
+  if (diff < WEEK_MS) {
+    return `${Math.floor(diff / DAY_MS)}天前`
+  }
+
+  if (diff < WEEK_MS * 8) {
+    return `${Math.floor(diff / WEEK_MS)}周前`
+  }
+
+  if (diff < DAY_MS * 365) {
+    return monthDayFormatter.format(date)
+  }
+
+  return formatFullDate(value)
 }
 
 export function ResumesSection() {
@@ -41,6 +86,9 @@ export function ResumesSection() {
   const [resumeLimit, setResumeLimit] = useState<ResumeLimitPayload>({ max: null, reached: false })
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
+  const [activeMenuResumeId, setActiveMenuResumeId] = useState<string | null>(null)
+  const [deletingResumeId, setDeletingResumeId] = useState<string | null>(null)
+  const [duplicatingResumeId, setDuplicatingResumeId] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -85,10 +133,37 @@ export function ResumesSection() {
     }
   }, [])
 
+  useEffect(() => {
+    if (!activeMenuResumeId) {
+      return
+    }
+
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target as HTMLElement | null
+      if (target?.closest('[data-resume-menu-root="true"]')) {
+        return
+      }
+      setActiveMenuResumeId(null)
+    }
+
+    const handleEsc = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setActiveMenuResumeId(null)
+      }
+    }
+
+    window.addEventListener('pointerdown', handlePointerDown)
+    window.addEventListener('keydown', handleEsc)
+    return () => {
+      window.removeEventListener('pointerdown', handlePointerDown)
+      window.removeEventListener('keydown', handleEsc)
+    }
+  }, [activeMenuResumeId])
+
   const creationLimitReached = resumeLimit.reached
   const summaryCards = useMemo(() => {
     const linkedDataSourceCount = new Set(resumes.map(resume => resume.dataSource?.id).filter(Boolean)).size
-    const lastUpdated = resumes[0]?.updatedAt ? formatDate(resumes[0].updatedAt) : '暂无'
+    const lastUpdated = resumes[0]?.updatedAt ? formatLastEdited(resumes[0].updatedAt) : '暂无'
 
     return [
       {
@@ -115,6 +190,101 @@ export function ResumesSection() {
     ]
   }, [resumes])
 
+  const handleDeleteResume = async (resumeId: string) => {
+    const confirmed = window.confirm('确认删除这份简历吗？删除后不可恢复。')
+    if (!confirmed) {
+      return
+    }
+
+    setDeletingResumeId(resumeId)
+
+    try {
+      const response = await fetch(`/api/resumes/${resumeId}`, {
+        method: 'DELETE',
+      })
+
+      if (response.status === 401) {
+        throw new Error('登录后才能删除简历')
+      }
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null)
+        throw new Error(payload?.error || '删除失败')
+      }
+
+      setResumes(current => {
+        const next = current.filter(resume => resume.id !== resumeId)
+        setResumeLimit(limit => {
+          if (limit.max === null) return limit
+          return {
+            ...limit,
+            reached: next.length >= limit.max,
+          }
+        })
+        return next
+      })
+      setActiveMenuResumeId(null)
+      toast.success('简历已删除')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : '删除失败')
+    } finally {
+      setDeletingResumeId(null)
+    }
+  }
+
+  const handleDuplicateResume = async (resume: ResumeSummary) => {
+    setDuplicatingResumeId(resume.id)
+
+    try {
+      const response = await fetch(`/api/resumes/${resume.id}/duplicate`, {
+        method: 'POST',
+      })
+
+      if (response.status === 401) {
+        throw new Error('登录后才能复制简历')
+      }
+
+      const payload = await response.json().catch(() => null)
+      if (!response.ok) {
+        throw new Error(payload?.error || '复制失败')
+      }
+
+      const duplicatedResume = payload?.resume as Partial<ResumeSummary> | null
+      if (!duplicatedResume?.id) {
+        throw new Error('复制失败')
+      }
+
+      const nextResume: ResumeSummary = {
+        id: String(duplicatedResume.id),
+        title: typeof duplicatedResume.title === 'string' ? duplicatedResume.title : `${resume.title} - 副本`,
+        templateId: typeof duplicatedResume.templateId === 'string' ? duplicatedResume.templateId : resume.templateId,
+        updatedAt:
+          typeof duplicatedResume.updatedAt === 'string' ? duplicatedResume.updatedAt : new Date().toISOString(),
+        dataSourceId: resume.dataSourceId ?? null,
+        dataSource: resume.dataSource ?? null,
+      }
+
+      setResumes(current => {
+        const next = [nextResume, ...current]
+        setResumeLimit(limit => {
+          if (limit.max === null) return limit
+          return {
+            ...limit,
+            reached: next.length >= limit.max,
+          }
+        })
+        return next
+      })
+
+      setActiveMenuResumeId(null)
+      toast.success('已复制简历')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : '复制失败')
+    } finally {
+      setDuplicatingResumeId(null)
+    }
+  }
+
   return (
     <div className={styles.sectionShell}>
       <header className={styles.sectionHeader}>
@@ -133,11 +303,11 @@ export function ResumesSection() {
         </div>
 
         <div className={styles.sectionHeaderActions}>
-          <Link href="/resume/templates" className={cn(styles.buttonBase, styles.secondaryButton)}>
+          <Link href="/builder/templates" className={cn(styles.buttonBase, styles.secondaryButton)}>
             模板中心
           </Link>
           <Link
-            href={creationLimitReached ? '/pricing' : '/resume/templates'}
+            href={creationLimitReached ? '/pricing' : '/builder/templates'}
             className={cn(styles.buttonBase, styles.primaryButton)}
           >
             <FilePlus2 size={16} />
@@ -178,7 +348,7 @@ export function ResumesSection() {
           <h2 className={styles.stateTitle}>还没有保存过简历</h2>
           <p className={styles.stateText}>从模板中心选择一个模板开始，工作台会自动把你的已保存简历统一收纳在这里。</p>
           <div className={styles.stateActions}>
-            <Link href="/resume/templates" className={cn(styles.buttonBase, styles.primaryButton)}>
+            <Link href="/builder/templates" className={cn(styles.buttonBase, styles.primaryButton)}>
               开始创建
             </Link>
           </div>
@@ -190,41 +360,82 @@ export function ResumesSection() {
 
             return (
               <article key={resume.id} className={cn(styles.panel, styles.resumeCard)}>
-                <Link href={`/resume/editor/${resume.id}`} className={styles.resumePreviewShell}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={template.preview}
-                    alt={`${template.name} 模板预览`}
-                    className={styles.resumePreview}
-                    loading="lazy"
-                    decoding="async"
-                    draggable={false}
-                  />
-                </Link>
+                <div className={styles.resumePreviewShell}>
+                  <Link href={`/builder/editor/${resume.id}`} className={styles.resumePreviewLink}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={template.preview}
+                      alt={`${template.name} 模板预览`}
+                      className={styles.resumePreview}
+                      loading="lazy"
+                      decoding="async"
+                      draggable={false}
+                    />
+                  </Link>
+                  <span className={styles.resumePreviewOverlay} aria-hidden="true" />
+                  <div
+                    className={cn(
+                      styles.resumeCardMenu,
+                      activeMenuResumeId === resume.id && styles.resumeCardMenuOpen
+                    )}
+                    data-resume-menu-root="true"
+                  >
+                    <button
+                      type="button"
+                      className={styles.resumeCardMenuTrigger}
+                      aria-label="更多操作"
+                      aria-haspopup="menu"
+                      aria-expanded={activeMenuResumeId === resume.id}
+                      onClick={() => {
+                        setActiveMenuResumeId(current => (current === resume.id ? null : resume.id))
+                      }}
+                      disabled={deletingResumeId === resume.id || duplicatingResumeId === resume.id}
+                    >
+                      <MoreHorizontal size={16} />
+                    </button>
+                    {activeMenuResumeId === resume.id ? (
+                      <div className={styles.resumeCardMenuList} role="menu">
+                        <Link
+                          href={`/builder/editor/${resume.id}`}
+                          role="menuitem"
+                          className={styles.resumeCardMenuItem}
+                          onClick={() => {
+                            setActiveMenuResumeId(null)
+                          }}
+                        >
+                          <PenLine size={14} />
+                          编辑
+                        </Link>
+                        <button
+                          type="button"
+                          role="menuitem"
+                          className={styles.resumeCardMenuItem}
+                          onClick={() => void handleDuplicateResume(resume)}
+                          disabled={duplicatingResumeId === resume.id || deletingResumeId === resume.id}
+                        >
+                          <Copy size={14} />
+                          {duplicatingResumeId === resume.id ? '复制中...' : '复制'}
+                        </button>
+                        <button
+                          type="button"
+                          role="menuitem"
+                          className={cn(styles.resumeCardMenuItem, styles.resumeCardMenuItemDanger)}
+                          onClick={() => void handleDeleteResume(resume.id)}
+                          disabled={deletingResumeId === resume.id || duplicatingResumeId === resume.id}
+                        >
+                          <Trash2 size={14} />
+                          {deletingResumeId === resume.id ? '删除中...' : '删除'}
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
 
                 <div className={styles.resumeBody}>
-                  <div>
-                    <h2 className={styles.resumeTitle}>{resume.title}</h2>
-                    <p className={styles.resumeText}>更新于 {formatDate(resume.updatedAt)}</p>
-                  </div>
-
-                  <div className={styles.resumeMeta}>
-                    <span className={styles.inlineTag}>{template.name}</span>
-                    <span className={styles.inlineTag}>{resume.dataSource?.name || '未关联数据源'}</span>
-                  </div>
-
-                  <div className={styles.cardActionGrid}>
-                    <Link href={`/resume/editor/${resume.id}`} className={cn(styles.buttonBase, styles.primaryButton)}>
-                      继续编辑
-                      <ArrowUpRight size={15} />
-                    </Link>
-                    <Link
-                      href={creationLimitReached ? '/pricing' : '/resume/templates'}
-                      className={cn(styles.buttonBase, styles.secondaryButton)}
-                    >
-                      {creationLimitReached ? '升级后再建' : '再建一份'}
-                    </Link>
-                  </div>
+                  <h2 className={styles.resumeTitle}>{resume.title}</h2>
+                  <p className={styles.resumeUpdatedAt} title={formatFullDate(resume.updatedAt)}>
+                    最后编辑 {formatLastEdited(resume.updatedAt)}
+                  </p>
                 </div>
               </article>
             )

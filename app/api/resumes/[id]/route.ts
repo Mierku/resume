@@ -8,6 +8,8 @@ const updateSchema = z.object({
   templateId: z.string().optional(),
   dataSourceId: z.string().nullable().optional(),
   mode: z.enum(['form', 'markdown']).optional(),
+  shareVisibility: z.enum(['private', 'public']).optional(),
+  shareWithRecruiters: z.boolean().optional(),
   content: z.record(z.any()).optional(),
 })
 

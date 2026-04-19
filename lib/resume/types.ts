@@ -261,9 +261,10 @@ export interface LayoutData {
   pages: PageLayout[]
 }
 
-export type ResumePageFormat = 'a4' | 'free-form'
+export type ResumePageFormat = 'a4' | 'letter' | 'free-form'
 
 export function normalizeResumePageFormat(value: unknown): ResumePageFormat {
+  if (value === 'letter') return 'letter'
   return value === 'free-form' ? 'free-form' : 'a4'
 }
 

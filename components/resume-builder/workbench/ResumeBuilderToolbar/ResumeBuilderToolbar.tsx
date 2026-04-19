@@ -1,7 +1,13 @@
-'use client'
+"use client";
 
-import { type KeyboardEvent as ReactKeyboardEvent, type ReactNode, useEffect, useRef, useState } from 'react'
-import { Button, IconLeft, IconSave, Input, Space } from '../../primitives'
+import {
+  type KeyboardEvent as ReactKeyboardEvent,
+  type ReactNode,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import { Button, IconLeft, IconSave, Input, Space } from "../../primitives";
 
 function ToolbarSpinnerIcon() {
   return (
@@ -19,7 +25,7 @@ function ToolbarSpinnerIcon() {
     >
       <path d="M21 12a9 9 0 1 1-2.64-6.36" />
     </svg>
-  )
+  );
 }
 
 function PdfFileIcon() {
@@ -38,7 +44,7 @@ function PdfFileIcon() {
       <polyline points="14 2 14 8 20 8" />
       <path d="M9 15h3a1 1 0 0 1 0 2H9M9 12h3a1 1 0 1 1 0 2H9v-2z" />
     </svg>
-  )
+  );
 }
 
 function PngFileIcon() {
@@ -57,7 +63,7 @@ function PngFileIcon() {
       <circle cx="8.5" cy="8.5" r="1.5" />
       <polyline points="21 15 16 10 5 21" />
     </svg>
-  )
+  );
 }
 
 function JpgFileIcon() {
@@ -75,113 +81,124 @@ function JpgFileIcon() {
       <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
       <circle cx="12" cy="13" r="4" />
     </svg>
-  )
+  );
 }
 
 interface ResumeBuilderToolbarProps {
-  resumeTitle: string
-  saveStatus: ReactNode
-  saveLoading: boolean
-  onBack: () => void
-  onResumeTitleChange: (value: string) => void
-  onResumeTitleBlur: () => void
-  downloadLoading: boolean
-  onDownloadPng: () => void
-  onDownloadJpg: () => void
-  onDownloadPdf: () => void
-  onSave: () => void
+  resumeTitle: string;
+  saveStatus: ReactNode;
+  saveLoading: boolean;
+  shareVisibility: "private" | "public";
+  shareWithRecruiters: boolean;
+  shareSaving: boolean;
+  onBack: () => void;
+  onResumeTitleChange: (value: string) => void;
+  onResumeTitleBlur: () => void;
+  downloadLoading: boolean;
+  onChangeShareVisibility: (value: "private" | "public") => void;
+  onToggleShareWithRecruiters: (value: boolean) => void;
+  onCopyShareLink: () => void;
+  onDownloadPng: () => void;
+  onDownloadJpg: () => void;
+  onDownloadPdf: () => void;
+  onSave: () => void;
 }
 
 export function ResumeBuilderToolbar({
   resumeTitle,
   saveStatus,
   saveLoading,
+  shareVisibility,
+  shareWithRecruiters,
+  shareSaving,
   onBack,
   onResumeTitleChange,
   onResumeTitleBlur,
   downloadLoading,
+  onChangeShareVisibility,
+  onToggleShareWithRecruiters,
+  onCopyShareLink,
   onDownloadPng,
   onDownloadJpg,
   onDownloadPdf,
   onSave,
 }: ResumeBuilderToolbarProps) {
-  const [isTitleEditing, setIsTitleEditing] = useState(false)
-  const [downloadMenuOpen, setDownloadMenuOpen] = useState(false)
-  const downloadMenuRef = useRef<HTMLDivElement | null>(null)
-  const titleBeforeEditingRef = useRef(resumeTitle)
-  const skipCommitOnBlurRef = useRef(false)
-  const displayTitle = resumeTitle.trim() || '未命名简历'
+  const [isTitleEditing, setIsTitleEditing] = useState(false);
+  const [shareMenuOpen, setShareMenuOpen] = useState(false);
+  const [downloadMenuOpen, setDownloadMenuOpen] = useState(false);
+  const shareMenuRef = useRef<HTMLDivElement | null>(null);
+  const downloadMenuRef = useRef<HTMLDivElement | null>(null);
+  const titleBeforeEditingRef = useRef(resumeTitle);
+  const skipCommitOnBlurRef = useRef(false);
+  const displayTitle = resumeTitle.trim() || "未命名简历";
 
   useEffect(() => {
-    if (!downloadMenuOpen) return
+    if (!downloadMenuOpen && !shareMenuOpen) return;
 
     const handlePointerDownOutside = (event: PointerEvent) => {
-      const target = event.target
-      if (!(target instanceof Node)) return
-      if (downloadMenuRef.current?.contains(target)) return
-      setDownloadMenuOpen(false)
-    }
+      const target = event.target;
+      if (!(target instanceof Node)) return;
+      if (downloadMenuRef.current?.contains(target)) return;
+      if (shareMenuRef.current?.contains(target)) return;
+      setDownloadMenuOpen(false);
+      setShareMenuOpen(false);
+    };
 
     const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setDownloadMenuOpen(false)
+      if (event.key === "Escape") {
+        setDownloadMenuOpen(false);
+        setShareMenuOpen(false);
       }
-    }
+    };
 
-    window.addEventListener('pointerdown', handlePointerDownOutside)
-    window.addEventListener('keydown', handleEscape)
+    window.addEventListener("pointerdown", handlePointerDownOutside);
+    window.addEventListener("keydown", handleEscape);
     return () => {
-      window.removeEventListener('pointerdown', handlePointerDownOutside)
-      window.removeEventListener('keydown', handleEscape)
-    }
-  }, [downloadMenuOpen])
-
-  useEffect(() => {
-    if (downloadLoading) {
-      setDownloadMenuOpen(false)
-    }
-  }, [downloadLoading])
+      window.removeEventListener("pointerdown", handlePointerDownOutside);
+      window.removeEventListener("keydown", handleEscape);
+    };
+  }, [downloadMenuOpen, shareMenuOpen]);
 
   const startTitleEditing = () => {
-    titleBeforeEditingRef.current = resumeTitle
-    setIsTitleEditing(true)
-  }
+    titleBeforeEditingRef.current = resumeTitle;
+    setIsTitleEditing(true);
+  };
 
   const handleTitleBlur = () => {
-    setIsTitleEditing(false)
+    setIsTitleEditing(false);
     if (skipCommitOnBlurRef.current) {
-      skipCommitOnBlurRef.current = false
-      return
+      skipCommitOnBlurRef.current = false;
+      return;
     }
-    onResumeTitleBlur()
-  }
+    onResumeTitleBlur();
+  };
 
   const downloadOptions = [
     {
-      id: 'pdf',
-      label: 'PDF 下载',
-      desc: '适合打印与正式投递',
+      id: "pdf",
+      label: "PDF 下载",
+      desc: "适合打印与正式投递",
       icon: <PdfFileIcon />,
       onSelect: onDownloadPdf,
     },
     {
-      id: 'png',
-      label: '图片下载 (PNG)',
-      desc: '高清无损图片格式',
+      id: "png",
+      label: "图片下载 (PNG)",
+      desc: "高清无损图片格式",
       icon: <PngFileIcon />,
       onSelect: onDownloadPng,
     },
     {
-      id: 'jpg',
-      label: '图片下载 (JPG)',
-      desc: '较小的文件体积',
+      id: "jpg",
+      label: "图片下载 (JPG)",
+      desc: "较小的文件体积",
       icon: <JpgFileIcon />,
       onSelect: onDownloadJpg,
     },
-  ] as const
+  ] as const;
 
   return (
-    <div className="resume-toolbar border-b px-4 py-2 flex items-center gap-3 no-print flex-shrink-0">
+    <div className="resume-toolbar">
       <div className="resume-toolbar-left flex min-w-0 flex-1 items-center gap-2">
         <Button
           type="text"
@@ -190,25 +207,27 @@ export function ResumeBuilderToolbar({
           aria-label="返回"
           tipPlacement="bottom"
         />
-        <div className={`resume-toolbar-title-wrap${isTitleEditing ? ' is-editing' : ''}`}>
+        <div
+          className={`resume-toolbar-title-wrap${isTitleEditing ? " is-editing" : ""}`}
+        >
           {isTitleEditing ? (
             <Input
               value={resumeTitle}
               onChange={onResumeTitleChange}
               onBlur={handleTitleBlur}
-              onFocus={event => {
-                event.currentTarget.select()
+              onFocus={(event) => {
+                event.currentTarget.select();
               }}
               onKeyDown={(event: ReactKeyboardEvent<HTMLInputElement>) => {
-                if (event.key === 'Enter') {
-                  event.currentTarget.blur()
-                  return
+                if (event.key === "Enter") {
+                  event.currentTarget.blur();
+                  return;
                 }
 
-                if (event.key === 'Escape') {
-                  skipCommitOnBlurRef.current = true
-                  onResumeTitleChange(titleBeforeEditingRef.current)
-                  setIsTitleEditing(false)
+                if (event.key === "Escape") {
+                  skipCommitOnBlurRef.current = true;
+                  onResumeTitleChange(titleBeforeEditingRef.current);
+                  setIsTitleEditing(false);
                 }
               }}
               autoFocus
@@ -231,7 +250,7 @@ export function ResumeBuilderToolbar({
       <div className="flex items-center gap-3">
         <Space className="gap-3">
           <Button
-            type="secondary"
+            type="text"
             icon={<IconSave />}
             onClick={onSave}
             title="保存 (⌘S / Ctrl+S)"
@@ -241,12 +260,81 @@ export function ResumeBuilderToolbar({
             保存
           </Button>
           <div
-            ref={downloadMenuRef}
-            className={`resume-toolbar-download-menu${downloadMenuOpen ? ' is-open' : ''}`}
+            ref={shareMenuRef}
+            className={`resume-toolbar-share-menu${shareMenuOpen ? " is-open" : ""}`}
           >
             <button
               type="button"
-              onClick={() => setDownloadMenuOpen(open => !open)}
+              onClick={() => setShareMenuOpen((open) => !open)}
+              className="resume-toolbar-share-trigger"
+              aria-haspopup="menu"
+              aria-expanded={shareMenuOpen}
+              disabled={shareSaving}
+            >
+              分享
+            </button>
+            <div
+              className="resume-toolbar-share-panel"
+              role="menu"
+              aria-label="分享设置"
+            >
+              <div className="resume-toolbar-share-panel-body">
+                <div className="resume-toolbar-share-visibility-group">
+                  <button
+                    type="button"
+                    className={`resume-toolbar-share-option${shareVisibility === "private" ? " is-active" : ""}`}
+                    onClick={() => {
+                      onChangeShareVisibility("private");
+                      setShareMenuOpen(false);
+                    }}
+                    disabled={shareSaving}
+                  >
+                    私人
+                  </button>
+                  <button
+                    type="button"
+                    className={`resume-toolbar-share-option${shareVisibility === "public" ? " is-active" : ""}`}
+                    onClick={() => {
+                      onChangeShareVisibility("public");
+                      setShareMenuOpen(false);
+                    }}
+                    disabled={shareSaving}
+                  >
+                    公开
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  className={`resume-toolbar-share-recruiter-toggle${shareWithRecruiters ? " is-active" : ""}`}
+                  onClick={() => {
+                    onToggleShareWithRecruiters(!shareWithRecruiters);
+                    setShareMenuOpen(false);
+                  }}
+                  disabled={shareSaving || shareVisibility !== "public"}
+                >
+                  是否分享给招聘者看
+                </button>
+                <button
+                  type="button"
+                  className="resume-toolbar-share-copy-button"
+                  onClick={() => {
+                    onCopyShareLink();
+                    setShareMenuOpen(false);
+                  }}
+                  disabled={shareSaving}
+                >
+                  复制链接
+                </button>
+              </div>
+            </div>
+          </div>
+          <div
+            ref={downloadMenuRef}
+            className={`resume-toolbar-download-menu${downloadMenuOpen ? " is-open" : ""}`}
+          >
+            <button
+              type="button"
+              onClick={() => setDownloadMenuOpen((open) => !open)}
               className="resume-toolbar-download-trigger"
               aria-haspopup="menu"
               aria-expanded={downloadMenuOpen}
@@ -257,32 +345,51 @@ export function ResumeBuilderToolbar({
                   <ToolbarSpinnerIcon />
                 </span>
               ) : null}
-              <span className="resume-toolbar-download-trigger-label">快速下载
-              <span>
-                  <svg height="18" width="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path fill="#ffffff" d="M5 20h14v-2H5v2zM19 9h-4V3H9v6H5l7 7 7-7z"></path>
+              <span className="resume-toolbar-download-trigger-label">
+                快速下载
+                <span>
+                  <svg
+                    height="18"
+                    width="18"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      fill="#ffffff"
+                      d="M5 20h14v-2H5v2zM19 9h-4V3H9v6H5l7 7 7-7z"
+                    ></path>
                   </svg>
-              </span>
+                </span>
               </span>
             </button>
-            <div className="resume-toolbar-download-panel" role="menu" aria-label="下载选项">
+            <div
+              className="resume-toolbar-download-panel"
+              role="menu"
+              aria-label="下载选项"
+            >
               <div className="resume-toolbar-download-panel-body">
-                {downloadOptions.map(option => (
+                {downloadOptions.map((option) => (
                   <button
                     key={option.id}
                     type="button"
                     className="resume-toolbar-download-option"
                     role="menuitem"
                     onClick={() => {
-                      setDownloadMenuOpen(false)
-                      option.onSelect()
+                      setDownloadMenuOpen(false);
+                      option.onSelect();
                     }}
                     disabled={downloadLoading}
                   >
-                    <span className="resume-toolbar-download-option-icon-shell">{option.icon}</span>
+                    <span className="resume-toolbar-download-option-icon-shell">
+                      {option.icon}
+                    </span>
                     <span className="resume-toolbar-download-option-copy">
-                      <span className="resume-toolbar-download-option-label">{option.label}</span>
-                      <span className="resume-toolbar-download-option-desc">{option.desc}</span>
+                      <span className="resume-toolbar-download-option-label">
+                        {option.label}
+                      </span>
+                      <span className="resume-toolbar-download-option-desc">
+                        {option.desc}
+                      </span>
                     </span>
                   </button>
                 ))}
@@ -292,9 +399,8 @@ export function ResumeBuilderToolbar({
               </div>
             </div>
           </div>
-
         </Space>
       </div>
     </div>
-  )
+  );
 }

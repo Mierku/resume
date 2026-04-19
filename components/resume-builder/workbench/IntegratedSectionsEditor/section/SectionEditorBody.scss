@@ -99,9 +99,7 @@
 
   .resume-basics-photo-floating.is-expanded,
   .resume-basics-photo-floating:focus-within {
-    border: 2px solid
-      color-mix(in srgb, var(--control-focus-border) 22%, transparent);
-    background: var(--control-field-bg);
+    background: var(--control-field-bg-hover);
   }
 
   .resume-basics-photo-floating.is-expanded {
@@ -112,7 +110,6 @@
     width: 100%;
     min-height: 38px;
     padding: 0 12px;
-    background: var(--control-field-bg);
     color: var(--builder-panel-text);
     text-align: left;
     cursor: pointer;
@@ -315,8 +312,13 @@
 
   .resume-basics-extra-section {
     border-radius: 10px;
-    border: 1px solid color-mix(in srgb, var(--builder-card-border) 92%, transparent);
-    background: color-mix(in srgb, var(--builder-card-bg-hover) 68%, transparent);
+    border: 1px solid
+      color-mix(in srgb, var(--builder-card-border) 92%, transparent);
+    background: color-mix(
+      in srgb,
+      var(--builder-card-bg-hover) 68%,
+      transparent
+    );
     padding: 12px;
   }
 
@@ -343,7 +345,8 @@
 
   .resume-basics-extra-tag {
     height: 28px;
-    border: 1px dashed color-mix(in srgb, var(--builder-panel-border-strong) 78%, transparent);
+    border: 1px dashed
+      color-mix(in srgb, var(--builder-panel-border-strong) 78%, transparent);
     border-radius: 999px;
     background: color-mix(in srgb, var(--control-field-bg) 88%, transparent);
     color: var(--builder-panel-text-muted);
@@ -359,8 +362,16 @@
 
   .resume-basics-extra-tag:hover,
   .resume-basics-extra-tag:focus-visible {
-    border-color: color-mix(in srgb, var(--builder-panel-border-strong) 94%, transparent);
-    background: color-mix(in srgb, var(--control-field-bg-hover) 90%, transparent);
+    border-color: color-mix(
+      in srgb,
+      var(--builder-panel-border-strong) 94%,
+      transparent
+    );
+    background: color-mix(
+      in srgb,
+      var(--control-field-bg-hover) 90%,
+      transparent
+    );
     color: var(--builder-panel-text);
     outline: none;
   }

@@ -1325,7 +1325,10 @@ export function IntegratedSectionsEditor({
 
       <div
         ref={scrollContainerRef}
-        className="resume-scroll-shell resume-editor-tab-content-scroll"
+        className="scroll-shell resume-scroll-shell resume-editor-tab-content-scroll"
+        data-scroll-tone="panel"
+        data-scroll-reveal="always"
+        data-scroll-axis="y"
       >
         <div className="resume-side-panel-body resume-workbench-panel-body resume-editor-panel-body resume-editor-tab-content-body">
           <div

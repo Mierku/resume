@@ -6,7 +6,7 @@
 }
 
 /* ===== 通用语义变量（浅色：表单、选择器、浮层）===== */
-.resume-builder-scope {
+:root {
   --background: #ffffff;
   --foreground: #111111;
   --border: rgba(0, 0, 0, 0.18);
@@ -48,43 +48,45 @@
     transparent
   );
   --control-active-indicator: var(--color-foreground);
-  --resume-select-bg: #ffffff;
-  --resume-select-bg-hover: #f5f5f5;
-  --resume-select-text: #111111;
-  --resume-select-muted: #71717a;
-  --resume-select-border: rgba(0, 0, 0, 0.18);
-  --resume-select-border-hover: rgba(0, 0, 0, 0.26);
-  --resume-select-border-focus: #fac460;
-  --resume-select-ring: color-mix(
+
+  --control-field-bg: #ffffff;
+  --control-field-bg-hover: #f5f5f5;
+  --control-field-bg-focus: #ffffff;
+
+  --control-field-text: #111111;
+  --control-field-placeholder: #71717a;
+  --control-field-border-color: transparent;
+  --control-field-border-hover: rgba(255, 77, 77);
+  --control-field-focus-color: #fac460;
+  --control-field-focus-ring: color-mix(
     in srgb,
-    var(--resume-select-border-focus) 16%,
+    var(--control-field-focus-color) 16%,
     transparent
   );
-  --resume-select-panel-bg: #ffffff;
-  --resume-select-panel-border: rgba(0, 0, 0, 0.16);
-  --resume-select-panel-shadow: 0 12px 24px -6px rgba(0, 0, 0, 0.24);
-  --resume-select-option-hover: rgba(0, 0, 0, 0.06);
-  --resume-select-option-selected-bg: color-mix(
+  --control-panel-bg: #ffffff;
+  --control-panel-border-color: rgba(0, 0, 0, 0.16);
+  --control-panel-shadow-value: 0 12px 24px -6px rgba(0, 0, 0, 0.24);
+  --control-option-hover-bg: rgba(0, 0, 0, 0.06);
+  --control-option-selected-bg: color-mix(
     in srgb,
-    var(--resume-select-border-focus) 12%,
+    var(--control-field-focus-color) 12%,
     transparent
   );
-  --resume-select-option-selected-text: var(--resume-select-border-focus);
-  --control-field-bg: var(--resume-select-bg);
-  --control-field-bg-hover: var(--resume-select-bg-hover);
-  --control-field-focus-ring: var(--resume-select-ring);
-  --control-field-text: var(--resume-select-text);
-  --control-field-placeholder: var(--resume-select-muted);
-  --control-panel-bg: var(--resume-select-panel-bg);
-  --control-panel-border-color: var(--resume-select-panel-border);
-  --control-panel-shadow-value: var(--resume-select-panel-shadow);
-  --control-option-hover-bg: var(--resume-select-option-hover);
-  --control-option-selected-bg: var(--resume-select-option-selected-bg);
-  --control-option-selected-text: var(--resume-select-option-selected-text);
+  --control-option-selected-text: var(--control-field-focus-color);
+  --control-slider-track-bg: #d9d9dd;
+  --control-slider-fill-bg: #b8b8bc;
+  --control-slider-thumb-bg: #1a1a1d;
+  --control-slider-thumb-ring: rgba(255, 255, 255, 0.08);
+  --control-slider-thumb-shadow: 0 6px 12px rgba(0, 0, 0, 0.26);
+  --control-slider-track-height: 6px;
+  --control-slider-thumb-size: 24px;
+  // 控件
+  --control-field-bg: rgb(228, 228, 228);
+  --control-field-bg-hover: rgb(221, 221, 221);
 }
 
 /* ===== 通用语义变量（深色覆盖）===== */
-[data-theme="dark"] .resume-builder-scope {
+[data-theme="dark"] {
   --background: #090909;
   --foreground: rgba(243, 243, 243, 0.96);
   --border: rgba(255, 255, 255, 0.2);
@@ -125,33 +127,31 @@
     transparent
   );
   --control-active-indicator: var(--color-foreground);
-  --resume-select-bg: #232323;
-  --resume-select-bg-hover: #2b2b2b;
-  --resume-select-text: #d4d4d8;
-  --resume-select-muted: #a1a1aa;
-  --resume-select-border: #3f3f46;
-  --resume-select-border-hover: #52525b;
-  --resume-select-border-focus: #2274b8;
-  --resume-select-ring: color-mix(
+  --control-field-border-color: transparent;
+  --control-field-bg: #232323;
+  --control-field-bg-hover: #2b2b2b;
+  --control-field-bg-focus: #323232;
+  --control-field-text: #d4d4d8;
+  --control-field-placeholder: #a1a1aa;
+  --control-field-border-color: transparent;
+  --control-field-border-hover: rgba(255, 77, 77);
+  --control-field-focus-color: #2274b8;
+  --control-field-focus-ring: color-mix(
     in srgb,
-    var(--resume-select-border-focus) 16%,
+    var(--control-field-focus-color) 16%,
     transparent
   );
-  --resume-select-panel-bg: #1c1c1e;
-  --resume-select-panel-border: #3f3f46;
-  --resume-select-panel-shadow: 0 12px 24px -6px rgba(0, 0, 0, 0.5);
-  --resume-select-option-hover: #27272a;
-  --resume-select-option-selected-bg: var(--resume-select-border-focus);
-  --resume-select-option-selected-text: var(--resume-select-border-focus);
-  --control-field-bg: var(--resume-select-bg);
-  --control-field-bg-hover: var(--resume-select-bg-hover);
-  --control-field-focus-ring: var(--resume-select-ring);
-  --control-field-text: var(--resume-select-text);
-  --control-field-placeholder: var(--resume-select-muted);
-  --control-panel-bg: var(--resume-select-panel-bg);
-  --control-panel-border-color: var(--resume-select-panel-border);
-  --control-panel-shadow-value: var(--resume-select-panel-shadow);
-  --control-option-hover-bg: var(--resume-select-option-hover);
-  --control-option-selected-bg: var(--resume-select-option-selected-bg);
-  --control-option-selected-text: var(--resume-select-option-selected-text);
+  --control-panel-bg: #1c1c1e;
+  --control-panel-border-color: #3f3f46;
+  --control-panel-shadow-value: 0 12px 24px -6px rgba(0, 0, 0, 0.5);
+  --control-option-hover-bg: #27272a;
+  --control-option-selected-bg: var(--control-field-focus-color);
+  --control-option-selected-text: var(--control-field-focus-color);
+  --control-slider-track-bg: #55555b;
+  --control-slider-fill-bg: #c8c8ce;
+  --control-slider-thumb-bg: #1a1a1d;
+  --control-slider-thumb-ring: rgba(255, 255, 255, 0.1);
+  --control-slider-thumb-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+  --control-slider-track-height: 6px;
+  --control-slider-thumb-size: 24px;
 }

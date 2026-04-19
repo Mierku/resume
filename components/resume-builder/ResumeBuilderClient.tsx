@@ -56,14 +56,14 @@ const ResumeReactivePreview = dynamic(
   { ssr: false },
 );
 
-const THEME_STORAGE_KEY = "theme";
-
 interface ResumeBuilderClientProps {
   initialResume: {
     id: string;
     title: string;
     templateId: string;
     dataSourceId?: string | null;
+    shareVisibility?: "private" | "public";
+    shareWithRecruiters?: boolean;
     content: unknown;
   };
   dataSources: ResumeDataSource[];
@@ -117,6 +117,13 @@ export function ResumeBuilderClient({
   const focusRequestCounterRef = useRef(0);
   const sidePanelScrollTimerRef = useRef<number | null>(null);
   const isGuestDraft = initialResume.id.startsWith("guest-");
+  const [shareVisibility, setShareVisibility] = useState<"private" | "public">(
+    initialResume.shareVisibility || "private",
+  );
+  const [shareWithRecruiters, setShareWithRecruiters] = useState<boolean>(
+    Boolean(initialResume.shareWithRecruiters),
+  );
+  const [shareSaving, setShareSaving] = useState(false);
 
   const {
     resumeTitle,
@@ -302,6 +309,15 @@ export function ResumeBuilderClient({
   }, [initialResume.id, resetAIPreview, resetPreviewReady]);
 
   useEffect(() => {
+    setShareVisibility(initialResume.shareVisibility || "private");
+    setShareWithRecruiters(Boolean(initialResume.shareWithRecruiters));
+  }, [
+    initialResume.id,
+    initialResume.shareVisibility,
+    initialResume.shareWithRecruiters,
+  ]);
+
+  useEffect(() => {
     if (typeof window === "undefined") return;
 
     const loadingToastId = window.sessionStorage.getItem(
@@ -331,7 +347,7 @@ export function ResumeBuilderClient({
   }, [initialResume.id]);
 
   const handleBackFromEditor = useCallback(() => {
-    router.push(isGuestDraft ? "/resume/templates" : "/dashboard");
+    router.push(isGuestDraft ? "/builder/templates" : "/dashboard");
   }, [isGuestDraft, router]);
 
   const ensureAuthForAction = useCallback(async () => {
@@ -364,10 +380,101 @@ export function ResumeBuilderClient({
 
   const handleGuestResumeCreated = useCallback(
     (resumeId: string) => {
-      router.replace(`/resume/editor/${resumeId}`);
+      router.replace(`/builder/editor/${resumeId}`);
     },
     [router],
   );
+
+  const updateShareSettings = useCallback(
+    async (
+      nextShareVisibility: "private" | "public",
+      nextShareWithRecruiters: boolean,
+    ) => {
+      if (isGuestDraft) {
+        toast.message("请先保存简历后再设置分享");
+        return;
+      }
+
+      const authed = await ensureAuthForAction();
+      if (!authed) return;
+
+      setShareSaving(true);
+      try {
+        const response = await fetch(
+          `/api/resumes/${encodeURIComponent(initialResume.id)}`,
+          {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              shareVisibility: nextShareVisibility,
+              shareWithRecruiters:
+                nextShareVisibility === "public"
+                  ? nextShareWithRecruiters
+                  : false,
+            }),
+          },
+        );
+
+        if (!response.ok) {
+          const payload = await response
+            .json()
+            .catch(() => ({ error: "分享设置更新失败" }));
+          throw new Error(payload.error || "分享设置更新失败");
+        }
+
+        setShareVisibility(nextShareVisibility);
+        setShareWithRecruiters(
+          nextShareVisibility === "public"
+            ? nextShareWithRecruiters
+            : false,
+        );
+        toast.success("分享设置已更新");
+      } catch (error) {
+        toast.error(
+          error instanceof Error ? error.message : "分享设置更新失败",
+        );
+      } finally {
+        setShareSaving(false);
+      }
+    },
+    [ensureAuthForAction, initialResume.id, isGuestDraft],
+  );
+
+  const handleChangeShareVisibility = useCallback(
+    (nextShareVisibility: "private" | "public") => {
+      const nextShareWithRecruiters =
+        nextShareVisibility === "public" ? shareWithRecruiters : false;
+      void updateShareSettings(nextShareVisibility, nextShareWithRecruiters);
+    },
+    [shareWithRecruiters, updateShareSettings],
+  );
+
+  const handleToggleShareWithRecruiters = useCallback(
+    (nextValue: boolean) => {
+      const normalized = shareVisibility === "public" ? nextValue : false;
+      void updateShareSettings(shareVisibility, normalized);
+    },
+    [shareVisibility, updateShareSettings],
+  );
+
+  const handleCopyShareLink = useCallback(async () => {
+    if (isGuestDraft) {
+      toast.message("请先保存简历后再复制分享链接");
+      return;
+    }
+
+    if (typeof window === "undefined") return;
+    const shareUrl = `${window.location.origin}/resume/${encodeURIComponent(
+      initialResume.id,
+    )}`;
+
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      toast.success("分享链接已复制");
+    } catch {
+      toast.error("复制失败，请手动复制");
+    }
+  }, [initialResume.id, isGuestDraft]);
 
   const { handleManualSave } = useManualSave({
     ensureAuthForAction,
@@ -422,14 +529,6 @@ export function ResumeBuilderClient({
   //     document.body.classList.remove('resume-editor-panel-resizing')
   //   }
   // }, [])
-
-  useEffect(() => {
-    if (typeof document === "undefined") return;
-    document.documentElement.setAttribute("data-theme", "dark");
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(THEME_STORAGE_KEY, "dark");
-    }
-  }, []);
 
   useEffect(() => {
     return () => {
@@ -522,10 +621,18 @@ export function ResumeBuilderClient({
           resumeTitle={resumeTitle}
           saveStatus={<SaveStatusTag />}
           saveLoading={isSavingTitle || saveState.status === "saving"}
+          shareVisibility={shareVisibility}
+          shareWithRecruiters={shareWithRecruiters}
+          shareSaving={shareSaving}
           onBack={() => void handleBackFromEditor()}
           onResumeTitleChange={setResumeTitle}
           onResumeTitleBlur={() => void saveResumeTitle()}
           downloadLoading={exporting}
+          onChangeShareVisibility={handleChangeShareVisibility}
+          onToggleShareWithRecruiters={handleToggleShareWithRecruiters}
+          onCopyShareLink={() => {
+            void handleCopyShareLink();
+          }}
           onDownloadPng={() => void handleDownloadImage("png")}
           onDownloadJpg={() => void handleDownloadImage("jpg")}
           onDownloadPdf={() => void handleDownloadPdf()}
@@ -571,7 +678,7 @@ export function ResumeBuilderClient({
           redirectPath={
             typeof window !== "undefined"
               ? window.location.pathname + window.location.search
-              : "/resume/templates"
+              : "/builder/templates"
           }
           onBeforeLogin={cacheDraftBeforeLoginRedirect}
         />

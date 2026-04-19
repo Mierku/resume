@@ -20,6 +20,8 @@ type EditorPayload = {
     title: string
     templateId: string
     dataSourceId?: string | null
+    shareVisibility?: 'private' | 'public'
+    shareWithRecruiters?: boolean
     content: unknown
   }
   dataSources: ResumeDataSource[]
@@ -130,6 +132,8 @@ async function resolveEditorPayload({
     title: typeof resume.title === 'string' ? resume.title : '未命名简历',
     templateId: typeof resume.templateId === 'string' ? resume.templateId : 'template-1',
     dataSourceId: typeof resume.dataSourceId === 'string' ? resume.dataSourceId : null,
+    shareVisibility: resume.shareVisibility === 'public' ? 'public' : 'private',
+    shareWithRecruiters: Boolean(resume.shareWithRecruiters),
     content: resume.content,
   }
 
@@ -186,7 +190,7 @@ function EditorErrorState({ message, onRetry }: { message: string; onRetry: () =
           <Button variant="outline" onClick={onRetry}>
             重试
           </Button>
-          <Button variant="ghost" onClick={() => window.location.assign('/resume/templates')}>
+          <Button variant="ghost" onClick={() => window.location.assign('/builder/templates')}>
             返回模板页
           </Button>
         </div>
@@ -207,10 +211,7 @@ export function ResumeEditorPageClient() {
   const resumeId = typeof params.resumeId === 'string' ? params.resumeId : ''
 
   useEffect(() => {
-    if (!resumeId) {
-      setState({ status: 'error', message: '缺少简历标识' })
-      return
-    }
+    if (!resumeId) return
 
     const controller = new AbortController()
     let cancelled = false
@@ -249,6 +250,15 @@ export function ResumeEditorPageClient() {
       controller.abort()
     }
   }, [pathname, reloadKey, resumeId, router, search])
+
+  if (!resumeId) {
+    return (
+      <EditorErrorState
+        message="缺少简历标识"
+        onRetry={() => router.replace('/dashboard')}
+      />
+    )
+  }
 
   if (state.status === 'loading') {
     return <EditorLoadingState />

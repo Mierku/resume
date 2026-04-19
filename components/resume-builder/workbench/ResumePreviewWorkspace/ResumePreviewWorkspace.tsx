@@ -4,6 +4,7 @@ import { type CSSProperties, type RefObject, type ReactNode } from 'react'
 import { ZoomIn, ZoomOut } from 'lucide-react'
 import { Button, IconMaximize, IconRefresh, IconRedo, IconUndo } from '../../primitives'
 import { useResumeBuilderStore } from '../../store/useResumeBuilderStore'
+import { ScrollShell } from '@/components/ui/ScrollShell'
 import styles from './ResumePreviewWorkspace.module.scss'
 
 interface ResumePreviewCanvasProps {
@@ -30,7 +31,14 @@ function ResumePreviewCanvas({
   const scrollSpaceHeight = previewScrollSpaceHeight > 0 ? previewScrollSpaceHeight : 1
 
   return (
-    <div ref={previewViewportRef} className={styles.viewport} style={viewportPaddingStyle}>
+    <ScrollShell
+      ref={previewViewportRef}
+      className={styles.viewport}
+      style={viewportPaddingStyle}
+      tone="panel"
+      reveal="always"
+      axis="y"
+    >
       <div className={styles.scrollSpace} style={{ height: scrollSpaceHeight }}>
         <div
           className={styles.stageShell}
@@ -45,7 +53,7 @@ function ResumePreviewCanvas({
           </div>
         </div>
       </div>
-    </div>
+    </ScrollShell>
   )
 }
 

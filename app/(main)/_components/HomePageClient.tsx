@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Copy, X } from 'lucide-react'
 import { Message } from '@/components/ui/radix-adapter'
+import { ScrollShell } from '@/components/ui/ScrollShell'
 import { ChromeWindow } from '@/components/ChromeWindow'
 import Image from 'next/image'
 import { toast } from '@/lib/toast'
@@ -109,7 +110,7 @@ export function HomePageClient() {
       window.sessionStorage.setItem('resume:guest-editor-entry', '1')
     }
 
-    router.push('/resume/editor/new')
+    router.push('/builder/editor/new')
   }
 
   const handleQuickCreateResume = async () => {
@@ -152,7 +153,7 @@ export function HomePageClient() {
         window.sessionStorage.setItem('resume:editor-loading-toast-id', String(loadingToastId))
       }
 
-      router.push(`/resume/editor/${resumeId}`)
+      router.push(`/builder/editor/${resumeId}`)
     } catch (error) {
       toast.error(error instanceof Error ? error.message : '创建失败，请稍后重试')
     } finally {
@@ -174,7 +175,7 @@ export function HomePageClient() {
           />
 
           <div className={s.installModal}>
-            <div className={s.installModalScroll}>
+            <ScrollShell className={s.installModalScroll} tone='aura' reveal='always' axis='y'>
               <div className={s.installModalHeader}>
                 <div>
                   <p className={s.installEyebrow}>Install Guide</p>
@@ -329,7 +330,7 @@ export function HomePageClient() {
                   </div>
                 </div>
               </div>
-            </div>
+            </ScrollShell>
           </div>
         </div>
       )}

@@ -139,6 +139,11 @@ enum ResumeMode {
   markdown
 }
 
+enum ResumeShareVisibility {
+  private
+  public
+}
+
 model Resume {
   id           String     @id @default(uuid())
   userId       String
@@ -146,6 +151,8 @@ model Resume {
   templateId   String
   dataSourceId String?
   mode         ResumeMode @default(form)
+  shareVisibility     ResumeShareVisibility @default(private)
+  shareWithRecruiters Boolean               @default(false)
   content      Json       // { sections, markdownText, styles, moduleOrder }
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
@@ -156,6 +163,7 @@ model Resume {
 
   @@index([userId])
   @@index([userId, updatedAt])
+  @@index([shareVisibility, shareWithRecruiters])
 }
 
 model AiConversation {

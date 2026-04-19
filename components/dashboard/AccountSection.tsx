@@ -174,7 +174,7 @@ export function AccountSection({
         <div className={styles.sectionHeaderMain}>
           <span className={styles.sectionEyebrow}>Account Profile</span>
           <div className={styles.sectionHeadingRow}>
-            <h1 className={styles.sectionTitle}>用户信息</h1>
+            <h1 className={styles.sectionTitle}>个人主页</h1>
             <span className={styles.sectionPill}>{getMembershipLabel(user.planType, user.role)}</span>
           </div>
           <p className={styles.sectionDescription}>
@@ -249,8 +249,8 @@ export function AccountSection({
                 查看我的简历
                 <ArrowRight size={16} />
               </Link>
-              <Link href={getDashboardSectionHref('data-source')} className={styles.quickActionLink}>
-                管理数据源
+              <Link href={getDashboardSectionHref('tracking')} className={styles.quickActionLink}>
+                管理数据源（求职跟踪）
                 <ArrowRight size={16} />
               </Link>
               <Link href="/onboarding" className={styles.quickActionLink}>

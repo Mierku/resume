@@ -1,8 +1,8 @@
 .rail {
   position: absolute;
   top: 12px;
-  left: 8px;
-  width: 54px;
+  left: 5px;
+  width: 48px;
   z-index: 12;
   transition: width 180ms cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -13,7 +13,7 @@
   padding: 7px 6px;
   border-radius: 12px;
   background: var(--builder-panel-bg-soft);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
   overflow: hidden;
@@ -35,8 +35,9 @@
   border-radius: 12px;
   background: transparent;
   color: var(--builder-panel-text-muted);
-  position: relative;
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
   padding: 0;
   overflow: hidden;
   transition:
@@ -44,12 +45,9 @@
     color 140ms ease;
 }
 .toolIcon {
-  width: 16px;
-  height: 16px;
-  position: absolute;
-  top: 50%;
-  left: 13px;
-  transform: translateY(-50%);
+  width: 36px;
+  min-width: 36px;
+  height: 36px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -59,24 +57,35 @@
   width: 16px;
   height: 16px;
 }
-.toolButtonActive,
-.toolButton:hover,
-.toolButton:focus-visible {
-  color: var(--builder-panel-text);
-  background: rgba(255, 255, 255, 0.1);
-  outline: none;
+.toolButton {
+  // 共有样式
+  &:hover,
+  &:focus-visible,
+  &Active {
+    color: var(--builder-button-text);
+    outline: none;
+  }
+
+  // 颜色不同的状态
+  &:hover {
+    color: var(--builder-button-text-hover);
+    background: var(--builder-button-hover); // 你的 hover 颜色
+  }
+  // 颜色一致的状态
+  &Active {
+    background: var(--builder-button-primary-hover) !important;
+    color: rgb(255, 255, 255) !important;
+  }
 }
 .toolLabel {
-  position: absolute;
-  top: 50%;
-  left: 32px;
-  transform: translateY(-50%);
   width: 148px;
+  min-width: 148px;
   opacity: 0;
   overflow: hidden;
   white-space: nowrap;
   color: inherit;
   font-size: 12px;
+  line-height: 36px;
   transition:
     opacity 120ms ease,
     clip-path 180ms cubic-bezier(0.22, 1, 0.36, 1);

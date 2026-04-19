@@ -8,7 +8,7 @@ export const SITE_DESCRIPTION = '免费简历制作｜自动化网申'
 
 const PROTECTED_ROUTES = [
   '/dashboard',
-  '/resume',
+  '/builder',
   '/job-sites',
   '/tracking',
   '/records',

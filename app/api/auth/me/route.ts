@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { normalizeAuthProviderIds } from '@/lib/auth-provider-labels'
 import { getCurrentUser } from '@/lib/session'
 import { prisma } from '@/lib/prisma'
-import { isAdminRole } from '@/lib/user'
+import { DEFAULT_USER_AVATAR_URL, isAdminRole } from '@/lib/user'
 
 export async function GET() {
   try {
@@ -65,12 +65,16 @@ export async function GET() {
       planExpiresAt = rawPlanExpiresAt.toISOString()
     }
 
+    const avatarUrl = typeof user.image === 'string' && user.image.trim()
+      ? user.image
+      : DEFAULT_USER_AVATAR_URL
+
     return NextResponse.json({
       user: {
         id: user.id,
         email: user.email,
         displayName: user.name,
-        avatarUrl: user.image,
+        avatarUrl,
         onboardingCompleted: user.onboardingCompleted,
         defaultDataSourceId: user.defaultDataSourceId,
         providers,

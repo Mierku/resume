@@ -103,7 +103,10 @@ export function ResumeWorkbench({
           )}
 
           <div
-            className={`resume-scroll-shell${sidePanelScrolling ? ' is-scrolling' : ''}${activeTool === 'ai' ? ' is-ai-panel' : ''}`}
+            className={`scroll-shell resume-scroll-shell${sidePanelScrolling ? ' is-scrolling' : ''}${activeTool === 'ai' ? ' is-ai-panel' : ''}`}
+            data-scroll-tone='panel'
+            data-scroll-reveal='always'
+            data-scroll-axis='y'
             onScroll={onSidePanelScroll}
           >
             <div className={`resume-side-panel-body ${styles.workbenchPanelBody}${activeTool === 'ai' ? ' is-ai-panel' : ' py-4 px-3'}`}>

@@ -19,7 +19,7 @@
     border: 0;
     border-radius: 2px;
     background: transparent;
-    color: var(--resume-select-muted);
+    color: var(--control-field-placeholder);
     font-size: 11px;
     text-align: left;
     padding: 6px 8px;
@@ -36,8 +36,8 @@
 
   .resume-item-menu-action:hover:not(:disabled),
   .resume-item-menu-action:focus-visible {
-    background: var(--resume-select-option-hover);
-    color: var(--resume-select-text);
+    background: var(--control-option-hover-bg);
+    color: var(--control-field-text);
     outline: none;
   }
 
@@ -52,10 +52,10 @@
 
   .resume-item-menu-popover,
   .resume-ai-history-menu {
-    border: 1px solid var(--resume-select-panel-border);
+    border: 1px solid var(--control-panel-border-color);
     border-radius: 4px;
-    background: var(--resume-select-panel-bg);
-    box-shadow: var(--resume-select-panel-shadow);
+    background: var(--control-panel-bg);
+    box-shadow: var(--control-panel-shadow-value);
   }
 
   .resume-item-menu-popover {
@@ -66,34 +66,8 @@
   .resume-scroll-shell {
     min-height: 0;
     flex: 1;
-    overflow-y: auto;
-    overflow-x: hidden;
-    scrollbar-width: none;
-    scrollbar-gutter: stable;
-  }
-
-  .resume-scroll-shell::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-
-  .resume-scroll-shell::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  .resume-scroll-shell::-webkit-scrollbar-thumb {
-    border-radius: 999px;
-    background: transparent;
-    transition: background-color 160ms ease;
-  }
-
-  .resume-scroll-shell.is-scrolling {
-    scrollbar-width: thin;
-  }
-
-  .resume-scroll-shell.is-scrolling::-webkit-scrollbar-thumb,
-  .resume-scroll-shell:hover::-webkit-scrollbar-thumb {
-    background: color-mix(
+    --scroll-shell-size: 6px;
+    --scroll-shell-thumb-active-color: color-mix(
       in srgb,
       var(--builder-panel-border-strong) 76%,
       transparent

@@ -1,4 +1,9 @@
 .panel {
+  --resume-ai-assistant-bubble-bg: color-mix(
+    in srgb,
+    var(--builder-panel-bg) 64%,
+    transparent
+  );
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -114,7 +119,7 @@
   font-weight: 600;
   letter-spacing: 0.04em;
   color: color-mix(in srgb, var(--builder-panel-text-muted) 92%, transparent);
-  border-bottom: 1px solid var(--resume-select-panel-border);
+  border-bottom: 1px solid var(--control-panel-border-color);
 }
 .panel :global(.resume-ai-history-menu-state) {
   padding: 14px 12px;
@@ -127,25 +132,26 @@
 }
 .panel :global(.resume-ai-history-list) {
   max-height: 280px;
-  overflow-y: auto;
 }
 .panel :global(.resume-ai-history-item) {
   width: 100%;
   border: 0;
   background: transparent;
-  color: var(--resume-select-muted);
+  color: var(--control-field-placeholder);
   text-align: left;
   padding: 8px;
   display: flex;
   flex-direction: column;
   gap: 3px;
   border-radius: 2px;
-  transition: background-color 120ms ease, color 120ms ease;
+  transition:
+    background-color 120ms ease,
+    color 120ms ease;
 }
 .panel :global(.resume-ai-history-item:hover:not(:disabled)),
 .panel :global(.resume-ai-history-item:focus-visible) {
-  background: var(--resume-select-option-hover);
-  color: var(--resume-select-text);
+  background: var(--control-option-hover-bg);
+  color: var(--control-field-text);
   outline: none;
 }
 .panel :global(.resume-ai-history-item:disabled) {
@@ -153,8 +159,8 @@
   cursor: not-allowed;
 }
 .panel :global(.resume-ai-history-item.is-active) {
-  background: var(--resume-select-option-selected-bg);
-  color: var(--resume-select-option-selected-text);
+  background: var(--control-option-selected-bg);
+  color: var(--control-option-selected-text);
 }
 .panel :global(.resume-ai-history-item-title) {
   font-size: 12px;
@@ -171,102 +177,98 @@
 .panel :global(.resume-ai-messages) {
   flex: 1;
   min-height: 0;
-  overflow-y: auto;
   padding: 12px 14px 10px;
 }
 .panel :global(.resume-ai-messages.is-empty) {
   display: flex;
+  align-items: stretch;
+  justify-content: flex-start;
+}
+.panel :global(.resume-ai-empty-state) {
+  width: 100%;
+  min-height: 100%;
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  gap: 22px;
+  padding: 12px 4px 0;
+}
+.panel :global(.resume-ai-empty-hero) {
+  width: 100%;
+  min-height: 240px;
+  display: flex;
   align-items: center;
   justify-content: center;
 }
-.panel :global(.resume-ai-empty-state) {
-  width: min(760px, 100%);
-  margin: auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 20px;
-  text-align: center;
-  padding: 10px 2px 12px;
-}
-.panel :global(.resume-ai-empty-hero) {
-  position: relative;
-  width: 110px;
-  height: 110px;
-}
 .panel :global(.resume-ai-empty-hero-icon) {
-  width: 100%;
-  height: 100%;
-  border-radius: 30px;
+  position: relative;
+  width: 92px;
+  height: 92px;
+  border-radius: 999px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: #63a4ff;
+  color: color-mix(in srgb, var(--builder-panel-text) 92%, transparent);
   background:
-    linear-gradient(145deg, rgba(72, 62, 156, 0.62) 0%, rgba(44, 68, 151, 0.52) 100%),
-    rgba(14, 17, 28, 0.88);
+    linear-gradient(
+      135deg,
+      rgba(248, 169, 199, 0.72) 0%,
+      rgba(178, 188, 255, 0.72) 48%,
+      rgba(134, 220, 255, 0.68) 100%
+    ),
+    rgba(255, 255, 255, 0.82);
   box-shadow:
-    inset 0 0 0 1px rgba(168, 180, 255, 0.22),
-    0 24px 44px rgba(0, 0, 0, 0.48);
+    inset 0 0 0 1px rgba(255, 255, 255, 0.76),
+    0 16px 34px rgba(157, 184, 222, 0.28);
 }
 .panel :global(.resume-ai-empty-hero-icon::after) {
-  content: '';
+  content: "";
   position: absolute;
-  inset: -16%;
-  border-radius: 36px;
-  background: radial-gradient(circle, rgba(99, 164, 255, 0.18) 0%, transparent 72%);
+  inset: -18%;
+  border-radius: inherit;
+  background: radial-gradient(
+    circle,
+    rgba(240, 160, 205, 0.22) 0%,
+    transparent 72%
+  );
   filter: blur(18px);
   z-index: -1;
 }
-.panel :global(.resume-ai-empty-hero-check) {
-  position: absolute;
-  right: -8px;
-  bottom: -6px;
-  width: 34px;
-  height: 34px;
-  border-radius: 12px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: #5fffa7;
-  background: rgba(26, 88, 55, 0.8);
-  box-shadow: inset 0 0 0 1px rgba(96, 255, 170, 0.34);
-}
 .panel :global(.resume-ai-empty-copy) {
-  max-width: 580px;
+  width: min(100%, 700px);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
-.panel :global(.resume-ai-empty-title) {
+.panel :global(.resume-ai-empty-lead) {
   margin: 0;
-  font-size: 26px;
-  line-height: 1.14;
-  letter-spacing: 0.01em;
-  font-weight: 650;
+  font-size: 14px;
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+  font-weight: 600;
   color: color-mix(in srgb, var(--builder-panel-text) 96%, #ffffff 4%);
 }
-.panel :global(.resume-ai-empty-desc) {
-  margin: 12px 0 0;
-  font-size: 14px;
-  line-height: 1.55;
-  color: color-mix(in srgb, var(--builder-panel-text-muted) 92%, #ffffff 8%);
-}
 .panel :global(.resume-ai-empty-actions) {
-  width: 100%;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-  margin-top: 6px;
+  width: min(100%, 520px);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 12px;
 }
 .panel :global(.resume-ai-empty-action) {
-  width: 100%;
-  min-height: 112px;
-  border-radius: 22px;
-  border: 1px solid color-mix(in srgb, #ffffff 10%, transparent);
-  background: color-mix(in srgb, #ffffff 7%, rgba(8, 10, 16, 0.72));
+  width: fit-content;
+  max-width: 100%;
+  min-width: 0;
+  flex: 0 1 auto;
+  border-radius: 999px;
+  border: 1px solid
+    color-mix(in srgb, var(--builder-panel-text) 8%, transparent);
+  background: var(--resume-ai-assistant-bubble-bg);
   color: var(--builder-panel-text);
-  padding: 18px 20px;
-  display: flex;
+  padding: 6px 12px;
+  display: inline-flex;
   align-items: center;
-  gap: 16px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  gap: 5px;
   text-align: left;
   transition:
     transform 180ms cubic-bezier(0.2, 0.9, 0.2, 1),
@@ -276,53 +278,58 @@
 }
 .panel :global(.resume-ai-empty-action:hover:not(:disabled)),
 .panel :global(.resume-ai-empty-action:focus-visible) {
-  transform: translateY(-2px);
-  border-color: color-mix(in srgb, #ffffff 24%, transparent);
-  box-shadow:
-    0 16px 32px rgba(0, 0, 0, 0.32),
-    inset 0 0 0 1px color-mix(in srgb, #ffffff 10%, transparent);
-  outline: none;
+  border-color: color-mix(in srgb, var(--builder-panel-text) 16%, transparent);
 }
 .panel :global(.resume-ai-empty-action:disabled) {
   opacity: 0.48;
   cursor: not-allowed;
 }
 .panel :global(.resume-ai-empty-action-icon) {
-  width: 54px;
-  height: 54px;
-  border-radius: 14px;
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: color-mix(in srgb, #000000 68%, transparent);
 }
 .panel :global(.resume-ai-empty-action-icon.is-blue) {
-  color: #63a4ff;
+  color: #5b8eff;
 }
 .panel :global(.resume-ai-empty-action-icon.is-violet) {
-  color: #c37bff;
-}
-.panel :global(.resume-ai-empty-action-icon.is-amber) {
-  color: #ffa743;
+  color: #8c74ff;
 }
 .panel :global(.resume-ai-empty-action-icon.is-emerald) {
-  color: #2fe08d;
+  color: #279f8b;
 }
-.panel :global(.resume-ai-empty-action-label) {
-  font-size: 18px;
-  line-height: 1.3;
-  letter-spacing: 0.01em;
-  font-weight: 500;
+.panel :global(.resume-ai-empty-action-copy) {
+  min-width: 0;
+  display: inline-flex;
+  align-items: baseline;
+  flex-wrap: nowrap;
+  gap: 6px;
+  white-space: nowrap;
 }
-.panel :global(.resume-ai-history-list::-webkit-scrollbar),
-.panel :global(.resume-ai-messages::-webkit-scrollbar) {
-  width: 4px;
+.panel :global(.resume-ai-empty-action-title) {
+  font-size: 11px;
+  line-height: 1.25;
+  font-weight: 700;
+  color: color-mix(in srgb, var(--builder-panel-text) 96%, transparent);
 }
-.panel :global(.resume-ai-history-list::-webkit-scrollbar-thumb),
-.panel :global(.resume-ai-messages::-webkit-scrollbar-thumb) {
-  background: color-mix(in srgb, var(--builder-panel-text) 26%, transparent);
-  border-radius: 999px;
+.panel :global(.resume-ai-empty-action-meta) {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 11px;
+  line-height: 1.25;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--builder-panel-text) 84%, transparent);
+}
+.panel :global(.resume-ai-empty-action-command) {
+  font-size: 11px;
+  font-weight: 700;
+  color: color-mix(in srgb, var(--builder-panel-text-muted) 92%, transparent);
 }
 .panel :global(.resume-ai-message) {
   display: flex;
@@ -341,16 +348,16 @@
 }
 .panel :global(.resume-ai-bubble.is-ai) {
   border-radius: 14px 14px 14px 6px;
+  background: var(--resume-ai-assistant-bubble-bg);
 }
 .panel :global(.resume-ai-bubble.is-user) {
   border-radius: 14px 14px 6px 14px;
-  background: var(--builder-input-bg2);
 }
 .panel :global(.resume-ai-bubble.is-progress) {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: color-mix(in srgb, var(--builder-panel-bg) 64%, transparent);
+  background: var(--resume-ai-assistant-bubble-bg);
 }
 .panel :global(.resume-ai-progress-dot) {
   width: 8px;
@@ -401,7 +408,7 @@
   outline: none;
 }
 .panel :global(.resume-ai-card::after) {
-  content: '';
+  content: "";
   position: absolute;
   width: 180%;
   height: 180%;
@@ -424,7 +431,11 @@
   width: 140px;
   height: 140px;
   border-radius: 999px;
-  background: radial-gradient(circle, color-mix(in srgb, #ffffff 56%, transparent) 0%, transparent 68%);
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, #ffffff 56%, transparent) 0%,
+    transparent 68%
+  );
   opacity: 0.18;
   filter: blur(32px);
   pointer-events: none;
@@ -530,7 +541,6 @@
   box-shadow:
     inset 0 0 0 1px color-mix(in srgb, #ffffff 8%, transparent),
     0 10px 28px rgba(0, 0, 0, 0.2);
-  background: var(--builder-input-bg2);
   padding: 12px 12px 12px 14px;
 }
 .panel :global(.resume-ai-input-shell .resume-ai-composer) {
@@ -602,34 +612,46 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: transform 120ms ease, opacity 120ms ease;
+  transition:
+    transform 120ms ease,
+    opacity 120ms ease;
 }
 .panel :global(.resume-ai-send-btn:hover:not(:disabled)) {
   transform: translateY(-1px) scale(1.01);
 }
 @media (max-width: 920px) {
-  .panel :global(.resume-ai-empty-title) {
-    font-size: 24px;
+  .panel :global(.resume-ai-empty-state) {
+    gap: 18px;
   }
-  .panel :global(.resume-ai-empty-desc) {
+  .panel :global(.resume-ai-empty-hero) {
+    min-height: 200px;
+  }
+  .panel :global(.resume-ai-empty-lead) {
+    font-size: 15px;
+  }
+  .panel :global(.resume-ai-empty-action-title) {
+    font-size: 15px;
+  }
+  .panel :global(.resume-ai-empty-action-command) {
     font-size: 13px;
-  }
-  .panel :global(.resume-ai-empty-action-label) {
-    font-size: 16px;
   }
 }
 @media (max-width: 680px) {
-  .panel :global(.resume-ai-empty-actions) {
-    grid-template-columns: minmax(0, 1fr);
+  .panel :global(.resume-ai-empty-state) {
+    padding-top: 6px;
   }
-  .panel :global(.resume-ai-empty-title) {
-    font-size: 22px;
+  .panel :global(.resume-ai-empty-action) {
+    border-radius: 999px;
+    align-items: center;
   }
-  .panel :global(.resume-ai-empty-desc) {
-    font-size: 13px;
+  .panel :global(.resume-ai-empty-action-copy) {
+    gap: 6px;
   }
-  .panel :global(.resume-ai-empty-action-label) {
+  .panel :global(.resume-ai-empty-action-title) {
     font-size: 15px;
+  }
+  .panel :global(.resume-ai-empty-action-meta) {
+    font-size: 13px;
   }
 }
 @keyframes aiCardSpin {

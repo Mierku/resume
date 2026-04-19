@@ -39,6 +39,8 @@ const PDF_EXPORT_IMAGE_FORMAT: ResumePdfWorkerPagePayload['format'] = 'JPEG'
 const PDF_EXPORT_IMAGE_QUALITY = 0.84
 const PDF_A4_WIDTH_MM = 210
 const PDF_A4_HEIGHT_MM = 297
+const PDF_LETTER_WIDTH_MM = 216
+const PDF_LETTER_HEIGHT_MM = 279
 const PDF_MIN_FREE_FORM_HEIGHT_MM = 20
 const PDF_WORKER_SCRIPT_VERSION = '2026-04-14-free-form-1'
 
@@ -172,8 +174,10 @@ function resolvePdfPageSizeMm(
   pageFormat: ResumeData['metadata']['page']['format'],
 ) {
   const isLandscape = canvas.width >= canvas.height
-  const widthMm = isLandscape ? PDF_A4_HEIGHT_MM : PDF_A4_WIDTH_MM
-  const fixedHeightMm = isLandscape ? PDF_A4_WIDTH_MM : PDF_A4_HEIGHT_MM
+  const baseWidthMm = pageFormat === 'letter' ? PDF_LETTER_WIDTH_MM : PDF_A4_WIDTH_MM
+  const baseHeightMm = pageFormat === 'letter' ? PDF_LETTER_HEIGHT_MM : PDF_A4_HEIGHT_MM
+  const widthMm = isLandscape ? baseHeightMm : baseWidthMm
+  const fixedHeightMm = isLandscape ? baseWidthMm : baseHeightMm
 
   if (pageFormat !== 'free-form') {
     return { widthMm, heightMm: fixedHeightMm }

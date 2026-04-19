@@ -233,7 +233,7 @@ const pageLayoutSchema = z.object({
 const HEADER_VARIANT_VALUES = ['auto', ...REACTIVE_HEADER_VARIANTS] as const
 const SECTION_VARIANT_VALUES = ['auto', ...REACTIVE_SECTION_VARIANTS] as const
 const SKILLS_VARIANT_VALUES = ['auto', ...REACTIVE_SKILLS_VARIANTS] as const
-const PAGE_FORMAT_VALUES = ['a4', 'free-form'] as const
+const PAGE_FORMAT_VALUES = ['a4', 'letter', 'free-form'] as const
 
 const metadataSchema = z.object({
   template: z.enum(REACTIVE_TEMPLATE_IDS),

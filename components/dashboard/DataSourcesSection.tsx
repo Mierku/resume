@@ -190,7 +190,7 @@ export function DataSourcesSection({
         </div>
 
         <div className={styles.sectionHeaderActions}>
-          <Link href="/resume/data-source/new" className={cn(styles.buttonBase, styles.primaryButton)}>
+          <Link href="/builder/data-source/new" className={cn(styles.buttonBase, styles.primaryButton)}>
             <Plus size={16} />
             新建数据源
           </Link>
@@ -229,7 +229,7 @@ export function DataSourcesSection({
           <h2 className={styles.stateTitle}>你还没有数据源</h2>
           <p className={styles.stateText}>先创建一份默认数据源，后续填写简历和自动填表都会直接复用它。</p>
           <div className={styles.stateActions}>
-            <Link href="/resume/data-source/new" className={cn(styles.buttonBase, styles.primaryButton)}>
+            <Link href="/builder/data-source/new" className={cn(styles.buttonBase, styles.primaryButton)}>
               创建第一份数据源
             </Link>
           </div>
@@ -267,7 +267,7 @@ export function DataSourcesSection({
                       {workingId === dataSource.id ? '设置中...' : '设为默认'}
                     </button>
                   ) : null}
-                  <Link href={`/resume/data-source/${dataSource.id}`} className={cn(styles.buttonBase, styles.secondaryButton)}>
+                  <Link href={`/builder/data-source/${dataSource.id}`} className={cn(styles.buttonBase, styles.secondaryButton)}>
                     编辑
                   </Link>
                   <button
