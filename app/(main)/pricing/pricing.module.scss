@@ -1,12 +1,24 @@
 .page {
-  --price-bg: var(--builder-workspace-bg);
-  --price-card: color-mix(in srgb, var(--builder-panel-bg) 96%, var(--builder-workspace-bg));
-  --price-card-soft: color-mix(in srgb, var(--builder-panel-bg-soft) 96%, var(--builder-workspace-bg));
+  --price-bg: var(--builder-panel-bg-soft);
+  --price-card: color-mix(
+    in srgb,
+    var(--builder-panel-bg) 96%,
+    var(--builder-workspace-bg)
+  );
+  --price-card-soft: color-mix(
+    in srgb,
+    var(--builder-panel-bg-soft) 96%,
+    var(--builder-workspace-bg)
+  );
   --price-border: var(--builder-panel-border);
   --price-text-main: var(--builder-panel-text);
   --price-text-sub: var(--builder-panel-text-muted);
   --price-accent: var(--builder-button-primary-hover);
-  --price-accent-strong: color-mix(in srgb, var(--builder-button-primary-hover) 86%, var(--builder-panel-text));
+  --price-accent-strong: color-mix(
+    in srgb,
+    var(--builder-button-primary-hover) 86%,
+    var(--builder-panel-text)
+  );
   --price-btn-bg: var(--builder-button-primary-hover);
   --price-btn-text: #fffaf6;
   --price-shadow: var(--builder-toolbar-shadow);
@@ -15,7 +27,9 @@
   padding: 104px 18px 56px;
   background: var(--price-bg);
   color: var(--price-text-main);
-  transition: background-color 320ms ease, color 320ms ease;
+  transition:
+    background-color 320ms ease,
+    color 320ms ease;
 }
 
 .container {
@@ -81,7 +95,11 @@
 }
 
 .cardFeatured {
-  border-color: color-mix(in srgb, var(--price-accent) 58%, var(--price-border));
+  border-color: color-mix(
+    in srgb,
+    var(--price-accent) 58%,
+    var(--price-border)
+  );
   box-shadow: var(--price-shadow);
 }
 
@@ -104,7 +122,7 @@
   text-transform: uppercase;
 }
 
-:global([data-theme='dark']) .badge {
+:global([data-theme="dark"]) .badge {
   color: #1c1817;
 }
 
@@ -211,7 +229,11 @@
   font-size: 14px;
   background: transparent;
   color: var(--price-text-main);
-  transition: filter 180ms ease, background-color 180ms ease, color 180ms ease, border-color 180ms ease;
+  transition:
+    filter 180ms ease,
+    background-color 180ms ease,
+    color 180ms ease,
+    border-color 180ms ease;
 }
 
 .ctaButtonOutline {
@@ -220,7 +242,11 @@
 
 .ctaButtonOutlineBold {
   border-width: 1px;
-  border-color: color-mix(in srgb, var(--price-text-main) 70%, var(--price-border));
+  border-color: color-mix(
+    in srgb,
+    var(--price-text-main) 70%,
+    var(--price-border)
+  );
 }
 
 .ctaButtonPrimary {
@@ -289,14 +315,26 @@
 }
 
 .checkoutModalPanel {
-  --price-card: color-mix(in srgb, var(--builder-panel-bg) 96%, var(--builder-workspace-bg));
-  --price-card-soft: color-mix(in srgb, var(--builder-panel-bg-soft) 96%, var(--builder-workspace-bg));
+  --price-card: color-mix(
+    in srgb,
+    var(--builder-panel-bg) 96%,
+    var(--builder-workspace-bg)
+  );
+  --price-card-soft: color-mix(
+    in srgb,
+    var(--builder-panel-bg-soft) 96%,
+    var(--builder-workspace-bg)
+  );
   --price-border: var(--builder-panel-border);
   --price-border-strong: var(--builder-panel-border-strong);
   --price-text-main: var(--builder-panel-text);
   --price-text-sub: var(--builder-panel-text-muted);
   --price-accent: var(--builder-button-primary-hover);
-  --price-accent-strong: color-mix(in srgb, var(--builder-button-primary-hover) 86%, var(--builder-panel-text));
+  --price-accent-strong: color-mix(
+    in srgb,
+    var(--builder-button-primary-hover) 86%,
+    var(--builder-panel-text)
+  );
   --price-btn-bg: var(--builder-button-primary-hover);
   --price-btn-text: #fffaf6;
 
@@ -312,9 +350,9 @@
 }
 
 .loginModalPanel {
-  max-width: 720px;
+  max-width: 450px;
   border: none;
-  background: var(--price-card);
+  background: var(--builder-panel-bg-soft);
   box-shadow: 0 30px 90px rgba(0, 0, 0, 0.18);
   color: var(--price-text-main);
 }
@@ -562,7 +600,8 @@
   width: 100%;
   height: 100%;
   border-radius: 14px;
-  border: 1px dashed color-mix(in srgb, var(--price-border-strong) 70%, transparent);
+  border: 1px dashed
+    color-mix(in srgb, var(--price-border-strong) 70%, transparent);
   display: grid;
   place-items: center;
   color: var(--price-text-sub);
@@ -709,5 +748,4 @@
   .checkoutCouponSelect {
     width: 100%;
   }
-
 }

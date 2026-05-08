@@ -479,19 +479,23 @@ export function LoginPanel({
   return (
     <div className={isPageMode ? styles.shell : styles.compactShell}>
       <section className={isPageMode ? styles.leftPanel : styles.compactLeftPanel}>
-        <div className={styles.brandRow}>
-          <Link href="/" className={styles.brandLink} aria-label="回到首页">
-            <span className={styles.brandBadge}>
-              <BrandFlowerIcon className={styles.brandLogo} />
-            </span>
-            <span className={styles.brandName}>沉浸式网申</span>
-          </Link>
-        </div>
+        {isPageMode ? (
+          <>
+            <div className={styles.brandRow}>
+              <Link href="/" className={styles.brandLink} aria-label="回到首页">
+                <span className={styles.brandBadge}>
+                  <BrandFlowerIcon className={styles.brandLogo} />
+                </span>
+                <span className={styles.brandName}>沉浸式网申</span>
+              </Link>
+            </div>
 
-        <header className={styles.header}>
-          <h1 className={styles.title}>欢迎回来</h1>
-          <p className={styles.subtitle}>选择你习惯的登录方式，继续你的求职流程</p>
-        </header>
+            <header className={styles.header}>
+              <h1 className={styles.title}>欢迎回来</h1>
+              <p className={styles.subtitle}>选择你习惯的登录方式，继续你的求职流程</p>
+            </header>
+          </>
+        ) : null}
 
         {modeOptions.length > 1 ? (
           <nav
