@@ -29,7 +29,7 @@ export async function listActiveVipPackages() {
       select: adminPackageSelect,
     })
   } catch (error) {
-    if (isMissingCommerceTableError(error)) {
+    if (isUnavailableCommerceDataError(error)) {
       return []
     }
     throw error
@@ -43,7 +43,7 @@ export async function listAdminVipPackages() {
       select: adminPackageSelect,
     })
   } catch (error) {
-    if (isMissingCommerceTableError(error)) {
+    if (isUnavailableCommerceDataError(error)) {
       return []
     }
     throw error
@@ -173,11 +173,12 @@ export async function updateVipPackage(id: string, input: Partial<UpsertVipPacka
   })
 }
 
-function isMissingCommerceTableError(error: unknown) {
+function isUnavailableCommerceDataError(error: unknown) {
   return (
     typeof error === 'object' &&
     error !== null &&
-    'code' in error &&
-    (error as { code?: string }).code === 'P2021'
+    (('code' in error &&
+      ((error as { code?: string }).code === 'P2021' || (error as { code?: string }).code === 'P1001')) ||
+      ('name' in error && (error as { name?: string }).name === 'PrismaClientInitializationError'))
   )
 }

@@ -4,7 +4,19 @@ const globalForRedis = globalThis as unknown as {
   redis: Redis | undefined
 }
 
-export const redis = globalForRedis.redis ?? new Redis(process.env.REDIS_URL || 'redis://localhost:6379')
+function createRedisClient() {
+  const client = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
+    lazyConnect: true,
+  })
+
+  // ioredis emits connection failures as events in addition to rejecting commands.
+  // Keep unused imports during build from spamming stderr; callers still see command failures.
+  client.on('error', () => {})
+
+  return client
+}
+
+export const redis = globalForRedis.redis ?? createRedisClient()
 
 if (process.env.NODE_ENV !== 'production') {
   globalForRedis.redis = redis
@@ -30,4 +42,3 @@ export async function checkRateLimit(
   
   return { allowed, remaining }
 }
-

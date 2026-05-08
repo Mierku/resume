@@ -1,9 +1,9 @@
 import { Metadata } from 'next'
-import { getCurrentUser } from '@/lib/session'
 import { buildMetadata } from '@/lib/seo'
 import { listActiveVipPackages } from '@/server/commerce/packages'
-import { listEligibleCouponsForCheckout } from '@/server/commerce/coupons'
 import { PricingPageClient } from './PricingPageClient'
+
+export const revalidate = 3600
 
 export const metadata: Metadata = {
   ...buildMetadata({
@@ -16,22 +16,6 @@ export const metadata: Metadata = {
 
 export default async function PricingPage() {
   const packages = await listActiveVipPackages()
-  const user = await getCurrentUser()
-  const couponOptionsByPackageId = Object.fromEntries(
-    await Promise.all(
-      packages.map(async item => {
-        const coupons = user
-          ? await listEligibleCouponsForCheckout({
-              vipPackageId: item.id,
-              userId: user.id,
-              originalAmountFen: item.priceFen,
-            }).catch(() => [])
-          : []
 
-        return [item.id, coupons]
-      }),
-    ),
-  )
-
-  return <PricingPageClient packages={packages as never[]} couponOptionsByPackageId={couponOptionsByPackageId as never} />
+  return <PricingPageClient initialPackages={packages as never[]} />
 }

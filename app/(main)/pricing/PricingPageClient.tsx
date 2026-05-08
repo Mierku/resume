@@ -131,16 +131,14 @@ const EMPTY_STATE_PLAN: PricingPlan = {
 }
 
 export function PricingPageClient({
-  packages,
-  couponOptionsByPackageId,
+  initialPackages,
 }: {
-  packages: PackageRecord[]
-  couponOptionsByPackageId: Record<string, CheckoutCouponOption[]>
+  initialPackages: PackageRecord[]
 }) {
   const router = useRouter()
   const authContext = useOptionalAuthContext()
-  const plans = useMemo(() => packages.map(buildPlan), [packages])
-  const resolvedPlans = plans.length > 0 ? plans : [EMPTY_STATE_PLAN]
+  const [packages, setPackages] = useState(initialPackages)
+  const [couponOptionsByPackageId, setCouponOptionsByPackageId] = useState<Record<string, CheckoutCouponOption[]>>({})
   const [selectedPackageId, setSelectedPackageId] = useState<string | null>(null)
   const [selectedCouponCode, setSelectedCouponCode] = useState('')
   const [checkoutState, setCheckoutState] = useState<CheckoutState | null>(null)
@@ -148,13 +146,116 @@ export function PricingPageClient({
   const [checkingOut, setCheckingOut] = useState(false)
   const [pollingStatus, setPollingStatus] = useState(false)
   const [appliedCouponCode, setAppliedCouponCode] = useState('')
+  const [couponOptionsLoading, setCouponOptionsLoading] = useState(false)
   const checkoutRequestRef = useRef(0)
+  const packageRefreshAttemptedRef = useRef(false)
+  const couponRequestRef = useRef(0)
+  const plans = useMemo(() => packages.map(buildPlan), [packages])
+  const resolvedPlans = plans.length > 0 ? plans : [EMPTY_STATE_PLAN]
 
   const selectedPlan = plans.find(plan => plan.id === selectedPackageId) || null
   const selectedCouponOptions = selectedPackageId ? couponOptionsByPackageId[selectedPackageId] || [] : []
   const appliedCoupon = selectedCouponOptions.find(option => option.code === appliedCouponCode) || null
   const activePriceFen = appliedCoupon?.payableAmountFen ?? selectedPlan?.priceFen ?? 0
   const activeDiscountFen = appliedCoupon?.discountAmountFen ?? 0
+
+  useEffect(() => {
+    setPackages(initialPackages)
+  }, [initialPackages])
+
+  useEffect(() => {
+    if (initialPackages.length > 0 || packageRefreshAttemptedRef.current) {
+      return
+    }
+
+    packageRefreshAttemptedRef.current = true
+    let cancelled = false
+
+    void (async () => {
+      try {
+        const response = await fetch('/api/commerce/packages', {
+          cache: 'no-store',
+        })
+        const payload = await response.json().catch(() => null)
+        if (!response.ok || !payload?.packages || cancelled) {
+          return
+        }
+
+        setPackages(payload.packages)
+      } catch {
+        // keep the static fallback state when runtime data is temporarily unavailable
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [initialPackages])
+
+  useEffect(() => {
+    if (!selectedPackageId || couponOptionsByPackageId[selectedPackageId] !== undefined) {
+      return
+    }
+
+    const requestId = ++couponRequestRef.current
+    const params = new URLSearchParams({
+      vipPackageId: selectedPackageId,
+    })
+
+    let cancelled = false
+    setCouponOptionsLoading(true)
+
+    void (async () => {
+      try {
+        const response = await fetch(`/api/commerce/coupons/eligible?${params.toString()}`, {
+          cache: 'no-store',
+        })
+
+        if (cancelled || requestId !== couponRequestRef.current) {
+          return
+        }
+
+        if (response.status === 401) {
+          setCouponOptionsByPackageId(current => ({
+            ...current,
+            [selectedPackageId]: [],
+          }))
+          return
+        }
+
+        const payload = await response.json().catch(() => null)
+        if (!response.ok || !payload?.coupons) {
+          setCouponOptionsByPackageId(current => ({
+            ...current,
+            [selectedPackageId]: [],
+          }))
+          return
+        }
+
+        setCouponOptionsByPackageId(current => ({
+          ...current,
+          [selectedPackageId]: payload.coupons,
+        }))
+      } catch {
+        if (cancelled || requestId !== couponRequestRef.current) {
+          return
+        }
+
+        setCouponOptionsByPackageId(current => ({
+          ...current,
+          [selectedPackageId]: [],
+        }))
+      } finally {
+        if (!cancelled && requestId === couponRequestRef.current) {
+          setCouponOptionsLoading(false)
+        }
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [couponOptionsByPackageId, selectedPackageId])
 
   useEffect(() => {
     if (!checkoutState?.orderId) {
@@ -208,7 +309,7 @@ export function PricingPageClient({
       cancelled = true
       window.clearInterval(interval)
     }
-  }, [checkoutState?.orderId])
+  }, [authContext, checkoutState?.orderId, router])
 
   async function requestCheckout(packageId: string, coupon?: string) {
     const requestId = ++checkoutRequestRef.current
@@ -264,11 +365,21 @@ export function PricingPageClient({
     setCheckoutError('')
     setSelectedCouponCode('')
     setAppliedCouponCode('')
+    setCouponOptionsLoading(false)
     setCheckingOut(false)
     setPollingStatus(false)
   }
 
   function openCheckout(packageId: string) {
+    setCouponOptionsByPackageId(current => {
+      if (!(packageId in current)) {
+        return current
+      }
+
+      const next = { ...current }
+      delete next[packageId]
+      return next
+    })
     setSelectedPackageId(packageId)
     setCheckoutState(null)
     setCheckoutError('')
@@ -436,11 +547,11 @@ export function PricingPageClient({
                       setAppliedCouponCode(nextCouponCode)
                       refreshCheckoutQrCode(nextCouponCode)
                     }}
-                    disabled={checkingOut || selectedCouponOptions.length === 0}
+                    disabled={checkingOut || couponOptionsLoading || selectedCouponOptions.length === 0}
                     options={[
                       {
                         value: '',
-                        label: selectedCouponOptions.length > 0 ? '无代金券' : '暂无代金券',
+                        label: couponOptionsLoading ? '优惠券加载中' : selectedCouponOptions.length > 0 ? '无代金券' : '暂无代金券',
                       },
                       ...selectedCouponOptions.map(option => ({
                         value: option.code,
