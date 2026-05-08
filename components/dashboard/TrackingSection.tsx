@@ -592,7 +592,7 @@ export function TrackingSection({ onRecordsMutated }: { onRecordsMutated: () => 
                 <button type="button" className={cn(styles.buttonBase, styles.secondaryButton)} onClick={handleRefresh}>
                   重新加载
                 </button>
-                <Link href="/install" className={cn(styles.buttonBase, styles.primaryButton)}>
+                <Link href="/?installGuide=1" className={cn(styles.buttonBase, styles.primaryButton)}>
                   查看插件
                 </Link>
               </div>
@@ -614,7 +614,7 @@ export function TrackingSection({ onRecordsMutated }: { onRecordsMutated: () => 
                   <Plus size={16} />
                   新建记录
                 </button>
-                <Link href="/install" className={cn(styles.buttonBase, styles.secondaryButton)}>
+                <Link href="/?installGuide=1" className={cn(styles.buttonBase, styles.secondaryButton)}>
                   安装插件
                 </Link>
               </div>

@@ -19,28 +19,113 @@ enum MembershipPlan {
   elite
 }
 
+enum VipPackageStatus {
+  draft
+  active
+  disabled
+  archived
+}
+
+enum CouponType {
+  fixed_amount
+  percentage
+  threshold_discount
+}
+
+enum CouponStatus {
+  draft
+  active
+  disabled
+  archived
+}
+
+enum CouponAudience {
+  all
+  new_user
+  existing_user
+  active_vip
+  inactive_vip
+}
+
+enum CouponStackingRule {
+  single_only
+  future_stackable
+}
+
+enum CouponRedemptionStatus {
+  reserved
+  consumed
+  released
+}
+
+enum CommerceOrderStatus {
+  pending
+  awaiting_payment
+  manual_review
+  callback_error
+  paid
+  fulfilled
+  closed
+}
+
+enum PaymentProvider {
+  wechat_native
+}
+
+enum PaymentStatus {
+  pending
+  awaiting_payment
+  manual_review
+  callback_received
+  succeeded
+  failed
+}
+
+enum PaymentWebhookStatus {
+  received
+  verified
+  processed
+  rejected
+}
+
+enum EntitlementSourceType {
+  purchase
+  merge
+  manual
+}
+
+enum OrderAuditAction {
+  close_unpaid
+  mark_manual_review
+  note
+}
+
 model User {
-  id                  String    @id @default(uuid())
+  id                  String         @id @default(uuid())
   name                String?
-  email               String?   @unique
+  email               String?        @unique
   emailVerified       DateTime?
   image               String?
   defaultDataSourceId String?
-  onboardingCompleted Boolean   @default(false)
-  role                UserRole  @default(user)
+  onboardingCompleted Boolean        @default(false)
+  role                UserRole       @default(user)
   membershipPlan      MembershipPlan @default(basic)
   membershipExpiresAt DateTime?
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
 
-  sessions    Session[]
-  accounts    Account[]
-  dataSources DataSource[]
-  resumes     Resume[]
-  aiConversations AiConversation[]
-  records     Record[]
-  jobSites    JobSite[]
-  legalConsents LegalConsent[]
+  sessions          Session[]
+  accounts          Account[]
+  dataSources       DataSource[]
+  resumes           Resume[]
+  aiConversations   AiConversation[]
+  records           Record[]
+  jobSites          JobSite[]
+  legalConsents     LegalConsent[]
+  commerceOrders    CommerceOrder[]
+  couponRedemptions CouponRedemption[]
+  entitlementGrants EntitlementGrant[]
+  orderAuditEvents  OrderAuditEvent[]
 
   @@index([email])
   @@index([role])
@@ -64,20 +149,20 @@ model LegalConsent {
 }
 
 model Account {
-  id                String  @id @default(uuid())
-  userId            String
-  type              String
-  provider          String
-  providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
-  expires_at        Int?
-  token_type        String?
-  scope             String?
-  id_token          String? @db.Text
-  session_state     String?
+  id                 String  @id @default(uuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String? @db.Text
+  access_token       String? @db.Text
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String? @db.Text
+  session_state      String?
   oauth_token_secret String? @db.Text
-  oauth_token       String? @db.Text
+  oauth_token        String? @db.Text
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -112,20 +197,20 @@ enum LangMode {
 }
 
 model DataSource {
-  id         String   @id @default(uuid())
-  userId     String
-  name       String
-  langMode   LangMode @default(zh)
-  basics     Json     // { name_zh, name_en, email, phone, location, website, ... }
-  intention  Json?    // { position, location, availableDate, ... }
-  education  Json     @default("[]") // Array of education entries
-  work       Json     @default("[]") // Array of work experience entries
-  projects   Json     @default("[]") // Array of project entries
-  skills     Json     @default("[]") // Array or text of skills
-  summaryZh  String?  @db.Text
-  summaryEn  String?  @db.Text
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id        String   @id @default(uuid())
+  userId    String
+  name      String
+  langMode  LangMode @default(zh)
+  basics    Json // { name_zh, name_en, email, phone, location, website, ... }
+  intention Json? // { position, location, availableDate, ... }
+  education Json     @default("[]") // Array of education entries
+  work      Json     @default("[]") // Array of work experience entries
+  projects  Json     @default("[]") // Array of project entries
+  skills    Json     @default("[]") // Array or text of skills
+  summaryZh String?  @db.Text
+  summaryEn String?  @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   resumes Resume[]
@@ -145,20 +230,20 @@ enum ResumeShareVisibility {
 }
 
 model Resume {
-  id           String     @id @default(uuid())
-  userId       String
-  title        String
-  templateId   String
-  dataSourceId String?
-  mode         ResumeMode @default(form)
+  id                  String                @id @default(uuid())
+  userId              String
+  title               String
+  templateId          String
+  dataSourceId        String?
+  mode                ResumeMode            @default(form)
   shareVisibility     ResumeShareVisibility @default(private)
   shareWithRecruiters Boolean               @default(false)
-  content      Json       // { sections, markdownText, styles, moduleOrder }
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  content             Json // { sections, markdownText, styles, moduleOrder }
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
 
-  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  dataSource DataSource? @relation(fields: [dataSourceId], references: [id], onDelete: SetNull)
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dataSource      DataSource?      @relation(fields: [dataSourceId], references: [id], onDelete: SetNull)
   aiConversations AiConversation[]
 
   @@index([userId])
@@ -174,8 +259,8 @@ model AiConversation {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user     User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  resume   Resume?                @relation(fields: [resumeId], references: [id], onDelete: SetNull)
+  user     User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resume   Resume?                 @relation(fields: [resumeId], references: [id], onDelete: SetNull)
   messages AiConversationMessage[]
 
   @@index([userId, updatedAt])
@@ -199,10 +284,10 @@ model AiConversationMessage {
 }
 
 enum RecordStatus {
-  pending    @map("未提交")
-  submitted  @map("已提交")
-  recorded   @map("已收录")
-  abandoned  @map("放弃")
+  pending   @map("未提交")
+  submitted @map("已提交")
+  recorded  @map("已收录")
+  abandoned @map("放弃")
 }
 
 model Record {
@@ -243,4 +328,235 @@ model JobSite {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+model VipPackage {
+  id                String           @id @default(uuid())
+  code              String           @unique
+  name              String
+  subtitle          String?
+  description       String?          @db.Text
+  membershipPlan    MembershipPlan
+  durationDays      Int
+  priceFen          Int
+  compareAtPriceFen Int?
+  status            VipPackageStatus @default(draft)
+  isFeatured        Boolean          @default(false)
+  badge             String?
+  note              String?
+  featureList       Json?            @default("[]")
+  sortOrder         Int              @default(0)
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  orders      CommerceOrder[]
+  couponRules CouponPackage[]
+
+  @@index([status, sortOrder])
+}
+
+model Coupon {
+  id             String             @id @default(uuid())
+  code           String             @unique
+  name           String
+  description    String?            @db.Text
+  status         CouponStatus       @default(draft)
+  type           CouponType
+  audience       CouponAudience     @default(all)
+  stackingRule   CouponStackingRule @default(single_only)
+  channel        String?
+  amountFen      Int?
+  percentOff     Int?
+  thresholdFen   Int?
+  startsAt       DateTime?
+  endsAt         DateTime?
+  maxRedemptions Int?
+  perUserLimit   Int?
+  sortOrder      Int                @default(0)
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  packages          CouponPackage[]
+  redemptions       CouponRedemption[]
+  orderApplications OrderCouponApplication[]
+
+  @@index([status, startsAt, endsAt])
+  @@index([channel, status])
+}
+
+model CouponPackage {
+  id           String   @id @default(uuid())
+  couponId     String
+  vipPackageId String
+  createdAt    DateTime @default(now())
+
+  coupon     Coupon     @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  vipPackage VipPackage @relation(fields: [vipPackageId], references: [id], onDelete: Cascade)
+
+  @@unique([couponId, vipPackageId])
+  @@index([vipPackageId])
+}
+
+model CommerceOrder {
+  id                      String              @id @default(uuid())
+  orderNumber             String              @unique
+  userId                  String
+  vipPackageId            String
+  status                  CommerceOrderStatus @default(pending)
+  paymentProvider         PaymentProvider     @default(wechat_native)
+  currency                String              @default("CNY")
+  membershipPlanSnapshot  MembershipPlan
+  durationDaysSnapshot    Int
+  packageCodeSnapshot     String
+  packageNameSnapshot     String
+  packageSubtitleSnapshot String?
+  originalAmountFen       Int
+  discountAmountFen       Int                 @default(0)
+  payableAmountFen        Int
+  couponCodeSnapshot      String?
+  manualReviewReason      String?             @db.Text
+  closedReason            String?             @db.Text
+  qrCodeUrl               String?             @db.Text
+  paidAt                  DateTime?
+  fulfilledAt             DateTime?
+  closedAt                DateTime?
+  createdAt               DateTime            @default(now())
+  updatedAt               DateTime            @updatedAt
+
+  user              User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vipPackage        VipPackage              @relation(fields: [vipPackageId], references: [id], onDelete: Restrict)
+  couponApplication OrderCouponApplication?
+  paymentAttempts   PaymentAttempt[]
+  webhookEvents     PaymentWebhookEvent[]
+  auditEvents       OrderAuditEvent[]
+  entitlementGrants EntitlementGrant[]
+  couponRedemption  CouponRedemption?
+
+  @@index([userId, createdAt])
+  @@index([userId, status])
+  @@index([status, createdAt])
+}
+
+model OrderCouponApplication {
+  id                   String             @id @default(uuid())
+  orderId              String             @unique
+  couponId             String
+  couponCodeSnapshot   String
+  couponNameSnapshot   String
+  couponTypeSnapshot   CouponType
+  stackingRuleSnapshot CouponStackingRule
+  audienceSnapshot     CouponAudience
+  discountAmountFen    Int
+  createdAt            DateTime           @default(now())
+
+  order  CommerceOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  coupon Coupon        @relation(fields: [couponId], references: [id], onDelete: Restrict)
+
+  @@index([couponId])
+}
+
+model CouponRedemption {
+  id                String                 @id @default(uuid())
+  couponId          String
+  userId            String
+  orderId           String                 @unique
+  status            CouponRedemptionStatus @default(reserved)
+  discountAmountFen Int
+  reservedAt        DateTime               @default(now())
+  consumedAt        DateTime?
+  releasedAt        DateTime?
+  releaseReason     String?                @db.Text
+
+  coupon Coupon        @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  user   User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  order  CommerceOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([couponId, status, reservedAt])
+  @@index([userId, couponId, status])
+}
+
+model PaymentAttempt {
+  id                   String          @id @default(uuid())
+  orderId              String
+  provider             PaymentProvider @default(wechat_native)
+  status               PaymentStatus   @default(pending)
+  merchantTradeNumber  String          @unique
+  requestPayload       Json?
+  responsePayload      Json?
+  responseCodeUrl      String?         @db.Text
+  gatewayTransactionId String?
+  errorCode            String?
+  errorMessage         String?         @db.Text
+  requestedAt          DateTime        @default(now())
+  respondedAt          DateTime?
+  paidAt               DateTime?
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+
+  order         CommerceOrder         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  webhookEvents PaymentWebhookEvent[]
+
+  @@index([orderId, createdAt])
+  @@index([status, updatedAt])
+}
+
+model PaymentWebhookEvent {
+  id               String               @id @default(uuid())
+  provider         PaymentProvider      @default(wechat_native)
+  orderId          String?
+  paymentAttemptId String?
+  status           PaymentWebhookStatus @default(received)
+  eventType        String?
+  dedupeKey        String               @unique
+  serial           String?
+  signature        String?              @db.Text
+  nonce            String?
+  timestamp        String?
+  bodyText         String               @db.Text
+  verifiedAt       DateTime?
+  processedAt      DateTime?
+  processingError  String?              @db.Text
+  createdAt        DateTime             @default(now())
+
+  order          CommerceOrder?  @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  paymentAttempt PaymentAttempt? @relation(fields: [paymentAttemptId], references: [id], onDelete: SetNull)
+
+  @@index([orderId, createdAt])
+  @@index([paymentAttemptId, createdAt])
+}
+
+model EntitlementGrant {
+  id              String                @id @default(uuid())
+  userId          String
+  orderId         String?               @unique
+  sourceType      EntitlementSourceType
+  sourceReference String
+  membershipPlan  MembershipPlan
+  startsAt        DateTime?
+  endsAt          DateTime?
+  grantedDays     Int?
+  note            String?               @db.Text
+  createdAt       DateTime              @default(now())
+
+  user  User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  order CommerceOrder? @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  @@unique([sourceType, sourceReference])
+  @@index([userId, createdAt])
+}
+
+model OrderAuditEvent {
+  id          String           @id @default(uuid())
+  orderId     String
+  actorUserId String?
+  action      OrderAuditAction
+  reason      String?          @db.Text
+  meta        Json?
+  createdAt   DateTime         @default(now())
+
+  order     CommerceOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  actorUser User?         @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([orderId, createdAt])
+  @@index([actorUserId, createdAt])
 }

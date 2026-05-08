@@ -289,7 +289,7 @@
       transparent
     );
     opacity: 0;
-    transform: scale(0.96) translateX(-1px);
+    transform: scale(0.96);
     pointer-events: none;
     z-index: 1;
     transition:
@@ -301,7 +301,6 @@
   .resume-editor-section-nav-item:focus-visible {
     outline: none;
     color: var(--builder-panel-text);
-    transform: translateX(0.5px);
   }
 
   .resume-editor-section-nav-item:not(.is-active):hover
@@ -309,7 +308,7 @@
   .resume-editor-section-nav-item:not(.is-active):focus-visible
     .resume-editor-section-nav-hover-bg {
     opacity: 1;
-    transform: scale(1) translateX(0);
+    transform: scale(1);
   }
 
   .resume-editor-section-nav-item.is-active {
@@ -378,6 +377,22 @@
     font-size: 13px;
     line-height: 1.2;
     font-weight: 500;
+  }
+
+  .resume-editor-section-nav-custom-tag {
+    height: 16px;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 5px;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--builder-panel-border) 88%, transparent);
+    background: color-mix(in srgb, var(--builder-panel-bg-soft) 90%, transparent);
+    color: color-mix(in srgb, var(--builder-panel-text-muted) 86%, transparent);
+    font-size: 10px;
+    line-height: 1;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    flex-shrink: 0;
   }
 
   .resume-editor-add-shell,

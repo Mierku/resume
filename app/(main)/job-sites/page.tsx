@@ -230,7 +230,7 @@ export default function JobSitesPage() {
           <p className="text-sm font-medium text-foreground">插件使用说明</p>
           <p className="text-xs text-muted-foreground">安装并启用插件后，可在这些招聘网站的岗位页直接发起一键填报与跟踪</p>
         </div>
-        <Link href="/install">
+        <Link href="/?installGuide=1">
           <Button variant="outline" size="sm">
             查看安装说明
           </Button>

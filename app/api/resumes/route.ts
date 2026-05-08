@@ -24,7 +24,12 @@ export async function GET() {
     }
 
     const resumes = await getResumes(user.id)
-    const limit = buildResumeLimitSummary(user.membershipPlan, resumes.length, user.role)
+    const limit = buildResumeLimitSummary(
+      user.membershipPlan,
+      user.membershipExpiresAt,
+      resumes.length,
+      user.role,
+    )
     return NextResponse.json({ resumes, limit })
   } catch (error) {
     console.error('Get resumes error:', error)

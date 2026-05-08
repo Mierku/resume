@@ -141,6 +141,11 @@
   --builder-button-text-hover: rgb(19, 19, 19);
   --builder-button-tab-active-bg: #d0d0d0;
   --builder-button-primary-hover: rgb(237, 102, 98);
+  --builder-button-light-bg: color-mix(
+    in srgb,
+    var(--builder-button-primary-hover) 8%,
+    transparent
+  );
   --builder-input-placeholder: rgba(150, 150, 160, 0.92);
   --builder-status-info: #60a5fa;
   --builder-status-warning: #fbbf24;
@@ -203,7 +208,7 @@
   --builder-preview-bg: #05070b;
   --builder-preview-dock-bg: rgba(18, 18, 18, 0.92);
   --builder-preview-dock-shadow: 0 12px 28px rgba(0, 0, 0, 0.34);
-  --builder-card-bg: #1f1f1f;
+  --builder-card-bg: #323232;
   --builder-card-bg-hover: color-mix(
     in srgb,
     var(--builder-panel-bg-soft) 90%,
@@ -229,6 +234,8 @@
   --builder-button-text-hover: rgb(231, 231, 231);
   --builder-button-tab-active-bg: #1d1d1d;
   --builder-button-primary-hover: rgb(237, 102, 98);
+  --builder-button-light-bg: rgb(197, 102, 89);
+  --builder-button-light-border: rgb(249, 88, 55);
   --builder-input-placeholder: rgba(150, 150, 160, 0.92);
   --builder-status-info: #60a5fa;
   --builder-status-warning: #fbbf24;

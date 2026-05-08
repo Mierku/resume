@@ -178,7 +178,12 @@ function EditorSectionNavTabChromeBg() {
   )
 }
 
-function renderSectionNavItemInner(sectionId: string, title: string, hidden: boolean) {
+function renderSectionNavItemInner(
+  sectionId: string,
+  title: string,
+  hidden: boolean,
+  custom = false,
+) {
   return (
     <>
       <EditorSectionNavTabChromeBg />
@@ -193,6 +198,11 @@ function renderSectionNavItemInner(sectionId: string, title: string, hidden: boo
         <span className="resume-editor-section-nav-title-text">
           {title}
         </span>
+        {custom ? (
+          <span className="resume-editor-section-nav-custom-tag">
+            自定义
+          </span>
+        ) : null}
       </span>
     </>
   )
@@ -203,6 +213,7 @@ interface EditorSectionNavButtonProps {
   title: string
   active: boolean
   hidden: boolean
+  custom?: boolean
   locked?: boolean
   sortable?: boolean
   dragging?: boolean
@@ -218,6 +229,7 @@ function EditorSectionNavButton({
   title,
   active,
   hidden,
+  custom = false,
   locked = false,
   sortable = false,
   dragging = false,
@@ -255,7 +267,7 @@ function EditorSectionNavButton({
       }}
       {...listeners}
     >
-      {renderSectionNavItemInner(sectionId, title, hidden)}
+      {renderSectionNavItemInner(sectionId, title, hidden, custom)}
     </button>
   )
 }
@@ -368,6 +380,7 @@ interface SortableEditorSectionNavItemProps {
   title: string
   active: boolean
   hidden: boolean
+  custom?: boolean
   locked?: boolean
   onSelect: () => void
 }
@@ -377,6 +390,7 @@ function SortableEditorSectionNavItem({
   title,
   active,
   hidden,
+  custom = false,
   locked = false,
   onSelect,
 }: SortableEditorSectionNavItemProps) {
@@ -409,6 +423,7 @@ function SortableEditorSectionNavItem({
       title={title}
       active={active}
       hidden={hidden}
+      custom={custom}
       locked={locked}
       sortable
       dragging={isDragging}
@@ -526,6 +541,7 @@ interface EditorSectionNavGroupProps {
     id: string
     title: string
     hidden: boolean
+    custom?: boolean
     locked?: boolean
     sortable?: boolean
     removable?: boolean
@@ -577,6 +593,7 @@ function EditorSectionNavGroup({
                   title={tab.title}
                   active={activeSectionId === tab.id}
                   hidden={tab.hidden}
+                  custom={tab.custom}
                   locked={tab.locked}
                   onSelect={() => onSelect(tab.id)}
                 />
@@ -587,6 +604,7 @@ function EditorSectionNavGroup({
                   title={tab.title}
                   active={activeSectionId === tab.id}
                   hidden={tab.hidden}
+                  custom={tab.custom}
                   locked={tab.locked}
                   onSelect={() => onSelect(tab.id)}
                 />
@@ -710,6 +728,7 @@ export function IntegratedSectionsEditor({
   }, [data]);
 
   const tabs = useMemo(() => {
+    const customSectionIdSet = new Set(data.customSections.map((section) => section.id));
     const dynamicTabs = layoutSectionIds
       .filter(
         (sectionId) => sectionId !== "basics" && sectionId !== "intention",
@@ -718,6 +737,7 @@ export function IntegratedSectionsEditor({
         id: sectionId,
         title: getSectionDisplayTitle(data, sectionId),
         hidden: isSectionHidden(data, sectionId),
+        custom: customSectionIdSet.has(sectionId),
         locked: false,
         removable: true,
         sortable: true,
@@ -728,6 +748,7 @@ export function IntegratedSectionsEditor({
         id: "basics",
         title: "基本信息",
         hidden: false,
+        custom: false,
         locked: true,
         removable: false,
         sortable: false,
@@ -747,6 +768,7 @@ export function IntegratedSectionsEditor({
         id: sectionId,
         title: getSectionDisplayTitle(data, sectionId),
         hidden: true,
+        custom: false,
         locked: false,
         removable: false,
         sortable: false,

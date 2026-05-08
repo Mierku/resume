@@ -1,20 +1,15 @@
 import { randomBytes } from 'crypto'
-import type { Prisma, PrismaClient, User } from '@prisma/client'
+import type { Prisma, User } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { normalizeAuthProviderIds } from '@/lib/auth-provider-labels'
 import { redis } from '@/lib/redis'
+import { resolveMergedMembership } from '@/server/vip/entitlement'
 
 export const EMAIL_BIND_PROVIDER = 'email_code'
 export const WECHAT_BIND_PROVIDER = 'wechat_official'
 
 const ACCOUNT_BIND_CONFLICT_PREFIX = 'account:bind:conflict:'
 const ACCOUNT_BIND_CONFLICT_TTL_SECONDS = 10 * 60
-
-const MEMBERSHIP_PLAN_PRIORITY = {
-  basic: 0,
-  pro: 1,
-  elite: 2,
-} as const
 
 const ROLE_PRIORITY = {
   user: 0,
@@ -174,65 +169,6 @@ async function consumeConflictPayload(token: string) {
 
 function getPreferredRole(targetRole: User['role'], sourceRole: User['role']) {
   return ROLE_PRIORITY[sourceRole] > ROLE_PRIORITY[targetRole] ? sourceRole : targetRole
-}
-
-function getPreferredMembershipPlan(
-  targetPlan: User['membershipPlan'],
-  sourcePlan: User['membershipPlan'],
-  targetExpiresAt: Date | null,
-  sourceExpiresAt: Date | null,
-) {
-  const sourceIsPerpetual = sourceExpiresAt == null
-  const targetIsPerpetual = targetExpiresAt == null
-  const sourceIsActive = sourceIsPerpetual || sourceExpiresAt.getTime() > Date.now()
-  const targetIsActive = targetIsPerpetual || targetExpiresAt.getTime() > Date.now()
-
-  if (sourceIsActive && !targetIsActive) {
-    return {
-      membershipPlan: sourcePlan,
-      membershipExpiresAt: sourceExpiresAt,
-    }
-  }
-
-  if (targetIsActive && !sourceIsActive) {
-    return {
-      membershipPlan: targetPlan,
-      membershipExpiresAt: targetExpiresAt,
-    }
-  }
-
-  if (MEMBERSHIP_PLAN_PRIORITY[sourcePlan] > MEMBERSHIP_PLAN_PRIORITY[targetPlan]) {
-    return {
-      membershipPlan: sourcePlan,
-      membershipExpiresAt: sourceExpiresAt,
-    }
-  }
-
-  if (MEMBERSHIP_PLAN_PRIORITY[sourcePlan] < MEMBERSHIP_PLAN_PRIORITY[targetPlan]) {
-    return {
-      membershipPlan: targetPlan,
-      membershipExpiresAt: targetExpiresAt,
-    }
-  }
-
-  if (targetIsPerpetual || sourceIsPerpetual) {
-    return {
-      membershipPlan: targetIsPerpetual ? targetPlan : sourcePlan,
-      membershipExpiresAt: targetIsPerpetual ? targetExpiresAt : sourceExpiresAt,
-    }
-  }
-
-  if ((sourceExpiresAt?.getTime() || 0) > (targetExpiresAt?.getTime() || 0)) {
-    return {
-      membershipPlan: sourcePlan,
-      membershipExpiresAt: sourceExpiresAt,
-    }
-  }
-
-  return {
-    membershipPlan: targetPlan,
-    membershipExpiresAt: targetExpiresAt,
-  }
 }
 
 async function mergeUniqueRecordsByUrl(
@@ -440,12 +376,18 @@ async function deleteOrphanedSourceUserIfNeeded(
     })
 
     if (targetUser) {
-      const preferredMembership = getPreferredMembershipPlan(
-        targetUser.membershipPlan,
-        sourceUser.membershipPlan,
-        targetUser.membershipExpiresAt,
-        sourceUser.membershipExpiresAt,
-      )
+      const preferredMembership = resolveMergedMembership({
+        target: {
+          membershipPlan: targetUser.membershipPlan,
+          membershipExpiresAt: targetUser.membershipExpiresAt,
+          role: targetUser.role,
+        },
+        source: {
+          membershipPlan: sourceUser.membershipPlan,
+          membershipExpiresAt: sourceUser.membershipExpiresAt,
+          role: sourceUser.role,
+        },
+      })
 
       await tx.user.update({
         where: { id: targetUserId },

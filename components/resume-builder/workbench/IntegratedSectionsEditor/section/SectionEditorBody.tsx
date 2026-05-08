@@ -13,6 +13,7 @@ import {
 import { DateRangePickerField } from '@/components/ui/date-range-picker'
 import { MonthPickerField } from '@/components/ui/month-picker'
 import { dateToYearMonth, joinPeriodValue, splitPeriodValue } from '@/lib/date-fields'
+import { sanitizeHtml } from '@/lib/resume/sanitize'
 import {
   clampToRange,
   formatNumericValue,
@@ -78,12 +79,6 @@ function ScrubbableNumberInput({ value, placeholder, suffix, config, onChange }:
     }
     return config.defaultValue
   }, [config.defaultValue, config.max, config.min, value])
-
-  useEffect(() => {
-    if (!focused) {
-      setDraft(value)
-    }
-  }, [focused, value])
 
   useEffect(() => {
     return () => {
@@ -277,6 +272,62 @@ function CollapseMotion({ open, className, children }: CollapseMotionProps) {
   )
 }
 
+interface CollapsibleSectionShellProps {
+  title: string
+  expanded: boolean
+  onToggle: () => void
+  className?: string
+  collapseClassName?: string
+  previewClassName?: string
+  children: ReactNode
+  preview?: ReactNode
+}
+
+function CollapsibleSectionShell({
+  title,
+  expanded,
+  onToggle,
+  className,
+  collapseClassName,
+  previewClassName,
+  children,
+  preview,
+}: CollapsibleSectionShellProps) {
+  return (
+    <div
+      className={joinClassNames(
+        'resume-soft-card resume-section-shell',
+        className,
+        expanded && 'is-expanded',
+        !expanded && 'is-collapsed',
+      )}
+    >
+      <button
+        type="button"
+        className="resume-section-shell-head"
+        onClick={onToggle}
+        aria-expanded={expanded}
+        aria-label={`展开或收起${title}`}
+      >
+        <span className="resume-section-shell-head-main">
+          <span className={joinClassNames('resume-section-shell-toggle', expanded && 'is-expanded')}>
+            <IconChevronRight />
+          </span>
+          <span className="resume-section-shell-title">{title}</span>
+        </span>
+      </button>
+
+      <CollapseMotion open={expanded} className={joinClassNames('resume-section-shell-collapse', collapseClassName)}>
+        {children}
+      </CollapseMotion>
+
+      {!expanded && preview ? (
+        <div className={joinClassNames('resume-section-shell-preview', previewClassName)}>{preview}</div>
+      ) : null}
+    </div>
+  )
+}
+
 type BasicInfoExtraFieldKey =
   | 'intentionCity'
   | 'birthDate'
@@ -308,6 +359,14 @@ function hasNonEmptyText(value: unknown) {
   return typeof value === 'string' && value.trim().length > 0
 }
 
+function htmlToCollapsedPlainText(value: string) {
+  return value
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
 type PanelInputProps = ComponentProps<typeof Input>
 
 function PanelInput(props: PanelInputProps) {
@@ -322,6 +381,7 @@ export function BasicInfoSectionEditor() {
   const photoFloatingRef = useRef<HTMLDivElement | null>(null)
   const [photoUploading, setPhotoUploading] = useState(false)
   const [photoExpanded, setPhotoExpanded] = useState(false)
+  const [basicsExpanded, setBasicsExpanded] = useState(true)
   const [enabledExtraFields, setEnabledExtraFields] = useState<BasicInfoExtraFieldKey[]>([])
 
   const updateField = (field: keyof ResumeData['basics'], value: string) => {
@@ -450,9 +510,38 @@ export function BasicInfoSectionEditor() {
     setEnabledExtraFields((prev) => (prev.includes(fieldKey) ? prev : [...prev, fieldKey]))
   }
 
+  const primaryPreviewValues = useMemo(
+    () => [basics.name.trim(), (basics.intentionPosition || basics.headline).trim()].filter(Boolean),
+    [basics.headline, basics.intentionPosition, basics.name],
+  )
+
+  const secondaryPreviewValues = useMemo(
+    () =>
+      [basics.birthDate.trim(), basics.phone.trim(), basics.email.trim(), basics.workYears.trim()].filter(Boolean),
+    [basics.birthDate, basics.email, basics.phone, basics.workYears],
+  )
+  const hasBasicsPreview = primaryPreviewValues.length > 0 || secondaryPreviewValues.length > 0
+
   return (
     <div className="space-y-4">
-      <SectionFormGrid className="resume-basics-grid">
+      <CollapsibleSectionShell
+        title="基本信息"
+        expanded={basicsExpanded}
+        onToggle={() => setBasicsExpanded((prev) => !prev)}
+        className="resume-basics-shell"
+        previewClassName="resume-basics-shell-preview"
+        preview={hasBasicsPreview ? (
+          <>
+            {primaryPreviewValues.length > 0 ? (
+              <p className="resume-basics-shell-preview-line is-primary">{primaryPreviewValues.join(' ｜ ')}</p>
+            ) : null}
+            {secondaryPreviewValues.length > 0 ? (
+              <p className="resume-basics-shell-preview-line is-secondary">{secondaryPreviewValues.join(' ｜ ')}</p>
+            ) : null}
+          </>
+        ) : null}
+      >
+        <SectionFormGrid className="resume-basics-card resume-basics-grid">
         <SectionFormField>
           <EditorAnchor sectionId="basics" fieldKey="name">
             <label className="text-xs text-muted-foreground block mb-2">姓名</label>
@@ -849,29 +938,28 @@ export function BasicInfoSectionEditor() {
             </EditorAnchor>
           </SectionFormField>
         ) : null}
+        </SectionFormGrid>
+      </CollapsibleSectionShell>
 
-        {hiddenExtraFields.length > 0 ? (
-          <SectionFormField wide className="resume-basics-extra-field">
-            <section className="resume-basics-extra-section" aria-label="其他信息">
-              <div className="resume-basics-extra">
-                <p className="resume-basics-extra-title">其他信息</p>
-                <div className="resume-basics-extra-tags">
-                  {hiddenExtraFields.map((field) => (
-                    <button
-                      key={field.key}
-                      type="button"
-                      className="resume-basics-extra-tag"
-                      onClick={() => showExtraField(field.key)}
-                    >
-                      + {field.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </section>
-          </SectionFormField>
-        ) : null}
-      </SectionFormGrid>
+      {hiddenExtraFields.length > 0 ? (
+        <section className="resume-soft-card resume-basics-extra-section" aria-label="其他信息">
+          <div className="resume-basics-extra">
+            <p className="resume-basics-extra-title">其他信息</p>
+            <div className="resume-basics-extra-tags">
+              {hiddenExtraFields.map((field) => (
+                <button
+                  key={field.key}
+                  type="button"
+                  className="resume-basics-extra-tag"
+                  onClick={() => showExtraField(field.key)}
+                >
+                  + {field.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </section>
+      ) : null}
     </div>
   )
 }
@@ -879,21 +967,44 @@ export function BasicInfoSectionEditor() {
 function SummaryEditor() {
   const summary = useResumeBuilderStore((state) => state.data.summary)
   const updateResumeData = useResumeBuilderStore((state) => state.updateResumeData)
+  const [summaryExpanded, setSummaryExpanded] = useState(true)
+  const summaryHtml = useMemo(() => sanitizeHtml(summary.content), [summary.content])
+  const summarySectionTitle = useMemo(() => summary.title.trim() || '个人总结', [summary.title])
+  const hasSummaryContent = useMemo(
+    () => htmlToCollapsedPlainText(summaryHtml).length > 0,
+    [summaryHtml],
+  )
 
   return (
     <div className="space-y-3">
-      <EditorAnchor sectionId="summary" fieldKey="content">
-        <RichTextEditor
-          value={summary.content}
-          onChange={(value) =>
-            updateResumeData((draft) => {
-              draft.summary.content = value
-            })
-          }
-          placeholder="输入个人简介..."
-          minHeight={160}
-        />
-      </EditorAnchor>
+      <CollapsibleSectionShell
+        title={summarySectionTitle}
+        expanded={summaryExpanded}
+        onToggle={() => setSummaryExpanded((prev) => !prev)}
+        className="resume-summary-shell"
+        previewClassName="resume-summary-preview"
+        preview={hasSummaryContent ? (
+          <div
+            className="resume-summary-preview-content"
+            dangerouslySetInnerHTML={{ __html: summaryHtml }}
+          />
+        ) : null}
+      >
+        <div className="resume-summary-editor-card">
+          <EditorAnchor sectionId="summary" fieldKey="content">
+            <RichTextEditor
+              value={summary.content}
+              onChange={(value) =>
+                updateResumeData((draft) => {
+                  draft.summary.content = value
+                })
+              }
+              placeholder="输入个人简介..."
+              minHeight={160}
+            />
+          </EditorAnchor>
+        </div>
+      </CollapsibleSectionShell>
     </div>
   )
 }
@@ -903,85 +1014,126 @@ function SkillsSectionEditor() {
   const updateResumeData = useResumeBuilderStore((state) => state.updateResumeData)
   const updateItem = useResumeBuilderStore((state) => state.updateStandardSectionItem)
   const removeItem = useResumeBuilderStore((state) => state.removeStandardSectionItem)
+  const [skillsExpanded, setSkillsExpanded] = useState(true)
+  const skillsSectionTitle = useMemo(
+    () => section.title.trim() || STANDARD_SECTION_LABELS.skills,
+    [section.title],
+  )
+  const introPreview = useMemo(
+    () => htmlToCollapsedPlainText(sanitizeHtml(section.intro || '')),
+    [section.intro],
+  )
+  const skillPreviewLine = useMemo(
+    () =>
+      section.items
+        .map((item) => {
+          const name = String(item.name || '').trim()
+          if (!name) return ''
+          const proficiency = String(item.proficiency || '').trim()
+          return proficiency ? `${name}（${proficiency}）` : name
+        })
+        .filter(Boolean)
+        .join(' ｜ '),
+    [section.items],
+  )
+  const hasSkillsPreview = Boolean(introPreview || skillPreviewLine)
 
   return (
-    <div className="space-y-3">
-      <EditorAnchor sectionId="skills" fieldKey="intro">
-        <RichTextEditor
-          value={section.intro}
-          onChange={(value) =>
-            updateResumeData((draft) => {
-              draft.sections.skills.intro = value
-            })
-          }
-          placeholder="输入技能说明，例如技术栈、擅长方向、项目经验和方法论..."
-          minHeight={180}
-        />
-      </EditorAnchor>
+    <CollapsibleSectionShell
+      title={skillsSectionTitle}
+      expanded={skillsExpanded}
+      onToggle={() => setSkillsExpanded((prev) => !prev)}
+      className="resume-skills-shell"
+      previewClassName="resume-skills-preview"
+      preview={hasSkillsPreview ? (
+        <>
+          {introPreview ? (
+            <p className="resume-skills-preview-line">{introPreview}</p>
+          ) : null}
+          {skillPreviewLine ? (
+            <p className="resume-skills-preview-line is-secondary">{skillPreviewLine}</p>
+          ) : null}
+        </>
+      ) : null}
+    >
+      <div className="space-y-3 resume-skills-shell-body">
+        <EditorAnchor sectionId="skills" fieldKey="intro">
+          <RichTextEditor
+            value={section.intro}
+            onChange={(value) =>
+              updateResumeData((draft) => {
+                draft.sections.skills.intro = value
+              })
+            }
+            placeholder="输入技能说明，例如技术栈、擅长方向、项目经验和方法论..."
+            minHeight={180}
+          />
+        </EditorAnchor>
 
-      {section.items.length > 0 ? (
-        <div className="resume-skill-inline-list">
-          {section.items.map((item, index) => {
-            const itemId = resolveEditorItemId(item.id, `skills-${index}`)
+        {section.items.length > 0 ? (
+          <div className="resume-skill-inline-list">
+            {section.items.map((item, index) => {
+              const itemId = resolveEditorItemId(item.id, `skills-${index}`)
 
-            return (
-              <div key={itemId} className="resume-soft-card resume-skill-inline-card">
-                <div className="resume-skill-inline-content">
-                  <EditorAnchor
-                    sectionId="skills"
-                    itemId={itemId}
-                    fieldKey="name"
-                    className="resume-skill-inline-field is-name"
-                  >
-                    <PanelInput
-                      value={item.name}
-                      onChange={(value) => updateItem('skills', index, { name: value })}
-                      placeholder="技能名称"
-                    />
-                  </EditorAnchor>
-
-                  <EditorAnchor
-                    sectionId="skills"
-                    itemId={itemId}
-                    fieldKey="proficiency"
-                    className="resume-skill-inline-field is-proficiency"
-                  >
-                    <Select
-                      value={item.proficiency || DEFAULT_SKILL_PROFICIENCY}
-                      onChange={(value) =>
-                        updateItem('skills', index, {
-                          proficiency: toSingleSelectValue(value) || DEFAULT_SKILL_PROFICIENCY,
-                        })
-                      }
-                      placeholder="选择熟练度"
-                      style={{ width: '100%' }}
+              return (
+                <div key={itemId} className="resume-soft-card resume-skill-inline-card">
+                  <div className="resume-skill-inline-content">
+                    <EditorAnchor
+                      sectionId="skills"
+                      itemId={itemId}
+                      fieldKey="name"
+                      className="resume-skill-inline-field is-name"
                     >
-                      {SKILL_PROFICIENCY_OPTIONS.map((option) => (
-                        <Option key={option.value} value={option.value}>
-                          {option.label}
-                        </Option>
-                      ))}
-                    </Select>
-                  </EditorAnchor>
+                      <PanelInput
+                        value={item.name}
+                        onChange={(value) => updateItem('skills', index, { name: value })}
+                        placeholder="技能名称"
+                      />
+                    </EditorAnchor>
 
-                  <div className="resume-skill-inline-actions">
-                    <Button
-                      type="text"
-                      size="mini"
-                      status="danger"
-                      icon={<IconDelete />}
-                      onClick={() => removeItem('skills', index)}
-                    />
+                    <EditorAnchor
+                      sectionId="skills"
+                      itemId={itemId}
+                      fieldKey="proficiency"
+                      className="resume-skill-inline-field is-proficiency"
+                    >
+                      <Select
+                        value={item.proficiency || DEFAULT_SKILL_PROFICIENCY}
+                        onChange={(value) =>
+                          updateItem('skills', index, {
+                            proficiency: toSingleSelectValue(value) || DEFAULT_SKILL_PROFICIENCY,
+                          })
+                        }
+                        placeholder="选择熟练度"
+                        style={{ width: '100%' }}
+                      >
+                        {SKILL_PROFICIENCY_OPTIONS.map((option) => (
+                          <Option key={option.value} value={option.value}>
+                            {option.label}
+                          </Option>
+                        ))}
+                      </Select>
+                    </EditorAnchor>
+
+                    <div className="resume-skill-inline-actions">
+                      <Button
+                        type="text"
+                        size="mini"
+                        status="danger"
+                        icon={<IconDelete />}
+                        onClick={() => removeItem('skills', index)}
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
-            )
-          })}
-        </div>
-      ) : (
-        <div className="resume-skill-inline-empty text-xs text-muted-foreground">点击下方“新增条目”添加技能词条</div>
-      )}
-    </div>
+              )
+            })}
+          </div>
+        ) : (
+          <div className="resume-skill-inline-empty text-xs text-muted-foreground">点击下方“新增条目”添加技能词条</div>
+        )}
+      </div>
+    </CollapsibleSectionShell>
   )
 }
 
@@ -1054,11 +1206,17 @@ function StandardSectionEditor({ sectionId }: { sectionId: StandardSectionType }
                   {summary ? (
                     <div
                       className="resume-standard-item-summary"
-                      title={`${summary.primary} / ${summary.secondary}`}
+                      title={[summary.primary, summary.secondary].filter(Boolean).join(' / ')}
                     >
-                      <span className="resume-standard-item-summary-primary">{summary.primary}</span>
-                      <span className="resume-standard-item-summary-sep">/</span>
-                      <span className="resume-standard-item-summary-secondary">{summary.secondary}</span>
+                      {summary.primary ? (
+                        <span className="resume-standard-item-summary-primary">{summary.primary}</span>
+                      ) : null}
+                      {summary.primary && summary.secondary ? (
+                        <span className="resume-standard-item-summary-sep">/</span>
+                      ) : null}
+                      {summary.secondary ? (
+                        <span className="resume-standard-item-summary-secondary">{summary.secondary}</span>
+                      ) : null}
                     </div>
                   ) : null}
                 </div>

@@ -260,8 +260,9 @@ export function resolveStandardSectionItemSummary(sectionId: StandardSectionType
   const config = STANDARD_SECTION_ITEM_SUMMARY_CONFIG[sectionId]
   if (!config) return null
 
-  const primary = toSummaryText(getNestedValue(record, config.primaryKey)) || `未填写${config.primaryFallback}`
-  const secondary = toSummaryText(getNestedValue(record, config.secondaryKey)) || `未填写${config.secondaryFallback}`
+  const primary = toSummaryText(getNestedValue(record, config.primaryKey))
+  const secondary = toSummaryText(getNestedValue(record, config.secondaryKey))
+  if (!primary && !secondary) return null
 
   return { primary, secondary }
 }

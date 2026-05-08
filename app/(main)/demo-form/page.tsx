@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
 
 export default function DemoFormPage() {
-  redirect('/install')
+  redirect('/?installGuide=1')
 }

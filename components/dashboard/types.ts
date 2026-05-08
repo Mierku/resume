@@ -3,6 +3,7 @@ export const DASHBOARD_SECTION_IDS = [
   'tracking',
   'resume',
   'admin-users',
+  'admin-commerce',
   'account',
 ] as const
 

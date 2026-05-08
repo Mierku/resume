@@ -5,7 +5,7 @@ const DEFAULT_SITE_ORIGIN = 'http://localhost:3000'
 
 export const siteOrigin = (process.env.NEXT_PUBLIC_SITE_ORIGIN || process.env.SITE_ORIGIN || DEFAULT_SITE_ORIGIN).replace(/\/$/, '')
 
-export const publicSeoRoutes = ['/', '/pricing', '/faq', '/install', '/terms', '/privacy'] as const
+export const publicSeoRoutes = ['/', '/pricing', '/faq', '/terms', '/privacy'] as const
 
 export function buildMetadata({
   title,

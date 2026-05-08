@@ -1,41 +1,17 @@
 .page {
   padding: 28px 24px 12px;
+  background: var(--builder-workspace-bg);
+  color: var(--builder-panel-text);
 }
 
 .banner {
   position: relative;
   overflow: hidden;
   border-radius: 18px;
-  border: 1px solid color-mix(in srgb, var(--color-border) 86%, transparent);
-  background:
-    radial-gradient(circle at 92% 10%, color-mix(in srgb, var(--color-primary) 16%, transparent), transparent 44%),
-    radial-gradient(circle at 8% 16%, color-mix(in srgb, var(--color-primary) 8%, transparent), transparent 40%),
-    linear-gradient(150deg, color-mix(in srgb, var(--color-background) 95%, white), color-mix(in srgb, var(--color-muted) 36%, var(--color-background)));
-  box-shadow: 0 20px 44px rgba(74, 66, 64, 0.08);
+  border: 1px solid var(--builder-panel-border);
+  background: color-mix(in srgb, var(--builder-panel-bg) 96%, var(--builder-workspace-bg));
+  box-shadow: var(--builder-toolbar-shadow);
   padding: 28px 24px 24px;
-}
-
-.banner::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image: radial-gradient(circle, color-mix(in srgb, var(--color-primary) 12%, transparent) 0.8px, transparent 0.9px);
-  background-size: 16px 16px;
-  opacity: 0.26;
-  pointer-events: none;
-}
-
-.banner::after {
-  content: '';
-  position: absolute;
-  right: -100px;
-  bottom: -140px;
-  width: 320px;
-  height: 320px;
-  border-radius: 999px;
-  background: radial-gradient(circle, color-mix(in srgb, var(--color-primary) 32%, transparent), transparent 68%);
-  filter: blur(10px);
-  pointer-events: none;
 }
 
 .bannerContent {
@@ -51,7 +27,7 @@
   font-size: 11px;
   letter-spacing: 0.24em;
   text-transform: uppercase;
-  color: var(--color-muted-foreground);
+  color: var(--builder-panel-text-muted);
 }
 
 .bannerTitle {
@@ -59,7 +35,7 @@
   font-size: clamp(30px, 4vw, 42px);
   line-height: 1.1;
   letter-spacing: -0.03em;
-  color: var(--color-foreground);
+  color: var(--builder-panel-text);
 }
 
 .bannerSubtitle {
@@ -67,7 +43,7 @@
   max-width: 640px;
   font-size: 14px;
   line-height: 1.7;
-  color: var(--color-muted-foreground);
+  color: var(--builder-panel-text-muted);
 }
 
 .searchWrap {
@@ -81,23 +57,23 @@
   align-items: center;
   gap: 10px;
   border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--color-border) 82%, transparent);
-  background: color-mix(in srgb, var(--color-background) 97%, white);
-  box-shadow: 0 12px 28px rgba(74, 66, 64, 0.08);
+  border: 1px solid var(--builder-panel-border);
+  background: color-mix(in srgb, var(--builder-panel-bg-soft) 94%, var(--builder-workspace-bg));
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
   padding: 0 16px;
   transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 .searchField:focus-within {
-  border-color: color-mix(in srgb, var(--color-primary) 62%, var(--color-border));
-  box-shadow: 0 14px 30px rgba(74, 66, 64, 0.12);
+  border-color: var(--builder-panel-border-strong);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.24);
   transform: translateY(-1px);
 }
 
 .searchIcon {
   width: 18px;
   height: 18px;
-  color: var(--color-muted-foreground);
+  color: var(--builder-panel-text-muted);
   flex-shrink: 0;
 }
 
@@ -106,13 +82,13 @@
   height: 100%;
   border: 0;
   background: transparent;
-  color: var(--color-foreground);
+  color: var(--builder-panel-text);
   font-size: 15px;
   outline: none;
 }
 
 .searchInput::placeholder {
-  color: color-mix(in srgb, var(--color-muted-foreground) 88%, transparent);
+  color: var(--builder-input-placeholder);
 }
 
 .categoryWrap {
@@ -130,9 +106,9 @@
   justify-content: center;
   gap: 8px;
   border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--color-border) 84%, transparent);
-  background: color-mix(in srgb, var(--color-background) 96%, white);
-  color: var(--color-foreground);
+  border: 1px solid var(--builder-panel-border);
+  background: color-mix(in srgb, var(--builder-panel-bg) 94%, var(--builder-workspace-bg));
+  color: var(--builder-panel-text);
   font-size: 12px;
   line-height: 1;
   padding: 0 12px;
@@ -141,13 +117,13 @@
 
 .categoryChip:hover {
   transform: translateY(-1px);
-  border-color: color-mix(in srgb, var(--color-primary) 42%, var(--color-border));
-  background: color-mix(in srgb, var(--color-muted) 88%, var(--color-background));
+  border-color: var(--builder-panel-border-strong);
+  background: color-mix(in srgb, var(--builder-panel-bg-soft) 90%, var(--builder-workspace-bg));
 }
 
 .categoryChipActive {
-  border-color: color-mix(in srgb, var(--color-primary) 60%, transparent);
-  background: color-mix(in srgb, var(--color-primary) 12%, var(--color-background));
+  border-color: color-mix(in srgb, var(--builder-button-primary-hover) 48%, var(--builder-panel-border));
+  background: color-mix(in srgb, var(--builder-button-primary-hover) 12%, var(--builder-panel-bg));
 }
 
 .categoryCount {
@@ -159,13 +135,13 @@
   align-items: center;
   justify-content: center;
   font-size: 11px;
-  color: var(--color-muted-foreground);
-  background: color-mix(in srgb, var(--color-muted) 78%, var(--color-background));
+  color: var(--builder-panel-text-muted);
+  background: color-mix(in srgb, var(--builder-panel-bg-soft) 78%, var(--builder-workspace-bg));
 }
 
 .categoryChipActive .categoryCount {
-  color: color-mix(in srgb, var(--color-primary) 92%, black);
-  background: color-mix(in srgb, var(--color-primary) 16%, var(--color-background));
+  color: var(--builder-button-primary-hover);
+  background: color-mix(in srgb, var(--builder-button-primary-hover) 18%, var(--builder-panel-bg));
 }
 
 .toolbar {
@@ -179,7 +155,7 @@
 .toolbarMeta {
   margin: 0;
   font-size: 12px;
-  color: var(--color-muted-foreground);
+  color: var(--builder-panel-text-muted);
 }
 
 .toolbarDot {
@@ -187,9 +163,9 @@
 }
 
 .toolbarReset {
-  border: 1px solid color-mix(in srgb, var(--color-border) 84%, transparent);
-  background: color-mix(in srgb, var(--color-background) 96%, white);
-  color: var(--color-muted-foreground);
+  border: 1px solid var(--builder-panel-border);
+  background: color-mix(in srgb, var(--builder-panel-bg) 94%, var(--builder-workspace-bg));
+  color: var(--builder-panel-text-muted);
   border-radius: 999px;
   height: 30px;
   padding: 0 12px;
@@ -198,30 +174,9 @@
 }
 
 .toolbarReset:hover {
-  border-color: color-mix(in srgb, var(--color-primary) 48%, transparent);
-  background: color-mix(in srgb, var(--color-muted) 86%, var(--color-background));
-  color: var(--color-foreground);
-}
-
-:global([data-theme='dark']) .banner {
-  background:
-    radial-gradient(circle at 92% 10%, color-mix(in srgb, var(--color-primary) 14%, transparent), transparent 44%),
-    radial-gradient(circle at 8% 16%, color-mix(in srgb, var(--color-primary) 8%, transparent), transparent 40%),
-    linear-gradient(150deg, color-mix(in srgb, var(--color-background) 90%, #181312), color-mix(in srgb, var(--color-muted) 76%, #151210));
-  box-shadow: 0 20px 38px rgba(0, 0, 0, 0.28);
-}
-
-:global([data-theme='dark']) .searchField {
-  background: color-mix(in srgb, var(--color-muted) 88%, transparent);
-  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.22);
-}
-
-:global([data-theme='dark']) .categoryChip {
-  background: color-mix(in srgb, var(--color-muted) 88%, transparent);
-}
-
-:global([data-theme='dark']) .toolbarReset {
-  background: color-mix(in srgb, var(--color-muted) 90%, transparent);
+  border-color: var(--builder-panel-border-strong);
+  background: color-mix(in srgb, var(--builder-panel-bg-soft) 92%, var(--builder-workspace-bg));
+  color: var(--builder-panel-text);
 }
 
 @media (max-width: 960px) {

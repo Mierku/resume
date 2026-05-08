@@ -3,6 +3,7 @@ import { normalizeAuthProviderIds } from '@/lib/auth-provider-labels'
 import { getCurrentUser } from '@/lib/session'
 import { prisma } from '@/lib/prisma'
 import { DEFAULT_USER_AVATAR_URL, isAdminRole } from '@/lib/user'
+import { getVipSnapshot, resolvePlanExpiresAt, resolvePlanType } from '@/lib/vip'
 
 export async function GET() {
   try {
@@ -41,12 +42,6 @@ export async function GET() {
       userRecord.membershipPlan ??
       null
 
-    const normalizedPlan = typeof rawPlan === 'string' ? rawPlan.toLowerCase() : null
-    const planType =
-      normalizedPlan === 'pro' || normalizedPlan === 'elite' || normalizedPlan === 'basic'
-        ? normalizedPlan
-        : 'basic'
-
     const rawPlanExpiresAt =
       user.membershipExpiresAt ??
       userRecord.planExpiresAt ??
@@ -55,15 +50,13 @@ export async function GET() {
       userRecord.subscriptionExpiresAt ??
       null
 
-    let planExpiresAt: string | null = null
-    if (typeof rawPlanExpiresAt === 'string') {
-      const parsed = new Date(rawPlanExpiresAt)
-      if (!Number.isNaN(parsed.getTime())) {
-        planExpiresAt = parsed.toISOString()
-      }
-    } else if (rawPlanExpiresAt instanceof Date && !Number.isNaN(rawPlanExpiresAt.getTime())) {
-      planExpiresAt = rawPlanExpiresAt.toISOString()
-    }
+    const vipSnapshot = getVipSnapshot({
+      membershipPlan: typeof rawPlan === 'string' ? rawPlan : user.membershipPlan,
+      membershipExpiresAt: rawPlanExpiresAt instanceof Date || typeof rawPlanExpiresAt === 'string' ? rawPlanExpiresAt : null,
+      role,
+    })
+    const planType = resolvePlanType(vipSnapshot)
+    const planExpiresAt = resolvePlanExpiresAt(vipSnapshot)
 
     const avatarUrl = typeof user.image === 'string' && user.image.trim()
       ? user.image

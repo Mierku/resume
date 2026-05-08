@@ -132,12 +132,12 @@ async function assertCanCreateResume(client: ResumeLimitClient, userId: string) 
   const [user, resumeCount] = await Promise.all([
     client.user.findUnique({
       where: { id: userId },
-      select: { membershipPlan: true, role: true },
+      select: { membershipPlan: true, membershipExpiresAt: true, role: true },
     }),
     client.resume.count({ where: { userId } }),
   ])
 
-  const limit = getResumeStorageLimit(user?.membershipPlan, user?.role)
+  const limit = getResumeStorageLimit(user?.membershipPlan, user?.membershipExpiresAt, user?.role)
   if (limit !== null && resumeCount >= limit) {
     throw new ResumeCreationLimitError(limit)
   }

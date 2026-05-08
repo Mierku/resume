@@ -1473,7 +1473,8 @@
 }
 
 .resumeEntryCard:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--builder-button-primary-hover) 58%, transparent);
+  outline: 2px solid
+    color-mix(in srgb, var(--builder-button-primary-hover) 58%, transparent);
   outline-offset: 2px;
 }
 
@@ -1485,15 +1486,6 @@
   opacity: 0.76;
 }
 
-.resumeEntryLabel {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin: 0;
-  font-size: 12px;
-  color: var(--builder-panel-text-muted);
-}
-
 .resumeEntryTitle {
   margin: 0;
   font-size: 22px;
@@ -1501,12 +1493,6 @@
   line-height: 1.15;
   letter-spacing: -0.02em;
   color: var(--builder-panel-text);
-}
-
-.resumeEntryHint {
-  margin: 0;
-  font-size: 11px;
-  color: color-mix(in srgb, var(--builder-button-primary-hover) 62%, var(--builder-panel-text-muted));
 }
 
 .resumeGrid {

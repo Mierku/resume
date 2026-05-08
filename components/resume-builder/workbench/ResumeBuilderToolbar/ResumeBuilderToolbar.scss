@@ -137,38 +137,79 @@
   }
 
   .resume-toolbar-share-trigger {
+    --resume-share-accent: var(
+      --builder-button-light-border,
+      var(--builder-button-primary-hover)
+    );
     min-height: 35px;
-    border: 1px solid var(--builder-button-primary-hover);
+    position: relative;
+    isolation: isolate;
+    border: none;
     border-radius: 999px;
     padding: 0 18px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 6px;
-    background: transparent;
-    color: var(--builder-button-primary-hover);
+    background: color-mix(
+      in srgb,
+      var(--builder-button-light-bg, transparent) 10%,
+      transparent
+    );
+    color: var(--resume-share-accent);
     font-size: 13px;
     font-weight: 600;
     transition:
-      border-color 180ms ease,
       color 180ms ease,
       background-color 180ms ease,
+      transform 180ms ease,
       box-shadow 180ms ease;
     cursor: pointer;
   }
 
+  .resume-toolbar-share-trigger::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    padding: 2px;
+    border-radius: inherit;
+    background: linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--resume-share-accent) 58%, transparent),
+      color-mix(in srgb, var(--resume-share-accent) 86%, white),
+      color-mix(in srgb, var(--resume-share-accent) 58%, transparent)
+    );
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: destination-out;
+    mask-composite: exclude;
+    pointer-events: none;
+    transition:
+      filter 180ms ease,
+      opacity 180ms ease;
+  }
+
   .resume-toolbar-share-trigger:hover:not(:disabled),
   .resume-toolbar-share-trigger:focus-visible {
-    border-color: var(--builder-button-primary-hover);
-    color: var(--builder-button-primary-hover);
+    color: color-mix(in srgb, var(--resume-share-accent) 90%, white);
     background: color-mix(
       in srgb,
-      var(--builder-button-primary-hover) 10%,
+      var(--resume-share-accent) 12%,
       transparent
     );
     box-shadow: 0 0 0 3px
-      color-mix(in srgb, var(--builder-button-primary-hover) 16%, transparent);
+      color-mix(in srgb, var(--resume-share-accent) 16%, transparent);
     outline: none;
+  }
+
+  .resume-toolbar-share-trigger:hover:not(:disabled)::before,
+  .resume-toolbar-share-trigger:focus-visible::before {
+    filter: brightness(1.22);
+  }
+
+  .resume-toolbar-share-trigger:active:not(:disabled) {
+    transform: scale(0.98);
   }
 
   .resume-toolbar-share-trigger:disabled {
@@ -176,7 +217,13 @@
     cursor: wait;
   }
 
+  .resume-toolbar-share-trigger:disabled::before {
+    opacity: 0.76;
+  }
+
   .resume-toolbar-share-trigger-icon {
+    position: relative;
+    z-index: 1;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -184,6 +231,8 @@
   }
 
   .resume-toolbar-share-trigger-label {
+    position: relative;
+    z-index: 1;
     line-height: 1;
   }
 
@@ -276,6 +325,17 @@
   }
 
   .resume-toolbar-download-trigger {
+    --resume-download-accent: var(--builder-button-primary-hover);
+    --resume-download-bg: color-mix(
+      in srgb,
+      var(--resume-download-accent) 84%,
+      var(--builder-panel-bg-soft)
+    );
+    --resume-download-bg-hover: color-mix(
+      in srgb,
+      var(--resume-download-accent) 92%,
+      var(--builder-panel-bg-soft)
+    );
     min-height: 35px;
     border: 0;
     border-radius: 999px;
@@ -284,14 +344,14 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
-    background: #2563eb;
+    background: var(--resume-download-bg);
     color: #ffffff;
     font-size: 13px;
     font-weight: 700;
     line-height: 1;
     letter-spacing: 0.01em;
     box-shadow:
-      0 4px 15px rgba(59, 130, 246, 0.3),
+      0 4px 15px color-mix(in srgb, var(--resume-download-accent) 30%, transparent),
       inset 0 1px 0 rgba(255, 255, 255, 0.14);
     transition:
       background-color 180ms ease,
@@ -301,7 +361,7 @@
   }
 
   .resume-toolbar-download-trigger:hover:not(:disabled) {
-    background: #3b82f6;
+    background: var(--resume-download-bg-hover);
   }
 
   .resume-toolbar-download-trigger:active:not(:disabled) {
@@ -311,8 +371,8 @@
   .resume-toolbar-download-trigger:focus-visible {
     outline: none;
     box-shadow:
-      0 4px 15px rgba(59, 130, 246, 0.32),
-      0 0 0 3px rgba(147, 197, 253, 0.24);
+      0 4px 15px color-mix(in srgb, var(--resume-download-accent) 36%, transparent),
+      0 0 0 3px color-mix(in srgb, var(--resume-download-accent) 24%, transparent);
   }
 
   .resume-toolbar-download-trigger:disabled {

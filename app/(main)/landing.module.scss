@@ -57,41 +57,33 @@
   position: fixed;
   inset: 0;
   z-index: 80;
-  display: flex;
-  align-items: flex-start;
+  display: grid;
+  place-items: center;
   justify-content: center;
-  padding: 24px;
+  padding: 22px;
 }
 
 .installBackdrop {
   position: absolute;
   inset: 0;
   border: 0;
-  background:
-    radial-gradient(circle at 16% 14%, color-mix(in srgb, var(--aura-gold) 20%, transparent) 0%, transparent 34%),
-    radial-gradient(circle at 86% 86%, color-mix(in srgb, var(--aura-accent) 82%, transparent) 0%, transparent 42%),
-    rgba(38, 32, 29, 0.42);
-  backdrop-filter: blur(14px);
+  background: rgba(16, 18, 24, 0.38);
+  backdrop-filter: blur(9px);
 }
 
 .installModal {
   position: relative;
   z-index: 1;
-  width: min(920px, 100%);
-  max-height: calc(100vh - 48px);
+  width: min(760px, 100%);
+  max-height: calc(100vh - 44px);
   overflow: hidden;
-  border-radius: 16px;
-  border: 1px solid color-mix(in srgb, var(--aura-gold) 24%, transparent);
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--aura-card-bg) 94%, white 6%) 0%,
-      color-mix(in srgb, var(--aura-pink) 96%, white 4%) 100%
-    );
-  color: var(--aura-text);
+  border-radius: 18px;
+  border: 1px solid #dadde5;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
+  color: #191c23;
   box-shadow:
-    0 32px 110px rgba(74, 66, 64, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.72);
+    0 30px 90px rgba(14, 21, 36, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
 .installModalScroll {
@@ -104,49 +96,51 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 24px 26px 18px;
-  border-bottom: 1px solid color-mix(in srgb, var(--aura-gold) 16%, transparent);
-}
-
-.installEyebrow {
-  margin: 0 0 8px;
-  color: var(--aura-gold);
-  font-size: 9px;
-  letter-spacing: 0.28em;
-  text-transform: uppercase;
+  padding: 24px 26px 20px;
+  border-bottom: 1px solid #e6e9f0;
 }
 
 .installTitle {
   margin: 0;
-  color: var(--aura-text);
-  font-size: clamp(1.45rem, 2.4vw, 1.95rem);
-  letter-spacing: -0.03em;
+  color: #171a22;
+  font-size: clamp(1.15rem, 1.8vw, 1.4rem);
+  letter-spacing: -0.02em;
   line-height: 1.12;
+  font-weight: 700;
 }
 
 .installClose {
-  width: 38px;
-  height: 38px;
+  width: 54px;
+  height: 54px;
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border: 0;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--aura-accent) 78%, white 22%);
-  color: var(--aura-text-soft);
+  background: #f1f3f8;
+  color: #525867;
   cursor: pointer;
-  transition: transform 180ms ease, background 180ms ease, color 180ms ease;
+  transition: transform 180ms ease, background 180ms ease, color 180ms ease, box-shadow 180ms ease;
 }
 
 .installClose:hover {
-  transform: rotate(90deg);
-  background: color-mix(in srgb, var(--aura-gold) 22%, white 78%);
-  color: var(--aura-text);
+  transform: scale(1.04);
+  background: #e6eaf3;
+  color: #202532;
+  box-shadow: 0 6px 18px rgba(27, 35, 56, 0.14);
 }
 
 .installSection {
-  padding: 20px 22px 24px;
+  padding: 20px 26px 24px;
+}
+
+.installSectionLabel {
+  margin: 0 0 18px;
+  color: #50586b;
+  font-size: 0.92rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
 }
 
 .installVersionGrid {
@@ -156,133 +150,82 @@
 }
 
 .installVersionCard {
-  border-radius: 18px;
-  border: 1px solid color-mix(in srgb, var(--aura-gold) 12%, transparent);
-  background: color-mix(in srgb, var(--aura-card-bg) 88%, white 12%);
-  padding: 20px 20px 18px;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  border-radius: 24px;
+  border: 1px solid #d9dee9;
+  background: linear-gradient(150deg, #f8faff 0%, #f2f5fb 100%);
+  padding: 18px 20px;
+  min-height: 132px;
+  display: grid;
+  align-content: flex-start;
+  gap: 8px;
 }
 
 .installVersionCardActive {
-  border-color: color-mix(in srgb, var(--aura-gold) 46%, transparent);
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--aura-gold) 10%, white 90%) 0%,
-      color-mix(in srgb, var(--aura-accent) 24%, white 76%) 100%
-    );
-  box-shadow:
-    inset 0 0 0 1px color-mix(in srgb, var(--aura-gold) 14%, transparent),
-    0 18px 42px rgba(74, 66, 64, 0.08);
+  border-color: #9ea8bc;
+  box-shadow: inset 0 0 0 1px rgba(146, 157, 178, 0.2);
 }
 
 .installBadge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 48px;
-  height: 30px;
-  padding: 0 12px;
+  min-width: 58px;
+  height: 28px;
+  padding: 0 10px;
   border-radius: 10px;
-  background: var(--aura-btn-bg);
-  color: var(--aura-btn-text);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
+  background: #e6ebf5;
+  color: #293045;
+  font-size: 0.75rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
 }
 
 .installBadgeMuted {
-  background: color-mix(in srgb, var(--aura-accent) 70%, white 30%);
-  color: var(--aura-text);
+  background: #dbe2f0;
+  color: #1f2839;
 }
 
 .installVersionTitle {
-  margin: 14px 0 12px;
-  color: var(--aura-text);
-  font-size: 1.35rem;
-  letter-spacing: -0.03em;
-}
-
-.installList {
   margin: 0;
-  padding-left: 18px;
-  color: var(--aura-text-soft);
-  display: grid;
-  gap: 8px;
-  font-size: 13px;
-  line-height: 1.65;
+  color: #181c26;
+  font-size: clamp(1rem, 1.5vw, 1.18rem);
+  letter-spacing: -0.01em;
+  line-height: 1.18;
 }
 
-.installNotice {
-  margin-top: 16px;
-  border-radius: 14px;
-  padding: 14px 16px;
-  text-align: center;
-  color: var(--aura-text);
-  font-size: 13px;
-  background: color-mix(in srgb, var(--aura-gold) 8%, white 92%);
-  border: 1px solid color-mix(in srgb, var(--aura-gold) 20%, transparent);
-}
-
-.installBrowserTabs {
-  display: inline-flex;
-  gap: 8px;
-  padding: 5px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--aura-accent) 70%, white 30%);
-}
-
-.installBrowserTab,
-.installBrowserTabActive {
-  border: 0;
-  border-radius: 999px;
-  padding: 8px 14px;
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: background 180ms ease, color 180ms ease, transform 180ms ease;
-}
-
-.installBrowserTab {
-  background: transparent;
-  color: var(--aura-text-soft);
-}
-
-.installBrowserTabActive {
-  background: var(--aura-btn-bg);
-  color: var(--aura-btn-text);
+.installVersionDesc {
+  margin: 0;
+  color: #5e6679;
+  font-size: 0.8rem;
+  line-height: 1.52;
 }
 
 .installStep {
   display: grid;
-  grid-template-columns: 58px 1fr;
+  grid-template-columns: 52px 1fr;
   gap: 14px;
   align-items: flex-start;
-  padding: 4px 0 22px;
+  padding: 4px 0 20px;
 }
 
 .installStep + .installStep {
-  border-top: 1px solid color-mix(in srgb, var(--aura-gold) 12%, transparent);
-  padding-top: 22px;
+  margin-top: 4px;
+  padding-top: 20px;
+  border-top: 1px solid #e8ecf3;
 }
 
 .installStepIndex {
   width: 40px;
   height: 40px;
   border-radius: 999px;
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--aura-gold) 82%, white 18%) 0%,
-    color-mix(in srgb, var(--aura-accent) 88%, white 12%) 100%
-  );
+  background: #eef2f8;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--aura-text);
-  font-size: 1.15rem;
+  color: #1d2330;
+  font-size: 0.96rem;
   font-weight: 700;
-  box-shadow: 0 12px 22px rgba(74, 66, 64, 0.1);
+  box-shadow: 0 6px 14px rgba(21, 30, 46, 0.15);
 }
 
 .installStepBody {
@@ -292,176 +235,92 @@
 
 .installStepTitle {
   margin: 0;
-  color: var(--aura-text);
-  font-size: clamp(1.1rem, 1.8vw, 1.35rem);
+  color: #1b2130;
+  font-size: clamp(1.02rem, 1.6vw, 1.18rem);
   line-height: 1.2;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.015em;
 }
 
 .installStepText {
   margin: 0;
-  color: var(--aura-text-soft);
-  font-size: 13px;
-  line-height: 1.7;
+  color: #5a6276;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.installStepHint {
+  margin: -2px 0 0;
+  color: #70798f;
+  font-size: 0.74rem;
+  line-height: 1.45;
 }
 
 .installCodeRow {
   display: flex;
   align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px;
   border-radius: 14px;
-  border: 1px solid color-mix(in srgb, var(--aura-gold) 14%, transparent);
-  background: color-mix(in srgb, var(--aura-card-bg) 82%, white 18%);
+  border: 1px solid #d4dae7;
+  background: #ffffff;
   padding: 10px 12px;
 }
 
 .installCode {
-  font-size: clamp(0.9rem, 1.4vw, 1rem);
-  color: var(--aura-text);
-  letter-spacing: 0.02em;
+  font-size: clamp(0.8rem, 1.1vw, 0.92rem);
+  color: #1e2533;
+  letter-spacing: 0.04em;
+  font-family: 'IBM Plex Mono', 'SFMono-Regular', Menlo, Consolas, monospace;
 }
 
 .installCopyButton,
 .installPathAction,
 .installPrimaryAction {
-  border: 0;
+  border: 1px solid transparent;
   cursor: pointer;
-  transition: transform 180ms ease, opacity 180ms ease, background 180ms ease;
+  transition: transform 180ms ease, opacity 180ms ease, background 180ms ease, border-color 180ms ease;
 }
 
 .installCopyButton {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  height: 36px;
-  padding: 0 14px;
-  border-radius: 12px;
-  background: var(--aura-btn-bg);
-  color: var(--aura-btn-text);
-  font-size: 12px;
+  justify-content: center;
+  height: 34px;
+  min-width: 70px;
+  padding: 0 12px;
+  border-radius: 9px;
+  background: #eef2f8;
+  color: #1a2130;
+  font-size: 0.74rem;
+  font-weight: 650;
 }
 
 .installCopyButton:hover,
 .installPathAction:hover,
 .installPrimaryAction:hover {
   transform: translateY(-1px);
-  opacity: 0.94;
-}
-
-.browserMock {
-  border-radius: 18px;
-  border: 1px solid color-mix(in srgb, var(--aura-gold) 16%, transparent);
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--aura-card-bg) 90%, white 10%) 0%,
-    color-mix(in srgb, var(--aura-accent) 34%, white 66%) 100%
-  );
-  overflow: hidden;
-}
-
-.browserMockTop {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 14px;
-  background: color-mix(in srgb, var(--aura-accent) 62%, white 38%);
-}
-
-.browserMockDot {
-  width: 9px;
-  height: 9px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--aura-text-soft) 24%, white 76%);
-}
-
-.browserMockAddress {
-  margin-left: 8px;
-  flex: 1;
-  min-width: 0;
-  border-radius: 999px;
-  padding: 8px 12px;
-  background: rgba(255, 255, 255, 0.62);
-  color: var(--aura-text-soft);
-  font-size: 12px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.browserMockBody {
-  display: grid;
-  gap: 14px;
-  padding: 16px 16px 18px;
-}
-
-.browserMockToolbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.browserMockPill {
-  display: inline-flex;
-  align-items: center;
-  height: 34px;
-  border-radius: 999px;
-  padding: 0 14px;
-  border: 1px solid color-mix(in srgb, var(--aura-gold) 18%, transparent);
-  color: var(--aura-text);
-  font-size: 12px;
-  background: rgba(255, 255, 255, 0.54);
-}
-
-.browserMockToggle {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 10px;
-  color: var(--aura-text);
-  font-size: 13px;
-}
-
-.browserMockSwitch {
-  width: 54px;
-  height: 30px;
-  padding: 3px;
-  border-radius: 999px;
-  background: linear-gradient(
-    90deg,
-    color-mix(in srgb, var(--aura-btn-bg) 86%, white 14%) 0%,
-    color-mix(in srgb, var(--aura-gold) 68%, white 32%) 100%
-  );
-  display: inline-flex;
-  justify-content: flex-end;
-}
-
-.browserMockSwitchKnob {
-  width: 24px;
-  height: 24px;
-  border-radius: 999px;
-  background: #ffffff;
+  opacity: 0.96;
 }
 
 .installPathBlock {
   display: grid;
   gap: 8px;
-  border-radius: 14px;
-  border: 1px solid color-mix(in srgb, var(--aura-gold) 14%, transparent);
-  background: color-mix(in srgb, var(--aura-card-bg) 82%, white 18%);
-  padding: 14px 14px 12px;
+  border-radius: 12px;
+  border: 1px solid #d8deea;
+  background: #f7f9fd;
+  padding: 10px 12px;
 }
 
 .installPathLabel {
-  color: var(--aura-gold);
-  font-size: 10px;
+  color: #69738a;
+  font-size: 0.62rem;
   text-transform: uppercase;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.14em;
 }
 
 .installPathValue {
-  color: var(--aura-text);
-  font-size: 12px;
+  color: #1e2533;
+  font-size: 0.76rem;
   line-height: 1.6;
   word-break: break-word;
 }
@@ -470,32 +329,61 @@
   justify-self: flex-start;
   height: 34px;
   padding: 0 12px;
-  border-radius: 10px;
-  background: var(--aura-btn-bg);
-  color: var(--aura-btn-text);
-  font-size: 12px;
+  border-radius: 9px;
+  background: #eef2f8;
+  border-color: #cfd7e7;
+  color: #1d2431;
+  font-size: 0.74rem;
+  font-weight: 550;
+}
+
+.installHintPanel {
+  border-radius: 12px;
+  border: 1px solid #d4dbe9;
+  background: #f3f6fc;
+  min-height: 82px;
+  display: grid;
+  place-items: center;
+  color: #69748b;
+  font-size: 0.78rem;
+}
+
+.installDropArea {
+  border-radius: 14px;
+  border: 1px dashed #c6d0e2;
+  background: #f5f8fd;
+  min-height: 122px;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 8px;
+  color: #6b758b;
+}
+
+.installDropText {
+  font-size: 0.78rem;
+  letter-spacing: 0.01em;
 }
 
 .installFooterActions {
   display: flex;
   align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.installTextLink {
-  color: color-mix(in srgb, var(--aura-gold) 78%, var(--aura-text) 22%);
-  text-decoration: none;
-  font-size: 12px;
+  justify-content: flex-end;
+  margin-top: 4px;
 }
 
 .installPrimaryAction {
-  height: 38px;
-  padding: 0 16px;
-  border-radius: 12px;
-  background: var(--aura-btn-bg);
-  color: var(--aura-btn-text);
-  font-size: 12px;
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 9px;
+  background: #e9eef8;
+  color: #131a26;
+  font-size: 0.74rem;
+  font-weight: 650;
+}
+
+.installPrimaryAction:hover {
+  border-color: #c1cbe0;
 }
 
 .nav {
@@ -1022,17 +910,23 @@
 
   .installModal {
     max-height: calc(100vh - 28px);
-    border-radius: 20px;
+    border-radius: 16px;
   }
 
   .installModalHeader,
   .installSection {
-    padding-left: 16px;
-    padding-right: 16px;
+    padding-left: 18px;
+    padding-right: 18px;
   }
 
   .installVersionGrid {
     grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .installVersionCard {
+    min-height: auto;
+    padding: 14px;
   }
 
   .installStep {
@@ -1041,19 +935,65 @@
   }
 
   .installStepIndex {
-    width: 38px;
-    height: 38px;
-    font-size: 1rem;
+    width: 34px;
+    height: 34px;
+    font-size: 0.92rem;
   }
 
-  .installBrowserTabs {
-    width: 100%;
-    justify-content: stretch;
+  .installSectionLabel {
+    font-size: 0.84rem;
+    margin-bottom: 14px;
   }
 
-  .installBrowserTab,
-  .installBrowserTabActive {
-    flex: 1;
+  .installVersionTitle {
+    font-size: clamp(0.95rem, 3.8vw, 1.12rem);
+  }
+
+  .installVersionDesc {
+    font-size: 0.74rem;
+  }
+
+  .installStepTitle {
+    font-size: clamp(0.98rem, 4.3vw, 1.14rem);
+  }
+
+  .installStepText {
+    font-size: 0.78rem;
+  }
+
+  .installStepHint {
+    font-size: 0.7rem;
+  }
+
+  .installCode {
+    font-size: 0.76rem;
+  }
+
+  .installHintPanel {
+    min-height: 74px;
+    font-size: 0.72rem;
+  }
+
+  .installDropArea {
+    min-height: 110px;
+  }
+
+  .installDropText {
+    font-size: 0.74rem;
+  }
+
+  .installPathLabel {
+    font-size: 0.58rem;
+  }
+
+  .installPathValue {
+    font-size: 0.7rem;
+  }
+
+  .installPathAction,
+  .installPrimaryAction,
+  .installCopyButton {
+    font-size: 0.68rem;
   }
 
   .nav {
@@ -1101,31 +1041,44 @@
 }
 
 @media (max-width: 768px) {
-  .installModalHeader {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
   .installClose {
     position: absolute;
-    top: 14px;
-    right: 14px;
+    top: 12px;
+    right: 12px;
+    width: 40px;
+    height: 40px;
+  }
+
+  .installModalHeader {
+    padding-top: 16px;
+    padding-bottom: 14px;
   }
 
   .installTitle {
-    max-width: calc(100% - 56px);
+    max-width: calc(100% - 70px);
+    font-size: 1.1rem;
   }
 
-  .installCodeRow,
-  .installFooterActions {
+  .installCodeRow {
+    gap: 10px;
     align-items: stretch;
+    flex-direction: column;
   }
 
+  .installFooterActions,
   .installCopyButton,
   .installPathAction,
   .installPrimaryAction {
     width: 100%;
     justify-content: center;
+  }
+
+  .installPrimaryAction {
+    height: 34px;
+  }
+
+  .installStep + .installStep {
+    padding-top: 18px;
   }
 
   .navLinks {

@@ -1,9 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { Copy, X } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { Upload, X } from 'lucide-react'
 import { Message } from '@/components/ui/radix-adapter'
 import { ScrollShell } from '@/components/ui/ScrollShell'
 import { ChromeWindow } from '@/components/ChromeWindow'
@@ -33,43 +32,44 @@ const logoShapeClassMap: Record<LogoShape, string> = {
   stack: s.logoMarkStack,
 }
 
-type BrowserGuide = 'chrome' | 'edge'
-
 const DEFAULT_RESUME_TEMPLATE_ID = 'template-1'
 const DEFAULT_RESUME_TITLE = '未命名简历'
 
-const installGuides: Record<
-  BrowserGuide,
-  {
-    label: string
-    url: string
-    toggleLabel: string
-    loadSource: string
-    supportText: string
-  }
-> = {
-  chrome: {
-    label: 'Chrome',
-    url: 'chrome://extensions',
-    toggleLabel: '开发者模式',
-    loadSource: '../extension1/.output/chrome-mv3-dev（开发） 或 ../extension1/.output/chrome-mv3（正式）',
-    supportText: '推荐用于本地开发、内测和私有交付',
-  },
-  edge: {
-    label: 'Edge',
-    url: 'edge://extensions',
-    toggleLabel: '开发人员模式',
-    loadSource: '../extension1/.output/chrome-mv3-dev（开发） 或 ../extension1/.output/chrome-mv3（正式）',
-    supportText: '适合 Edge 用户，同样支持 Chromium 扩展目录加载',
-  },
+const installGuide = {
+  url: 'chrome://extensions',
+  edgeUrl: 'edge://extensions',
+  loadSource: '../extension1/.output/chrome-mv3-dev（开发） 或 ../extension1/.output/chrome-mv3（正式）',
 }
 
 export function HomePageClient() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const logoMarqueeItems = [...platformLogos, ...platformLogos]
   const [installGuideOpen, setInstallGuideOpen] = useState(false)
-  const [activeBrowser, setActiveBrowser] = useState<BrowserGuide>('chrome')
   const [creatingResume, setCreatingResume] = useState(false)
+
+  const closeInstallGuide = useCallback(() => {
+    setInstallGuideOpen(false)
+
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    const nextUrl = new URL(window.location.href)
+    if (!nextUrl.searchParams.has('installGuide')) {
+      return
+    }
+
+    nextUrl.searchParams.delete('installGuide')
+    const nextPath = `${nextUrl.pathname}${nextUrl.search}${nextUrl.hash}`
+    window.history.replaceState(null, '', nextPath)
+  }, [])
+
+  useEffect(() => {
+    if (searchParams.get('installGuide') === '1') {
+      setInstallGuideOpen(true)
+    }
+  }, [searchParams])
 
   useEffect(() => {
     if (!installGuideOpen) {
@@ -81,7 +81,7 @@ export function HomePageClient() {
 
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        setInstallGuideOpen(false)
+        closeInstallGuide()
       }
     }
 
@@ -90,9 +90,7 @@ export function HomePageClient() {
       document.body.style.overflow = ''
       window.removeEventListener('keydown', handleEscape)
     }
-  }, [installGuideOpen])
-
-  const guide = installGuides[activeBrowser]
+  }, [closeInstallGuide, installGuideOpen])
 
   const copyText = async (text: string, successMessage: string) => {
     try {
@@ -170,16 +168,15 @@ export function HomePageClient() {
             type="button"
             className={s.installBackdrop}
             aria-label="关闭安装说明"
-            onClick={() => setInstallGuideOpen(false)}
+            onClick={closeInstallGuide}
           />
 
           <div className={s.installModal}>
             <ScrollShell className={s.installModalScroll} tone='aura' reveal='always' axis='y'>
               <div className={s.installModalHeader}>
                 <div>
-                  <p className={s.installEyebrow}>Install Guide</p>
                   <h2 id="install-guide-title" className={s.installTitle}>
-                    1. 安装版本说明
+                    安装指南
                   </h2>
                 </div>
 
@@ -187,107 +184,59 @@ export function HomePageClient() {
                   type="button"
                   className={s.installClose}
                   aria-label="关闭安装说明"
-                  onClick={() => setInstallGuideOpen(false)}
+                  onClick={closeInstallGuide}
                 >
                   <X className="size-5" aria-hidden="true" />
                 </button>
               </div>
 
               <div className={s.installSection}>
+                <p className={s.installSectionLabel}>版本方案</p>
                 <div className={s.installVersionGrid}>
                   <article className={s.installVersionCard}>
-                    <div className={s.installBadge}>后续</div>
-                    <h3 className={s.installVersionTitle}>商店自动更新版</h3>
-                    <ul className={s.installList}>
-                      <li>Chrome Web Store / Edge Add-ons 上架后开放</li>
-                      <li>适合公开分发和自动更新</li>
-                      <li>当前阶段暂不启用</li>
-                    </ul>
+                    <div className={s.installBadge}>Store</div>
+                    <h3 className={s.installVersionTitle}>商店版</h3>
+                    <p className={s.installVersionDesc}>自动静默更新</p>
                   </article>
 
                   <article className={`${s.installVersionCard} ${s.installVersionCardActive}`}>
-                    <div className={`${s.installBadge} ${s.installBadgeMuted}`}>当前</div>
+                    <div className={`${s.installBadge} ${s.installBadgeMuted}`}>Current</div>
                     <h3 className={s.installVersionTitle}>手动加载版</h3>
-                    <ul className={s.installList}>
-                      <li>不依赖 Chrome 商店审核</li>
-                      <li>适合私有分发、内部测试、本地调试</li>
-                      <li>需要手动开启浏览器扩展开发者模式</li>
-                    </ul>
+                    <p className={s.installVersionDesc}>内部测试专用</p>
                   </article>
-                </div>
-
-                <div className={s.installNotice}>
-                  当前先采用手动加载模式。点击下方步骤即可完成安装，不接下载功能也能先把链路跑通。
-                </div>
-              </div>
-
-              <div className={s.installModalHeader}>
-                <div>
-                  <p className={s.installEyebrow}>Step By Step</p>
-                  <h2 className={s.installTitle}>2. 安装步骤</h2>
-                </div>
-
-                <div className={s.installBrowserTabs}>
-                  {(['chrome', 'edge'] as BrowserGuide[]).map(browser => (
-                    <button
-                      key={browser}
-                      type="button"
-                      className={browser === activeBrowser ? s.installBrowserTabActive : s.installBrowserTab}
-                      onClick={() => setActiveBrowser(browser)}
-                    >
-                      {installGuides[browser].label}
-                    </button>
-                  ))}
                 </div>
               </div>
 
               <div className={s.installSection}>
+                <p className={s.installSectionLabel}>安装步骤</p>
                 <div className={s.installStep}>
                   <div className={s.installStepIndex}>1</div>
                   <div className={s.installStepBody}>
-                    <h3 className={s.installStepTitle}>进入浏览器的扩展程序页面</h3>
-                    <p className={s.installStepText}>{guide.supportText}</p>
+                    <h3 className={s.installStepTitle}>访问扩展管理</h3>
+                    <p className={s.installStepText}>在浏览器地址栏输入：</p>
 
                     <div className={s.installCodeRow}>
-                      <code className={s.installCode}>{guide.url}</code>
+                      <code className={s.installCode}>{installGuide.url}</code>
                       <button
                         type="button"
                         className={s.installCopyButton}
-                        onClick={() => copyText(guide.url, `${guide.url} 已复制`)}
+                        onClick={() => copyText(installGuide.url, `${installGuide.url} 已复制`)}
                       >
-                        <Copy className="size-4" aria-hidden="true" />
                         复制
                       </button>
                     </div>
+                    <p className={s.installStepHint}>Edge 用户可用：{installGuide.edgeUrl}</p>
                   </div>
                 </div>
 
                 <div className={s.installStep}>
                   <div className={s.installStepIndex}>2</div>
                   <div className={s.installStepBody}>
-                    <h3 className={s.installStepTitle}>开启「{guide.toggleLabel}」</h3>
-                    <p className={s.installStepText}>打开扩展管理页后，在右上角把开关打开。开启后才会出现“加载已解压的扩展程序”入口。</p>
+                    <h3 className={s.installStepTitle}>开启开发者模式</h3>
+                    <p className={s.installStepText}>点击页面右上角的开关。</p>
 
-                    <div className={s.browserMock}>
-                      <div className={s.browserMockTop}>
-                        <span className={s.browserMockDot} />
-                        <span className={s.browserMockDot} />
-                        <span className={s.browserMockDot} />
-                        <div className={s.browserMockAddress}>{guide.url}</div>
-                      </div>
-                      <div className={s.browserMockBody}>
-                        <div className={s.browserMockToolbar}>
-                          <span className={s.browserMockPill}>加载已解压的扩展程序</span>
-                          <span className={s.browserMockPill}>打包扩展程序</span>
-                          <span className={s.browserMockPill}>更新</span>
-                        </div>
-                        <div className={s.browserMockToggle}>
-                          <span>{guide.toggleLabel}</span>
-                          <span className={s.browserMockSwitch}>
-                            <span className={s.browserMockSwitchKnob} />
-                          </span>
-                        </div>
-                      </div>
+                    <div className={s.installHintPanel}>
+                      <span>示意图：右上角开关</span>
                     </div>
                   </div>
                 </div>
@@ -295,34 +244,27 @@ export function HomePageClient() {
                 <div className={s.installStep}>
                   <div className={s.installStepIndex}>3</div>
                   <div className={s.installStepBody}>
-                    <h3 className={s.installStepTitle}>加载插件目录</h3>
-                    <p className={s.installStepText}>点击“加载已解压的扩展程序”后，选择我们提供给你的插件目录。如果你就在本地项目里调试，直接选下面这个构建目录即可。</p>
+                    <h3 className={s.installStepTitle}>加载解压包</h3>
+                    <p className={s.installStepText}>点击“加载已解压的扩展程序”，或者直接将文件夹拖入此页面：</p>
+
+                    <div className={s.installDropArea}>
+                      <Upload className="size-7" aria-hidden="true" />
+                      <span className={s.installDropText}>将 extension 文件夹拖拽至此</span>
+                    </div>
 
                     <div className={s.installPathBlock}>
                       <div className={s.installPathLabel}>推荐目录</div>
-                      <code className={s.installPathValue}>{guide.loadSource}</code>
+                      <code className={s.installPathValue}>{installGuide.loadSource}</code>
                       <button
                         type="button"
                         className={s.installPathAction}
-                        onClick={() => copyText(guide.loadSource, '插件目录提示已复制')}
+                        onClick={() => copyText(installGuide.loadSource, '插件目录提示已复制')}
                       >
                         复制目录提示
                       </button>
                     </div>
-                  </div>
-                </div>
-
-                <div className={s.installStep}>
-                  <div className={s.installStepIndex}>4</div>
-                  <div className={s.installStepBody}>
-                    <h3 className={s.installStepTitle}>固定插件并开启沉浸式模式</h3>
-                    <p className={s.installStepText}>安装完成后，把插件固定到浏览器工具栏，打开 Popup 面板，开启沉浸式模式。随后就可以在招聘网站中使用一键填报。</p>
-
                     <div className={s.installFooterActions}>
-                      <Link href="/install" className={s.installTextLink}>
-                        查看完整安装页
-                      </Link>
-                      <button type="button" className={s.installPrimaryAction} onClick={() => setInstallGuideOpen(false)}>
+                      <button type="button" className={s.installPrimaryAction} onClick={closeInstallGuide}>
                         我知道了
                       </button>
                     </div>

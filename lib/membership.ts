@@ -1,5 +1,5 @@
 import type { MembershipPlan } from '@prisma/client'
-import { isAdminRole } from '@/lib/user'
+import { getVipSnapshot } from '@/lib/vip'
 
 interface ResumeLimitSummary {
   planType: MembershipPlan
@@ -19,23 +19,30 @@ function normalizeMembershipPlan(rawPlan: MembershipPlan | string | null | undef
 
 export function getResumeStorageLimit(
   rawPlan: MembershipPlan | string | null | undefined,
+  membershipExpiresAt?: Date | string | null,
   role?: string | null,
 ): number | null {
-  if (isAdminRole(role)) {
+  const snapshot = getVipSnapshot({
+    membershipPlan: normalizeMembershipPlan(rawPlan),
+    membershipExpiresAt,
+    role,
+  })
+
+  if (snapshot.isAdminBypass || snapshot.isActive) {
     return null
   }
 
-  const planType = normalizeMembershipPlan(rawPlan)
-  return planType === 'basic' ? 1 : null
+  return 1
 }
 
 export function buildResumeLimitSummary(
   rawPlan: MembershipPlan | string | null | undefined,
+  membershipExpiresAt: Date | string | null | undefined,
   resumeCount: number,
   role?: string | null,
 ): ResumeLimitSummary {
   const planType = normalizeMembershipPlan(rawPlan)
-  const max = getResumeStorageLimit(planType, role)
+  const max = getResumeStorageLimit(planType, membershipExpiresAt, role)
 
   return {
     planType,

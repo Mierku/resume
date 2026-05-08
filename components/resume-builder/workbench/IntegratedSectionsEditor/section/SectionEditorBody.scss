@@ -16,7 +16,93 @@
     grid-column: 1 / -1;
   }
 
+  /* 可折叠板块外壳 */
+  .resume-section-shell {
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .resume-section-shell-head {
+    width: 100%;
+    min-height: 40px;
+    border: 0;
+    background: transparent;
+    padding: 10px 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .resume-section-shell-head-main {
+    min-width: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .resume-section-shell-toggle {
+    width: 14px;
+    height: 14px;
+    color: var(--builder-panel-text-muted);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .resume-section-shell-toggle svg {
+    width: 14px;
+    height: 14px;
+    transform: rotate(0deg);
+    transition: transform 160ms ease;
+  }
+
+  .resume-section-shell-toggle.is-expanded svg {
+    transform: rotate(90deg);
+  }
+
+  .resume-section-shell-title {
+    font-size: 12px;
+    line-height: 1.2;
+    color: var(--builder-panel-text);
+    font-weight: 500;
+  }
+
+  .resume-section-shell-collapse .resume-collapse-motion-inner {
+    border-top: 1px solid color-mix(in srgb, var(--builder-card-border) 86%, transparent);
+  }
+
+  .resume-section-shell-preview {
+    border-top: 1px solid color-mix(in srgb, var(--builder-card-border) 86%, transparent);
+    padding: 10px 12px 12px;
+  }
+
   /* 基本信息区域（含头像选择器） */
+  .resume-basics-card {
+    padding: 12px;
+  }
+
+  .resume-basics-shell-preview {
+    display: grid;
+    gap: 6px;
+  }
+
+  .resume-basics-shell-preview-line {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--builder-panel-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .resume-basics-shell-preview-line.is-secondary {
+    color: var(--builder-panel-text-muted);
+  }
+
   .resume-basics-grid {
     align-items: start;
   }
@@ -305,21 +391,78 @@
     background: color-mix(in srgb, #b42318 88%, #5c1010);
   }
 
-  .resume-basics-extra-field {
-    grid-column: 1 / -1;
-    margin-top: 6px;
-  }
-
   .resume-basics-extra-section {
     border-radius: 10px;
-    border: 1px solid
-      color-mix(in srgb, var(--builder-card-border) 92%, transparent);
     background: color-mix(
       in srgb,
       var(--builder-card-bg-hover) 68%,
       transparent
     );
     padding: 12px;
+  }
+
+  .resume-summary-editor-card {
+    padding: 12px;
+  }
+
+  .resume-summary-preview {
+    display: grid;
+    gap: 6px;
+  }
+
+  .resume-summary-preview-content {
+    font-size: 12px;
+    line-height: 1.55;
+    color: var(--builder-panel-text);
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+
+  .resume-summary-preview-content :where(p) {
+    margin: 0 0 6px;
+  }
+
+  .resume-summary-preview-content :where(p:last-child) {
+    margin-bottom: 0;
+  }
+
+  .resume-summary-preview-content :where(ul),
+  .resume-summary-preview-content :where(ol) {
+    margin: 4px 0;
+    padding-left: 18px;
+  }
+
+  .resume-summary-preview-content :where(li) {
+    margin: 2px 0;
+  }
+
+  .resume-summary-preview-content :where(a) {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 0.12rem;
+  }
+
+  .resume-skills-shell-body {
+    padding: 12px;
+  }
+
+  .resume-skills-preview {
+    display: grid;
+    gap: 6px;
+  }
+
+  .resume-skills-preview-line {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--builder-panel-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .resume-skills-preview-line.is-secondary {
+    color: var(--builder-panel-text-muted);
   }
 
   .resume-basics-extra {

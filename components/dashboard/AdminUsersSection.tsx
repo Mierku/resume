@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import {
   Activity,
@@ -15,6 +16,7 @@ import { Skeleton } from '@/components/ui/Skeleton'
 import { getUserDisplayName, isAdminRole } from '@/lib/user'
 import { formatAuthProviderLabels } from '@/lib/auth-provider-labels'
 import { cn } from '@/lib/utils'
+import { getDashboardSectionHref } from '@/components/dashboard/types'
 import styles from './dashboard-workbench.module.scss'
 import adminStyles from './admin-users-section.module.scss'
 
@@ -107,7 +109,6 @@ export function AdminUsersSection() {
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
   const [refreshKey, setRefreshKey] = useState(0)
-
   useEffect(() => {
     setSearchDraft(activeQuery)
   }, [activeQuery])
@@ -312,6 +313,9 @@ export function AdminUsersSection() {
               </div>
 
               <div className={styles.panelActions}>
+                <Link href={getDashboardSectionHref('admin-commerce')} className={cn(styles.buttonBase, styles.secondaryButton)}>
+                  前往电商后台
+                </Link>
                 <form className={adminStyles.searchForm} onSubmit={handleSearchSubmit}>
                   <SearchField
                     value={searchDraft}

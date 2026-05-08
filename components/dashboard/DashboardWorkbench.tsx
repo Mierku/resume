@@ -12,6 +12,7 @@ import {
 } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
+  Boxes,
   BadgeDollarSign,
   BriefcaseBusiness,
   ChevronLeft,
@@ -51,6 +52,7 @@ import { TrackingSection } from "@/components/dashboard/TrackingSection";
 import { ResumesSection } from "@/components/dashboard/ResumesSection";
 import { AccountSection } from "@/components/dashboard/AccountSection";
 import { AdminUsersSection } from "@/components/dashboard/AdminUsersSection";
+import { AdminCommerceSection } from "@/components/dashboard/AdminCommerceSection";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { cn } from "@/lib/utils";
 import styles from "./dashboard-workbench.module.scss";
@@ -63,6 +65,7 @@ const SECTION_META: Record<
   tracking: { label: "求职跟踪", icon: BriefcaseBusiness },
   resume: { label: "我的简历", icon: FileText },
   "admin-users": { label: "管理后台", icon: ShieldCheck },
+  "admin-commerce": { label: "电商后台", icon: Boxes },
   account: { label: "个人主页", icon: UserRound },
 };
 const SECTION_NAV_ORDER: DashboardSection[] = [
@@ -70,6 +73,7 @@ const SECTION_NAV_ORDER: DashboardSection[] = [
   "resume",
   "tracking",
   "admin-users",
+  "admin-commerce",
 ];
 const USER_MENU_ITEMS: Array<{
   href: string;
@@ -255,7 +259,7 @@ function DashboardWorkbenchInner() {
   const resolvedActiveSection =
     isGuestMode
       ? "workbench"
-      : activeSection === "admin-users" && !canAccessAdminSection
+      : (activeSection === "admin-users" || activeSection === "admin-commerce") && !canAccessAdminSection
       ? "tracking"
       : activeSection;
   const visibleSectionIds: DashboardSection[] = isGuestMode
@@ -274,7 +278,7 @@ function DashboardWorkbenchInner() {
 
   useEffect(() => {
     if (!checked || !auth.authenticated || !user) return;
-    if (activeSection !== "admin-users") return;
+    if (activeSection !== "admin-users" && activeSection !== "admin-commerce") return;
     if (canAccessAdminSection) return;
     router.replace(getDashboardSectionHref("tracking"));
   }, [
@@ -521,6 +525,12 @@ function DashboardWorkbenchInner() {
       resolvedActiveSection === "admin-users" &&
       canAccessAdminSection ? (
         <AdminUsersSection />
+      ) : null}
+
+      {user &&
+      resolvedActiveSection === "admin-commerce" &&
+      canAccessAdminSection ? (
+        <AdminCommerceSection />
       ) : null}
 
       {user && resolvedActiveSection === "account" ? (
