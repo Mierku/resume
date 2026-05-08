@@ -3,12 +3,13 @@
 import { Check, LoaderCircle } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { LoginPanel } from '@/components/auth/LoginPanel'
 import { Modal } from '@/components/ui/Modal'
 import { Message } from '@/components/ui/radix-adapter'
 import { Select } from '@/components/ui/Select'
 import { QrCodeSvg } from '@/components/ui/QrCodeSvg'
-import { useOptionalAuthContext } from '@/lib/auth/context'
 import { invalidateAuthSnapshotCache } from '@/lib/auth/client'
+import { useAuthSnapshot } from '@/lib/hooks/useAuthSnapshot'
 import styles from './pricing.module.scss'
 
 interface PricingFeature {
@@ -136,7 +137,7 @@ export function PricingPageClient({
   initialPackages: PackageRecord[]
 }) {
   const router = useRouter()
-  const authContext = useOptionalAuthContext()
+  const { auth, refresh: refreshAuth, ensureAuthenticated } = useAuthSnapshot({ eager: true })
   const [packages, setPackages] = useState(initialPackages)
   const [couponOptionsByPackageId, setCouponOptionsByPackageId] = useState<Record<string, CheckoutCouponOption[]>>({})
   const [selectedPackageId, setSelectedPackageId] = useState<string | null>(null)
@@ -147,6 +148,8 @@ export function PricingPageClient({
   const [pollingStatus, setPollingStatus] = useState(false)
   const [appliedCouponCode, setAppliedCouponCode] = useState('')
   const [couponOptionsLoading, setCouponOptionsLoading] = useState(false)
+  const [loginModalOpen, setLoginModalOpen] = useState(false)
+  const [pendingPackageId, setPendingPackageId] = useState<string | null>(null)
   const checkoutRequestRef = useRef(0)
   const packageRefreshAttemptedRef = useRef(false)
   const couponRequestRef = useRef(0)
@@ -291,7 +294,7 @@ export function PricingPageClient({
           setCheckoutError('')
           window.clearInterval(interval)
           invalidateAuthSnapshotCache()
-          void authContext?.refresh({ force: true })
+          void refreshAuth()
           router.refresh()
           Message.success('支付成功，会员权益已开通')
           closeCheckoutModal()
@@ -309,7 +312,7 @@ export function PricingPageClient({
       cancelled = true
       window.clearInterval(interval)
     }
-  }, [authContext, checkoutState?.orderId, router])
+  }, [checkoutState?.orderId, refreshAuth, router])
 
   async function requestCheckout(packageId: string, coupon?: string) {
     const requestId = ++checkoutRequestRef.current
@@ -370,7 +373,7 @@ export function PricingPageClient({
     setPollingStatus(false)
   }
 
-  function openCheckout(packageId: string) {
+  function beginCheckout(packageId: string) {
     setCouponOptionsByPackageId(current => {
       if (!(packageId in current)) {
         return current
@@ -386,6 +389,38 @@ export function PricingPageClient({
     setSelectedCouponCode('')
     setAppliedCouponCode('')
     void requestCheckout(packageId)
+  }
+
+  async function openCheckout(packageId: string) {
+    if (!auth.authenticated) {
+      const authed = await ensureAuthenticated()
+      if (authed) {
+        beginCheckout(packageId)
+        return
+      }
+
+      setPendingPackageId(packageId)
+      setLoginModalOpen(true)
+      return
+    }
+
+    beginCheckout(packageId)
+  }
+
+  async function handleLoginSuccess() {
+    invalidateAuthSnapshotCache()
+    const latestAuth = await refreshAuth()
+    router.refresh()
+    setLoginModalOpen(false)
+
+    if (latestAuth.authenticated && pendingPackageId) {
+      const packageId = pendingPackageId
+      setPendingPackageId(null)
+      beginCheckout(packageId)
+      return
+    }
+
+    setPendingPackageId(null)
   }
 
   function refreshCheckoutQrCode(nextCouponCode?: string) {
@@ -463,7 +498,7 @@ export function PricingPageClient({
                   if (plan.id === EMPTY_STATE_PLAN.id) {
                     return
                   }
-                  openCheckout(plan.id)
+                  void openCheckout(plan.id)
                 }}
                 disabled={plan.id === EMPTY_STATE_PLAN.id}
               >
@@ -619,6 +654,23 @@ export function PricingPageClient({
             </div>
           </div>
         ) : null}
+      </Modal>
+
+      <Modal
+        open={loginModalOpen}
+        onClose={() => {
+          setLoginModalOpen(false)
+          setPendingPackageId(null)
+        }}
+        title="登录后开通"
+        panelClassName={styles.loginModalPanel}
+        contentClassName={styles.loginModalContent}
+      >
+        <LoginPanel
+          mode="modal"
+          nextPath="/pricing"
+          onSuccess={() => handleLoginSuccess()}
+        />
       </Modal>
     </div>
   )

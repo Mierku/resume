@@ -311,6 +311,18 @@
   color: var(--price-text-main);
 }
 
+.loginModalPanel {
+  max-width: 720px;
+  border: none;
+  background: var(--price-card);
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.18);
+  color: var(--price-text-main);
+}
+
+.loginModalContent {
+  color: var(--price-text-main);
+}
+
 .checkoutBody {
   display: grid;
   grid-template-columns: minmax(0, 1.16fr) minmax(300px, 0.84fr);
