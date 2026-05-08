@@ -75,6 +75,8 @@ jobs:
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
           DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
           DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          CR_PAT: ${{ secrets.GITHUB_TOKEN }}
+          CR_USER: ${{ github.actor }}
         run: |
           set -euo pipefail
 
@@ -82,34 +84,43 @@ jobs:
           deploy_image="${{ steps.deploy_image.outputs.name }}:sha-${{ github.sha }}"
           remote_port="${DEPLOY_PORT:-22}"
 
-          docker pull "$origin_image" >/dev/null
-          docker tag "$origin_image" "$deploy_image"
-
           ssh_key_file="$(mktemp)"
           trap 'rm -f "$ssh_key_file"' EXIT
           printf '%s\n' "$DEPLOY_SSH_KEY" > "$ssh_key_file"
           chmod 600 "$ssh_key_file"
 
-          docker save "$origin_image" "$deploy_image" \
-            | gzip \
-            | ssh \
-                -i "$ssh_key_file" \
-                -o StrictHostKeyChecking=no \
-                -o UserKnownHostsFile=/dev/null \
-                -p "$remote_port" \
-                "${DEPLOY_USER}@${DEPLOY_HOST}" '
-                  set -euo pipefail
-                  if docker info >/dev/null 2>&1; then
-                    gunzip | docker load >/tmp/resume-app-image-load.log
-                  elif sudo -n docker info >/dev/null 2>&1; then
-                    gunzip | sudo -n docker load >/tmp/resume-app-image-load.log
-                  else
-                    echo "docker daemon is unreachable on remote host during image preload" >&2
-                    exit 1
-                  fi
-                  cat /tmp/resume-app-image-load.log
-                  rm -f /tmp/resume-app-image-load.log
-                '
+          ssh \
+            -i "$ssh_key_file" \
+            -o StrictHostKeyChecking=no \
+            -o UserKnownHostsFile=/dev/null \
+            -o ServerAliveInterval=15 \
+            -o ServerAliveCountMax=4 \
+            -o ConnectTimeout=20 \
+            -p "$remote_port" \
+            "${DEPLOY_USER}@${DEPLOY_HOST}" \
+            "ORIGIN_IMAGE='$origin_image' DEPLOY_IMAGE='$deploy_image' bash -se" <<'EOF'
+              set -euo pipefail
+
+              docker_cmd() {
+                if docker info >/dev/null 2>&1; then
+                  docker "$@"
+                elif sudo -n docker info >/dev/null 2>&1; then
+                  sudo -n docker "$@"
+                else
+                  echo "docker daemon is unreachable on remote host during image preload" >&2
+                  exit 1
+                fi
+              }
+
+              registry_host="${ORIGIN_IMAGE%%/*}"
+
+              if [ -n "${CR_PAT:-}" ]; then
+                printf '%s\n' "$CR_PAT" | docker_cmd login "$registry_host" -u "${CR_USER:-github-actions}" --password-stdin >/dev/null
+              fi
+
+              docker_cmd pull "$ORIGIN_IMAGE"
+              docker_cmd tag "$ORIGIN_IMAGE" "$DEPLOY_IMAGE"
+          EOF
 
       - name: Prepare remote deploy path
         uses: appleboy/ssh-action@v1.0.3
