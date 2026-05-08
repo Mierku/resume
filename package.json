@@ -2,6 +2,7 @@
   "name": "immersive-delivery-website",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@10.12.4",
   "scripts": {
     "predev": "prisma generate",
     "dev": "next dev",
